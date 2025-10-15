@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Stitch Design</title>
+<link href="data:image/x-icon;base64," rel="icon" type="image/x-icon"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<style type="text/tailwindcss">
+      :root {
+        --primary-color: #1993e5;
+        --secondary-color: #f0f2f4;
+        --background-color: #f9f9f9;
+        --text-primary: #111418;
+        --text-secondary: #637488;
+        --accent-color: #e0e7ff;
+      }
+      body {
+        font-family: 'Manrope', sans-serif;
+        background-color: var(--background-color);
+        color: var(--text-primary);
+      }
+      .button_primary {
+        @apply bg-[var(--primary-color)] text-white rounded-lg px-4 py-2 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50;
+      }
+      .button_secondary {
+        @apply bg-[var(--secondary-color)] text-[var(--text-primary)] rounded-lg px-4 py-2 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50;
+      }
+      .icon_button {
+        @apply p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50;
+      }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body>
+<div class="relative flex size-full min-h-screen flex-col bg-[var(--background-color)] justify-between group/design-root overflow-x-hidden">
+<div>
+<header class="flex items-center p-4 pb-2 justify-between">
+<div class="w-12"></div>
+<h1 class="text-[var(--text-primary)] text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">Job Portal</h1>
+<div class="flex w-12 items-center justify-end">
+<button class="icon_button text-[var(--text-primary)]">
+<svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg">
+<path d="M221.8,175.94C216.25,166.38,208,139.33,208,104a80,80,0,1,0-160,0c0,35.34-8.26,62.38-13.81,71.94A16,16,0,0,0,48,200H88.81a40,40,0,0,0,78.38,0H208a16,16,0,0,0,13.8-24.06ZM128,216a24,24,0,0,1-22.62-16h45.24A24,24,0,0,1,128,216ZM48,184c7.7-13.24,16-43.92,16-80a64,64,0,1,1,128,0c0,36.05,8.28,66.73,16,80Z"></path>
+</svg>
+</button>
+</div>
+</header>
+<main class="container mx-auto px-4">
+<div class="relative min-h-[480px] flex flex-col justify-end rounded-xl overflow-hidden p-6" style='background-image: linear-gradient(rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.6) 100%), url("https://lh3.googleusercontent.com/aida-public/AB6AXuCLI-nOVl-Softt6bo2gWaDBlOpLDZTswAZunQ2uS9ucULiDvGxCnq8N-ARQoIzsZ1aA6ccq1Mlc-hXWDyOWp5L5GLZ5AwJvFeVSAHVPd-BGvMuh4LH4mWTkTF7VVZBPyIdo_akE7Bf8_pPP6u_kzfrZWbM6wUfQHPofcIBfJWA9w5qxmMo15GizxNSP9KwVEn5KXNk1Xl6PbC6SZXbOTQx681O3yBWiU06bhMZhJ0KzKx7fp_h7wHHDn4fFalM7OAfjyfXIJbcL5eS"); background-size: cover; background-position: center;'>
+<div class="flex flex-col gap-4 text-left text-white">
+<h2 class="text-4xl font-extrabold leading-tight tracking-tighter">Find Your Dream Job</h2>
+<p class="text-base font-normal leading-normal max-w-md">Explore thousands of job opportunities across various industries and locations. Start your career journey with us today.</p>
+<button class="button_primary w-fit">Search Jobs</button>
+</div>
+</div>
+<section class="py-8">
+<h3 class="text-[var(--text-primary)] text-2xl font-bold leading-tight tracking-[-0.015em] mb-4">Featured Jobs</h3>
+<div class="flex overflow-x-auto [-ms-scrollbar-style:none] [scrollbar-width:none] [&amp;::-webkit-scrollbar]:hidden -mx-4 px-4">
+<div class="flex items-stretch gap-4">
+<div class="flex flex-col gap-3 rounded-lg min-w-64">
+<div class="w-full bg-center bg-no-repeat aspect-square bg-cover rounded-xl" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuC_smCEoCPlzD4imnizz69kxKPO78d-7SUy4jBDY9j3pyl0lgt6YEmG1_ZOza74qOs1HsLmeWXWZ_p_COQN4hyRRzpJfHmRkFelF4mctIIzQSe4D0WTWqLS6reteuP71cLZNMx6-4dr-zwQ2Io9mqaAd8KikraVdFW_1dEbCk8jw7x0cyvYrzcVeDSSrWOCsY3FzIfh0t-aujwtR-lXzM27oMpUxLjdhaXjlXfiajT5eZdlO4oFCx5j7f2uLdQdPRRo1GcrS4Re0gHQ");'></div>
+<div>
+<p class="text-[var(--text-primary)] text-base font-semibold leading-normal">Software Engineer</p>
+<p class="text-[var(--text-secondary)] text-sm font-normal leading-normal">Tech Company Inc. - Remote</p>
+</div>
+</div>
+<div class="flex flex-col gap-3 rounded-lg min-w-64">
+<div class="w-full bg-center bg-no-repeat aspect-square bg-cover rounded-xl" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuA1FH4tRpsDki8lAiFKEGJoHbTTHJMxmZmNaRo2PY0oLMv3yeZYFut8VvaVQU5d0M3JemMsep0QlKkXp4LiZlrSN16V0KGiNEFshffnQLfl7Wf6_BzYbOC2k0yxBFOA8dVohFy1695nRGc5Yr-QQYhM_k6RdQoXZv2e6VEieYZoPi71K37cRcRSwaJfdTChx4cPkB8giT2ZBwOum2osQhMG-EkWm5Ii18X__TywsXt8gEyjplKYpSVEywIhVyF0QLmW2XTE3c2gymZg");'></div>
+<div>
+<p class="text-[var(--text-primary)] text-base font-semibold leading-normal">Construction Manager</p>
+<p class="text-[var(--text-secondary)] text-sm font-normal leading-normal">BuildWell Corp. - New York, NY</p>
+</div>
+</div>
+<div class="flex flex-col gap-3 rounded-lg min-w-64">
+<div class="w-full bg-center bg-no-repeat aspect-square bg-cover rounded-xl" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDVBavQ5hssBg1JP9QMgxGg4Kg2bWHjzi6xFhLgpJAfqy01Ombix6GTb8r-14Y7hSvSpimjpnBi5rw1sdhr0LcCO5fetw3zplaShP_VBVJ3zYBzUlDOO4c599N8lGKYfDApUdHFwyFl_r7pj11m4n5NeENNLYtqtqqdG1bqBlXSKg6fH6y2Kd0TUmiJ2-rR6kIEChVsbPFFApikeVdvNL0mas6MnF4Ut4Lk0GSfj0ybXSgS2Wb4BgDfFugsvL22tflK7zaWbgd0IdmS");'></div>
+<div>
+<p class="text-[var(--text-primary)] text-base font-semibold leading-normal">Registered Nurse</p>
+<p class="text-[var(--text-secondary)] text-sm font-normal leading-normal">HealthFirst Hospital - Los Angeles, CA</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<div class="flex flex-col sm:flex-row gap-3 py-4">
+<button class="button_primary flex-1">Browse All Jobs</button>
+<button class="button_secondary flex-1">Create Job Alert</button>
+</div>
+</main>
+</div>
+<footer class="sticky bottom-0 bg-[var(--background-color)] border-t border-gray-200">
+<nav class="flex justify-around items-center h-20">
+<a class="flex flex-col items-center justify-center gap-1 text-[var(--primary-color)]" href="#">
+<svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg">
+<path d="M224,115.55V208a16,16,0,0,1-16,16H168a16,16,0,0,1-16-16V168a8,8,0,0,0-8-8H112a8,8,0,0,0-8,8v40a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V115.55a16,16,0,0,1,5.17-11.78l80-75.48.11-.11a16,16,0,0,1,21.53,0,1.14,1.14,0,0,0,.11.11l80,75.48A16,16,0,0,1,224,115.55Z"></path>
+</svg>
+<p class="text-xs font-medium">Home</p>
+</a>
+<a class="flex flex-col items-center justify-center gap-1 text-[var(--text-secondary)]" href="#">
+<svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg">
+<path d="M216,56H176V48a24,24,0,0,0-24-24H104A24,24,0,0,0,80,48v8H40A16,16,0,0,0,24,72V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V72A16,16,0,0,0,216,56ZM96,48a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96ZM216,72v41.61A184,184,0,0,1,128,136a184.07,184.07,0,0,1-88-22.38V72Zm0,128H40V131.64A200.19,200.19,0,0,0,128,152a200.25,200.25,0,0,0,88-20.37V200ZM104,112a8,8,0,0,1,8-8h32a8,8,0,0,1,0,16H112A8,8,0,0,1,104,112Z"></path>
+</svg>
+<p class="text-xs font-medium">Jobs</p>
+</a>
+<a class="flex flex-col items-center justify-center gap-1 text-[var(--text-secondary)]" href="#">
+<svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg">
+<path d="M213.66,82.34l-56-56A8,8,0,0,0,152,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V88A8,8,0,0,0,213.66,82.34ZM160,51.31,188.69,80H160ZM200,216H56V40h88V88a8,8,0,0,0,8,8h48V216Z"></path>
+</svg>
+<p class="text-xs font-medium">Applications</p>
+</a>
+<a class="flex flex-col items-center justify-center gap-1 text-[var(--text-secondary)]" href="#">
+<svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg">
+<path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"></path>
+</svg>
+<p class="text-xs font-medium">Profile</p>
+</a>
+</nav>
+</footer>
+</div>
+
+</body></html>
