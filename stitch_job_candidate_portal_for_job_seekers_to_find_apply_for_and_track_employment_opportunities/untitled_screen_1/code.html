@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Account Settings</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style type="text/tailwindcss">
+      :root {
+        --primary-color: #1993e5;
+        --secondary-color: #f0f2f4;
+        --background-color: #f9f9f9;
+        --text-primary: #111418;
+        --text-secondary: #637488;
+        --accent-color: #e0e7ff;
+        --gray-100: #f7f7f7;
+        --gray-200: #e5e5e5;
+        --gray-300: #d4d4d4;
+        --gray-400: #a3a3a3;
+        --gray-500: #737373;
+        --gray-600: #525252;
+        --gray-700: #404040;
+        --gray-800: #262626;
+        --gray-900: #171717;
+      }
+      body {
+        font-family: 'Manrope', sans-serif;
+        background-color: var(--background-color);
+        color: var(--text-primary);
+      }
+      .setting_toggle:has(:checked) .setting_toggle_circle {
+        transform: translateX(1.25rem);
+      }
+      .setting_toggle:has(:checked) .setting_toggle_slider {
+        background-color: var(--primary-color);
+      }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body>
+<div class="relative flex size-full min-h-screen flex-col justify-between overflow-x-hidden">
+<div class="flex-grow">
+<header class="sticky top-0 z-10 bg-[var(--background-color)]/80 backdrop-blur-sm">
+<div class="flex items-center p-4">
+<button class="text-[var(--text-primary)]">
+<svg fill="currentColor" height="24" viewBox="0 0 256 256" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z"></path>
+</svg>
+</button>
+<h1 class="flex-1 text-center text-xl font-bold tracking-tight text-[var(--text-primary)]">Settings</h1>
+<div class="w-6"></div>
+</div>
+</header>
+<main class="px-4 pb-8">
+<div class="setting_group mt-6">
+<h2 class="section_title text-lg font-semibold text-[var(--text-primary)] mb-2">Account</h2>
+<div class="rounded-xl bg-white shadow-sm">
+<a class="setting_item flex items-center justify-between py-4 px-4 border-b border-[var(--gray-200)] last:border-none" href="#">
+<span class="setting_label text-base text-[var(--text-primary)]">Personal information</span>
+<svg class="text-[var(--text-secondary)]" fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+<path d="M181.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L164.69,128H40a8,8,0,0,1,0-16H164.69L109.66,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,181.66,133.66Z"></path>
+</svg>
+</a>
+<a class="setting_item flex items-center justify-between py-4 px-4 border-b border-[var(--gray-200)] last:border-none" href="#">
+<span class="setting_label text-base text-[var(--text-primary)]">Email</span>
+<svg class="text-[var(--text-secondary)]" fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+<path d="M181.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L164.69,128H40a8,8,0,0,1,0-16H164.69L109.66,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,181.66,133.66Z"></path>
+</svg>
+</a>
+<a class="setting_item flex items-center justify-between py-4 px-4 border-b border-[var(--gray-200)] last:border-none" href="#">
+<span class="setting_label text-base text-[var(--text-primary)]">Phone number</span>
+<svg class="text-[var(--text-secondary)]" fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+<path d="M181.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L164.69,128H40a8,8,0,0,1,0-16H164.69L109.66,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,181.66,133.66Z"></path>
+</svg>
+</a>
+<a class="setting_item flex items-center justify-between py-4 px-4 border-b border-[var(--gray-200)] last:border-none" href="#">
+<span class="setting_label text-base text-[var(--text-primary)]">Password</span>
+<svg class="text-[var(--text-secondary)]" fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+<path d="M181.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L164.69,128H40a8,8,0,0,1,0-16H164.69L109.66,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,181.66,133.66Z"></path>
+</svg>
+</a>
+</div>
+</div>
+<div class="setting_group mt-8">
+<h2 class="section_title text-lg font-semibold text-[var(--text-primary)] mb-2">Privacy</h2>
+<div class="rounded-xl bg-white shadow-sm">
+<a class="setting_item flex items-center justify-between py-4 px-4 border-b border-[var(--gray-200)] last:border-none" href="#">
+<span class="setting_label text-base text-[var(--text-primary)]">Data usage</span>
+<svg class="text-[var(--text-secondary)]" fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+<path d="M181.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L164.69,128H40a8,8,0,0,1,0-16H164.69L109.66,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,181.66,133.66Z"></path>
+</svg>
+</a>
+<a class="setting_item flex items-center justify-between py-4 px-4 border-b border-[var(--gray-200)] last:border-none" href="#">
+<span class="setting_label text-base text-[var(--text-primary)]">Cookies</span>
+<svg class="text-[var(--text-secondary)]" fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+<path d="M181.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L164.69,128H40a8,8,0,0,1,0-16H164.69L109.66,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,181.66,133.66Z"></path>
+</svg>
+</a>
+<a class="setting_item flex items-center justify-between py-4 px-4 border-b border-[var(--gray-200)] last:border-none" href="#">
+<span class="setting_label text-base text-[var(--text-primary)]">Location</span>
+<svg class="text-[var(--text-secondary)]" fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+<path d="M181.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L164.69,128H40a8,8,0,0,1,0-16H164.69L109.66,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,181.66,133.66Z"></path>
+</svg>
+</a>
+</div>
+</div>
+<div class="setting_group mt-8">
+<h2 class="section_title text-lg font-semibold text-[var(--text-primary)] mb-2">Notifications</h2>
+<div class="rounded-xl bg-white shadow-sm">
+<div class="setting_item flex items-center justify-between py-4 px-4 border-b border-[var(--gray-200)] last:border-none">
+<label class="setting_label text-base text-[var(--text-primary)]" for="email-notifications">Email notifications</label>
+<label class="setting_toggle relative inline-flex h-6 w-11 items-center rounded-full">
+<input class="peer sr-only" id="email-notifications" type="checkbox"/>
+<span class="setting_toggle_slider absolute inset-0 cursor-pointer rounded-full bg-[var(--gray-200)] transition-colors"></span>
+<span class="setting_toggle_circle inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform"></span>
+</label>
+</div>
+<div class="setting_item flex items-center justify-between py-4 px-4 border-b border-[var(--gray-200)] last:border-none">
+<label class="setting_label text-base text-[var(--text-primary)]" for="push-notifications">Push notifications</label>
+<label class="setting_toggle relative inline-flex h-6 w-11 items-center rounded-full">
+<input checked="" class="peer sr-only" id="push-notifications" type="checkbox"/>
+<span class="setting_toggle_slider absolute inset-0 cursor-pointer rounded-full bg-[var(--gray-200)] transition-colors"></span>
+<span class="setting_toggle_circle inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform"></span>
+</label>
+</div>
+</div>
+</div>
+</main>
+</div>
+<footer class="sticky bottom-0 bg-[var(--background-color)]/80 backdrop-blur-sm border-t border-[var(--gray-200)] pb-safe">
+<nav class="flex justify-around items-center h-20">
+<a class="flex flex-col items-center gap-1 text-[var(--text-secondary)]" href="#">
+<svg fill="currentColor" height="24" viewBox="0 0 256 256" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M218.83,103.77l-80-75.48a1.14,1.14,0,0,1-.11-.11,16,16,0,0,0-21.53,0l-.11.11L37.17,103.77A16,16,0,0,0,32,115.55V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V160h32v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V115.55A16,16,0,0,0,218.83,103.77ZM208,208H160V160a16,16,0,0,0-16-16H112a16,16,0,0,0-16,16v48H48V115.55l.11-.1L128,40l79.9,75.43.11.1Z"></path>
+</svg>
+<span class="text-xs font-medium">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-[var(--text-secondary)]" href="#">
+<svg fill="currentColor" height="24" viewBox="0 0 256 256" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path>
+</svg>
+<span class="text-xs font-medium">Search</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-[var(--text-secondary)]" href="#">
+<svg fill="currentColor" height="24" viewBox="0 0 256 256" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M216,56H176V48a24,24,0,0,0-24-24H104A24,24,0,0,0,80,48v8H40A16,16,0,0,0,24,72V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V72A16,16,0,0,0,216,56ZM96,48a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96ZM216,72v41.61A184,184,0,0,1,128,136a184.07,184.07,0,0,1-88-22.38V72Zm0,128H40V131.64A200.19,200.19,0,0,0,128,152a200.25,200.25,0,0,0,88-20.37V200ZM104,112a8,8,0,0,1,8-8h32a8,8,0,0,1,0,16H112A8,8,0,0,1,104,112Z"></path>
+</svg>
+<span class="text-xs font-medium">Applications</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-[var(--primary-color)]" href="#">
+<svg fill="currentColor" height="24" viewBox="0 0 256 256" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M230.93,220a8,8,0,0,1-6.93,4H32a8,8,0,0,1-6.92-12c15.23-26.33,38.7-45.21,66.09-54.16a72,72,0,1,1,73.66,0c27.39,8.95,50.86,27.83,66.09,54.16A8,8,0,0,1,230.93,220Z"></path>
+</svg>
+<span class="text-xs font-bold">Profile</span>
+</a>
+</nav>
+</footer>
+</div>
+
+</body></html>
