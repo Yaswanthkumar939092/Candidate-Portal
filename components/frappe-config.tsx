@@ -131,7 +131,7 @@ export function FrappeConfig({ onNext, initialData }: FrappeConfigProps) {
   }
 
   const handleSkip = () => {
-    onNext()
+    onNext(undefined)
   }
 
   return (
@@ -273,7 +273,7 @@ export function FrappeConfig({ onNext, initialData }: FrappeConfigProps) {
 
         <Button
           onClick={handleSubmit}
-          disabled={testing || (!testResult?.success && (formData.url || formData.api_key || formData.api_secret))}
+          disabled={testing || (!testResult?.success && !!(formData.url || formData.api_key || formData.api_secret))}
         >
           {!testResult?.success && (formData.url || formData.api_key || formData.api_secret) ? 'Test & Continue' : 'Continue'}
         </Button>

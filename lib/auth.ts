@@ -30,33 +30,39 @@ export interface OAuthError extends AuthError {
 export const auth = {
   // Sign up a new user
   signUp: async ({ email, password, fullName }: SignUpData) => {
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
-          },
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName,
         },
-      })
+      },
+    })
 
-      if (error) {
-        throw new Error(error.message)
-      }
-
-      // Create profile after successful signup
-      if (data.user) {
-        await createProfile(data.user.id, {
-          email,
-          full_name: fullName || null,
-        })
-      }
-
-      return { user: data.user, session: data.session }
-    } catch (error) {
-      throw new Error(error instanceof Error ? error.message : 'Failed to sign up')
+    if (error) {
+      throw new Error(error.message)
     }
+
+    // Supabase returns a user with an empty identities array when the email
+    // is already registered (and email confirmations are enabled).  Detect
+    // this case and surface a clear error instead of silently proceeding.
+    if (
+      data.user &&
+      (!data.user.identities || data.user.identities.length === 0)
+    ) {
+      throw new Error('User already registered')
+    }
+
+    // Create profile after successful signup
+    if (data.user) {
+      await createProfile(data.user.id, {
+        email,
+        full_name: fullName || null,
+      })
+    }
+
+    return { user: data.user, session: data.session }
   },
 
   // Sign in an existing user

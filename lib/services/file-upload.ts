@@ -204,7 +204,7 @@ class FileUploadService {
       // Get file record
       const { data: fileRecord, error: fetchError } = await this.supabase
         .from('user_documents')
-        .select('bucket_name, storage_path, user_id')
+        .select('*')
         .eq('id', fileId)
         .single()
 
@@ -217,10 +217,12 @@ class FileUploadService {
         return { success: false, error: 'Unauthorized' }
       }
 
+      const record = fileRecord as any
+
       // Delete from storage
       const { error: storageError } = await this.supabase.storage
-        .from(fileRecord.bucket_name)
-        .remove([fileRecord.storage_path])
+        .from(record.bucket_name)
+        .remove([record.storage_path])
 
       if (storageError) {
         console.error('Storage deletion error:', storageError)
@@ -262,7 +264,7 @@ class FileUploadService {
       // Get file record
       const { data: fileRecord, error: fetchError } = await this.supabase
         .from('user_documents')
-        .select('bucket_name, storage_path, user_id')
+        .select('*')
         .eq('id', fileId)
         .single()
 
@@ -276,10 +278,12 @@ class FileUploadService {
         return { success: false, error: 'Unauthorized' }
       }
 
+      const record = fileRecord as any
+
       // Generate signed URL
       const { data: signedUrlData, error: urlError } = await this.supabase.storage
-        .from(fileRecord.bucket_name)
-        .createSignedUrl(fileRecord.storage_path, expiresIn)
+        .from(record.bucket_name)
+        .createSignedUrl(record.storage_path, expiresIn)
 
       if (urlError) {
         console.error('Signed URL generation error:', urlError)
@@ -398,7 +402,7 @@ class FileUploadService {
       // Get file record
       const { data: fileRecord, error: fetchError } = await this.supabase
         .from('user_documents')
-        .select('bucket_name, storage_path, file_type')
+        .select('*')
         .eq('id', fileId)
         .single()
 
@@ -411,15 +415,17 @@ class FileUploadService {
         return { success: false, error: 'File is not an image' }
       }
 
+      const record = fileRecord as any
+
       // Generate thumbnail URL using Supabase's transform API
       const { data: publicUrlData } = this.supabase.storage
-        .from(fileRecord.bucket_name)
-        .getPublicUrl(fileRecord.storage_path, {
+        .from(record.bucket_name)
+        .getPublicUrl(record.storage_path, {
           transform: {
             width,
             height,
             resize: 'cover',
-            format: 'webp',
+            format: 'origin' as const,
             quality: 80
           }
         })
@@ -517,6 +523,7 @@ class FileUploadService {
         return { success: false, error: 'File not found' }
       }
 
+      const record = fileRecord as any
       return {
         success: true,
         metadata: {
@@ -525,8 +532,8 @@ class FileUploadService {
           type: fileRecord.file_type,
           created_at: fileRecord.created_at,
           updated_at: fileRecord.updated_at,
-          bucket: fileRecord.bucket_name,
-          path: fileRecord.storage_path,
+          bucket: record.bucket_name,
+          path: record.storage_path,
         }
       }
 

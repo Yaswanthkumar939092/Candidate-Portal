@@ -21,7 +21,7 @@ async function getUserFromRequest(request: NextRequest) {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getUserFromRequest(request)
@@ -33,7 +33,7 @@ export async function POST(
       )
     }
 
-    const { id: jobId } = params
+    const { id: jobId } = await params
 
     // Check if job exists and is active
     const { data: job, error: jobError } = await supabaseAdmin
@@ -93,7 +93,7 @@ export async function POST(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getUserFromRequest(request)
@@ -105,7 +105,7 @@ export async function DELETE(
       )
     }
 
-    const { id: jobId } = params
+    const { id: jobId } = await params
 
     // Remove saved job
     const { error: deleteError } = await supabaseAdmin

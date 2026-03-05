@@ -1,0 +1,147 @@
+"use client"
+
+import { useRef, useState, useCallback } from 'react'
+import { Upload, X, FileText } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+
+interface FileUploadFieldProps {
+  label: string
+  required?: boolean
+  accept?: string
+  helpText?: string
+  value?: File | string | null
+  onChange?: (file: File | null) => void
+  className?: string
+}
+
+/**
+ * A styled file upload field with drag-and-drop support.
+ * Renders a dashed border upload area with an upload cloud icon,
+ * matching the Physics Wallah onboarding design.
+ *
+ * @param label - The label text for the upload field
+ * @param required - Whether the field is required (shows red asterisk)
+ * @param accept - Accepted file types (default: images + PDF)
+ * @param helpText - Helper text below the upload area
+ * @param value - Current file or URL string
+ * @param onChange - Callback when a file is selected or removed
+ */
+export function FileUploadField({
+  label,
+  required = false,
+  accept = ".svg,.png,.jpg,.jpeg,.pdf",
+  helpText = "SVG, PNG, JPG or PDF (max. 5MB)",
+  value,
+  onChange,
+  className,
+}: FileUploadFieldProps) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [isDragOver, setIsDragOver] = useState(false)
+
+  const fileName = value instanceof File
+    ? value.name
+    : typeof value === 'string' && value.length > 0
+      ? value.split('/').pop() || value
+      : null
+
+  const handleClick = () => {
+    inputRef.current?.click()
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null
+    onChange?.(file)
+    // Reset input so the same file can be re-selected
+    if (inputRef.current) {
+      inputRef.current.value = ''
+    }
+  }
+
+  const handleRemove = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onChange?.(null)
+  }
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(true)
+  }, [])
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(false)
+  }, [])
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(false)
+    const file = e.dataTransfer.files?.[0] ?? null
+    if (file) {
+      onChange?.(file)
+    }
+  }, [onChange])
+
+  return (
+    <div className={cn("space-y-2", className)}>
+      <Label className="text-sm font-medium text-foreground">
+        {label}
+        {required && <span className="text-destructive"> *</span>}
+      </Label>
+
+      {fileName ? (
+        <div
+          className="flex items-center gap-3 rounded-lg border border-border bg-muted p-3 cursor-pointer"
+          onClick={handleClick}
+        >
+          <FileText className="h-5 w-5 shrink-0 text-primary" />
+          <span className="flex-1 truncate text-sm text-foreground">{fileName}</span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
+            onClick={handleRemove}
+            aria-label={`Remove ${label}`}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      ) : (
+        <div
+          onClick={handleClick}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          className={cn(
+            "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-8 transition-colors",
+            isDragOver
+              ? "border-primary bg-primary/5"
+              : "border-border bg-card hover:border-primary/50 hover:bg-muted/50"
+          )}
+        >
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+            <Upload className="h-5 w-5 text-primary" />
+          </div>
+          <p className="text-sm text-foreground">
+            Click to upload or drag and drop
+          </p>
+          <p className="text-xs text-muted-foreground">{helpText}</p>
+        </div>
+      )}
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        onChange={handleFileChange}
+        className="hidden"
+        aria-label={label}
+      />
+    </div>
+  )
+}

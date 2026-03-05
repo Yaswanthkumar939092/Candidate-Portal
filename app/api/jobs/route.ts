@@ -70,6 +70,26 @@ export async function GET(request: NextRequest) {
       .select('*', { count: 'exact' })
       .eq('is_active', true)
 
+    // --- Visibility filtering ---
+    // Internal employees see all jobs; external / anonymous users see only
+    // 'external' or 'both'.
+    const currentUser = await getUserFromRequest(request)
+    let isInternal = false
+
+    if (currentUser) {
+      const { data: profile } = await supabaseAdmin
+        .from('profiles')
+        .select('is_internal_employee')
+        .eq('id', currentUser.id)
+        .single()
+
+      isInternal = !!profile?.is_internal_employee
+    }
+
+    if (!isInternal) {
+      query = query.in('visibility', ['external', 'both'])
+    }
+
     // Apply filters
     if (search) {
       query = query.or(`title.ilike.%${search}%,company.ilike.%${search}%,description.ilike.%${search}%`)

@@ -31,7 +31,7 @@ const emailMessageSchema = z.object({
     contentType: z.string().optional(),
   })).optional(),
   replyTo: emailRecipientSchema.optional(),
-  priority: z.enum(['high', 'normal', 'low']).default('normal'),
+  priority: z.enum(['high', 'normal', 'low']).optional().default('normal'),
 })
 
 // Email templates
@@ -100,7 +100,7 @@ class EmailService {
 
     try {
       emailConfigSchema.parse(config)
-      this.transporter = nodemailer.createTransporter(config)
+      this.transporter = nodemailer.createTransport(config)
     } catch (error) {
       console.error('Invalid email configuration:', error)
       throw new Error('Email service configuration is invalid')
@@ -110,7 +110,7 @@ class EmailService {
   /**
    * Send a generic email
    */
-  async sendEmail(message: z.infer<typeof emailMessageSchema>): Promise<boolean> {
+  async sendEmail(message: z.input<typeof emailMessageSchema>): Promise<boolean> {
     try {
       // Validate message
       const validatedMessage = emailMessageSchema.parse(message)

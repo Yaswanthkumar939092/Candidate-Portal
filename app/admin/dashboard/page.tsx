@@ -36,14 +36,14 @@ interface Application {
     company: string
   } | null
   profiles: {
-    full_name: string
+    full_name: string | null
     email: string
   } | null
 }
 
 interface User {
   id: string
-  email: string
+  email?: string
 }
 
 export default function AdminDashboard() {
@@ -114,10 +114,10 @@ export default function AdminDashboard() {
         .from('applications')
         .select('status')
 
-      const statusCounts = statusDistribution?.reduce((acc, app) => {
+      const statusCounts = statusDistribution?.reduce((acc: Record<string, number>, app) => {
         acc[app.status] = (acc[app.status] || 0) + 1
         return acc
-      }, {}) || {}
+      }, {} as Record<string, number>) || {} as Record<string, number>
 
       setStats({
         totalUsers: usersCount.count || 0,
@@ -336,7 +336,7 @@ export default function AdminDashboard() {
                       </CardHeader>
                       <CardContent>
                         <div className="text-2xl font-bold">
-                          {stats?.totalApplications > 0
+                          {stats && stats.totalApplications > 0
                             ? ((stats.statusDistribution?.offered || 0) / stats.totalApplications * 100).toFixed(1)
                             : 0}%
                         </div>

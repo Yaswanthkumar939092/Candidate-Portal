@@ -119,7 +119,7 @@ const defaultStore = new InMemoryRateLimitStore()
 
 // Rate limiter class
 export class RateLimiter {
-  private config: z.infer<typeof rateLimitConfigSchema>
+  protected config: z.infer<typeof rateLimitConfigSchema>
   private store: InMemoryRateLimitStore | RedisRateLimitStore
 
   constructor(
@@ -144,7 +144,7 @@ export class RateLimiter {
     // Call onLimitReached callback if limit is exceeded
     if (!result.allowed && this.config.onLimitReached) {
       try {
-        await this.config.onLimitReached(request, result)
+        await (this.config.onLimitReached as any)(request, result)
       } catch (error) {
         console.error('Rate limit onLimitReached callback error:', error)
       }
@@ -155,7 +155,7 @@ export class RateLimiter {
 
   private generateKey(request: NextRequest): string {
     if (this.config.keyGenerator) {
-      return this.config.keyGenerator(request)
+      return (this.config.keyGenerator as any)(request) as string
     }
 
     // Default key generation based on IP address
@@ -164,12 +164,11 @@ export class RateLimiter {
     return `rate-limit:${ip}:${path}`
   }
 
-  private getClientIP(request: NextRequest): string {
+  protected getClientIP(request: NextRequest): string {
     return (
       request.headers.get('x-forwarded-for') ||
       request.headers.get('x-real-ip') ||
       request.headers.get('cf-connecting-ip') ||
-      request.ip ||
       'unknown'
     )
   }
@@ -367,7 +366,7 @@ export class WhitelistRateLimiter extends RateLimiter {
   }
 
   async checkLimit(request: NextRequest): Promise<RateLimitResult> {
-    const ip = this.getClientIP(request)
+    const ip = this.getClientIPAddress(request)
 
     // Check if IP is whitelisted
     if (this.whitelist.has(ip)) {
@@ -382,12 +381,11 @@ export class WhitelistRateLimiter extends RateLimiter {
     return super.checkLimit(request)
   }
 
-  private getClientIP(request: NextRequest): string {
+  private getClientIPAddress(request: NextRequest): string {
     return (
       request.headers.get('x-forwarded-for') ||
       request.headers.get('x-real-ip') ||
       request.headers.get('cf-connecting-ip') ||
-      request.ip ||
       'unknown'
     )
   }

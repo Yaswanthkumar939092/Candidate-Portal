@@ -125,7 +125,7 @@ export async function getFeatureFlagsForUser(userId: string | null): Promise<Rec
 
     if (featureFlags) {
       featureFlags.forEach(flag => {
-        const override = overrideMap.get(flag.id)
+        const override = overrideMap.get(flag.id) ?? null
         const value = evaluateFeatureFlagForUser(flag, userId, override)
         evaluatedFlags[flag.key] = value
       })

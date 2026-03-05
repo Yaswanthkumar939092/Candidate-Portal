@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
 
     if (error instanceof z.ZodError) {
       return validationErrorResponse(
-        error.errors.map(err => ({
+        error.issues.map((err: z.ZodIssue) => ({
           field: err.path.join('.'),
           message: err.message,
           code: err.code
@@ -283,7 +283,7 @@ async function syncJobs(job: SyncJob, options: z.infer<typeof syncRequestSchema>
   const { data: existingJobs } = await query
 
   // Mock sync process
-  const mockFrappeJobs = [
+  const mockFrappeJobs: Array<{ id: string }> = [
     // This would be replaced with actual Frappe API data
   ]
 
@@ -335,7 +335,7 @@ async function syncApplications(job: SyncJob, options: z.infer<typeof syncReques
   const { data: existingApplications } = await query
 
   // Mock sync process
-  const mockFrappeApplications = [
+  const mockFrappeApplications: Array<{ id: string }> = [
     // This would be replaced with actual Frappe API data
   ]
 

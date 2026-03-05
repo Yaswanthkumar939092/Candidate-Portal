@@ -26,7 +26,11 @@ import {
   ChevronDown,
   Menu,
   X,
-  ToggleLeft
+  ToggleLeft,
+  Server,
+  ClipboardList,
+  Globe,
+  Shield,
 } from 'lucide-react'
 import { signOut } from '@/lib/supabase'
 
@@ -74,6 +78,30 @@ const navigationItems = [
     icon: ToggleLeft,
     description: 'Manage feature toggles',
     badge: 'Beta'
+  },
+  {
+    title: 'Frappe Environments',
+    href: '/admin/frappe-environments',
+    icon: Server,
+    description: 'Manage Frappe connections'
+  },
+  {
+    title: 'Onboarding',
+    href: '/admin/onboarding-management',
+    icon: ClipboardList,
+    description: 'Review onboarding submissions'
+  },
+  {
+    title: 'Company Domains',
+    href: '/admin/company-domains',
+    icon: Globe,
+    description: 'Internal employee detection'
+  },
+  {
+    title: 'SSO Providers',
+    href: '/admin/sso-providers',
+    icon: Shield,
+    description: 'Single Sign-On configuration'
   },
   {
     title: 'Settings',
