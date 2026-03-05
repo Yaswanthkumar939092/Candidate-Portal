@@ -38,7 +38,7 @@ async function isAdmin(userId: string) {
 // GET /api/admin/feature-flags/[id] - Get a specific feature flag
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getUserFromRequest(request)
@@ -59,10 +59,12 @@ export async function GET(
       )
     }
 
+    const { id } = await params
+
     const { data: featureFlag, error } = await supabaseAdmin
       .from('feature_flags')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .single()
 
     if (error) {
@@ -96,7 +98,7 @@ export async function GET(
 // PUT /api/admin/feature-flags/[id] - Update a specific feature flag
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getUserFromRequest(request)
@@ -117,6 +119,8 @@ export async function PUT(
       )
     }
 
+    const { id } = await params
+
     const body = await request.json()
     const updateData: FeatureFlagUpdate = {
       ...body,
@@ -131,7 +135,7 @@ export async function PUT(
     const { data: featureFlag, error } = await supabaseAdmin
       .from('feature_flags')
       .update(updateData)
-      .eq('id', params.id)
+      .eq('id', id)
       .select()
       .single()
 
@@ -166,7 +170,7 @@ export async function PUT(
 // DELETE /api/admin/feature-flags/[id] - Delete a specific feature flag
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getUserFromRequest(request)
@@ -187,10 +191,12 @@ export async function DELETE(
       )
     }
 
+    const { id } = await params
+
     const { error } = await supabaseAdmin
       .from('feature_flags')
       .delete()
-      .eq('id', params.id)
+      .eq('id', id)
 
     if (error) {
       console.error('Error deleting feature flag:', error)

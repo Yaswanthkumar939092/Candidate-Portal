@@ -177,13 +177,7 @@ export async function getUserContext(userId: string): Promise<UserContext | null
     // Get user profile with role information
     const { data: profile, error } = await supabaseAdmin
       .from('profiles')
-      .select(`
-        id,
-        email,
-        role,
-        company_id,
-        metadata
-      `)
+      .select('id, email, role')
       .eq('id', userId)
       .single()
 
@@ -202,9 +196,9 @@ export async function getUserContext(userId: string): Promise<UserContext | null
       id: profile.id,
       email: profile.email,
       role: userRole,
-      company_id: null, // TODO: Add company_id to schema if needed
+      company_id: undefined, // TODO: Add company_id to schema if needed
       permissions,
-      metadata: null, // TODO: Add metadata to schema if needed
+      metadata: undefined, // TODO: Add metadata to schema if needed
     }
   } catch (error) {
     console.error('Error getting user context:', error)
@@ -591,7 +585,7 @@ export async function updateUserRole(
     const { error } = await supabaseAdmin
       .from('profiles')
       .update({
-        role: newRole,
+        role: newRole as 'candidate' | 'admin' | 'super_admin',
         updated_at: new Date().toISOString()
       })
       .eq('id', targetUserId)

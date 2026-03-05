@@ -11,9 +11,9 @@ const updateStatusSchema = z.object({
 })
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
@@ -24,7 +24,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       return unauthorizedResponse()
     }
 
-    const applicationId = params.id
+    const { id: applicationId } = await params
 
     if (!applicationId) {
       return errorResponse('Application ID is required', 400)
@@ -105,7 +105,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     // Update the application
     const updateData: {
-      status: string;
+      status: 'pending' | 'reviewing' | 'interviewing' | 'offered' | 'rejected' | 'withdrawn';
       updated_at: string;
       notes?: string;
       rejection_reason?: string;
@@ -201,7 +201,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return unauthorizedResponse()
     }
 
-    const applicationId = params.id
+    const { id: applicationId } = await params
 
     if (!applicationId) {
       return errorResponse('Application ID is required', 400)

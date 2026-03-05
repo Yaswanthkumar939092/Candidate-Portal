@@ -125,7 +125,7 @@ export function withOwnership(
     }
 
     // Check resource ownership
-    const { data: resource, error } = await supabaseAdmin
+    const { data: resource, error } = await (supabaseAdmin as any)
       .from(resourceTable)
       .select(`id, ${ownershipField}`)
       .eq('id', resourceId)
@@ -139,7 +139,7 @@ export function withOwnership(
     }
 
     // Check if user owns the resource
-    if (resource[ownershipField] !== request.user.id) {
+    if ((resource as any)[ownershipField] !== request.user.id) {
       // Check if user is admin (simplified check)
       const { data: profile } = await supabaseAdmin
         .from('profiles')
@@ -173,7 +173,7 @@ export function withRateLimit(
     request: NextRequest,
     handler: (req: NextRequest) => Promise<Response>
   ): Promise<Response> => {
-    const ip = request.ip || request.headers.get('x-forwarded-for') || 'unknown'
+    const ip = request.headers.get('x-forwarded-for') || 'unknown'
     const key = `rate-limit:${ip}`
     const now = Date.now()
 
