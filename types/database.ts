@@ -25,6 +25,10 @@ export interface Database {
           preferred_job_types: string[] | null
           role: 'candidate' | 'admin' | 'super_admin'
           provider: string | null
+          lifecycle_stage: 'candidate' | 'applicant' | 'offered' | 'onboarding' | 'employee'
+          frappe_employee_id: string | null
+          is_internal_employee: boolean
+          email_domain: string | null
           created_at: string
           updated_at: string
         }
@@ -43,6 +47,10 @@ export interface Database {
           preferred_job_types?: string[] | null
           role?: 'candidate' | 'admin' | 'super_admin'
           provider?: string | null
+          lifecycle_stage?: 'candidate' | 'applicant' | 'offered' | 'onboarding' | 'employee'
+          frappe_employee_id?: string | null
+          is_internal_employee?: boolean
+          email_domain?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -61,6 +69,10 @@ export interface Database {
           preferred_job_types?: string[] | null
           role?: 'candidate' | 'admin' | 'super_admin'
           provider?: string | null
+          lifecycle_stage?: 'candidate' | 'applicant' | 'offered' | 'onboarding' | 'employee'
+          frappe_employee_id?: string | null
+          is_internal_employee?: boolean
+          email_domain?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -93,6 +105,9 @@ export interface Database {
           application_deadline: string | null
           is_active: boolean
           posted_by: string
+          visibility: 'internal' | 'external' | 'both'
+          visibility_override: boolean
+          frappe_publish_field: boolean
           frappe_created_at: string | null
           frappe_updated_at: string | null
           synced_at: string | null
@@ -118,6 +133,9 @@ export interface Database {
           application_deadline?: string | null
           is_active?: boolean
           posted_by: string
+          visibility?: 'internal' | 'external' | 'both'
+          visibility_override?: boolean
+          frappe_publish_field?: boolean
           frappe_created_at?: string | null
           frappe_updated_at?: string | null
           synced_at?: string | null
@@ -143,6 +161,9 @@ export interface Database {
           application_deadline?: string | null
           is_active?: boolean
           posted_by?: string
+          visibility?: 'internal' | 'external' | 'both'
+          visibility_override?: boolean
+          frappe_publish_field?: boolean
           frappe_created_at?: string | null
           frappe_updated_at?: string | null
           synced_at?: string | null
@@ -173,6 +194,8 @@ export interface Database {
           updated_at: string
           notes: string | null
           rejection_reason: string | null
+          offer_accepted_at: string | null
+          frappe_job_applicant_id: string | null
           frappe_applied_at: string | null
           frappe_updated_at: string | null
           synced_at: string | null
@@ -189,6 +212,8 @@ export interface Database {
           updated_at?: string
           notes?: string | null
           rejection_reason?: string | null
+          offer_accepted_at?: string | null
+          frappe_job_applicant_id?: string | null
           frappe_applied_at?: string | null
           frappe_updated_at?: string | null
           synced_at?: string | null
@@ -205,6 +230,8 @@ export interface Database {
           updated_at?: string
           notes?: string | null
           rejection_reason?: string | null
+          offer_accepted_at?: string | null
+          frappe_job_applicant_id?: string | null
           frappe_applied_at?: string | null
           frappe_updated_at?: string | null
           synced_at?: string | null
@@ -555,6 +582,384 @@ export interface Database {
           }
         ]
       }
+      frappe_environments: {
+        Row: {
+          id: string
+          environment_key: 'LOCAL' | 'DEV' | 'UAT' | 'PROD'
+          label: string
+          frappe_url: string
+          api_key: string | null
+          api_secret: string | null
+          username: string | null
+          password: string | null
+          webhook_secret: string | null
+          is_active: boolean
+          auto_sync_enabled: boolean
+          sync_interval_hours: number
+          last_connection_test_at: string | null
+          last_connection_status: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          environment_key: 'LOCAL' | 'DEV' | 'UAT' | 'PROD'
+          label: string
+          frappe_url: string
+          api_key?: string | null
+          api_secret?: string | null
+          username?: string | null
+          password?: string | null
+          webhook_secret?: string | null
+          is_active?: boolean
+          auto_sync_enabled?: boolean
+          sync_interval_hours?: number
+          last_connection_test_at?: string | null
+          last_connection_status?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          environment_key?: 'LOCAL' | 'DEV' | 'UAT' | 'PROD'
+          label?: string
+          frappe_url?: string
+          api_key?: string | null
+          api_secret?: string | null
+          username?: string | null
+          password?: string | null
+          webhook_secret?: string | null
+          is_active?: boolean
+          auto_sync_enabled?: boolean
+          sync_interval_hours?: number
+          last_connection_test_at?: string | null
+          last_connection_status?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      onboarding_data: {
+        Row: {
+          id: string
+          user_id: string
+          personal_info: Json
+          address: Json
+          identity_documents: Json
+          bank_details: Json
+          emergency_contacts: Json
+          education: Json
+          employment_history: Json
+          current_step: number
+          completed_steps: string[]
+          declaration_accepted: boolean
+          status: 'draft' | 'submitted' | 'approved' | 'pushed_to_frappe'
+          frappe_employee_id: string | null
+          frappe_user_id: string | null
+          pushed_to_frappe_at: string | null
+          submitted_at: string | null
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          personal_info?: Json
+          address?: Json
+          identity_documents?: Json
+          bank_details?: Json
+          emergency_contacts?: Json
+          education?: Json
+          employment_history?: Json
+          current_step?: number
+          completed_steps?: string[]
+          declaration_accepted?: boolean
+          status?: 'draft' | 'submitted' | 'approved' | 'pushed_to_frappe'
+          frappe_employee_id?: string | null
+          frappe_user_id?: string | null
+          pushed_to_frappe_at?: string | null
+          submitted_at?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          personal_info?: Json
+          address?: Json
+          identity_documents?: Json
+          bank_details?: Json
+          emergency_contacts?: Json
+          education?: Json
+          employment_history?: Json
+          current_step?: number
+          completed_steps?: string[]
+          declaration_accepted?: boolean
+          status?: 'draft' | 'submitted' | 'approved' | 'pushed_to_frappe'
+          frappe_employee_id?: string | null
+          frappe_user_id?: string | null
+          pushed_to_frappe_at?: string | null
+          submitted_at?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_data_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      job_match_results: {
+        Row: {
+          id: string
+          user_id: string
+          job_id: string
+          match_type: 'keyword' | 'ai'
+          match_score: number
+          matched_skills: string[]
+          missing_skills: string[]
+          analysis: Json
+          resume_document_id: string | null
+          computed_at: string
+          expires_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          job_id: string
+          match_type: 'keyword' | 'ai'
+          match_score: number
+          matched_skills?: string[]
+          missing_skills?: string[]
+          analysis?: Json
+          resume_document_id?: string | null
+          computed_at?: string
+          expires_at?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          job_id?: string
+          match_type?: 'keyword' | 'ai'
+          match_score?: number
+          matched_skills?: string[]
+          missing_skills?: string[]
+          analysis?: Json
+          resume_document_id?: string | null
+          computed_at?: string
+          expires_at?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_match_results_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_match_results_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      action_center_tasks: {
+        Row: {
+          id: string
+          user_id: string
+          assigned_by: string | null
+          title: string
+          description: string | null
+          task_type: 'onboarding_task' | 'document_upload' | 'form_fill' | 'custom'
+          status: 'pending' | 'in_progress' | 'completed' | 'overdue'
+          priority: 'low' | 'medium' | 'high' | 'urgent'
+          due_date: string | null
+          completed_at: string | null
+          metadata: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          assigned_by?: string | null
+          title: string
+          description?: string | null
+          task_type: 'onboarding_task' | 'document_upload' | 'form_fill' | 'custom'
+          status?: 'pending' | 'in_progress' | 'completed' | 'overdue'
+          priority?: 'low' | 'medium' | 'high' | 'urgent'
+          due_date?: string | null
+          completed_at?: string | null
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          assigned_by?: string | null
+          title?: string
+          description?: string | null
+          task_type?: 'onboarding_task' | 'document_upload' | 'form_fill' | 'custom'
+          status?: 'pending' | 'in_progress' | 'completed' | 'overdue'
+          priority?: 'low' | 'medium' | 'high' | 'urgent'
+          due_date?: string | null
+          completed_at?: string | null
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "action_center_tasks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      action_center_requests: {
+        Row: {
+          id: string
+          user_id: string
+          request_type: string
+          subject: string
+          description: string | null
+          status: 'open' | 'in_review' | 'approved' | 'rejected' | 'closed'
+          attachments: string[]
+          admin_notes: string | null
+          resolved_by: string | null
+          resolved_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          request_type: string
+          subject: string
+          description?: string | null
+          status?: 'open' | 'in_review' | 'approved' | 'rejected' | 'closed'
+          attachments?: string[]
+          admin_notes?: string | null
+          resolved_by?: string | null
+          resolved_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          request_type?: string
+          subject?: string
+          description?: string | null
+          status?: 'open' | 'in_review' | 'approved' | 'rejected' | 'closed'
+          attachments?: string[]
+          admin_notes?: string | null
+          resolved_by?: string | null
+          resolved_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "action_center_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      sso_providers: {
+        Row: {
+          id: string
+          provider_type: 'saml' | 'oidc' | 'frappe_sso'
+          name: string
+          is_enabled: boolean
+          config: Json
+          email_domain_restriction: string[]
+          auto_create_profile: boolean
+          default_role: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          provider_type: 'saml' | 'oidc' | 'frappe_sso'
+          name: string
+          is_enabled?: boolean
+          config?: Json
+          email_domain_restriction?: string[]
+          auto_create_profile?: boolean
+          default_role?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          provider_type?: 'saml' | 'oidc' | 'frappe_sso'
+          name?: string
+          is_enabled?: boolean
+          config?: Json
+          email_domain_restriction?: string[]
+          auto_create_profile?: boolean
+          default_role?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      company_domains: {
+        Row: {
+          id: string
+          domain: string
+          company_name: string | null
+          frappe_company_id: string | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          domain: string
+          company_name?: string | null
+          frappe_company_id?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          domain?: string
+          company_name?: string | null
+          frappe_company_id?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -568,6 +973,15 @@ export interface Database {
       application_status: 'pending' | 'reviewing' | 'interviewing' | 'offered' | 'rejected' | 'withdrawn'
       notification_type: 'application_update' | 'job_match' | 'interview_scheduled' | 'system'
       document_type: 'resume' | 'cover_letter' | 'portfolio' | 'certificate' | 'other'
+      environment_key: 'LOCAL' | 'DEV' | 'UAT' | 'PROD'
+      lifecycle_stage: 'candidate' | 'applicant' | 'offered' | 'onboarding' | 'employee'
+      onboarding_status: 'draft' | 'submitted' | 'approved' | 'pushed_to_frappe'
+      task_type: 'onboarding_task' | 'document_upload' | 'form_fill' | 'custom'
+      task_status: 'pending' | 'in_progress' | 'completed' | 'overdue'
+      request_status: 'open' | 'in_review' | 'approved' | 'rejected' | 'closed'
+      match_type: 'keyword' | 'ai'
+      sso_provider_type: 'saml' | 'oidc' | 'frappe_sso'
+      job_visibility: 'internal' | 'external' | 'both'
     }
     CompositeTypes: {
       [_ in never]: never
@@ -611,6 +1025,34 @@ export type FeatureFlagOverride = Database['public']['Tables']['feature_flag_ove
 export type FeatureFlagOverrideInsert = Database['public']['Tables']['feature_flag_overrides']['Insert']
 export type FeatureFlagOverrideUpdate = Database['public']['Tables']['feature_flag_overrides']['Update']
 
+export type FrappeEnvironment = Database['public']['Tables']['frappe_environments']['Row']
+export type FrappeEnvironmentInsert = Database['public']['Tables']['frappe_environments']['Insert']
+export type FrappeEnvironmentUpdate = Database['public']['Tables']['frappe_environments']['Update']
+
+export type OnboardingData = Database['public']['Tables']['onboarding_data']['Row']
+export type OnboardingDataInsert = Database['public']['Tables']['onboarding_data']['Insert']
+export type OnboardingDataUpdate = Database['public']['Tables']['onboarding_data']['Update']
+
+export type JobMatchResult = Database['public']['Tables']['job_match_results']['Row']
+export type JobMatchResultInsert = Database['public']['Tables']['job_match_results']['Insert']
+export type JobMatchResultUpdate = Database['public']['Tables']['job_match_results']['Update']
+
+export type ActionCenterTask = Database['public']['Tables']['action_center_tasks']['Row']
+export type ActionCenterTaskInsert = Database['public']['Tables']['action_center_tasks']['Insert']
+export type ActionCenterTaskUpdate = Database['public']['Tables']['action_center_tasks']['Update']
+
+export type ActionCenterRequest = Database['public']['Tables']['action_center_requests']['Row']
+export type ActionCenterRequestInsert = Database['public']['Tables']['action_center_requests']['Insert']
+export type ActionCenterRequestUpdate = Database['public']['Tables']['action_center_requests']['Update']
+
+export type SSOProvider = Database['public']['Tables']['sso_providers']['Row']
+export type SSOProviderInsert = Database['public']['Tables']['sso_providers']['Insert']
+export type SSOProviderUpdate = Database['public']['Tables']['sso_providers']['Update']
+
+export type CompanyDomain = Database['public']['Tables']['company_domains']['Row']
+export type CompanyDomainInsert = Database['public']['Tables']['company_domains']['Insert']
+export type CompanyDomainUpdate = Database['public']['Tables']['company_domains']['Update']
+
 // Enum types
 export type JobType = Database['public']['Enums']['job_type']
 export type ExperienceLevel = Database['public']['Enums']['experience_level']
@@ -618,3 +1060,12 @@ export type ApplicationStatus = Database['public']['Enums']['application_status'
 export type NotificationType = Database['public']['Enums']['notification_type']
 export type DocumentType = Database['public']['Enums']['document_type']
 export type FeatureFlagValueType = 'boolean' | 'string' | 'number' | 'json'
+export type EnvironmentKey = Database['public']['Enums']['environment_key']
+export type LifecycleStage = Database['public']['Enums']['lifecycle_stage']
+export type OnboardingStatus = Database['public']['Enums']['onboarding_status']
+export type TaskType = Database['public']['Enums']['task_type']
+export type TaskStatus = Database['public']['Enums']['task_status']
+export type RequestStatus = Database['public']['Enums']['request_status']
+export type MatchType = Database['public']['Enums']['match_type']
+export type SSOProviderType = Database['public']['Enums']['sso_provider_type']
+export type JobVisibility = Database['public']['Enums']['job_visibility']

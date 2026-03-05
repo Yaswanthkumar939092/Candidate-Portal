@@ -43,9 +43,9 @@ interface UserFilters {
 
 export default function AdminUsersPage() {
   const router = useRouter()
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [users, setUsers] = useState([])
+  const [users, setUsers] = useState<any[]>([])
   const [userStats, setUserStats] = useState({
     total: 0,
     active: 0,
@@ -455,8 +455,9 @@ export default function AdminUsersPage() {
             {/* Users Table */}
             <UserManagementTable
               users={users}
-              onSelectionChange={handleUserSelection}
-              onUserUpdate={loadUsers}
+              onRoleChange={(userId: string, newRole: 'candidate' | 'admin' | 'super_admin') => { console.log('Role change', userId, newRole); loadUsers(); }}
+              onActivateUser={(userId: string) => { console.log('Activate', userId); loadUsers(); }}
+              onDeactivateUser={(userId: string) => { console.log('Deactivate', userId); loadUsers(); }}
             />
           </div>
         </div>

@@ -1,14 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { z } from 'zod'
-
-// Frappe API configuration
-const FRAPPE_CONFIG = {
-  baseUrl: process.env.FRAPPE_BASE_URL || 'https://your-frappe-instance.com',
-  apiKey: process.env.FRAPPE_API_KEY || '',
-  apiSecret: process.env.FRAPPE_API_SECRET || '',
-  username: process.env.FRAPPE_USERNAME || '',
-  password: process.env.FRAPPE_PASSWORD || '',
-}
+import { FrappeEnvironmentManager, FrappeClient, frappeEnvManager } from '@/lib/services/frappe-env'
 
 // Sync configuration schemas
 const syncOptionsSchema = z.object({
@@ -17,7 +9,7 @@ const syncOptionsSchema = z.object({
   force: z.boolean().default(false),
   dateFrom: z.string().datetime().optional(),
   dateTo: z.string().datetime().optional(),
-  filters: z.record(z.any()).optional(),
+  filters: z.record(z.string(), z.any()).optional(),
 })
 
 // Frappe entity schemas
@@ -87,92 +79,24 @@ interface SyncProgress {
 
 class FrappeSyncService {
   private readonly supabase = supabaseAdmin
-  private authToken?: string
-  private authExpiry?: Date
+  private envManager: FrappeEnvironmentManager
 
-  /**
-   * Authenticate with Frappe
-   */
-  private async authenticate(): Promise<boolean> {
-    try {
-      // Check if we have a valid token
-      if (this.authToken && this.authExpiry && new Date() < this.authExpiry) {
-        return true
-      }
-
-      const response = await fetch(`${FRAPPE_CONFIG.baseUrl}/api/method/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          usr: FRAPPE_CONFIG.username,
-          pwd: FRAPPE_CONFIG.password,
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error(`Authentication failed: ${response.statusText}`)
-      }
-
-      // Extract cookies for session-based auth
-      const cookies = response.headers.get('set-cookie')
-      if (cookies) {
-        this.authToken = cookies
-        this.authExpiry = new Date(Date.now() + 8 * 60 * 60 * 1000) // 8 hours
-        return true
-      }
-
-      return false
-
-    } catch (error) {
-      console.error('Frappe authentication error:', error)
-      return false
-    }
+  constructor(envManager?: FrappeEnvironmentManager) {
+    this.envManager = envManager || frappeEnvManager
   }
 
-  /**
-   * Make authenticated API request to Frappe
-   */
+  private async getClient(): Promise<FrappeClient> {
+    return this.envManager.getClient()
+  }
+
   private async frappeRequest(
     endpoint: string,
-    options: RequestInit = {}
+    _options: RequestInit = {}
   ): Promise<{ success: boolean; data?: any; error?: string }> {
     try {
-      // Ensure we're authenticated
-      const isAuthenticated = await this.authenticate()
-      if (!isAuthenticated) {
-        return { success: false, error: 'Authentication failed' }
-      }
-
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      }
-
-      // Add auth headers
-      if (FRAPPE_CONFIG.apiKey && FRAPPE_CONFIG.apiSecret) {
-        headers['Authorization'] = `token ${FRAPPE_CONFIG.apiKey}:${FRAPPE_CONFIG.apiSecret}`
-      } else if (this.authToken) {
-        headers['Cookie'] = this.authToken
-      }
-
-      const response = await fetch(`${FRAPPE_CONFIG.baseUrl}${endpoint}`, {
-        ...options,
-        headers,
-      })
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        return {
-          success: false,
-          error: `HTTP ${response.status}: ${errorText}`
-        }
-      }
-
-      const data = await response.json()
+      const client = await this.getClient()
+      const data = await client.request(endpoint)
       return { success: true, data }
-
     } catch (error) {
       console.error('Frappe API request error:', error)
       return {
@@ -272,14 +196,15 @@ class FrappeSyncService {
         salary_min: frappeJob.min_salary,
         salary_max: frappeJob.max_salary,
         location: frappeJob.location,
-        job_type: this.mapEmploymentType(frappeJob.employment_type),
-        experience_level: this.mapExperienceLevel(frappeJob.experience_level),
+        job_type: this.mapEmploymentType(frappeJob.employment_type) as 'full-time' | 'part-time' | 'contract' | 'freelance' | 'internship',
+        experience_level: this.mapExperienceLevel(frappeJob.experience_level) as 'entry' | 'junior' | 'mid' | 'senior' | 'lead',
         skills_required: frappeJob.skills_required || [],
         application_deadline: frappeJob.application_deadline,
         is_active: frappeJob.status === 'Open',
         frappe_created_at: frappeJob.creation,
         frappe_updated_at: frappeJob.modified,
         synced_at: new Date().toISOString(),
+        posted_by: 'system', // Synced jobs are attributed to system
       }
 
       if (existingJob) {
@@ -429,7 +354,7 @@ class FrappeSyncService {
         frappe_application_id: frappeApp.name,
         job_id: job.id,
         candidate_id: candidate.id,
-        status: this.mapApplicationStatus(frappeApp.status),
+        status: this.mapApplicationStatus(frappeApp.status) as 'pending' | 'reviewing' | 'interviewing' | 'offered' | 'rejected' | 'withdrawn',
         cover_letter: frappeApp.cover_letter,
         resume_url: frappeApp.resume_attachment,
         notes: frappeApp.notes,
@@ -653,16 +578,9 @@ class FrappeSyncService {
    */
   async testConnection(): Promise<{ success: boolean; error?: string }> {
     try {
-      const isAuthenticated = await this.authenticate()
-      if (!isAuthenticated) {
-        return { success: false, error: 'Authentication failed' }
-      }
-
-      // Test API call
-      const { success, error } = await this.frappeRequest('/api/method/frappe.ping')
-
-      return { success, error }
-
+      const client = await this.getClient()
+      const success = await client.ping()
+      return { success, error: success ? undefined : 'Ping failed' }
     } catch (error) {
       return {
         success: false,
@@ -706,8 +624,11 @@ class FrappeSyncService {
   }
 }
 
-// Export singleton instance
+// Export singleton instance (uses default frappeEnvManager)
 export const frappeSyncService = new FrappeSyncService()
+
+// Export class for testing with custom envManager
+export { FrappeSyncService }
 
 // Export types
 export type { SyncResult, SyncProgress }

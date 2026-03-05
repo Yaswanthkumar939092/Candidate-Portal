@@ -91,7 +91,7 @@ export function OAuthConfig({ onNext, initialData }: OAuthConfigProps) {
   }
 
   const handleSkip = () => {
-    onNext()
+    onNext(undefined)
   }
 
   const isFormValid = () => {

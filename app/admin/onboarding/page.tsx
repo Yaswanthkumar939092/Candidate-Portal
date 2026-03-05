@@ -8,12 +8,12 @@ import { Card, CardContent } from '@/components/ui/card'
 
 interface User {
   id: string
-  email: string
+  email?: string
 }
 
 interface UserProfile {
   id: string
-  full_name?: string
+  full_name?: string | null
   email: string
   role?: string
 }

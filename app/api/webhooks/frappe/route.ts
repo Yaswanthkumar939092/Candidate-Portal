@@ -151,7 +151,7 @@ async function handleJobWebhook(payload: unknown) {
 
   } catch (error) {
     if (error instanceof z.ZodError) {
-      console.error('Job webhook validation error:', error.errors)
+      console.error('Job webhook validation error:', error.issues)
       return errorResponse('Invalid job webhook payload', 400)
     }
     throw error
@@ -175,7 +175,7 @@ async function handleApplicationWebhook(payload: unknown) {
 
   } catch (error) {
     if (error instanceof z.ZodError) {
-      console.error('Application webhook validation error:', error.errors)
+      console.error('Application webhook validation error:', error.issues)
       return errorResponse('Invalid application webhook payload', 400)
     }
     throw error
@@ -199,7 +199,7 @@ async function handleCompanyWebhook(payload: unknown) {
 
   } catch (error) {
     if (error instanceof z.ZodError) {
-      console.error('Company webhook validation error:', error.errors)
+      console.error('Company webhook validation error:', error.issues)
       return errorResponse('Invalid company webhook payload', 400)
     }
     throw error
@@ -227,6 +227,7 @@ async function upsertJob(jobData: z.infer<typeof jobWebhookSchema>['data'], even
       frappe_created_at: jobData.created_at,
       frappe_updated_at: jobData.updated_at,
       synced_at: new Date().toISOString(),
+      posted_by: 'system', // Webhook-synced jobs are attributed to system
     }
 
     // Check if job already exists
