@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, EyeOff, CheckCircle2, ArrowRight } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
-import { FaGithub } from "react-icons/fa";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -51,7 +50,7 @@ export function AuthForm({ type, onSubmit, isLoading = false }: AuthFormProps) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-white">
+    <div className="w-full max-w-[1240px] mx-auto flex flex-col md:flex-row bg-white md:rounded-[24px] md:shadow-2xl overflow-hidden min-h-screen md:min-h-[820px]">
       {/* Left Pane - 45% */}
       <div
         className="hidden md:flex flex-col w-[50%] relative"
@@ -299,11 +298,8 @@ export function AuthForm({ type, onSubmit, isLoading = false }: AuthFormProps) {
           </div>
 
           <div className="mt-6 gap-4 flex w-full">
-            <Button variant="outline" type="button" className="flex-1 h-11 border-[#E2E8F0] text-[#475569] font-medium hover:bg-gray-50 bg-white">
-              <FcGoogle className="size-6" />Google
-            </Button>
-            <Button variant="outline" type="button" className="flex-1 h-11 border-[#E2E8F0] text-[#475569] font-medium hover:bg-gray-50 bg-white">
-              <FaGithub className="size-6" /> GitHub
+            <Button variant="outline" type="button" className="flex-1 h-11 border-[#E2E8F0] text-[#475569] font-medium hover:bg-gray-50 bg-white gap-2">
+              <FcGoogle className="size-5" /> Continue with Google
             </Button>
           </div>
 
