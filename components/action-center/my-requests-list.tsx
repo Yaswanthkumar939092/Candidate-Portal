@@ -2,11 +2,12 @@
 
 import {
   Calendar,
-  ChevronRight,
+  ArrowRight,
   FileText,
   CalendarClock,
+  Clock,
 } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 
@@ -15,6 +16,7 @@ export interface Request {
   title: string
   category: string
   status: "pending_approval" | "approved" | "rejected" | "in_review"
+  requestType?: string
   responseDate?: string
   submittedDate?: string
   icon?: string
@@ -23,28 +25,39 @@ export interface Request {
 
 const STATUS_STYLES: Record<
   string,
-  { label: string; className: string }
+  { label: string; badgeClass: string; iconBgColor: string; icon: React.ElementType }
 > = {
   pending_approval: {
     label: "Pending Approval",
-    className:
-      "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+    badgeClass: "bg-[#FFFAEB] text-[#B54708] hover:bg-[#FFFAEB] dark:bg-orange-900/30 dark:text-orange-400 border border-[#FEDF89] font-medium text-[12px] px-2.5 py-0.5 rounded-full shadow-none",
+    iconBgColor: "bg-[#F79009]",
+    icon: CalendarClock,
   },
   approved: {
     label: "Approved",
-    className:
-      "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+    badgeClass: "bg-[#ECFDF3] text-[#027A48] hover:bg-[#ECFDF3] dark:bg-green-900/30 dark:text-green-400 border border-[#A6F4C5] font-medium text-[12px] px-2.5 py-0.5 rounded-full shadow-none",
+    iconBgColor: "bg-[#12B76A]",
+    icon: CalendarClock,
   },
   rejected: {
     label: "Rejected",
-    className:
-      "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+    badgeClass: "bg-red-50 text-[#B42318] hover:bg-red-50 dark:bg-red-900/30 dark:text-red-400 border border-[#FECDCA] font-medium text-[12px] px-2.5 py-0.5 rounded-full shadow-none",
+    iconBgColor: "bg-[#F04438]",
+    icon: CalendarClock,
   },
   in_review: {
     label: "In Review",
-    className:
-      "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+    badgeClass: "bg-[#EFF8FF] text-[#175CD3] hover:bg-[#EFF8FF] dark:bg-blue-900/30 dark:text-blue-400 border border-[#B2DDFF] font-medium text-[12px] px-2.5 py-0.5 rounded-full shadow-none",
+    iconBgColor: "bg-[#12B76A]",
+    icon: CalendarClock,
   },
+}
+
+const ICON_MAP: Record<string, React.ElementType> = {
+  FileText: FileText,
+  CalendarClock: CalendarClock,
+  Calendar: Calendar,
+  Clock: Clock,
 }
 
 interface MyRequestsListProps {
@@ -53,13 +66,6 @@ interface MyRequestsListProps {
   className?: string
 }
 
-/**
- * Displays a list of user-submitted requests with icon circles,
- * status badges, response dates, and "View Status" action links.
- *
- * @param requests - Array of request objects to display
- * @param filter - Optional filter string to filter by status
- */
 export function MyRequestsList({
   requests,
   filter,
@@ -69,16 +75,16 @@ export function MyRequestsList({
   const filteredRequests =
     filter && filter !== "all"
       ? requests.filter((req) => {
-          if (filter === "pending") return req.status === "pending_approval" || req.status === "in_review"
-          if (filter === "accepted") return req.status === "approved"
-          return true
-        })
+        if (filter === "pending") return req.status === "pending_approval" || req.status === "in_review"
+        if (filter === "accepted") return req.status === "approved" || req.status === "rejected"
+        return true
+      })
       : requests
 
   if (filteredRequests.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed p-12 text-center">
-        <p className="text-sm text-muted-foreground">
+      <div className="mt-6 rounded-2xl border border-dashed border-slate-200 p-12 text-center dark:border-slate-800">
+        <p className="text-sm text-slate-500 dark:text-gray-400">
           No requests found for the selected filter.
         </p>
       </div>
@@ -97,60 +103,65 @@ export function MyRequestsList({
   )
 
   return (
-    <div className={cn("space-y-6", className)}>
+    <div className={cn("space-y-6 mt-6", className)}>
       {Object.entries(grouped).map(([category, categoryRequests]) => (
-        <div key={category} className="space-y-3">
-          <h3 className="text-sm font-semibold text-foreground">{category}</h3>
-          <div className="space-y-2">
-            {categoryRequests.map((req) => {
-              const statusConfig =
-                STATUS_STYLES[req.status] ?? STATUS_STYLES.pending_approval
+        <Card key={category} className="rounded-2xl border-slate-200 shadow-sm overflow-hidden dark:border-slate-800 bg-white dark:bg-slate-950 p-0 gap-0">
+          <CardHeader className="px-6 pt-6 pb-0 border-none">
+            <CardTitle className="text-lg font-bold text-slate-900 tracking-tight dark:text-gray-100 font-sans">
+              {category}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+              {categoryRequests.map((req) => {
+                const statusConfig = STATUS_STYLES[req.status] ?? STATUS_STYLES.pending_approval
+                const StatusIcon = req.icon && ICON_MAP[req.icon] ? ICON_MAP[req.icon] : statusConfig.icon
+                const bgClass = req.iconColor || statusConfig.iconBgColor
 
-              return (
-                <Card key={req.id} className="shadow-sm">
-                  <CardContent className="flex items-center gap-3 py-3">
-                    {/* Icon circle */}
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange-100 text-orange-600">
-                      <CalendarClock className="h-4 w-4" />
-                    </div>
-
-                    {/* Request info */}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <h4 className="truncate text-sm font-medium text-foreground">
-                          {req.title}
-                        </h4>
-                        <Badge
-                          variant="secondary"
-                          className={cn(
-                            "shrink-0 border-transparent text-[10px]",
-                            statusConfig.className
-                          )}
-                        >
+                return (
+                  <Card key={req.id} className="flex flex-col rounded-2xl border border-slate-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950 transition-shadow hover:shadow-md p-0 gap-0 py-0 w-full md:max-w-[570px]">
+                    <CardContent className="p-5 pb-0">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-start gap-4 min-w-0">
+                          <div className={cn("flex size-10 shrink-0 items-center justify-center text-white rounded-[12px]", bgClass)}>
+                            <StatusIcon className="size-6" strokeWidth={2.5} />
+                          </div>
+                          <div className="flex flex-col pt-0.5 min-w-0">
+                            <h4 className="font-bold text-base text-slate-900 dark:text-gray-100 leading-tight truncate">{req.title}</h4>
+                            <span className="text-xs text-[#667085] mt-1.5 font-medium dark:text-gray-400 leading-none truncate">
+                              Request Type: {req.requestType || "General"}
+                            </span>
+                            <div className="mt-3.5 flex items-center gap-1.5 text-xs font-medium text-[#475467] whitespace-nowrap dark:text-gray-400 overflow-hidden text-ellipsis">
+                              <Calendar className="h-3.5 w-3.5 shrink-0" />
+                              <span className="truncate">
+                                {req.responseDate
+                                  ? `Response on ${req.responseDate}`
+                                  : req.submittedDate
+                                    ? `Requested on ${req.submittedDate}`
+                                    : "No date available"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <Badge variant="secondary" className={cn("shrink-0", statusConfig.badgeClass)}>
                           {statusConfig.label}
                         </Badge>
                       </div>
-                      <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-                        <Calendar className="h-3 w-3" />
-                        {req.responseDate
-                          ? `Response on ${req.responseDate}`
-                          : req.submittedDate
-                            ? `Submitted on ${req.submittedDate}`
-                            : "No date available"}
-                      </div>
-                    </div>
+                    </CardContent>
 
-                    {/* Action link */}
-                    <button className="inline-flex shrink-0 items-center gap-0.5 text-xs font-medium text-primary hover:underline">
-                      View Status
-                      <ChevronRight className="h-3.5 w-3.5" />
-                    </button>
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
-        </div>
+                    <div className="mx-5 my-[18px] h-[1px] bg-slate-100 dark:bg-slate-800" />
+
+                    <CardFooter className="px-5 pb-5 pt-0 justify-end">
+                      <button className="inline-flex items-center gap-1.5 text-[14px] font-bold text-[#2E90FA] hover:text-[#2E90FA]/80 transition-colors">
+                        View Status <ArrowRight className="h-3.5 w-3.5 mt-[1px]" />
+                      </button>
+                    </CardFooter>
+                  </Card>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
       ))}
     </div>
   )

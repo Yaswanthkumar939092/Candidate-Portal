@@ -33,7 +33,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f9f9f9]">
+    <div className="min-h-screen bg-[#f9f9f9] flex flex-col items-center justify-center p-0 md:p-8">
       {error && (
         <div className="p-4">
           <Alert className="border-red-200 bg-red-50 max-w-md mx-auto">
