@@ -156,7 +156,7 @@ export function RaiseRequestDialog({
           <div className="space-y-[8px]">
             <Label className="text-[14px] font-medium text-[#344054] dark:text-slate-300">Attachments</Label>
             <div
-              className="flex cursor-pointer flex-col items-center gap-[12px] rounded-lg border border-slate-200 dark:border-slate-800 bg-white hover:bg-slate-50 dark:bg-slate-950 px-6 py-8 text-center transition-colors shadow-xs"
+              className="flex cursor-pointer flex-col items-center gap-[12px] rounded-lg border-dashed border-2 border-slate-200 dark:border-slate-800 bg-white hover:bg-slate-50 dark:bg-slate-950 px-6 py-8 text-center transition-colors shadow-xs"
               onClick={handleFileSelect}
             >
               <div className="flex size-[42px] items-center justify-center rounded-full bg-[#F2F4F7] dark:bg-slate-800 border-[6px] box-content border-[#F9FAFB] dark:border-slate-900 mt-1">
