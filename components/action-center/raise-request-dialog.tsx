@@ -3,12 +3,12 @@
 import { useState, useCallback } from "react"
 import { Plus, Upload, Loader2 } from "lucide-react"
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet"
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -31,12 +31,12 @@ interface RaiseRequestDialogProps {
 }
 
 /**
- * Right-side sheet/panel form for submitting a new request.
+ * Centered dialog modal for submitting a new request.
  * Contains a Request Type dropdown, Description textarea, file upload,
  * and Cancel/Submit buttons.
  *
- * @param open - Whether the sheet is open
- * @param onOpenChange - Callback to toggle sheet visibility
+ * @param open - Whether the dialog is open
+ * @param onOpenChange - Callback to toggle visibility
  * @param onSubmit - Callback with form data when submitted
  */
 export function RaiseRequestDialog({
@@ -99,29 +99,29 @@ export function RaiseRequestDialog({
   }
 
   return (
-    <Sheet
+    <Dialog
       open={open}
       onOpenChange={(val) => {
         onOpenChange(val)
         if (!val) resetForm()
       }}
     >
-      <SheetContent side="right" className="w-[400px] sm:max-w-[400px]">
-        <SheetHeader>
-          <SheetTitle>Raise a Request</SheetTitle>
-          <SheetDescription className="sr-only">
-            Submit a new request to your admin team
-          </SheetDescription>
-        </SheetHeader>
+      <DialogContent className="sm:max-w-[480px] p-6 rounded-xl border border-slate-200 shadow-xl overflow-y-auto max-h-[90vh]">
+        <DialogHeader className="mb-2">
+          <DialogTitle className="text-[18px] font-bold text-slate-900 dark:text-gray-100 font-sans">Raise a Request</DialogTitle>
+          <DialogDescription className="text-[14px] font-normal text-[#475467] dark:text-slate-400 mt-1.5 leading-snug">
+            Submit a new request to the HR team.
+          </DialogDescription>
+        </DialogHeader>
 
-        <div className="mt-6 space-y-5">
+        <div className="space-y-[22px]">
           {/* Request Type */}
-          <div className="space-y-2">
-            <Label htmlFor="req-type">
-              Request Type <span className="text-destructive">*</span>
+          <div className="space-y-[8px]">
+            <Label htmlFor="req-type" className="text-[14px] font-medium text-[#344054] dark:text-slate-300">
+              Request Type <span className="text-[#F04438]">*</span>
             </Label>
             <Select value={requestType} onValueChange={setRequestType}>
-              <SelectTrigger id="req-type" className="w-full">
+              <SelectTrigger id="req-type" className="w-full text-slate-600 outline-none rounded-lg h-11 border-slate-200 dark:border-slate-800 focus:ring-4 focus:ring-slate-100 shadow-xs px-3.5">
                 <SelectValue placeholder="Select request type" />
               </SelectTrigger>
               <SelectContent>
@@ -138,53 +138,55 @@ export function RaiseRequestDialog({
           </div>
 
           {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="req-description">
-              Description <span className="text-destructive">*</span>
+          <div className="space-y-[8px]">
+            <Label htmlFor="req-description" className="text-[14px] font-medium text-[#344054] dark:text-slate-300">
+              Description <span className="text-[#F04438]">*</span>
             </Label>
             <Textarea
               id="req-description"
-              placeholder="Describe your request in detail..."
-              rows={5}
+              placeholder="Please describe your request in detail..."
+              rows={10}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              className="resize-none rounded-lg border border-slate-200 dark:border-slate-800 outline-none p-3.5 text-sm placeholder:text-slate- focus:ring-4 focus:ring-slate-100 shadow-xs"
             />
           </div>
 
           {/* Attachments */}
-          <div className="space-y-2">
-            <Label>Attachments</Label>
+          <div className="space-y-[8px]">
+            <Label className="text-[14px] font-medium text-[#344054] dark:text-slate-300">Attachments</Label>
             <div
-              className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-muted-foreground/25 px-4 py-6 text-center transition-colors hover:border-primary/50"
+              className="flex cursor-pointer flex-col items-center gap-[12px] rounded-lg border-dashed border-2 border-slate-200 dark:border-slate-800 bg-white hover:bg-slate-50 dark:bg-slate-950 px-6 py-8 text-center transition-colors shadow-xs"
               onClick={handleFileSelect}
             >
-              <Upload className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-xs text-muted-foreground">
-                  Click to{" "}
-                  <span className="font-medium text-primary">upload</span> or
-                  drag and drop
+              <div className="flex size-[42px] items-center justify-center rounded-full bg-[#F2F4F7] dark:bg-slate-800 border-[6px] box-content border-[#F9FAFB] dark:border-slate-900 mt-1">
+                <Upload className="h-[18px] w-[18px] text-[#475467] dark:text-slate-400" strokeWidth={2.5} />
+              </div>
+              <div className="mb-1 space-y-1">
+                <p className="text-[14px] text-[#101828] dark:text-slate-300 font-medium tracking-normal">
+                  <span className="font-medium text-[#2E90FA] hover:text-[#1849A9] transition-colors">Click to upload</span> or drag and drop
                 </p>
-                <p className="mt-0.5 text-[10px] text-muted-foreground">
-                  jpg, jpeg, pdf or file max 3MB
+                <p className="text-xs text-[#667085] dark:text-slate-400 font-medium">
+                  SVG, PNG, JPG or PDF (max. 5MB)
                 </p>
               </div>
             </div>
             {attachments.length > 0 && (
-              <div className="space-y-1">
+              <div className="space-y-1 mt-3">
                 {attachments.map((file, i) => (
                   <div
                     key={i}
-                    className="flex items-center justify-between rounded-md bg-muted px-3 py-1.5 text-xs"
+                    className="flex items-center justify-between rounded-md bg-slate-50 border border-slate-200 px-3 py-2 text-sm"
                   >
-                    <span className="truncate">{file.name}</span>
+                    <span className="truncate text-slate-700 font-medium">{file.name}</span>
                     <button
-                      className="shrink-0 text-muted-foreground hover:text-destructive"
-                      onClick={() =>
+                      className="shrink-0 text-slate-400 hover:text-red-500 font-medium text-xs ml-4"
+                      onClick={(e) => {
+                        e.stopPropagation()
                         setAttachments((prev) =>
                           prev.filter((_, idx) => idx !== i)
                         )
-                      }
+                      }}
                     >
                       Remove
                     </button>
@@ -194,13 +196,14 @@ export function RaiseRequestDialog({
             )}
           </div>
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <p className="text-[13px] text-red-500 font-medium">{error}</p>}
 
           {/* Actions */}
-          <div className="flex items-center gap-3 pt-2">
+          <hr className="border-slate-200 dark:border-slate-800 -mx-6 hidden" />
+          <div className="flex flex-col-reverse sm:flex-row items-center gap-3 pt-[2px] justify-between sm:justify-end">
             <Button
               variant="outline"
-              className="flex-1"
+              className="w-full sm:w-auto px-[18px] py-2.5 h-11 rounded-lg font-bold text-[#344054] hover:bg-slate-50 border border-slate-200 shadow-xs text-[14px]"
               onClick={() => {
                 resetForm()
                 onOpenChange(false)
@@ -209,14 +212,14 @@ export function RaiseRequestDialog({
               Cancel
             </Button>
             <Button
-              className="flex-1"
+              className="w-full sm:w-auto px-[18px] py-2.5 h-11 rounded-lg font-bold bg-[#101828] hover:bg-[#101828]/90 text-white shadow-xs text-[14px]"
               onClick={handleSubmit}
               disabled={isSubmitting}
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Submitting...
+                  <Loader2 className="mr-[8px] h-4 w-4 animate-spin" />
+                  Submitting
                 </>
               ) : (
                 "Submit Request"
@@ -224,7 +227,7 @@ export function RaiseRequestDialog({
             </Button>
           </div>
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   )
 }

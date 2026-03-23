@@ -35,7 +35,7 @@ export function InfoCard({
 }: InfoCardProps) {
   return (
     <Card className={cn("relative shadow-sm", className)}>
-      <CardContent className="space-y-3 py-5">
+      <CardContent className="space-y-3 py-3">
         {/* Top row: icon + tag */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">

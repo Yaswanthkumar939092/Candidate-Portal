@@ -1,9 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { Info, Plus, X } from "lucide-react"
+import { Info, Lightbulb, Plus, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+
 import {
   AssignedTasksList,
   type Task,
@@ -29,28 +29,36 @@ const MOCK_TASKS: Task[] = [
     title: "Offer Letter Released",
     category: "Recruitment",
     status: "completed",
-    completedDate: "04 Feb 2025",
+    completedDate: "04-09-2025",
+    icon: "FileText",
+    iconColor: "bg-[#12B76A]",
   },
   {
     id: "t3",
     title: "Pre-Offer Submission",
     category: "Recruitment",
     status: "approved",
-    completedDate: "04 Feb 2025",
+    completedDate: "03-09-2025",
+    icon: "Check",
+    iconColor: "bg-[#12B76A]",
   },
   {
     id: "t4",
     title: "Onboarding Journey",
     category: "Onboarding",
     status: "completed",
-    completedDate: "10 Feb 2025",
+    completedDate: "10-09-2025",
+    icon: "Clock",
+    iconColor: "bg-[#7A5AF8]",
   },
   {
     id: "t5",
     title: "Gratuity Form",
     category: "Onboarding",
     status: "completed",
-    completedDate: "12 Feb 2025",
+    completedDate: "09-09-2025",
+    icon: "FileText",
+    iconColor: "bg-[#2E90FA]",
   },
 ]
 
@@ -61,7 +69,10 @@ const MOCK_REQUESTS: Request[] = [
     title: "Extension of Joining Date",
     category: "Request",
     status: "pending_approval",
-    responseDate: "15 May 2025",
+    requestType: "Date Change",
+    submittedDate: "12-Sep-2025",
+    icon: "Clock",
+    iconColor: "bg-[#F79009]",
   },
 ]
 
@@ -110,52 +121,22 @@ export default function ActionCenterPage() {
       {/* Page header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Action Center</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Manage your tasks, tasks and requests efficiently.
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight dark:text-gray-100">Action Center</h1>
+          <p className="mt-1 text-base text-[#6A7282] dark:text-gray-400">
+            Manage your tasks and requests efficiently.
           </p>
         </div>
-        <Button
-          size="sm"
-          className="gap-1.5"
-          onClick={() => setRequestDialogOpen(true)}
-        >
-          <Plus className="h-4 w-4" />
-          Raise Request
-        </Button>
-      </div>
 
-      {/* Info banner */}
-      {infoBannerVisible && (
-        <div className="relative flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
-          <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" />
-          <div className="flex-1">
-            <p className="text-sm font-medium text-blue-800 dark:text-blue-300">
-              Did you know?
-            </p>
-            <p className="text-xs text-blue-700 dark:text-blue-400">
-              Take quick or give offer submissions and offer acceptance can be
-              completed directly from this dashboard.
-            </p>
-          </div>
-          <button
-            onClick={() => setInfoBannerVisible(false)}
-            className="shrink-0 text-blue-500 hover:text-blue-700"
-            aria-label="Dismiss"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-      )}
+      </div>
 
       {/* Tab bar */}
       <div className="flex items-center gap-6 border-b border-border">
         <button
           className={cn(
-            "relative pb-2.5 text-sm font-medium transition-colors",
+            "relative pb-3 text-sm font-medium transition-colors",
             activeTab === "tasks"
-              ? "text-foreground"
-              : "text-muted-foreground hover:text-foreground"
+              ? "text-[#101828] dark:text-gray-100"
+              : "text-[#6A7282] hover:text-[#101828] dark:text-gray-400 dark:hover:text-gray-200"
           )}
           onClick={() => {
             setActiveTab("tasks")
@@ -164,15 +145,15 @@ export default function ActionCenterPage() {
         >
           Assigned Tasks
           {activeTab === "tasks" && (
-            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground" />
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900 dark:bg-gray-100" />
           )}
         </button>
         <button
           className={cn(
-            "relative pb-2.5 text-sm font-medium transition-colors",
+            "relative pb-3 text-sm font-medium transition-colors",
             activeTab === "requests"
-              ? "text-foreground"
-              : "text-muted-foreground hover:text-foreground"
+              ? "text-slate-900 dark:text-gray-100"
+              : "text-slate-500 hover:text-slate-900 dark:text-gray-400 dark:hover:text-gray-200"
           )}
           onClick={() => {
             setActiveTab("requests")
@@ -181,72 +162,72 @@ export default function ActionCenterPage() {
         >
           My Requests
           {activeTab === "requests" && (
-            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground" />
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900 dark:bg-gray-100" />
           )}
         </button>
       </div>
 
-      {/* Filter pills */}
-      <div className="flex items-center gap-2">
-        <button
-          className={cn(
-            "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-            filter === "pending"
-              ? "border-primary bg-primary/10 text-primary"
-              : "border-border text-muted-foreground hover:text-foreground"
-          )}
-          onClick={() => setFilter("pending")}
-        >
-          Pending
-          {currentPendingCount > 0 && (
-            <Badge
-              variant="secondary"
-              className={cn(
-                "h-4 px-1 text-[10px]",
-                filter === "pending"
-                  ? "bg-primary/20 text-primary"
-                  : "bg-muted"
-              )}
-            >
-              {currentPendingCount}
-            </Badge>
-          )}
-        </button>
-        <button
-          className={cn(
-            "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-            filter === "accepted"
-              ? "border-primary bg-primary/10 text-primary"
-              : "border-border text-muted-foreground hover:text-foreground"
-          )}
-          onClick={() => setFilter("accepted")}
-        >
-          Accepted
-          {currentAcceptedCount > 0 && (
-            <Badge
-              variant="secondary"
-              className={cn(
-                "h-4 px-1 text-[10px]",
-                filter === "accepted"
-                  ? "bg-primary/20 text-primary"
-                  : "bg-muted"
-              )}
-            >
-              {currentAcceptedCount}
-            </Badge>
-          )}
-        </button>
-        <button
-          className={cn(
-            "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-            filter === "all"
-              ? "border-primary bg-primary/10 text-primary"
-              : "border-border text-muted-foreground hover:text-foreground"
-          )}
-          onClick={() => setFilter("all")}
-        >
-          All
-        </button>
+      {/* Info banner */}
+      {infoBannerVisible && (
+        <div className="relative flex items-center gap-3 rounded-xl border border-blue-100 bg-[#F4FAFF] p-4 text-sm dark:border-blue-800 dark:bg-blue-900/20">
+          <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#2E90FA] self-start mt-0.5">
+            <Lightbulb className="size-4 text-white" strokeWidth={3} />
+          </div>
+          <div className="flex-1 flex flex-col gap-1">
+            <span className="font-bold text-[#101828] dark:text-gray-100">
+              Did you know?
+            </span>
+            <span className="text-[#344054] dark:text-gray-300 block sm:inline">
+              Tasks such as pre-offer submission and offer acceptance can be completed directly from this dashboard.
+            </span>
+          </div>
+          <button
+            onClick={() => setInfoBannerVisible(false)}
+            className="shrink-0 text-blue-400 hover:text-blue-600 transition-colors self-start mt-0.5"
+            aria-label="Dismiss"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
+
+
+      {/* Filter pills and Raise Request Button row */}
+      <div className="flex flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-1 rounded-xl bg-[#F2F4F7] p-1 w-fit border border-[#E5E7EB] dark:bg-slate-900 dark:border-slate-800">
+          <button
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-sm font-medium transition-all",
+              filter === "pending"
+                ? "bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-gray-100"
+                : "text-slate-500 hover:text-slate-900 dark:text-gray-400 dark:hover:text-gray-300"
+            )}
+            onClick={() => setFilter("pending")}
+          >
+            Pending ({currentPendingCount})
+          </button>
+          <button
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-sm font-medium transition-all",
+              filter === "accepted" // Interpreting "Archived" as "accepted" in code logic
+                ? "bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-gray-100"
+                : "text-slate-500 hover:text-slate-900 dark:text-gray-400 dark:hover:text-gray-300"
+            )}
+            onClick={() => setFilter("accepted")}
+          >
+            Archived ({currentAcceptedCount})
+          </button>
+        </div>
+        {activeTab === "requests" && (
+          <Button
+            onClick={() => setRequestDialogOpen(true)}
+            className="flex items-center justify-center gap-2 bg-[#0F172A] hover:bg-[#0F172A]/90 text-white rounded-lg px-3 sm:px-4 py-2 font-semibold shrink-0"
+          >
+            <Plus className="h-4 w-4 sm:mr-1 shrink-0" strokeWidth={3} />
+            <span className="hidden sm:inline whitespace-nowrap">Raise Request</span>
+          </Button>
+        )}
       </div>
 
       {/* Tab content */}

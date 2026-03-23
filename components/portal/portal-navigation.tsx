@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/contexts/auth-context";
@@ -16,6 +17,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 import {
   Home,
@@ -26,6 +34,7 @@ import {
   LogOut,
   User,
   Settings,
+  Menu,
 } from "lucide-react";
 
 /**
@@ -124,28 +133,85 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
       )}
     >
       <div className="container mx-auto flex h-full items-center justify-between px-4">
-        {/* Left side: PW Logo */}
-        <Link href="/dashboard" className="flex shrink-0 items-center gap-2">
-          <img src="/pw-logo.svg" alt="Physics Wallah" className="h-8" />
-        </Link>
+        {/* Left side: Mobile Menu + PW Logo */}
+        <div className="flex items-center gap-2 md:gap-4">
+          {/* Mobile Hamburger Menu */}
+          <div className="md:hidden">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="-ml-3 shrink-0">
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Toggle menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[80vw] sm:w-[350px]">
+                <SheetHeader>
+                  <SheetTitle className="text-left font-bold text-lg">Navigation</SheetTitle>
+                </SheetHeader>
+                <div className="flex flex-col gap-2 py-6">
+                  {navItems.map((item) => {
+                    const active = isActive(item.href);
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={cn(
+                          "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                          active
+                            ? "bg-foreground text-background"
+                            : "hover:bg-muted text-muted-foreground"
+                        )}
+                      >
+                        <item.icon className="h-5 w-5" />
+                        <span className="flex-1">{item.label}</span>
+                        {item.badgeCount && item.badgeCount > 0 && (
+                          <Badge
+                            className={cn(
+                              "flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-semibold border-none",
+                              active
+                                ? "bg-background/20 text-background"
+                                : "bg-orange-500 text-white"
+                            )}
+                          >
+                            {item.badgeCount}
+                          </Badge>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
 
-        {/* Center: Nav links with pill-style active states */}
-        <nav className="flex items-center gap-1">
+          {/* Desktop/Mobile PW Logo */}
+          <Link href="/dashboard" className="flex shrink-0 items-center gap-2">
+            <Image
+              src="/brand2.png"
+              alt="Physics Wallah"
+              width={32}
+              height={32}
+              priority
+              className="shrink-0"
+            />
+            <span className="text-[14px] sm:text-base font-extrabold text-black uppercase hidden sm:block">Physics Wallah</span>
+          </Link>
+        </div>
+
+        {/* Center: Nav links with pill-style active states (Hidden on Mobile) */}
+        <nav className="hidden md:flex items-center gap-1">
           {navItems.map((item) => {
             const active = isActive(item.href);
-            const isActionCenter = item.href === "/action-center";
 
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "relative flex items-center gap-2 text-sm font-medium transition-colors",
+                  "relative flex items-center gap-2 text-sm font-medium px-4 py-1.5 rounded-full transition-all duration-300 ease-in-out",
                   active
-                    ? isActionCenter
-                      ? "bg-emerald-500 text-white rounded-full px-4 py-1.5"
-                      : "bg-foreground text-background rounded-full px-4 py-1.5"
-                    : "text-muted-foreground hover:text-foreground px-4 py-1.5"
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                 )}
               >
                 <span>{item.label}</span>
@@ -153,10 +219,10 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
                 {item.badgeCount && item.badgeCount > 0 && (
                   <Badge
                     className={cn(
-                      "ml-0.5 h-5 min-w-5 rounded-full px-1.5 text-[10px] font-semibold border-none",
+                      "ml-0.5 flex items-center justify-center rounded-full px-1.5 py-1 text-[10px] font-semibold border-none",
                       active
                         ? "bg-white/20 text-white"
-                        : "bg-orange-500 text-white"
+                        : "bg-gray-200 text-gray-500"
                     )}
                   >
                     {item.badgeCount}
