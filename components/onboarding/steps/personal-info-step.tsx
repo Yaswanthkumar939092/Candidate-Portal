@@ -19,6 +19,9 @@ import {
 } from '@/components/ui/select'
 import { FileUploadField } from '@/components/onboarding/file-upload-field'
 import { cn } from '@/lib/utils'
+import { toast } from "sonner";
+import { Value } from '@radix-ui/react-select'
+import { useFileUpload } from '@/lib/hooks/useFileUpload'
 
 interface PersonalInfoStepProps {
   data?: Record<string, unknown>
@@ -58,6 +61,7 @@ export function PersonalInfoStep({ className }: PersonalInfoStepProps) {
       photo_url: '',
       family_members: [],
       ...existingData,
+      resume_url: '',
     },
   })
 
@@ -86,6 +90,29 @@ export function PersonalInfoStep({ className }: PersonalInfoStepProps) {
     await saveDraft().catch(() => {})
     nextStep()
   })
+
+  const uploadMutation = useFileUpload()
+  // Debug log to inspect the mutation object
+
+  const handleFileUpload = (
+    field: string
+  ) => (file: File | null) => {
+    if (!file) {
+      setValue(field, "")
+      return
+    }
+  
+    uploadMutation.mutate(file, {
+      onSuccess(data: { file_url: string }) {
+        setValue(field, data?.file_url, { shouldValidate: true })
+        toast.success("File uploaded successfully")
+      },
+      onError(err: Error) {
+        console.error(err)
+        toast.error("File upload failed")
+      },
+    })
+  }
 
   return (
     <form onSubmit={onNext} className={cn("space-y-8", className)}>
@@ -358,18 +385,18 @@ export function PersonalInfoStep({ className }: PersonalInfoStepProps) {
         <Separator className="mt-2 mb-5" />
 
         <div className="grid grid-cols-1 gap-x-4 gap-y-5 md:grid-cols-2">
-          <FileUploadField
-            label="Upload Resume"
-            required
-            accept=".svg,.png,.jpg,.jpeg,.pdf"
-            helpText="SVG, PNG, JPG or PDF (max. 5MB)"
-          />
-          <FileUploadField
-            label="Upload Passport Size Photo"
-            required
-            accept=".svg,.png,.jpg,.jpeg,.pdf"
-            helpText="SVG, PNG, JPG or PDF (max. 5MB)"
-          />
+        <FileUploadField
+  label="Upload Resume"
+  required
+  value={watch("resume_url")}
+  onChange={handleFileUpload("resume_url")}
+/>
+<FileUploadField
+  label="Upload Passport Size Photo"
+  required
+  value={watch("photo_url")}
+  onChange={handleFileUpload("photo_url")}
+/>
         </div>
       </section>
 
@@ -384,3 +411,5 @@ export function PersonalInfoStep({ className }: PersonalInfoStepProps) {
     </form>
   )
 }
+
+

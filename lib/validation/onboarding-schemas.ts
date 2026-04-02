@@ -13,7 +13,6 @@ export const personalInfoSchema = z.object({
   nationality: z.string().optional(),
   phone: z.string().min(10, 'Valid phone number required').optional().or(z.literal('')),
   personal_email: z.string().email('Valid email required').optional().or(z.literal('')),
-  photo_url: z.string().optional(),
   family_members: z
     .array(
       z.object({
@@ -24,6 +23,8 @@ export const personalInfoSchema = z.object({
       })
     )
     .optional(),
+    resume_url: z.string().min(1, "Resume is required"),
+   photo_url: z.string().min(1, "Photo is required"),
 })
 
 // Step 2: Address Details
