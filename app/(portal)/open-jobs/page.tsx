@@ -234,7 +234,7 @@ export default function OpenJobsPage() {
 
       {/* Saved Jobs Drawer */}
       <Sheet open={savedDrawerOpen} onOpenChange={setSavedDrawerOpen}>
-        <SheetContent side="right" className="w-[380px] sm:max-w-[380px]">
+        <SheetContent side="right" className="w-95 sm:max-w-95">
           <SheetHeader>
             <SheetTitle>Saved Jobs ({savedJobs.length})</SheetTitle>
             <SheetDescription className="sr-only">
