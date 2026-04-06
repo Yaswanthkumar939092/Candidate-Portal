@@ -1,18 +1,21 @@
 "use client"
 
 import { useRef, useState, useCallback } from 'react'
-import { Upload, X, FileText } from 'lucide-react'
+import { Upload, X, FileText, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import { useFileUpload } from '@/lib/hooks/useFileUpload'
 
 interface FileUploadFieldProps {
   label: string
   required?: boolean
   accept?: string
   helpText?: string
-  value?: File | string | null
-  onChange?: (file: File | null) => void
+  value?: string | null
+  onChange?: (url: string | null) => void
+  disabled?: boolean
+  error?: string
   className?: string
 }
 
@@ -35,24 +38,37 @@ export function FileUploadField({
   helpText = "SVG, PNG, JPG or PDF (max. 5MB)",
   value,
   onChange,
+  disabled = false,
+  error,
   className,
 }: FileUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [isDragOver, setIsDragOver] = useState(false)
+  
+  const { mutateAsync: uploadFile, isPending } = useFileUpload()
 
-  const fileName = value instanceof File
-    ? value.name
-    : typeof value === 'string' && value.length > 0
-      ? value.split('/').pop() || value
-      : null
+  const fileName = typeof value === 'string' && value.length > 0
+    ? value.split('/').pop() || value
+    : null
 
   const handleClick = () => {
+    if (disabled || isPending) return
     inputRef.current?.click()
   }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProcessFile = useCallback(async (file: File | null) => {
+    if (!file) return
+    try {
+      const response = await uploadFile(file)
+      onChange?.(response.file_url)
+    } catch (error) {
+      console.error("Upload failed", error)
+    }
+  }, [uploadFile, onChange])
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null
-    onChange?.(file)
+    await handleProcessFile(file)
     // Reset input so the same file can be re-selected
     if (inputRef.current) {
       inputRef.current.value = ''
@@ -79,12 +95,13 @@ export function FileUploadField({
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
+    if (disabled || isPending) return
     setIsDragOver(false)
     const file = e.dataTransfer.files?.[0] ?? null
     if (file) {
-      onChange?.(file)
+      handleProcessFile(file)
     }
-  }, [onChange])
+  }, [disabled, isPending, handleProcessFile])
 
   return (
     <div className={cn("space-y-2", className)}>
@@ -118,12 +135,19 @@ export function FileUploadField({
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           className={cn(
-            "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-8 transition-colors",
+            "relative flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-8 transition-colors overflow-hidden",
             isDragOver
               ? "border-primary bg-primary/5"
-              : "border-border bg-card hover:border-primary/50 hover:bg-muted/50"
+              : "border-border bg-card hover:border-primary/50 hover:bg-muted/50",
+            (disabled || isPending) && "opacity-50 cursor-not-allowed hover:border-border hover:bg-card"
           )}
         >
+          {isPending && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/50 backdrop-blur-sm z-10">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="mt-2 text-sm font-medium text-primary">Uploading...</p>
+            </div>
+          )}
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
             <Upload className="h-5 w-5 text-primary" />
           </div>
@@ -142,6 +166,10 @@ export function FileUploadField({
         className="hidden"
         aria-label={label}
       />
+
+      {error && (
+        <p className="text-xs text-destructive">{error}</p>
+      )}
     </div>
   )
 }
