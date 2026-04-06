@@ -14,8 +14,9 @@ import { FileUploadField } from '@/components/onboarding/file-upload-field'
 import { cn } from '@/lib/utils'
 
 const DEFAULT_ADDRESS = {
-  line1: '',
-  line2: '',
+  flat_house_wing: '',
+  street_locality_area: '',
+  landmark: '',
   city: '',
   state: '',
   pin_code: '',
@@ -47,7 +48,8 @@ export function AddressDetailsStep({ className }: AddressDetailsStepProps) {
     formState: { errors },
     reset,
   } = useForm<AddressDetailsData>({
-    resolver: zodResolver(addressDetailsSchema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(addressDetailsSchema) as any,
     defaultValues: {
       current_address: { ...DEFAULT_ADDRESS },
       same_as_current: false,
@@ -87,7 +89,7 @@ export function AddressDetailsStep({ className }: AddressDetailsStepProps) {
   const onNext = handleSubmit(async (data) => {
     setStepData('address', data as unknown as Record<string, unknown>)
     markStepComplete('address')
-    await saveDraft().catch(() => {})
+    await saveDraft().catch(() => { })
     nextStep()
   })
 
@@ -102,12 +104,11 @@ export function AddressDetailsStep({ className }: AddressDetailsStepProps) {
             Flat / House / Wing
           </Label>
           <Input
-            {...register(`${prefix}.line1`)}
+            {...register(`${prefix}.flat_house_wing`)}
             placeholder=""
             className="bg-muted"
             disabled={disabled}
           />
-          {e?.line1 && <p className="text-xs text-destructive">{e.line1.message}</p>}
         </div>
 
         {/* Street / Locality / Area */}
@@ -116,11 +117,12 @@ export function AddressDetailsStep({ className }: AddressDetailsStepProps) {
             Street / Locality / Area <span className="text-destructive">*</span>
           </Label>
           <Input
-            {...register(`${prefix}.line2`)}
+            {...register(`${prefix}.street_locality_area`)}
             placeholder=""
             className="bg-muted"
             disabled={disabled}
           />
+          {e?.street_locality_area && <p className="text-xs text-destructive">{e.street_locality_area.message}</p>}
         </div>
 
         {/* Landmark */}
@@ -129,6 +131,7 @@ export function AddressDetailsStep({ className }: AddressDetailsStepProps) {
             Landmark
           </Label>
           <Input
+            {...register(`${prefix}.landmark`)}
             placeholder=""
             className="bg-muted"
             disabled={disabled}
@@ -174,6 +177,7 @@ export function AddressDetailsStep({ className }: AddressDetailsStepProps) {
             className="bg-muted"
             disabled={disabled}
           />
+          {e?.country && <p className="text-xs text-destructive">{e.country.message}</p>}
         </div>
 
         {/* Pincode */}
@@ -209,6 +213,9 @@ export function AddressDetailsStep({ className }: AddressDetailsStepProps) {
             required
             accept=".svg,.png,.jpg,.jpeg,.pdf"
             helpText="SVG, PNG, JPG or PDF (max. 5MB)"
+            value={watch('address_proof_url')}
+            onChange={(url) => setValue('address_proof_url', url || '', { shouldValidate: true })}
+            error={errors.address_proof_url?.message}
           />
         </div>
       </section>

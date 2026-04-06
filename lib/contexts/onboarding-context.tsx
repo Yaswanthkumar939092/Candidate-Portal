@@ -9,8 +9,155 @@ import React, {
   useRef,
 } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { ONBOARDING_STEPS, type OnboardingStepKey } from '@/lib/validation/onboarding-schemas'
+import { ONBOARDING_STEPS } from '@/lib/validation/onboarding-schemas'
 import { useAuth } from '@/lib/contexts/auth-context'
+
+function mapOnboardingDataToFrappe(onboardingData: Record<string, unknown>, userEmail: string) {
+  const p = (onboardingData.personal_info as Record<string, unknown>) || {}
+  const a = (onboardingData.address as Record<string, unknown>) || {}
+  const currAddr = (a.current_address as Record<string, unknown>) || {}
+  const permAddr = (a.permanent_address as Record<string, unknown>) || {}
+  const i = (onboardingData.identity_documents as Record<string, unknown>) || {}
+  const b = (onboardingData.bank_details as Record<string, unknown>) || {}
+  const e = (onboardingData.emergency_contacts as Record<string, unknown>) || {}
+  const edu = (onboardingData.education as Record<string, unknown>) || {}
+  const emp = (onboardingData.employment_history as Record<string, unknown>) || {}
+
+  const mappedData = {
+    boarding_status: "Pending",
+    date_of_joining: p.date_of_joining || new Date().toISOString().split('T')[0],
+    boarding_begins_on: new Date().toISOString().split('T')[0],
+    notify_users_by_email: 1,
+    amended_from: "",
+    custom_is_rehire: 0,
+    custom_other_reason: "",
+    custom_select_inactive_employee: "",
+    custom_migrate_payroll_data: 0,
+    custom_assign_back_reportees: 0,
+
+    custom_gender: p.gender || "",
+    custom_blood_group: p.blood_group || "",
+    custom_marital_status: p.marital_status || "",
+    custom_languages_known: p.languages_known || "",
+    custom_fathers_full_name: p.fathers_full_name || "",
+    custom_spouse_name: p.spouse_name || "",
+    custom_mothers_full_name: p.mothers_full_name || "",
+    custom_children: p.children || "",
+
+    custom_upload_resume: p.resume_url || "",
+    custom_upload_passport_size_photo: p.photo_url || "",
+
+    custom_enable_web_clockin: 1,
+    custom_ip_restrictions: "",
+    custom_use_shift_blocks: 0,
+    custom_enable_check_in: 1,
+    custom_break_entry: 1,
+    custom_ctc: "",
+    custom_monthly: 0,
+    custom_currency: "INR",
+    custom_self_service: "Yes",
+    custom_email: userEmail,
+    custom_first_name: p.first_name || "",
+    custom_personal_email_id: p.personal_email || "",
+    custom_middle_name: p.middle_name || "",
+    custom_primary_contact_number: p.primary_contact_number || "",
+    custom_date_of_birth: p.date_of_birth || "",
+    custom_date_of_joining: p.date_of_joining || "",
+    custom_last_name: p.last_name || "",
+    custom_office_mobile_number: p.office_mobile_number || "",
+    custom_auto_activate: "Yes",
+
+    custom_current_flat__house__wing: currAddr.flat_house_wing || "",
+    custom_current_landmark: currAddr.landmark || "",
+    custom_current_state: currAddr.state || "",
+    custom_current_pincode: currAddr.pin_code || "",
+    custom_current_street__locality__area: currAddr.street_locality_area || "",
+    custom_current_city: currAddr.city || "",
+    custom_current_country: currAddr.country || "",
+    custom_upload_address_proof: a.address_proof_url || "",
+
+    custom_permanent_flat__house__wing: permAddr.flat_house_wing || "",
+    custom_permanent_landmark: permAddr.landmark || "",
+    custom_permanent_state: permAddr.state || "",
+    custom_permanent_pincode: permAddr.pin_code || "",
+    custom_permanent_street__locality__area: permAddr.street_locality_area || "",
+    custom_permanent_city: permAddr.city || "",
+    custom_permanent_country: permAddr.country || "",
+
+    custom_pan_number: i.pan_number || "",
+    custom_name_as_per_pan: i.name_as_per_pan || "",
+    custom_upload_pan_card: i.pan_document_url || "",
+    custom_guardian_name: i.guardian_name || "",
+    custom_date_of_birthpan: i.dob_pan || "",
+    custom_aadhaar_number: i.aadhaar_number || "",
+    custom_upload_aadhaarfront: i.aadhaar_document_url || "",
+    custom_upload_aadhaarback: i.aadhaar_document_back_url || "",
+
+    custom_bank_name: b.bank_name || "",
+    custom_account_number: b.account_number || "",
+    custom_upload_cancelled_cheque_passbook_statement: b.cheque_document_url || "",
+    custom_ifsc_code: b.ifsc_code || "",
+    custom_uan_numberoptional: b.uan_number || "",
+
+    custom_emergency_contact_name: (e.contacts && Array.isArray(e.contacts) && e.contacts[0]) ? e.contacts[0].name : "",
+    custom_relationship: (e.contacts && Array.isArray(e.contacts) && e.contacts[0]) ? e.contacts[0].relationship : "",
+    custom_contact_number: (e.contacts && Array.isArray(e.contacts) && e.contacts[0]) ? e.contacts[0].phone_number : "",
+
+    custom_education_details: (Array.isArray(edu.qualifications) ? edu.qualifications : []).map((q: Record<string, unknown>) => ({
+      school_univ: q.institution || "",
+      custom_university: q.university || "",
+      qualification: q.degree || "",
+      custom_educational_details: q.specialization || "",
+      level: "",
+      year_of_passing: q.year_of_passing ? parseInt(q.year_of_passing as string) : null,
+      custom_passing_year: (q.year_of_passing as string) || "",
+      class_per: q.percentage_or_cgpa || "",
+      maj_opt_subj: q.specialization || "",
+      custom_attachmentt: q.document_url || "",
+      custom_activities: "",
+      custom_this_is_my_highest_education_qualification: 1,
+      custom_mode_of_learning: q.mode_of_learning || "Regular",
+      custom_education_degree_naukri: q.degree || "",
+      custom_education_category_naukri: "",
+      custom_field_of_specialization_naukri: q.specialization || "",
+      custom_percentage_naukri: q.percentage_or_cgpa || "",
+      custom_employee_education: "",
+      custom_educational_category: q.educational_category || "",
+      custom_education_degree: q.degree || "",
+      custom_field_of_specialisation: q.specialization || "",
+      custom_course_typedegree_type_: q.course_type || "",
+      custom_max_gpapercentage: parseFloat(q.percentage_or_cgpa as string) || null,
+      custom_i_am_currently_a_student: 0,
+      custom_start_date: q.start_date || "",
+      custom_completion_date: q.end_date || "",
+      custom_educational_documents_proofs: q.document_url || "",
+      custom_notes: "",
+      custom_please_enter_your_marks_obtained: q.percentage_or_cgpa || "",
+      custom_month__year_of_passing: (q.year_of_passing as string) || "",
+      custom_course_typedegree_type: "Full Time",
+      custom_registration_number: q.registration_number || "",
+      custom_educational_proof_degree: q.document_url || "",
+      custom_to_date: "",
+      custom_have_you_done_your_masters_from_iim: "No",
+      custom_i_am_currently_pursuing_this_course: q.is_currently_pursuing ? 1 : 0
+    })),
+
+    custom_employment_details_custom: (Array.isArray(emp.experiences) ? emp.experiences : []).map((exp: Record<string, unknown>) => ({
+      company_name: exp.company || "",
+      designation: exp.designation || "",
+      from_date: exp.from_date || "",
+      to_date: exp.to_date || "",
+      address: "",
+      custom_total_experience_years: emp.total_experience_years || "",
+      custom_are_you_fresher: emp.has_experience ? 0 : 1,
+      custom_previous_annual_ctc: emp.previous_annual_ctc || ""
+    })),
+
+    custom_do_you_have__any_relatives_working_at_pw: "No"
+  };
+
+  return { email: userEmail, data: mappedData };
+}
 
 const STORAGE_KEY = 'onboarding_draft'
 const DEBOUNCE_MS = 500
@@ -286,22 +433,28 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     }
   }, [stepData, currentStep, completedSteps])
 
-  // Submit all onboarding data
   const submitAll = useCallback(async () => {
     setIsSaving(true)
     try {
-      // First save the latest draft
-      await saveDraft()
+      // Get correct user email
+      const userEmail = user?.email || user?.user_metadata?.email || 'unknown@example.com'
 
-      // Then submit
-      const response = await fetch('/api/onboarding/submit', {
+      // Map data for Frappe directly
+      const payload = mapOnboardingDataToFrappe(stepData, userEmail)
+
+      const frappeUrl = process.env.NEXT_PUBLIC_FRAPPE_URL || 'http://localhost:8000'
+      const endpoint = `${frappeUrl}/api/method/recruitment.api.employee_onboarding.update_onboarding_details`
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to submit onboarding')
+        const errorText = await response.text()
+        console.error('Frappe API error:', errorText)
+        throw new Error('Failed to submit onboarding to Frappe: ' + errorText)
       }
 
       setStatus('submitted')
@@ -312,7 +465,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     } finally {
       setIsSaving(false)
     }
-  }, [saveDraft])
+  }, [stepData, user])
 
   const contextValue: OnboardingContextType = {
     currentStep,
