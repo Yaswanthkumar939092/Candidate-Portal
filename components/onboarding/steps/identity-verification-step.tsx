@@ -39,13 +39,18 @@ export function IdentityVerificationStep({ className }: IdentityVerificationStep
     watch,
     formState: { errors },
     reset,
+    setValue,
   } = useForm<IdentityVerificationData>({
     resolver: zodResolver(identityVerificationSchema),
     defaultValues: {
       pan_number: '',
+      name_as_per_pan: '',
+      guardian_name: '',
+      dob_pan: '',
       pan_document_url: '',
       aadhaar_number: '',
       aadhaar_document_url: '',
+      aadhaar_document_back_url: '',
       passport_number: '',
       passport_document_url: '',
       ...existingData,
@@ -99,12 +104,16 @@ export function IdentityVerificationStep({ className }: IdentityVerificationStep
           {/* Name as per PAN */}
           <div className="space-y-1.5">
             <Label className="text-sm font-medium text-foreground">
-              Name as per PAN
+              Name as per PAN <span className="text-destructive">*</span>
             </Label>
             <Input
+              {...register('name_as_per_pan')}
               placeholder=""
               className="bg-muted"
             />
+            {errors.name_as_per_pan && (
+              <p className="text-xs text-destructive">{errors.name_as_per_pan.message}</p>
+            )}
           </div>
 
           {/* Guardian Name */}
@@ -113,6 +122,7 @@ export function IdentityVerificationStep({ className }: IdentityVerificationStep
               Guardian Name
             </Label>
             <Input
+              {...register('guardian_name')}
               placeholder=""
               className="bg-muted"
             />
@@ -121,10 +131,11 @@ export function IdentityVerificationStep({ className }: IdentityVerificationStep
           {/* Date of Birth */}
           <div className="space-y-1.5">
             <Label className="text-sm font-medium text-foreground">
-              Date of Birth
+              Date of Birth (as per PAN)
             </Label>
             <Input
               type="date"
+              {...register('dob_pan')}
               className="bg-muted"
             />
           </div>
@@ -137,6 +148,9 @@ export function IdentityVerificationStep({ className }: IdentityVerificationStep
             required
             accept=".svg,.png,.jpg,.jpeg,.pdf"
             helpText="SVG, PNG, JPG or PDF (max. 5MB)"
+            value={watch('pan_document_url')}
+            onChange={(url) => setValue('pan_document_url', url || '', { shouldValidate: true })}
+            error={errors.pan_document_url?.message}
           />
         </div>
       </section>
@@ -169,12 +183,18 @@ export function IdentityVerificationStep({ className }: IdentityVerificationStep
               required
               accept=".svg,.png,.jpg,.jpeg,.pdf"
               helpText="SVG, PNG, JPG or PDF (max. 5MB)"
+              value={watch('aadhaar_document_url')}
+              onChange={(url) => setValue('aadhaar_document_url', url || '', { shouldValidate: true })}
+              error={errors.aadhaar_document_url?.message}
             />
             <FileUploadField
               label="Upload Aadhaar (Back)"
               required
               accept=".svg,.png,.jpg,.jpeg,.pdf"
               helpText="SVG, PNG, JPG or PDF (max. 5MB)"
+              value={watch('aadhaar_document_back_url')}
+              onChange={(url) => setValue('aadhaar_document_back_url', url || '', { shouldValidate: true })}
+              error={errors.aadhaar_document_back_url?.message}
             />
           </div>
         </div>
