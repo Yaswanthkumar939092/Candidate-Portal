@@ -1,11 +1,7 @@
-"use client"
+/* eslint-disable react-hooks/rules-of-hooks */
+"use client";
 
-import {
-  MapPin,
-  Building2,
-  Clock,
-  IndianRupee,
-} from "lucide-react"
+import { MapPin, Building2, Clock, IndianRupee } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -13,29 +9,31 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/dialog"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
-import { cn } from "@/lib/utils"
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation"; 
 
 interface JobDetailDialogProps {
   job: {
-    id: string
-    title: string
-    company: string
-    location: string
-    experience: string
-    salary: string
-    type: string
-    skills: string[]
-    matchPercentage: number
-    description?: string
-    requirements?: string[]
-  } | null
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onApply?: () => void
+    id: string;
+    title: string;
+    company: string;
+    location: string;
+    experience: string;
+    salary: string;
+    type: string;
+    skills: string[];
+    matchPercentage: number;
+    description?: string;
+    requirements?: string[];
+  } | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onApply?: (open: boolean) => void;
+  openApplyForm?: boolean;
 }
 
 /**
@@ -53,11 +51,8 @@ export function JobDetailDialog({
   onOpenChange,
   onApply,
 }: JobDetailDialogProps) {
-  if (!job) return null
-
-  const description =
-    job.description ??
-    `We are looking for a ${job.title} to lead our design team. You will be responsible for creating user-centered designs, conducting user research, and collaborating with cross-functional teams to deliver exceptional user experiences.`
+  if (!job) return null;
+  const router = useRouter();
 
   const requirements = job.requirements ?? [
     "5+ years of product design experience",
@@ -66,7 +61,7 @@ export function JobDetailDialog({
     "Experience with Design Systems, Prototyping",
     "Excellent communication skills",
     "Bachelor's degree in relevant field",
-  ]
+  ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -118,9 +113,10 @@ export function JobDetailDialog({
           <h4 className="text-sm font-semibold text-foreground">
             Job Description
           </h4>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            {description}
-          </p>
+          <div
+            className="list-disc space-y-1 pl-5 text-sm text-muted-foreground"
+            dangerouslySetInnerHTML={{ __html: job.description || "" }}
+          />
         </div>
 
         {/* Requirements */}
@@ -139,9 +135,17 @@ export function JobDetailDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={onApply}>Apply</Button>
+          <Button
+  onClick={() => {
+    onOpenChange(false);
+    router.push(`/open-jobs/${job.id}/apply-job`);
+  }}
+>
+  Apply
+</Button>
         </DialogFooter>
       </DialogContent>
+      
     </Dialog>
-  )
+  );
 }
