@@ -1,14 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useMemo } from "react"
 import {
   Search,
-  LayoutGrid,
   MapPin,
   Briefcase,
-  Loader2,
   Bookmark,
-  X,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import {
@@ -20,13 +18,11 @@ import {
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetDescription,
 } from "@/components/ui/sheet"
 import {
   SmartCareerMatch,
@@ -35,15 +31,74 @@ import {
 import { JobMatchCard } from "@/components/jobs/job-match-card"
 import { JobDetailDialog } from "@/components/jobs/job-detail-dialog"
 import { cn } from "@/lib/utils"
+import { useJobOpening } from "@/lib/hooks/useJobOpening"
+import JobApplicantForm from "@/components/jobs/job-applicant-form"
 
 type PageState = "upload" | "analyzing" | "results"
 
-/**
- * Open Jobs page with two tabs:
- * - Smart Career Match: AI-powered resume matching (upload -> analyzing -> results)
- * - View All: Browse all open jobs
- */
+const JOBS_PER_PAGE = 5
+
+// ---------------------------------------------------------------------------
+// Pagination Component
+// ---------------------------------------------------------------------------
+function Pagination({
+  currentPage,
+  totalPages,
+  onPageChange,
+}: {
+  currentPage: number
+  totalPages: number
+  onPageChange: (page: number) => void
+}) {
+  const pages = Array.from({ length: totalPages }, (_, i) => i + 1)
+
+  return (
+    <div className="flex items-center justify-center gap-1 flex-wrap">
+      <button
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className="flex items-center gap-1 hover:cursor-pointer rounded-full border border-border px-4 py-2 text-sm text-muted-foreground disabled:opacity-40 hover:bg-muted transition-colors"
+      >
+        ‹ Previous
+      </button>
+
+      {pages.map((page) => (
+        <button
+          key={page}
+          onClick={() => onPageChange(page)}
+          className={cn(
+            "h-9 w-9 rounded-full  text-sm font-medium transition-colors",
+            page === currentPage
+              ? "bg-foreground text-background"
+              : "text-muted-foreground hover:bg-muted cursor-pointer"
+          )}
+        >
+          {page}
+        </button>
+      ))}
+
+      <button
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className="flex items-center gap-1 hover:cursor-pointer rounded-full border border-border px-4 py-2 text-sm text-muted-foreground disabled:opacity-40 hover:bg-muted transition-colors"
+      >
+        Next ›
+      </button>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Main Page
+// ---------------------------------------------------------------------------
 export default function OpenJobsPage() {
+  const [currentPage, setCurrentPage] = useState(1)
+console.log("Fetching jobs for page:", currentPage)
+  const { data: jobOpenings } = useJobOpening({
+    page: currentPage,
+    limit: JOBS_PER_PAGE,
+  })
+
   const [activeTab, setActiveTab] = useState<"smart-match" | "view-all">(
     "smart-match"
   )
@@ -51,8 +106,14 @@ export default function OpenJobsPage() {
   const [matchResults, setMatchResults] = useState<MatchedJob[]>([])
   const [savedJobIds, setSavedJobIds] = useState<Set<string>>(new Set())
   const [savedDrawerOpen, setSavedDrawerOpen] = useState(false)
+  const [applyFormOpen, setApplyFormOpen] = useState(false)
 
-  // Detail dialog state
+  // filters state
+  const [searchText, setSearchText] = useState("")
+  const [locationFilter, setLocationFilter] = useState("")
+  const [jobType, setJobType] = useState("all")
+
+  // Detail dialog
   const [selectedJob, setSelectedJob] = useState<MatchedJob | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
 
@@ -64,11 +125,8 @@ export default function OpenJobsPage() {
   const handleBookmark = (jobId: string) => {
     setSavedJobIds((prev) => {
       const next = new Set(prev)
-      if (next.has(jobId)) {
-        next.delete(jobId)
-      } else {
-        next.add(jobId)
-      }
+      if (next.has(jobId)) next.delete(jobId)
+      else next.add(jobId)
       return next
     })
   }
@@ -78,11 +136,78 @@ export default function OpenJobsPage() {
     setDialogOpen(true)
   }
 
+  // Filter change handlers — also reset page to 1
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchText(e.target.value)
+    setCurrentPage(1)
+  }
+
+  const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocationFilter(e.target.value)
+    setCurrentPage(1)
+  }
+
+  const handleJobTypeChange = (val: string) => {
+    setJobType(val)
+    setCurrentPage(1)
+  }
+
+  const mappedJobs: MatchedJob[] = useMemo(() => {
+    const list = Array.isArray(jobOpenings)
+      ? jobOpenings
+      : (jobOpenings?.data ?? [])
+
+    return list.map((job: any) => ({
+      id: job.name,
+      title: job.job_title || job.designation,
+      company: job.company,
+      location: job.location || job.custom_location || "Not specified",
+      type: job.employment_type || "full-time",
+      experience: job.custom_work_experience,
+      salary: job.custom_salary || "Not disclosed",
+      description: job.description,
+      status: job.status,
+    }))
+  }, [jobOpenings])
+
+  // ✅ FIXED (boundary check added)
+  const handlePageChange = (page: number) => {
+    if (page < 1) return
+    if (mappedJobs.length < JOBS_PER_PAGE && page > currentPage) return
+
+    setCurrentPage(page)
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
   const savedJobs = matchResults.filter((job) => savedJobIds.has(job.id))
+
+  // Total pages from API response
+  // Adjust the key (total_pages / pageCount / etc.) to match your API shape
+  const totalPages =
+    mappedJobs.length < JOBS_PER_PAGE
+      ? currentPage
+      : currentPage + 1
+
+  // 🔍 CLIENT-SIDE FILTER (on the current page's data)
+  const filteredJobs = useMemo(() => {
+    return mappedJobs.filter((job) => {
+      const matchesSearch =
+        job.title?.toLowerCase().includes(searchText.toLowerCase()) ||
+        job.company?.toLowerCase().includes(searchText.toLowerCase())
+
+      const matchesLocation =
+        !locationFilter ||
+        job.location?.toLowerCase().includes(locationFilter.toLowerCase())
+
+      const matchesType =
+        jobType === "all" || job.type?.toLowerCase() === jobType
+
+      return matchesSearch && matchesLocation && matchesType
+    })
+  }, [mappedJobs, searchText, locationFilter, jobType])
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 sm:px-6 py-8">
-      {/* Page header */}
       <div>
         <h1 className="text-2xl font-bold text-foreground">Open Jobs</h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -90,123 +215,68 @@ export default function OpenJobsPage() {
         </p>
       </div>
 
-      {/* Tab bar */}
+      {/* Tabs */}
       <div className="flex items-center gap-6 border-b border-border">
         <button
           className={cn(
-            "relative pb-2.5 text-sm font-medium transition-colors",
+            "relative pb-2.5 text-sm font-medium",
             activeTab === "smart-match"
               ? "text-foreground"
-              : "text-muted-foreground hover:text-foreground"
+              : "text-muted-foreground"
           )}
           onClick={() => setActiveTab("smart-match")}
         >
           Smart Career Match
-          {activeTab === "smart-match" && (
-            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground" />
-          )}
         </button>
+
         <button
           className={cn(
-            "relative pb-2.5 text-sm font-medium transition-colors",
+            "relative pb-2.5 text-sm font-medium",
             activeTab === "view-all"
               ? "text-foreground"
-              : "text-muted-foreground hover:text-foreground"
+              : "text-muted-foreground"
           )}
           onClick={() => setActiveTab("view-all")}
         >
           View All
-          {activeTab === "view-all" && (
-            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground" />
-          )}
         </button>
       </div>
 
-      {/* Smart Career Match Tab */}
+      {/* SMART MATCH */}
       {activeTab === "smart-match" && (
-        <div>
-          {pageState === "upload" && (
-            <Card className="shadow-sm">
-              <CardContent>
-                <SmartCareerMatch onAnalysisComplete={handleAnalysisComplete} />
-              </CardContent>
-            </Card>
-          )}
-
-          {pageState === "analyzing" && (
-            <Card className="shadow-sm">
-              <CardContent>
-                <SmartCareerMatch onAnalysisComplete={handleAnalysisComplete} />
-              </CardContent>
-            </Card>
-          )}
-
-          {pageState === "results" && (
-            <div className="space-y-6">
-              {/* Top Results header */}
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-foreground">
-                  Top Results
-                </h2>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={() => setSavedDrawerOpen(true)}
-                >
-                  <Bookmark className="h-4 w-4" />
-                  Saved Jobs ({savedJobs.length})
-                </Button>
-              </div>
-
-              {/* Results grid */}
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {matchResults.map((job) => (
-                  <JobMatchCard
-                    key={job.id}
-                    job={job}
-                    isBookmarked={savedJobIds.has(job.id)}
-                    onBookmark={() => handleBookmark(job.id)}
-                    onViewDetails={() => handleViewDetails(job)}
-                  />
-                ))}
-              </div>
-
-              {/* Footer */}
-              <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-                <span>
-                  Powered by <span className="font-semibold">AI</span>
-                </span>
-                <span>&middot;</span>
-                <button className="text-primary hover:underline">
-                  Privacy Policy
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+        <Card>
+          <CardContent>
+            <SmartCareerMatch onAnalysisComplete={handleAnalysisComplete} />
+          </CardContent>
+        </Card>
       )}
 
-      {/* View All Tab */}
+      {/* VIEW ALL */}
       {activeTab === "view-all" && (
         <div className="space-y-6">
           <div className="flex flex-col gap-3 sm:flex-row">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
               <Input
-                placeholder="Search jobs by title, company, or keyword..."
+                placeholder="Search jobs..."
                 className="pl-9"
+                value={searchText}
+                onChange={handleSearchChange}
               />
             </div>
+
             <div className="relative">
-              <MapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
               <Input
                 placeholder="Location"
-                className="w-full pl-9 sm:w-40"
+                className="pl-9"
+                value={locationFilter}
+                onChange={handleLocationChange}
               />
             </div>
-            <Select>
-              <SelectTrigger className="w-full sm:w-44">
+
+            <Select onValueChange={handleJobTypeChange}>
+              <SelectTrigger className="w-44">
                 <Briefcase className="mr-1 h-4 w-4" />
                 <SelectValue placeholder="Job Type" />
               </SelectTrigger>
@@ -218,78 +288,67 @@ export default function OpenJobsPage() {
                 <SelectItem value="internship">Internship</SelectItem>
               </SelectContent>
             </Select>
-            <Button>
-              <Search className="h-4 w-4" />
-              Search
-            </Button>
           </div>
 
-          <div className="rounded-lg border border-dashed p-12 text-center">
-            <p className="text-sm text-muted-foreground">
-              No open jobs found. Try adjusting your filters.
-            </p>
-          </div>
+          {/* JOB LIST */}
+          {filteredJobs.length === 0 ? (
+            <div className="rounded-lg border border-dashed p-12 text-center">
+              <p className="text-sm text-muted-foreground">
+                No open jobs found. Try adjusting your filters.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {filteredJobs.map((job) => (
+                  <JobMatchCard
+                    key={job.id}
+                    job={job}
+                    isBookmarked={savedJobIds.has(job.id)}
+                    onBookmark={() => handleBookmark(job.id)}
+                    onViewDetails={() => handleViewDetails(job)}
+                  />
+                ))}
+              </div>
+
+              {/* PAGINATION */}
+              {totalPages > 0 && (
+              <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
+              )}
+            </>
+          )}
         </div>
       )}
 
-      {/* Saved Jobs Drawer */}
+      {/* DRAWER */}
       <Sheet open={savedDrawerOpen} onOpenChange={setSavedDrawerOpen}>
-        <SheetContent side="right" className="w-95 sm:max-w-95">
+        <SheetContent side="right">
           <SheetHeader>
             <SheetTitle>Saved Jobs ({savedJobs.length})</SheetTitle>
-            <SheetDescription className="sr-only">
-              Your bookmarked jobs
-            </SheetDescription>
           </SheetHeader>
-          <div className="mt-6 space-y-3">
-            {savedJobs.length === 0 ? (
-              <p className="text-center text-sm text-muted-foreground">
-                No saved jobs yet. Bookmark jobs to see them here.
-              </p>
-            ) : (
-              savedJobs.map((job) => (
-                <Card key={job.id}>
-                  <CardContent className="space-y-2 p-4">
-                    <h4 className="text-sm font-semibold text-foreground">
-                      {job.title}
-                    </h4>
-                    <div className="flex flex-wrap gap-1.5">
-                      <Badge
-                        variant="outline"
-                        className="text-xs font-normal"
-                      >
-                        {job.company}
-                      </Badge>
-                      <Badge
-                        variant="outline"
-                        className="text-xs font-normal"
-                      >
-                        {job.location}
-                      </Badge>
-                    </div>
-                    <Button
-                      size="sm"
-                      className="w-full"
-                      onClick={() => handleViewDetails(job)}
-                    >
-                      View Details
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </div>
+
+          {savedJobs.map((job) => (
+            <Card key={job.id}>
+              <CardContent>
+                <h4>{job.title}</h4>
+                <Button onClick={() => handleViewDetails(job)}>
+                  View Details
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
         </SheetContent>
       </Sheet>
 
-      {/* Job Detail Dialog */}
       <JobDetailDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         job={selectedJob}
-        onApply={() => {
-          setDialogOpen(false)
-        }}
+        onApply={setApplyFormOpen}
       />
     </div>
   )

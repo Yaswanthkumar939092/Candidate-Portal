@@ -89,25 +89,24 @@ export function JobMatchCard({
           </span>
         </div>
 
-        {/* Skills */}
-        {job.skills.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {job.skills.map((skill) => (
-              <Badge
-                key={skill}
-                variant="outline"
-                className="text-xs font-normal"
-              >
-                {skill}
-              </Badge>
-            ))}
-          </div>
-        )}
+{/* Skills */}
+{Array.isArray(job.skills) && job.skills.length > 0 && (
+  <div className="flex flex-wrap gap-1.5">
+    {job.skills.map((skill: string, index: number) => (
+      <Badge
+        key={index}
+        variant="outline"
+        className="text-xs font-normal"
+      >
+        {skill}
+      </Badge>
+    ))}
+  </div>
+)}
 
         {/* Actions */}
         <div className="flex items-center justify-between pt-1">
           <Button
-            variant="outline"
             size="sm"
             onClick={(e) => {
               e.stopPropagation()
