@@ -3,7 +3,6 @@
 export const FrappeAPI = {
   uploadFile: async (
     file: File,
-    folder = "",
     docName?: string,
     doctype?: string
   ) => {
@@ -24,6 +23,63 @@ export const FrappeAPI = {
 
     if (!res.ok) {
       throw new Error("Upload failed");
+    }
+
+    const data = await res.json();
+    return data.message;
+  },
+
+  get: async (method: string, params: Record<string, string> = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const url = `${process.env.NEXT_PUBLIC_FRAPPE_URL}/api/method/${method}${
+      queryString ? `?${queryString}` : ""
+    }`;
+
+    const res = await fetch(url, {
+      method: "GET",
+      credentials: "include",
+    });
+
+    if (!res.ok) {
+      throw new Error(`API request failed: ${res.statusText}`);
+    }
+
+    const data = await res.json();
+    return data.message;
+  },
+
+  getBlob: async (method: string, params: Record<string, string> = {}): Promise<Blob> => {
+    const queryString = new URLSearchParams(params).toString();
+    const url = `${process.env.NEXT_PUBLIC_FRAPPE_URL}/api/method/${method}${
+      queryString ? `?${queryString}` : ""
+    }`;
+
+    const res = await fetch(url, {
+      method: "GET",
+      credentials: "include",
+    });
+
+    if (!res.ok) {
+      throw new Error(`API request failed: ${res.statusText}`);
+    }
+
+    return res.blob();
+  },
+
+  post: async (method: string, body: Record<string, unknown>) => {
+    const url = `${process.env.NEXT_PUBLIC_FRAPPE_URL}/api/method/${method}`;
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+      credentials: "include",
+    });
+
+    if (!res.ok) {
+      throw new Error(`API request failed: ${res.statusText}`);
     }
 
     const data = await res.json();
