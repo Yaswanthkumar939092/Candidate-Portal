@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/lib/frappe-api.ts
 
 export const FrappeAPI = {
