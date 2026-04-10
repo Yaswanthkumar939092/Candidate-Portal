@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
@@ -22,9 +22,16 @@ import { FileUploadField } from '@/components/onboarding/file-upload-field'
 import { cn } from '@/lib/utils'
 
 const EMPTY_QUALIFICATION = {
+  educational_category: '',
+  course_type: '',
+  university: '',
   degree: '',
   institution: '',
-  year_of_passing: '',
+  start_date: '',
+  end_date: '',
+  registration_number: '',
+  mode_of_learning: '',
+  is_currently_pursuing: false,
   percentage_or_cgpa: '',
   specialization: '',
   document_url: '',
@@ -72,8 +79,6 @@ export function EducationStep({ className }: EducationStepProps) {
   const { stepData, setStepData, saveDraft, nextStep, prevStep, markStepComplete, isSaving } =
     useOnboarding()
   const existingData = (stepData.education ?? {}) as Partial<EducationData>
-
-  const [currentlyPursuing, setCurrentlyPursuing] = useState(false)
 
   const {
     register,
@@ -136,11 +141,14 @@ export function EducationStep({ className }: EducationStepProps) {
             {/* Education Category */}
             <div className="space-y-1.5">
               <Label className="text-sm font-medium text-foreground">
-                Education Category
+                Education Category <span className="text-destructive">*</span>
               </Label>
-              <Select>
+              <Select
+                value={watch(`qualifications.${index}.educational_category`) || ""}
+                onValueChange={(value) => setValue(`qualifications.${index}.educational_category`, value, { shouldValidate: true })}
+              >
                 <SelectTrigger className="w-full bg-muted">
-                  <SelectValue placeholder="Select" />
+                  <SelectValue placeholder="Select education category" />
                 </SelectTrigger>
                 <SelectContent>
                   {EDUCATION_CATEGORIES.map((cat) => (
@@ -150,12 +158,17 @@ export function EducationStep({ className }: EducationStepProps) {
                   ))}
                 </SelectContent>
               </Select>
+              {errors.qualifications?.[index]?.educational_category && (
+                <p className="text-xs text-destructive">
+                  {errors.qualifications[index].educational_category?.message}
+                </p>
+              )}
             </div>
 
             {/* Degree / Qualification */}
             <div className="space-y-1.5">
               <Label className="text-sm font-medium text-foreground">
-                Degree / Qualification
+                Degree / Qualification <span className="text-destructive">*</span>
               </Label>
               <Input
                 {...register(`qualifications.${index}.degree`)}
@@ -186,9 +199,12 @@ export function EducationStep({ className }: EducationStepProps) {
               <Label className="text-sm font-medium text-foreground">
                 Course Type
               </Label>
-              <Select>
+              <Select
+                value={watch(`qualifications.${index}.course_type`) || ""}
+                onValueChange={(value) => setValue(`qualifications.${index}.course_type`, value, { shouldValidate: true })}
+              >
                 <SelectTrigger className="w-full bg-muted">
-                  <SelectValue placeholder="Select" />
+                  <SelectValue placeholder="Select course type" />
                 </SelectTrigger>
                 <SelectContent>
                   {COURSE_TYPES.map((ct) => (
@@ -203,7 +219,7 @@ export function EducationStep({ className }: EducationStepProps) {
             {/* Institute Name */}
             <div className="space-y-1.5">
               <Label className="text-sm font-medium text-foreground">
-                Institute Name
+                Institute Name <span className="text-destructive">*</span>
               </Label>
               <Input
                 {...register(`qualifications.${index}.institution`)}
@@ -223,7 +239,8 @@ export function EducationStep({ className }: EducationStepProps) {
                 University / Board
               </Label>
               <Input
-                placeholder=""
+                {...register(`qualifications.${index}.university`)}
+                placeholder="Enter university or board name"
                 className="bg-muted"
               />
             </div>
@@ -248,6 +265,7 @@ export function EducationStep({ className }: EducationStepProps) {
               <Input
                 type="date"
                 className="bg-muted"
+                {...register(`qualifications.${index}.start_date`)}
               />
             </div>
 
@@ -259,7 +277,7 @@ export function EducationStep({ className }: EducationStepProps) {
               <Input
                 type="date"
                 className="bg-muted"
-                disabled={currentlyPursuing}
+                {...register(`qualifications.${index}.end_date`)}
               />
             </div>
 
@@ -269,7 +287,8 @@ export function EducationStep({ className }: EducationStepProps) {
                 Registration Number
               </Label>
               <Input
-                placeholder=""
+                {...register(`qualifications.${index}.registration_number`)}
+                placeholder="Enter registration number"
                 className="bg-muted"
               />
             </div>
@@ -279,9 +298,12 @@ export function EducationStep({ className }: EducationStepProps) {
               <Label className="text-sm font-medium text-foreground">
                 Mode of Learning
               </Label>
-              <Select>
+              <Select
+                value={watch(`qualifications.${index}.mode_of_learning`) || ""}
+                onValueChange={(value) => setValue(`qualifications.${index}.mode_of_learning`, value, { shouldValidate: true })}
+              >
                 <SelectTrigger className="w-full bg-muted">
-                  <SelectValue placeholder="Select" />
+                  <SelectValue placeholder="Select mode of learning" />
                 </SelectTrigger>
                 <SelectContent>
                   {MODE_OF_LEARNING.map((mode) => (
@@ -294,12 +316,7 @@ export function EducationStep({ className }: EducationStepProps) {
             </div>
           </div>
 
-          {/* Year of Passing (hidden, used for validation) */}
-          <input
-            type="hidden"
-            {...register(`qualifications.${index}.year_of_passing`)}
-            value={watch(`qualifications.${index}.year_of_passing`) || new Date().getFullYear().toString()}
-          />
+
 
           {/* Currently Pursuing + Upload */}
           <div className="mt-5 grid grid-cols-1 gap-x-4 gap-y-5 md:grid-cols-2">
@@ -311,8 +328,8 @@ export function EducationStep({ className }: EducationStepProps) {
               <div className="flex items-center gap-2 pt-1">
                 <Checkbox
                   id={`currently_pursuing_${index}`}
-                  checked={currentlyPursuing}
-                  onCheckedChange={(checked) => setCurrentlyPursuing(checked === true)}
+                  checked={watch(`qualifications.${index}.is_currently_pursuing`) || false}
+                  onCheckedChange={(checked) => setValue(`qualifications.${index}.is_currently_pursuing`, checked === true, { shouldValidate: true })}
                 />
                 <Label
                   htmlFor={`currently_pursuing_${index}`}
@@ -328,6 +345,8 @@ export function EducationStep({ className }: EducationStepProps) {
               label="Upload Marksheet / Degree"
               accept=".svg,.png,.jpg,.jpeg,.pdf"
               helpText="SVG, PNG, JPG or PDF (max. 5MB)"
+              value={watch(`qualifications.${index}.document_url`)}
+              onChange={(url) => setValue(`qualifications.${index}.document_url`, url || '', { shouldValidate: true })}
             />
           </div>
         </section>

@@ -19,9 +19,6 @@ import {
 } from '@/components/ui/select'
 import { FileUploadField } from '@/components/onboarding/file-upload-field'
 import { cn } from '@/lib/utils'
-import { toast } from "sonner";
-import { Value } from '@radix-ui/react-select'
-import { useFileUpload } from '@/lib/hooks/useFileUpload'
 
 interface PersonalInfoStepProps {
   data?: Record<string, unknown>
@@ -50,14 +47,22 @@ export function PersonalInfoStep({ className }: PersonalInfoStepProps) {
     resolver: zodResolver(personalInfoSchema),
     defaultValues: {
       first_name: '',
+      middle_name: '',
       last_name: '',
+      personal_email: '',
       date_of_birth: '',
       gender: undefined,
       blood_group: '',
       marital_status: undefined,
       nationality: '',
-      phone: '',
-      personal_email: '',
+      languages_known: '',
+      primary_contact_number: '',
+      office_mobile_number: '',
+      fathers_full_name: '',
+      mothers_full_name: '',
+      spouse_name: '',
+      children: '',
+      date_of_joining: '',
       photo_url: '',
       family_members: [],
       ...existingData,
@@ -69,14 +74,22 @@ export function PersonalInfoStep({ className }: PersonalInfoStepProps) {
     if (existingData && Object.keys(existingData).length > 0) {
       reset({
         first_name: '',
+        middle_name: '',
         last_name: '',
+        personal_email: '',
         date_of_birth: '',
         gender: undefined,
         blood_group: '',
         marital_status: undefined,
         nationality: '',
-        phone: '',
-        personal_email: '',
+        languages_known: '',
+        primary_contact_number: '',
+        office_mobile_number: '',
+        fathers_full_name: '',
+        mothers_full_name: '',
+        spouse_name: '',
+        children: '',
+        date_of_joining: '',
         photo_url: '',
         family_members: [],
         ...existingData,
@@ -87,31 +100,12 @@ export function PersonalInfoStep({ className }: PersonalInfoStepProps) {
   const onNext = handleSubmit(async (data) => {
     setStepData('personal_info', data as unknown as Record<string, unknown>)
     markStepComplete('personal_info')
-    await saveDraft().catch(() => {})
+    await saveDraft().catch(() => { })
     nextStep()
   })
 
-  const uploadMutation = useFileUpload()
-  // Debug log to inspect the mutation object
-
-  const handleFileUpload = (
-    field: string
-  ) => (file: File | null) => {
-    if (!file) {
-      setValue(field, "")
-      return
-    }
-  
-    uploadMutation.mutate(file, {
-      onSuccess(data: { file_url: string }) {
-        setValue(field, data?.file_url, { shouldValidate: true })
-        toast.success("File uploaded successfully")
-      },
-      onError(err: Error) {
-        console.error(err)
-        toast.error("File upload failed")
-      },
-    })
+  const handleFileUpload = (field: string) => (url: string | null) => {
+    setValue(field, url || "", { shouldValidate: true })
   }
 
   return (
@@ -143,7 +137,7 @@ export function PersonalInfoStep({ className }: PersonalInfoStepProps) {
               Middle Name
             </Label>
             <Input
-              {...register('nationality')}
+              {...register('middle_name')}
               placeholder="Ex. Kumar"
               className="bg-muted"
             />
@@ -186,12 +180,12 @@ export function PersonalInfoStep({ className }: PersonalInfoStepProps) {
               Primary Contact Number <span className="text-destructive">*</span>
             </Label>
             <Input
-              {...register('phone')}
+              {...register('primary_contact_number')}
               placeholder="+91 98765 43210"
               className="bg-muted"
             />
-            {errors.phone && (
-              <p className="text-xs text-destructive">{errors.phone.message}</p>
+            {errors.primary_contact_number && (
+              <p className="text-xs text-destructive">{errors.primary_contact_number.message}</p>
             )}
           </div>
 
@@ -201,10 +195,13 @@ export function PersonalInfoStep({ className }: PersonalInfoStepProps) {
               Office Mobile Number
             </Label>
             <Input
-              placeholder="Optional"
+              {...register('office_mobile_number')}
+              placeholder="+91 98765 43210"
               className="bg-muted"
-              disabled
             />
+            {errors.office_mobile_number && (
+              <p className="text-xs text-destructive">{errors.office_mobile_number.message}</p>
+            )}
           </div>
 
           {/* Date of Joining */}
@@ -214,8 +211,12 @@ export function PersonalInfoStep({ className }: PersonalInfoStepProps) {
             </Label>
             <Input
               type="date"
+              {...register('date_of_joining')}
               className="bg-muted"
             />
+            {errors.date_of_joining && (
+              <p className="text-xs text-destructive">{errors.date_of_joining.message}</p>
+            )}
           </div>
 
           {/* Date of Birth */}
@@ -290,6 +291,9 @@ export function PersonalInfoStep({ className }: PersonalInfoStepProps) {
                 <SelectItem value="Widowed">Widowed</SelectItem>
               </SelectContent>
             </Select>
+            {errors.marital_status && (
+              <p className="text-xs text-destructive">{errors.marital_status.message}</p>
+            )}
           </div>
 
           {/* Blood Group */}
@@ -320,6 +324,7 @@ export function PersonalInfoStep({ className }: PersonalInfoStepProps) {
               Languages Known
             </Label>
             <Input
+              {...register('languages_known')}
               placeholder="English, Hindi, etc."
               className="bg-muted"
             />
@@ -339,9 +344,13 @@ export function PersonalInfoStep({ className }: PersonalInfoStepProps) {
               Father&apos;s Full Name <span className="text-destructive">*</span>
             </Label>
             <Input
+              {...register('fathers_full_name')}
               className="bg-muted"
               placeholder=""
             />
+            {errors.fathers_full_name && (
+              <p className="text-xs text-destructive">{errors.fathers_full_name.message}</p>
+            )}
           </div>
 
           {/* Mother's Full Name */}
@@ -350,9 +359,13 @@ export function PersonalInfoStep({ className }: PersonalInfoStepProps) {
               Mother&apos;s Full Name <span className="text-destructive">*</span>
             </Label>
             <Input
+              {...register('mothers_full_name')}
               className="bg-muted"
               placeholder=""
             />
+            {errors.mothers_full_name && (
+              <p className="text-xs text-destructive">{errors.mothers_full_name.message}</p>
+            )}
           </div>
 
           {/* Spouse Name */}
@@ -361,6 +374,7 @@ export function PersonalInfoStep({ className }: PersonalInfoStepProps) {
               Spouse Name
             </Label>
             <Input
+              {...register('spouse_name')}
               placeholder="Optional"
               className="bg-muted"
             />
@@ -372,6 +386,7 @@ export function PersonalInfoStep({ className }: PersonalInfoStepProps) {
               Children
             </Label>
             <Input
+              {...register('children')}
               placeholder="Optional"
               className="bg-muted"
             />
@@ -385,18 +400,20 @@ export function PersonalInfoStep({ className }: PersonalInfoStepProps) {
         <Separator className="mt-2 mb-5" />
 
         <div className="grid grid-cols-1 gap-x-4 gap-y-5 md:grid-cols-2">
-        <FileUploadField
-  label="Upload Resume"
-  required
-  value={watch("resume_url")}
-  onChange={handleFileUpload("resume_url")}
-/>
-<FileUploadField
-  label="Upload Passport Size Photo"
-  required
-  value={watch("photo_url")}
-  onChange={handleFileUpload("photo_url")}
-/>
+          <FileUploadField
+            label="Upload Resume"
+            required
+            value={watch("resume_url")}
+            onChange={handleFileUpload("resume_url")}
+            error={errors.resume_url?.message}
+          />
+          <FileUploadField
+            label="Upload Passport Size Photo"
+            required
+            value={watch("photo_url")}
+            onChange={handleFileUpload("photo_url")}
+            error={errors.photo_url?.message}
+          />
         </div>
       </section>
 
