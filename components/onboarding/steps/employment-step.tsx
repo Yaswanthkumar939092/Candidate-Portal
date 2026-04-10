@@ -54,6 +54,8 @@ export function EmploymentStep({ className }: EmploymentStepProps) {
     resolver: zodResolver(employmentHistorySchema),
     defaultValues: {
       has_experience: false,
+      total_experience_years: '',
+      previous_annual_ctc: '',
       experiences: [],
       referral_name: '',
       referral_employee_id: '',
@@ -96,15 +98,21 @@ export function EmploymentStep({ className }: EmploymentStepProps) {
 
         <div className="grid grid-cols-1 gap-x-4 gap-y-5 md:grid-cols-3">
           {/* Total Experience (Years) */}
-          <div className="space-y-1.5">
-            <Label className="text-sm font-medium text-foreground">
-              Total Experience (Years) <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              placeholder=""
-              className="bg-muted"
-            />
-          </div>
+          {!isFresher && (
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-foreground">
+                Total Experience (Years) <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                {...register('total_experience_years')}
+                placeholder="e.g. 2.5"
+                className="bg-muted"
+              />
+              {errors.total_experience_years && (
+                <p className="text-xs text-destructive">{errors.total_experience_years.message}</p>
+              )}
+            </div>
+          )}
 
           {/* Are you a Fresher? */}
           <div className="space-y-1.5">
@@ -144,7 +152,8 @@ export function EmploymentStep({ className }: EmploymentStepProps) {
               Previous Annual CTC
             </Label>
             <Input
-              placeholder=""
+              {...register('previous_annual_ctc')}
+              placeholder="Enter annual CTC"
               className="bg-muted"
             />
           </div>
@@ -182,7 +191,7 @@ export function EmploymentStep({ className }: EmploymentStepProps) {
               </Label>
               <Input
                 {...register(`experiences.${index}.company`)}
-                placeholder=""
+                placeholder="Enter company name"
                 className="bg-muted"
               />
               {errors.experiences?.[index]?.company && (
@@ -195,7 +204,7 @@ export function EmploymentStep({ className }: EmploymentStepProps) {
               </Label>
               <Input
                 {...register(`experiences.${index}.designation`)}
-                placeholder=""
+                placeholder="Enter your job title"
                 className="bg-muted"
               />
               {errors.experiences?.[index]?.designation && (
