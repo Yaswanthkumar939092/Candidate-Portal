@@ -36,6 +36,7 @@ export function BankDetailsStep({ className }: BankDetailsStepProps) {
     watch,
     formState: { errors },
     reset,
+    setValue,
   } = useForm<BankDetailsData>({
     resolver: zodResolver(bankDetailsSchema),
     defaultValues: {
@@ -43,6 +44,7 @@ export function BankDetailsStep({ className }: BankDetailsStepProps) {
       account_number: '',
       confirm_account_number: '',
       ifsc_code: '',
+      uan_number: '',
       bank_name: '',
       branch_name: '',
       cheque_document_url: '',
@@ -57,6 +59,7 @@ export function BankDetailsStep({ className }: BankDetailsStepProps) {
         account_number: '',
         confirm_account_number: '',
         ifsc_code: '',
+        uan_number: '',
         bank_name: '',
         branch_name: '',
         cheque_document_url: '',
@@ -65,10 +68,21 @@ export function BankDetailsStep({ className }: BankDetailsStepProps) {
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const bankName = watch('bank_name')
+  const accountNumber = watch('account_number')
+
+  useEffect(() => {
+    setValue('account_holder_name', bankName || '', { shouldValidate: true })
+  }, [bankName, setValue])
+
+  useEffect(() => {
+    setValue('confirm_account_number', accountNumber || '', { shouldValidate: true })
+  }, [accountNumber, setValue])
+
   const onNext = handleSubmit(async (data) => {
     setStepData('bank_details', data as unknown as Record<string, unknown>)
     markStepComplete('bank_details')
-    await saveDraft().catch(() => {})
+    await saveDraft().catch(() => { })
     nextStep()
   })
 
@@ -87,7 +101,7 @@ export function BankDetailsStep({ className }: BankDetailsStepProps) {
             </Label>
             <Input
               {...register('bank_name')}
-              placeholder=""
+              placeholder="e.g. State Bank of India"
               className="bg-muted"
             />
             {errors.bank_name && (
@@ -102,7 +116,7 @@ export function BankDetailsStep({ className }: BankDetailsStepProps) {
             </Label>
             <Input
               {...register('account_number')}
-              placeholder=""
+              placeholder="Enter account number"
               className="bg-muted"
               autoComplete="off"
             />
@@ -118,7 +132,7 @@ export function BankDetailsStep({ className }: BankDetailsStepProps) {
             </Label>
             <Input
               {...register('ifsc_code')}
-              placeholder=""
+              placeholder="e.g. SBIN0001234"
               className="bg-muted uppercase"
             />
             {errors.ifsc_code && (
@@ -132,23 +146,14 @@ export function BankDetailsStep({ className }: BankDetailsStepProps) {
               UAN Number (Optional)
             </Label>
             <Input
+              {...register('uan_number')}
               placeholder="If applicable"
               className="bg-muted"
             />
           </div>
         </div>
 
-        {/* Hidden confirm field for schema validation - pre-fill with account_number */}
-        <input
-          type="hidden"
-          {...register('confirm_account_number')}
-          value={watch('account_number')}
-        />
-        <input
-          type="hidden"
-          {...register('account_holder_name')}
-          value={watch('bank_name')}
-        />
+        {/* Hidden confirm field for schema validation - handled by useEffects above */}
 
         {/* Upload Cancelled Cheque / Passbook / Statement */}
         <div className="mt-5">
@@ -157,6 +162,9 @@ export function BankDetailsStep({ className }: BankDetailsStepProps) {
             required
             accept=".svg,.png,.jpg,.jpeg,.pdf"
             helpText="SVG, PNG, JPG or PDF (max. 5MB)"
+            value={watch('cheque_document_url')}
+            onChange={(url) => setValue('cheque_document_url', url || '', { shouldValidate: true })}
+            error={errors.cheque_document_url?.message}
           />
         </div>
       </section>
