@@ -75,11 +75,16 @@ export async function GET(request: NextRequest) {
     }
 
     const { data: featureFlags, error } = await query
-
+    
     if (error) {
-      console.error('Error fetching feature flags:', error)
+      console.error('Error fetching feature flags from Supabase:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      })
       return NextResponse.json(
-        { error: 'Failed to fetch feature flags' },
+        { error: 'Failed to fetch feature flags', details: error.message },
         { status: 500 }
       )
     }

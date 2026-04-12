@@ -15,9 +15,10 @@ export interface FormField {
   fieldname: string
   label: string
   fieldtype: string
-  is_mandatory?: boolean
-  read_only?: boolean
-  hidden?: boolean
+  is_mandatory?: boolean | number
+  reqd?: boolean | number
+  read_only?: boolean | number
+  hidden?: boolean | number
   options?: string
 }
 
@@ -53,14 +54,14 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
     component: ({ field, value, onChange, error, disabled, className }) => (
       <div className={cn("space-y-1.5", className)}>
         <Label className="text-sm font-medium text-foreground">
-          {field.label} {field.is_mandatory && <span className="text-destructive">*</span>}
+          {field.label} {!!(field.is_mandatory || field.reqd) && <span className="text-destructive">*</span>}
         </Label>
         <Input
           type="text"
           value={value as string || ''}
           onChange={(e) => onChange(e.target.value)}
           placeholder={field.label}
-          disabled={disabled || field.read_only}
+          disabled={disabled || !!field.read_only}
           className="bg-muted"
         />
         {error && <p className="text-xs text-destructive">{error}</p>}
@@ -71,14 +72,14 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
     component: ({ field, value, onChange, error, disabled, className }) => (
       <div className={cn("space-y-1.5", className)}>
         <Label className="text-sm font-medium text-foreground">
-          {field.label} {field.is_mandatory && <span className="text-destructive">*</span>}
+          {field.label} {!!(field.is_mandatory || field.reqd) && <span className="text-destructive">*</span>}
         </Label>
         <Input
           type="number"
           value={value as string || ''}
           onChange={(e) => onChange(e.target.value)}
           placeholder={field.label}
-          disabled={disabled || field.read_only}
+          disabled={disabled || !!field.read_only}
           className="bg-muted"
         />
         {error && <p className="text-xs text-destructive">{error}</p>}
@@ -89,7 +90,7 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
     component: ({ field, value, onChange, error, disabled, className }) => (
       <div className={cn("space-y-1.5", className)}>
         <Label className="text-sm font-medium text-foreground">
-          {field.label} {field.is_mandatory && <span className="text-destructive">*</span>}
+          {field.label} {!!(field.is_mandatory || field.reqd) && <span className="text-destructive">*</span>}
         </Label>
         <Input
           type="number"
@@ -97,7 +98,7 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
           value={value as string || ''}
           onChange={(e) => onChange(e.target.value)}
           placeholder={field.label}
-          disabled={disabled || field.read_only}
+          disabled={disabled || !!field.read_only}
           className="bg-muted"
         />
         {error && <p className="text-xs text-destructive">{error}</p>}
@@ -108,13 +109,13 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
     component: ({ field, value, onChange, error, disabled, className }) => (
       <div className={cn("space-y-1.5", className)}>
         <Label className="text-sm font-medium text-foreground">
-          {field.label} {field.is_mandatory && <span className="text-destructive">*</span>}
+          {field.label} {!!(field.is_mandatory || field.reqd) && <span className="text-destructive">*</span>}
         </Label>
         <Input
           type="date"
           value={value as string || ''}
           onChange={(e) => onChange(e.target.value)}
-          disabled={disabled || field.read_only}
+          disabled={disabled || !!field.read_only}
           className="bg-muted"
         />
         {error && <p className="text-xs text-destructive">{error}</p>}
@@ -127,10 +128,10 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
       return (
         <div className={cn("space-y-1.5", className)}>
           <Label className="text-sm font-medium text-foreground">
-            {field.label} {field.is_mandatory && <span className="text-destructive">*</span>}
+            {field.label} {!!(field.is_mandatory || field.reqd) && <span className="text-destructive">*</span>}
           </Label>
           <Select
-            disabled={disabled || field.read_only}
+            disabled={disabled || !!field.read_only}
             value={(value as string) || ''}
             onValueChange={(val) => onChange(val)}
           >
@@ -156,10 +157,10 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
       return (
         <div className={cn("space-y-1.5", className)}>
           <Label className="text-sm font-medium text-foreground">
-            {field.label} {field.is_mandatory && <span className="text-destructive">*</span>}
+            {field.label} {!!(field.is_mandatory || field.reqd) && <span className="text-destructive">*</span>}
           </Label>
           <Select
-            disabled={disabled || field.read_only}
+            disabled={disabled || !!field.read_only}
             value={(value as string) || ''}
             onValueChange={(val) => onChange(val)}
           >
@@ -185,14 +186,14 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
     component: ({ field, value, onChange, error, disabled, className }) => (
       <div className={cn("space-y-1.5", className)}>
         <Label className="text-sm font-medium text-foreground">
-          {field.label} {field.is_mandatory && <span className="text-destructive">*</span>}
+          {field.label} {!!(field.is_mandatory || field.reqd) && <span className="text-destructive">*</span>}
         </Label>
         <Input
           type="text"
           value={value as string || ''}
           onChange={(e) => onChange(e.target.value)}
           placeholder={field.label}
-          disabled={disabled || field.read_only}
+          disabled={disabled || !!field.read_only}
           className="bg-muted"
         />
         {error && <p className="text-xs text-destructive">{error}</p>}
@@ -203,14 +204,14 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
     component: ({ field, value, onChange, error, disabled, className }) => (
       <div className={cn("space-y-1.5", className)}>
         <Label className="text-sm font-medium text-foreground">
-          {field.label} {field.is_mandatory && <span className="text-destructive">*</span>}
+          {field.label} {!!(field.is_mandatory || field.reqd) && <span className="text-destructive">*</span>}
         </Label>
         <Input
           type="text"
           value={value as string || ''}
           onChange={(e) => onChange(e.target.value)}
           placeholder={field.label}
-          disabled={disabled || field.read_only}
+          disabled={disabled || !!field.read_only}
           className="bg-muted"
         />
         {error && <p className="text-xs text-destructive">{error}</p>}
@@ -228,7 +229,7 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
             className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
           />
           <span className="text-sm font-medium text-foreground">
-            {field.label} {field.is_mandatory && <span className="text-destructive">*</span>}
+            {field.label} {!!(field.is_mandatory || field.reqd) && <span className="text-destructive">*</span>}
           </span>
         </Label>
         {error && <p className="text-xs text-destructive">{error}</p>}
@@ -267,8 +268,7 @@ export function DynamicFieldRenderer<T extends FormField>({
 }: DynamicFieldRendererProps<T>) {
   if (field.hidden) return null
 
-  const isMandatory = !!field.is_mandatory
-  const isReadOnly = !!field.read_only
+  const isReadOnly = !!(field.read_only)
 
   const allFields = { ...defaultFields, ...overrides } as Record<FieldType, FieldConfig<T> | null>
   const fieldConfig = allFields[field.fieldtype as FieldType]
@@ -277,7 +277,7 @@ export function DynamicFieldRenderer<T extends FormField>({
     return (
       <div className={cn("space-y-1.5", className)}>
         <Label className="text-sm font-medium text-foreground">
-          {field.label} {isMandatory && <span className="text-destructive">*</span>}
+          {field.label} {!!(field.is_mandatory || field.reqd) && <span className="text-destructive">*</span>}
         </Label>
         <Input
           value={value as string || ''}
