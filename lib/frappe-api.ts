@@ -49,6 +49,29 @@ export const FrappeAPI = {
     return data.message;
   },
 
+  getResource: async (resource: string, params: Record<string, string> = {}) => {
+    let queryString = new URLSearchParams(params).toString();
+    // The user specifically requested unencoded brackets for the array query params
+    queryString = queryString.replace(/%5B/g, '[').replace(/%5D/g, ']');
+
+    const url = `${process.env.NEXT_PUBLIC_FRAPPE_URL}/api/resource/${resource}${
+      queryString ? `?${queryString}` : ""
+    }`;
+
+    const res = await fetch(url, {
+      method: "GET",
+      credentials: "include",
+    });
+
+    if (!res.ok) {
+      throw new Error(`API request failed: ${res.statusText}`);
+    }
+
+    // /api/resource returns { data: [...] } instead of { message: ... }
+    const responseData = await res.json();
+    return responseData;
+  },
+
   getBlob: async (method: string, params: Record<string, string> = {}): Promise<Blob> => {
     const queryString = new URLSearchParams(params).toString();
     const url = `${process.env.NEXT_PUBLIC_FRAPPE_URL}/api/method/${method}${

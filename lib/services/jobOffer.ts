@@ -20,6 +20,11 @@ export interface UpdateJobOfferStatusResponse {
   webform: string;
 }
 
+export interface RejectionReason {
+  name: string;
+  reason: string;
+}
+
 export const jobOfferService = {
   getJobOfferSummary: async (appl: string): Promise<JobOfferSummary> => {
     try {
@@ -29,6 +34,16 @@ export const jobOfferService = {
       return result;
     } catch (error) {
       console.error("Failed to fetch job offer summary:", error);
+      throw error;
+    }
+  },
+
+  getRejectionReasons: async (): Promise<RejectionReason[]> => {
+    try {
+      const result = await FrappeAPI.get("recruitment.job_offer_utils.get_rejection_reasons");
+      return result;
+    } catch (error) {
+      console.error("Failed to fetch rejection reasons:", error);
       throw error;
     }
   },

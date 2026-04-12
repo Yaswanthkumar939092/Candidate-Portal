@@ -57,3 +57,11 @@ export const useJobOfferStatus = (appl: string) => {
     staleTime: 1000 * 60 * 1, // 1 minute
   });
 };
+
+export const useRejectionReasons = () => {
+  return useQuery({
+    queryKey: ["rejectionReasons"],
+    queryFn: () => jobOfferService.getRejectionReasons(),
+    staleTime: 1000 * 60 * 60, // 1 hour — common set of reasons
+  });
+};
