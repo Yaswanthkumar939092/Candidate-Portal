@@ -21,7 +21,7 @@ function OnboardingContent() {
   const { currentStep, completedSteps, isLoading, formConfig, status, isError } = useOnboarding()
   const router = useRouter()
 
-  if (isLoading) {
+  if (isLoading || (!formConfig && !isError)) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="flex flex-col items-center gap-3">

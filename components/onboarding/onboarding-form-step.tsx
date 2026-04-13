@@ -43,7 +43,6 @@ export function OnboardingFormStep({ tab, stepKey, className }: OnboardingFormSt
   }, [tab, existingData])
 
   const {
-    register,
     handleSubmit,
     watch,
     setValue,
