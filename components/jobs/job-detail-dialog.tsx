@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation";
 
 interface JobDetailDialogProps {
   job: {
+    custom_qualifications: string[];
     id: string;
     title: string;
     company: string;
@@ -49,23 +50,14 @@ export function JobDetailDialog({
   job,
   open,
   onOpenChange,
-  onApply,
 }: JobDetailDialogProps) {
   if (!job) return null;
   const router = useRouter();
 
-  const requirements = job.requirements ?? [
-    "5+ years of product design experience",
-    "Strong portfolio demonstrating user-centered design process",
-    "Proficiency in Figma, Sketch, or similar design tools",
-    "Experience with Design Systems, Prototyping",
-    "Excellent communication skills",
-    "Bachelor's degree in relevant field",
-  ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg md:max-w-3xl w-full lg:max-w-5xl">
         <DialogHeader>
           <DialogTitle className="text-lg">{job.title}</DialogTitle>
           <DialogDescription className="flex flex-wrap items-center gap-2 pt-1 text-xs text-muted-foreground">
@@ -117,18 +109,6 @@ export function JobDetailDialog({
             className="list-disc space-y-1 pl-5 text-sm text-muted-foreground"
             dangerouslySetInnerHTML={{ __html: job.description || "" }}
           />
-        </div>
-
-        {/* Requirements */}
-        <div className="space-y-3">
-          <h4 className="text-sm font-semibold text-foreground">
-            Requirements
-          </h4>
-          <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
-            {requirements.map((req, i) => (
-              <li key={i}>{req}</li>
-            ))}
-          </ul>
         </div>
 
         <DialogFooter>
