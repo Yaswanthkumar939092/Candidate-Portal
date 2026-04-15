@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { JobApplicantService, JobOpeningService } from "../services/jobOpeningService";
+import { jobApplicationService } from "../services/jobOpeningService";
 
 
 export const useJobOpening = ({ page, limit }: { page: number; limit: number }) => {
@@ -24,3 +25,17 @@ export const useCreateJobApplicant = () => {
     },
   });
 };
+
+
+
+export function useJobApplicationForm() {
+  return useQuery({
+    queryKey: ["job-application-form"],
+    queryFn: async () => {
+      const data = await jobApplicationService.getJobApplicationForm();
+
+      // ✅ DOUBLE SAFETY
+      return data ?? { fields: [] };
+    },
+  });
+}
