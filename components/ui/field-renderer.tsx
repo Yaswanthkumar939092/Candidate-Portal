@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 "use client"
 
 import { Input } from '@/components/ui/input'
@@ -9,7 +10,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { FrappeAPI } from '@/lib/frappe-api'
 import { cn } from '@/lib/utils'
+import React from 'react'
 
 export interface FormField {
   fieldname: string
@@ -124,20 +127,58 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
   },
   Link: {
     component: ({ field, value, onChange, error, disabled, className }) => {
-      const options = parseOptions(field.options)
+      const [options, setOptions] = React.useState<string[]>([])
+      const [loading, setLoading] = React.useState(false)
+
+      React.useEffect(() => {
+        if (!field.options) return;
+       const doctype = field.options;
+        const fetchOptions = async () => {
+          try {
+            setLoading(true);
+            const res = await FrappeAPI.getresourceDocumentData(
+              doctype,
+              {
+                fields: ["name"],
+                page: 1,     // ✅ from component
+                limit: 100000,   // ✅ from component
+              }
+            );
+            const data = res?.data || [];
+            const optionsList = data.map((item: any) => item.name);
+            setOptions(optionsList);
+          } catch (err) {
+            console.error("Link fetch error:", err);
+            setOptions([]);
+          } finally {
+            setLoading(false);
+          }
+        };
+      
+        fetchOptions();
+      }, [field.options]);
+  
       return (
         <div className={cn("space-y-1.5", className)}>
           <Label className="text-sm font-medium text-foreground">
-            {field.label} {!!(field.is_mandatory || field.reqd) && <span className="text-destructive">*</span>}
+            {field.label} {!!(field.is_mandatory || field.reqd) && (
+              <span className="text-destructive">*</span>
+            )}
           </Label>
+  
           <Select
-            disabled={disabled || !!field.read_only}
-            value={(value as string) || ''}
+            disabled={disabled || !!field.read_only || loading}
+            value={(value as string) || ""}
             onValueChange={(val) => onChange(val)}
           >
             <SelectTrigger className="w-full bg-muted">
-              <SelectValue placeholder={`Select ${field.label}`} />
+              <SelectValue
+                placeholder={
+                  loading ? "Loading..." : `Select ${field.label}`
+                }
+              />
             </SelectTrigger>
+  
             <SelectContent>
               {options.map((opt) => (
                 <SelectItem key={opt} value={opt}>
@@ -146,6 +187,7 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
               ))}
             </SelectContent>
           </Select>
+  
           {error && <p className="text-xs text-destructive">{error}</p>}
         </div>
       )

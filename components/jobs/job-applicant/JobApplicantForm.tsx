@@ -1,0 +1,128 @@
+"use client";
+
+import { useState } from "react";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { useJobApp } from "@/lib/contexts/job-application-context";
+import { JobApplicationStepNav } from "./job-applicationstep-nav";
+import { JobApplicationStep } from "./DynamicField";
+
+interface JobApplicationPageProps {
+  jobID: string;
+}
+
+export default function JobApplicationPage({
+  jobID,
+}: JobApplicationPageProps) {
+  const { tabs, isLoading, stepData } = useJobApp();
+  const [currentStep, setCurrentStep] = useState(0);
+  const [completedSteps, setCompletedSteps] = useState<Set<string>>(
+    new Set()
+  );
+
+  // ── Loading / empty states ──────────────────────────────────────────────
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!tabs.length) return null;
+
+  // ── Helpers ─────────────────────────────────────────────────────────────
+
+  const currentTab = tabs[currentStep];
+  const stepKey = currentTab.tab.toLowerCase().replace(/\s+/g, "_");
+
+  const markStepComplete = (key: string) => {
+    setCompletedSteps((prev) => new Set([...prev, key]));
+  };
+
+  /**
+   * Validate required fields for the currently active step.
+   * Returns a map of fieldname → error message.
+   */
+  const validateCurrentStep = (): Record<string, string> => {
+    const data = (stepData?.[stepKey] ?? {}) as Record<string, unknown>;
+    const errors: Record<string, string> = {};
+
+    currentTab.sections.forEach((section: { fields: Array<{ fieldname: string; label: string; reqd?: number | boolean; is_mandatory?: number | boolean }> }) => {
+      section.fields?.forEach((field) => {
+        const isRequired = field.reqd || field.is_mandatory;
+        if (isRequired) {
+          const val = data[field.fieldname];
+          if (val === undefined || val === null || val === "") {
+            errors[field.fieldname] = `${field.label} is required`;
+          }
+        }
+      });
+    });
+
+    return errors;
+  };
+
+  // ── Step navigation ──────────────────────────────────────────────────────
+
+  const handleNext = () => {
+    markStepComplete(stepKey);
+    setCurrentStep((p) => Math.min(p + 1, tabs.length - 1));
+  };
+
+  const handlePrev = () => {
+    setCurrentStep((p) => Math.max(p - 1, 0));
+  };
+
+  const handleStepChange = (nextIndex: number) => {
+    if (nextIndex > currentStep) {
+      const errors = validateCurrentStep();
+      if (Object.keys(errors).length > 0) {
+        toast.warning("Please fill all required fields before proceeding.");
+        return;
+      }
+      markStepComplete(stepKey);
+    }
+    setCurrentStep(nextIndex);
+  };
+
+  // ── Render ───────────────────────────────────────────────────────────────
+
+  return (
+    <div className="flex h-[calc(100vh-64px)]  overflow-hidden">
+      {/* Sidebar */}
+      <JobApplicationStepNav
+        currentStep={currentStep}
+        completedSteps={completedSteps}
+        onStepChange={handleStepChange}
+        className="hidden w-64 shrink-0 md:flex"
+      />
+
+      {/* Main content */}
+      <main className="flex-1 w-full lg:max-w-7xl  overflow-y-auto">
+        <div className="mx-auto w-full px-4 py-8 sm:px-6 lg:px-8">
+          {/* Step header */}
+          <div className="mb-6">
+            <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+              Step {currentStep + 1} of {tabs.length}
+            </p>
+            <h1 className="mt-1 text-2xl font-bold text-foreground">
+              {currentTab.tab}
+            </h1>
+          </div>
+
+          <JobApplicationStep
+            tab={currentTab}
+            stepKey={stepKey}
+            currentStep={currentStep}
+            totalSteps={tabs.length}
+            jobID={jobID}
+            onNext={handleNext}
+            onPrev={handlePrev}
+          />
+        </div>
+      </main>
+    </div>
+  );
+}
