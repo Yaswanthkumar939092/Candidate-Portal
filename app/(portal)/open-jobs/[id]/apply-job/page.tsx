@@ -1,6 +1,7 @@
 // app/open-jobs/[id]/apply/page.tsx
 
-import JobApplicantForm from "@/components/jobs/job-applicant-form";
+import JobApplicationPage from "@/components/jobs/job-applicant/JobApplicantForm";
+import { JobAppProvider } from "@/lib/contexts/job-application-context";
 
 export default function ApplyPage({
   params,
@@ -8,8 +9,10 @@ export default function ApplyPage({
   params: { id: string };
 }) {
   return (
-    <div className="">
-      <JobApplicantForm jobID={params.id} />
+    <div className="h-screen">
+       <JobAppProvider>
+      <JobApplicationPage jobID={params.id} />
+      </JobAppProvider>
     </div>
   );
 }
