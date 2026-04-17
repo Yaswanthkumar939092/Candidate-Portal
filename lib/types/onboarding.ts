@@ -9,6 +9,8 @@ export interface OnboardingField {
   options?: string;
   child_doctype?: string;
   child_fields?: OnboardingField[];
+  value?: any;
+  default?: any;
 }
 
 export interface OnboardingSection {
