@@ -136,7 +136,11 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
           loadedStepData[key] = {}
           tab.sections.forEach((section) => {
             section.fields.forEach((field) => {
-              if (field.fieldtype === 'Table') {
+              const fieldValue = field.value !== undefined ? field.value : field.default;
+
+              if (fieldValue !== undefined && fieldValue !== null) {
+                loadedStepData[key][field.fieldname] = fieldValue
+              } else if (field.fieldtype === 'Table') {
                 loadedStepData[key][field.fieldname] = []
               } else {
                 loadedStepData[key][field.fieldname] = ''

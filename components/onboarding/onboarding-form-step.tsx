@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useMemo } from 'react'
+import React, { useEffect, useMemo, useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useOnboarding } from '@/lib/contexts/onboarding-context'
@@ -31,16 +31,51 @@ export function OnboardingFormStep({ tab, stepKey, className }: OnboardingFormSt
     tab.sections.forEach(section => {
       section.fields.forEach(field => {
         if (values[field.fieldname] === undefined) {
-          if (field.fieldtype === 'Table') {
-            values[field.fieldname] = []
+          const fieldValue = field.value !== undefined ? field.value : field.default;
+          if (fieldValue !== undefined && fieldValue !== null) {
+            values[field.fieldname] = fieldValue;
+          } else if (field.fieldtype === 'Table') {
+            values[field.fieldname] = [];
           } else {
-            values[field.fieldname] = ''
+            values[field.fieldname] = '';
           }
         }
       });
     });
     return values
   }, [tab, existingData])
+
+  const validationResolver = useCallback((values: Record<string, any>) => {
+    const errorList: Record<string, any> = {};
+    tab.sections.forEach(section => {
+      section.fields.forEach(field => {
+        if (!field.hidden && (field.is_mandatory || field.reqd)) {
+          const val = values[field.fieldname];
+          const isCheck = field.fieldtype === 'Check';
+          const isTable = field.fieldtype === 'Table';
+
+          if (isTable) {
+            if (!val || !Array.isArray(val) || val.length === 0) {
+              errorList[field.fieldname] = { type: 'required', message: `${field.label || 'This field'} is required` };
+            }
+          } else if (isCheck) {
+            if (!Boolean(val)) {
+              errorList[field.fieldname] = { type: 'required', message: `${field.label || 'This field'} is required` };
+            }
+          } else {
+            if (val === undefined || val === null || val === '') {
+              errorList[field.fieldname] = { type: 'required', message: `${field.label || 'This field'} is required` };
+            }
+          }
+        }
+      });
+    });
+
+    return {
+      values,
+      errors: errorList
+    };
+  }, [tab]);
 
   const {
     handleSubmit,
@@ -52,6 +87,7 @@ export function OnboardingFormStep({ tab, stepKey, className }: OnboardingFormSt
     getValues,
   } = useForm({
     defaultValues,
+    resolver: validationResolver,
   })
 
   useEffect(() => {
