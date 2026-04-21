@@ -4,7 +4,7 @@ import React, { useState, Suspense } from "react";
 import NextImage from "next/image";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useJobOfferSummary, useJobOfferPdf, useUpdateJobOfferStatus, useJobOfferStatus } from "@/lib/hooks/useJobOffer";
+import { useJobOfferSummary, useJobOfferPdf, useUpdateJobOfferStatus, useJobOfferStatus, useRejectionReasons } from "@/lib/hooks/useJobOffer";
 import { useCurrentUser } from "@/lib/hooks/useUser";
 import { useCompanyLogo } from "@/lib/hooks/useCompanyLogo";
 import dynamic from "next/dynamic";
@@ -19,13 +19,7 @@ const PdfViewer = dynamic(() => import("./PdfViewer"), {
   ),
 });
 
-const REJECTION_REASONS = [
-  { name: "Not interested", reason: "Not interested" },
-  { name: "Accepted another offer", reason: "Accepted another offer" },
-  { name: "Salary not as per expectations", reason: "Salary not as per expectations" },
-  { name: "Personal reasons", reason: "Personal reasons" },
-  { name: "Other", reason: "Other" },
-];
+
 
 export default function JobOfferPage() {
   return (
@@ -62,6 +56,7 @@ function JobOfferContent() {
   const { data: offerData, isLoading: isApiLoading } = useJobOfferSummary(applicantEmail, isSummaryNeeded);
   const { pdfUrl, isLoading: isPdfLoading } = useJobOfferPdf(applicantEmail, isPdfNeeded);
   const { mutateAsync: updateStatus } = useUpdateJobOfferStatus();
+  const { data: reasonsData, isLoading: isReasonsLoading } = useRejectionReasons();
 
   React.useEffect(() => {
     if (statusNormalized) {
@@ -337,10 +332,10 @@ function JobOfferContent() {
               value={rejectionReason}
               onChange={(e) => setRejectionReason(e.target.value)}
             >
-              <option value="">Select a reason...</option>
-              {REJECTION_REASONS.map((r) => (
-                <option key={r.name} value={r.name}>
-                  {r.reason}
+              <option value="">{isReasonsLoading ? "Loading reasons..." : "Select a reason..."}</option>
+              {reasonsData?.map((r) => (
+                <option key={r.reason} value={r.reason}>
+                  {r.name}
                 </option>
               ))}
             </select>

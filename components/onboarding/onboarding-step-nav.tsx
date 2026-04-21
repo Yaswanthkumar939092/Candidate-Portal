@@ -4,32 +4,9 @@ import Link from 'next/link'
 import {
   Check,
   ArrowLeft,
-  User,
-  MapPin,
-  Shield,
-  Building2,
-  Phone,
-  GraduationCap,
-  Briefcase,
-  FileCheck,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { ONBOARDING_STEPS } from '@/lib/validation/onboarding-schemas'
 import { useOnboarding } from '@/lib/contexts/onboarding-context'
-
-/**
- * Icon map for each onboarding step for the sidebar display.
- */
-const STEP_ICONS: Record<number, React.ElementType> = {
-  0: User,
-  1: MapPin,
-  2: Shield,
-  3: Building2,
-  4: Phone,
-  5: GraduationCap,
-  6: Briefcase,
-  7: FileCheck,
-}
 
 interface OnboardingStepNavProps {
   className?: string
@@ -39,15 +16,25 @@ interface OnboardingStepNavProps {
  * Sidebar navigation for the onboarding wizard.
  *
  * Features a blue header with title, subtitle, and progress bar,
- * followed by 8 numbered step items with status indicators
+ * followed by dynamic step items with status indicators
  * (active/completed/pending), and a "Back to Dashboard" link at the bottom.
  */
 export function OnboardingStepNav({ className }: OnboardingStepNavProps) {
-  const { currentStep, completedSteps, goToStep } = useOnboarding()
+  const { currentStep, completedSteps, goToStep, formConfig } = useOnboarding()
 
-  const progressPercentage = Math.round(
-    (completedSteps.size / ONBOARDING_STEPS.length) * 100
-  )
+  const tabs = formConfig?.tabs || []
+  const steps = [
+    ...tabs.map(t => ({ 
+      key: t.tab.toLowerCase().replace(/\s+/g, '_'), 
+      label: t.tab 
+    })), 
+    { key: 'review', label: 'Review' }
+  ]
+
+  const totalSteps = steps.length
+  const progressPercentage = totalSteps > 0 
+    ? Math.round((completedSteps.size / totalSteps) * 100)
+    : 0
 
   return (
     <nav
@@ -79,7 +66,7 @@ export function OnboardingStepNav({ className }: OnboardingStepNavProps) {
       {/* Step list */}
       <div className="flex-1 overflow-y-auto px-3 py-4">
         <div className="flex flex-col gap-0.5">
-          {ONBOARDING_STEPS.map((step, index) => {
+          {steps.map((step, index) => {
             const isCompleted = completedSteps.has(step.key)
             const isCurrent = index === currentStep
             const isPast = index < currentStep

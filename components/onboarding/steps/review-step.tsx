@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
@@ -11,10 +11,10 @@ import {
   AlertCircle,
   Info,
 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import {
   reviewDeclarationSchema,
   type ReviewDeclarationData,
-  ONBOARDING_STEPS,
 } from '@/lib/validation/onboarding-schemas'
 import { useOnboarding } from '@/lib/contexts/onboarding-context'
 import { Button } from '@/components/ui/button'
@@ -34,7 +34,7 @@ interface ReviewSection {
 }
 
 /**
- * Step 8: Review & Submit.
+ * Step: Review & Submit.
  *
  * Displays a "Review All Details" header with collapsible accordion
  * sections for each completed step, a declaration info box,
@@ -44,16 +44,28 @@ export function ReviewStep() {
   const {
     stepData,
     completedSteps,
-    saveDraft,
     submitAll,
     prevStep,
     goToStep,
     isSaving,
     status,
+    formConfig,
   } = useOnboarding()
+
+  const router = useRouter()
 
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [expandedSection, setExpandedSection] = useState<string | null>(null)
+
+  // Auto-redirect to dashboard if already submitted
+  useEffect(() => {
+    if (status === 'submitted') {
+      const timer = setTimeout(() => {
+        router.push('/dashboard')
+      }, 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [status, router])
 
   const {
     handleSubmit,
@@ -73,11 +85,19 @@ export function ReviewStep() {
     try {
       setSubmitError(null)
       await submitAll()
+      router.push('/dashboard')
     } catch (error) {
       setSubmitError(
         error instanceof Error ? error.message : 'Failed to submit. Please try again.'
       )
     }
+  })
+
+  const tabs = formConfig?.tabs || []
+
+  const incompleteSteps = tabs.filter((tab) => {
+    const key = tab.tab.toLowerCase().replace(/\s+/g, '_')
+    return !completedSteps.has(key)
   })
 
   // Success state
@@ -92,94 +112,43 @@ export function ReviewStep() {
           Your onboarding information has been submitted successfully. Our HR team will review your
           details and get back to you shortly.
         </p>
+        <Button 
+          className="mt-8" 
+          onClick={() => router.push('/dashboard')}
+        >
+          Go to Dashboard
+        </Button>
       </div>
     )
   }
 
-  const personalInfo = stepData.personal_info as Record<string, unknown> | undefined
-  const address = stepData.address as Record<string, unknown> | undefined
-  const identity = stepData.identity_documents as Record<string, unknown> | undefined
-  const bank = stepData.bank_details as Record<string, unknown> | undefined
-  const education = stepData.education as Record<string, unknown> | undefined
-  const employment = stepData.employment_history as Record<string, unknown> | undefined
+  /** Dynamic review sections based on formConfig tabs */
+  const sections: ReviewSection[] = tabs.map((tab, idx) => {
+    const key = tab.tab.toLowerCase().replace(/\s+/g, '_')
+    return {
+      key,
+      label: tab.tab,
+      stepIndex: idx,
+      getSummary: () => {
+        const data = stepData[key]
+        if (!data) return ''
 
-  const requiredSteps = ONBOARDING_STEPS.slice(0, 7)
-  const incompleteSteps = requiredSteps.filter((step) => !completedSteps.has(step.key))
+        // Check if this tab contains any "Table" fields
+        const tableField = tab.sections.flatMap(s => s.fields).find(f => f.fieldtype === 'Table')
+        if (tableField) {
+          const items = data[tableField.fieldname] as unknown[]
+          if (Array.isArray(items) && items.length > 0) {
+            return `${items.length} ${tableField.label} Added`
+          }
+          return `No ${tableField.label} Added`
+        }
 
-  /** Review sections configuration */
-  const sections: ReviewSection[] = [
-    {
-      key: 'personal_info',
-      label: 'Personal Info',
-      stepIndex: 0,
-      getSummary: () => {
-        if (!personalInfo) return ''
-        const name = `${personalInfo.first_name || ''} ${personalInfo.last_name || ''}`.trim()
-        return name || ''
-      },
-    },
-    {
-      key: 'address',
-      label: 'Address',
-      stepIndex: 1,
-      getSummary: () => {
-        if (!address) return ''
-        const curr = address.current_address as Record<string, string> | undefined
-        if (curr) {
-          return [curr.city, curr.state].filter(Boolean).join(', ')
-        }
-        return ''
-      },
-    },
-    {
-      key: 'identity_documents',
-      label: 'Identity',
-      stepIndex: 2,
-      getSummary: () => {
-        if (!identity) return ''
-        const parts: string[] = []
-        if (identity.pan_number) parts.push('PAN')
-        if (identity.aadhaar_number) parts.push('Aadhaar')
-        return parts.join('... ') || ''
-      },
-    },
-    {
-      key: 'bank_details',
-      label: 'Bank',
-      stepIndex: 3,
-      getSummary: () => {
-        if (!bank) return ''
-        return (bank.bank_name as string) || ''
-      },
-    },
-    {
-      key: 'education',
-      label: 'Education',
-      stepIndex: 5,
-      getSummary: () => {
-        if (!education) return ''
-        const quals = education.qualifications as Array<Record<string, string>> | undefined
-        if (quals && quals.length > 0) {
-          return `${quals.length} Qualification${quals.length > 1 ? 's' : ''} Added`
-        }
-        return ''
-      },
-    },
-    {
-      key: 'employment_history',
-      label: 'Employment',
-      stepIndex: 6,
-      getSummary: () => {
-        if (!employment) return ''
-        if (employment.has_experience === false) return 'Fresher'
-        const exps = employment.experiences as Array<Record<string, unknown>> | undefined
-        if (exps && exps.length > 0) {
-          return `${exps.length} Experience${exps.length > 1 ? 's' : ''}`
-        }
-        return 'Years Experience'
-      },
-    },
-  ]
+        // Standard flat fields summary
+        const values = Object.values(data).filter(v => v && typeof v === 'string').slice(0, 2)
+        return values.join(', ')
+      }
+    }
+  })
 
   const toggleSection = (key: string) => {
     setExpandedSection(expandedSection === key ? null : key)
@@ -201,15 +170,16 @@ export function ReviewStep() {
                 Please complete all steps before submitting.
               </p>
               <div className="mt-1 flex flex-wrap gap-1">
-                {incompleteSteps.map((step) => {
-                  const idx = ONBOARDING_STEPS.findIndex((s) => s.key === step.key)
+                {incompleteSteps.map((tab) => {
+                  const key = tab.tab.toLowerCase().replace(/\s+/g, '_')
+                  const idx = tabs.findIndex((t) => t.tab === tab.tab)
                   return (
                     <button
-                      key={step.key}
+                      key={key}
                       onClick={() => goToStep(idx)}
                       className="text-xs text-primary underline hover:no-underline"
                     >
-                      {step.label}
+                      {tab.tab}
                     </button>
                   )
                 })}
@@ -222,7 +192,6 @@ export function ReviewStep() {
         <div className="divide-y divide-border rounded-lg border border-border">
           {sections.map((section) => {
             const isExpanded = expandedSection === section.key
-            const isComplete = completedSteps.has(section.key)
             const summary = section.getSummary()
 
             return (
@@ -255,62 +224,54 @@ export function ReviewStep() {
                 {isExpanded && (
                   <div className="border-t border-border bg-muted/20 px-4 py-3">
                     <div className="space-y-1 text-sm text-muted-foreground">
-                      {section.key === 'personal_info' && personalInfo && (
-                        <>
-                          <p>Name: {`${personalInfo.first_name || ''} ${personalInfo.last_name || ''}`.trim()}</p>
-                          {personalInfo.gender && <p>Gender: {personalInfo.gender as string}</p>}
-                          {personalInfo.date_of_birth && <p>DOB: {personalInfo.date_of_birth as string}</p>}
-                          {personalInfo.personal_email && <p>Email: {personalInfo.personal_email as string}</p>}
-                          {personalInfo.phone && <p>Phone: {personalInfo.phone as string}</p>}
-                        </>
-                      )}
-                      {section.key === 'address' && address && (
-                        <>
-                          {address.current_address && (
-                            <p>Current: {formatAddress(address.current_address as Record<string, string>)}</p>
-                          )}
-                          {address.permanent_address && (
-                            <p>Permanent: {formatAddress(address.permanent_address as Record<string, string>)}</p>
-                          )}
-                        </>
-                      )}
-                      {section.key === 'identity_documents' && identity && (
-                        <>
-                          {identity.pan_number && <p>PAN: {identity.pan_number as string}</p>}
-                          {identity.aadhaar_number && <p>Aadhaar: {identity.aadhaar_number as string}</p>}
-                        </>
-                      )}
-                      {section.key === 'bank_details' && bank && (
-                        <>
-                          {bank.bank_name && <p>Bank: {bank.bank_name as string}</p>}
-                          {bank.ifsc_code && <p>IFSC: {bank.ifsc_code as string}</p>}
-                          {bank.account_number && (
-                            <p>A/C: ****{(bank.account_number as string).slice(-4)}</p>
-                          )}
-                        </>
-                      )}
-                      {section.key === 'education' && education && (
-                        <>
-                          {Array.isArray(education.qualifications) &&
-                            (education.qualifications as Array<Record<string, string>>).map((q, i) => (
-                              <p key={i}>{q.degree} - {q.institution}</p>
-                            ))}
-                        </>
-                      )}
-                      {section.key === 'employment_history' && employment && (
-                        <>
-                          {employment.has_experience === false && <p>No prior work experience (Fresher)</p>}
-                          {employment.has_experience && Array.isArray(employment.experiences) &&
-                            (employment.experiences as Array<Record<string, unknown>>).map((exp, i) => (
-                              <p key={i}>{String(exp.designation || '')} at {String(exp.company || '')}</p>
-                            ))}
-                        </>
-                      )}
+                      {tabs[section.stepIndex].sections.map((s, sIdx) => (
+                        <div key={sIdx} className="mb-4 last:mb-0">
+                          <p className="font-bold text-xs text-foreground uppercase tracking-wider mb-2">{s.section}</p>
+                          <div className="space-y-1 ml-1">
+                            {s.fields.map(f => {
+                              const val = (stepData[section.key] || {})[f.fieldname]
+                              if (f.hidden) return null
+
+                              if (f.fieldtype === 'Table') {
+                                const items = val as Record<string, unknown>[]
+                                if (!Array.isArray(items) || items.length === 0) return (
+                                  <p key={f.fieldname} className="italic text-xs">No {f.label} added</p>
+                                )
+                                return (
+                                  <div key={f.fieldname} className="mt-2 space-y-3">
+                                    {items.map((item, i) => (
+                                      <div key={i} className="pl-3 border-l-2 border-primary/20 py-1">
+                                        <p className="font-medium text-xs text-foreground mb-1">Item #{i + 1}</p>
+                                        {f.child_fields?.map(cf => {
+                                          const cVal = item[cf.fieldname]
+                                          if (!cVal || cf.hidden) return null
+                                          return (
+                                            <p key={cf.fieldname} className="text-xs">
+                                              <span className="font-medium">{cf.label}:</span> {String(cVal)}
+                                            </p>
+                                          )
+                                        })}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )
+                              }
+
+                              if (!val) return null
+                              return (
+                                <p key={f.fieldname} className="text-xs">
+                                  <span className="font-medium">{f.label}:</span> {String(val)}
+                                </p>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                     <button
                       type="button"
                       onClick={() => goToStep(section.stepIndex)}
-                      className="mt-2 text-xs text-primary underline hover:no-underline"
+                      className="mt-4 text-xs text-primary underline hover:no-underline font-medium"
                     >
                       Edit this section
                     </button>
@@ -387,12 +348,4 @@ export function ReviewStep() {
       </section>
     </div>
   )
-}
-
-/** Format an address object into a single line. */
-function formatAddress(addr: Record<string, string>): string {
-  const parts = [addr.line1, addr.line2, addr.city, addr.state, addr.pin_code, addr.country].filter(
-    Boolean
-  )
-  return parts.join(', ')
 }

@@ -1,16 +1,16 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react'
-import { supabase } from '@/lib/supabase'
+import React, { createContext, useContext, useCallback, useMemo } from 'react'
+import { useCandidateFeatureFlags } from '../hooks/useCandidateFeatureFlags'
 
 // Types for feature flags
 export interface FeatureFlagContextType {
-  flags: Record<string, any>
+  flags: Record<string, boolean>
   isLoading: boolean
   error: string | null
   refreshFlags: () => Promise<void>
   isEnabled: (key: string) => boolean
-  getFlag: (key: string, defaultValue?: any) => any
+  getFlag: (key: string, defaultValue?: boolean) => boolean
 }
 
 // Default feature flag keys that the app uses
@@ -24,7 +24,11 @@ export const DEFAULT_FEATURE_FLAGS = {
   advanced_search_filters: false,
   email_notifications: true,
   job_recommendations: false,
-  real_time_chat: false,
+  home: true,
+  documents: false,
+  open_jobs: false,
+  action_center: false,
+  my_jobs: false,
 } as const
 
 export type FeatureFlagKey = keyof typeof DEFAULT_FEATURE_FLAGS
@@ -35,58 +39,26 @@ const FeatureFlagContext = createContext<FeatureFlagContextType | undefined>(und
 // Provider component
 interface FeatureFlagProviderProps {
   children: React.ReactNode
-  initialFlags?: Record<string, any>
+  initialFlags?: Record<string, boolean>
 }
 
 export function FeatureFlagProvider({ children, initialFlags = {} }: FeatureFlagProviderProps) {
-  const [flags, setFlags] = useState<Record<string, any>>({
-    ...DEFAULT_FEATURE_FLAGS,
-    ...initialFlags
-  })
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { data: remoteFlags, isLoading, error, refetch } = useCandidateFeatureFlags()
 
-  // Function to fetch feature flags from the API
-  const fetchFlags = useCallback(async () => {
-    try {
-      setIsLoading(true)
-      setError(null)
+  const flags: Record<string, boolean> = useMemo(() => {
+    const baseFlags: Record<string, boolean> = { ...DEFAULT_FEATURE_FLAGS, ...initialFlags }
+    if (!remoteFlags) return baseFlags
 
-      const response = await fetch('/api/feature-flags', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      const data = await response.json()
-
-      if (data.success && data.flags) {
-        setFlags(prevFlags => ({
-          ...DEFAULT_FEATURE_FLAGS,
-          ...data.flags
-        }))
-      } else {
-        throw new Error(data.error || 'Failed to fetch feature flags')
-      }
-    } catch (err) {
-      console.error('Error fetching feature flags:', err)
-      setError(err instanceof Error ? err.message : 'Unknown error')
-      // Fall back to default flags on error
-      setFlags(DEFAULT_FEATURE_FLAGS)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
+    const remoteBooleans = Object.fromEntries(
+      Object.entries(remoteFlags).map(([k, v]) => [k, v === 1])
+    )
+    return { ...baseFlags, ...remoteBooleans }
+  }, [initialFlags, remoteFlags])
 
   // Function to refresh flags manually
   const refreshFlags = useCallback(async () => {
-    await fetchFlags()
-  }, [fetchFlags])
+    await refetch()
+  }, [refetch])
 
   // Function to check if a feature is enabled
   const isEnabled = useCallback((key: string): boolean => {
@@ -98,43 +70,14 @@ export function FeatureFlagProvider({ children, initialFlags = {} }: FeatureFlag
   }, [flags])
 
   // Function to get a feature flag value with optional default
-  const getFlag = useCallback((key: string, defaultValue: any = false): any => {
+  const getFlag = useCallback((key: string, defaultValue: boolean = false): boolean => {
     return flags[key] !== undefined ? flags[key] : defaultValue
   }, [flags])
-
-  // Initial fetch on mount
-  useEffect(() => {
-    fetchFlags()
-  }, [fetchFlags])
-
-  // Set up real-time updates via Supabase realtime
-  useEffect(() => {
-    const channel = supabase
-      .channel('feature-flags-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'feature_flags'
-        },
-        (payload) => {
-          console.log('Feature flag changed:', payload)
-          // Refresh flags when any flag changes
-          refreshFlags()
-        }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [refreshFlags])
 
   const contextValue: FeatureFlagContextType = {
     flags,
     isLoading,
-    error,
+    error: error instanceof Error ? error.message : (error ? String(error) : null),
     refreshFlags,
     isEnabled,
     getFlag
@@ -163,7 +106,7 @@ export function useFeatureFlag(key: FeatureFlagKey): boolean {
 }
 
 // Hook to get a feature flag value
-export function useFeatureFlagValue(key: FeatureFlagKey, defaultValue?: any): any {
+export function useFeatureFlagValue(key: FeatureFlagKey, defaultValue?: boolean): boolean {
   const { getFlag } = useFeatureFlags()
   return getFlag(key, defaultValue)
 }
