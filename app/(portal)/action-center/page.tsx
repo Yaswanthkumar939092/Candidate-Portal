@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
 import { useState } from "react"
-import { Info, Lightbulb, Plus, X } from "lucide-react"
+import { Lightbulb, Plus, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 import {
@@ -14,72 +15,142 @@ import {
 } from "@/components/action-center/my-requests-list"
 import { RaiseRequestDialog } from "@/components/action-center/raise-request-dialog"
 import { cn } from "@/lib/utils"
-
-// Mock data for assigned tasks
-const MOCK_TASKS: Task[] = [
-  {
-    id: "t1",
-    title: "PF Form",
-    category: "Onboarding",
-    status: "action_required",
-    dueDate: "15 May 2025",
-  },
-  {
-    id: "t2",
-    title: "Offer Letter Released",
-    category: "Recruitment",
-    status: "completed",
-    completedDate: "04-09-2025",
-    icon: "FileText",
-    iconColor: "bg-[#12B76A]",
-  },
-  {
-    id: "t3",
-    title: "Pre-Offer Submission",
-    category: "Recruitment",
-    status: "approved",
-    completedDate: "03-09-2025",
-    icon: "Check",
-    iconColor: "bg-[#12B76A]",
-  },
-  {
-    id: "t4",
-    title: "Onboarding Journey",
-    category: "Onboarding",
-    status: "completed",
-    completedDate: "10-09-2025",
-    icon: "Clock",
-    iconColor: "bg-[#7A5AF8]",
-  },
-  {
-    id: "t5",
-    title: "Gratuity Form",
-    category: "Onboarding",
-    status: "completed",
-    completedDate: "09-09-2025",
-    icon: "FileText",
-    iconColor: "bg-[#2E90FA]",
-  },
-]
-
-// Mock data for requests
-const MOCK_REQUESTS: Request[] = [
-  {
-    id: "r1",
-    title: "Extension of Joining Date",
-    category: "Request",
-    status: "pending_approval",
-    requestType: "Date Change",
-    submittedDate: "12-Sep-2025",
-    icon: "Clock",
-    iconColor: "bg-[#F79009]",
-  },
-]
+import { useAuth } from "@/lib/contexts/auth-context"
+import { useActionCenter, useActionCenterMyRequest, useCandidateRaiseRequest } from "@/lib/hooks/useAcationCenter"
+import { toast } from "sonner"
 
 /**
+ * Maps the API status string to the Task status union type.
+ */
+function mapApiStatusToTaskStatus(
+  apiStatus: string
+): Task["status"] {
+  switch (apiStatus?.toLowerCase()) {
+    case "action required":
+      return "action_required"
+    case "completed":
+      return "completed"
+    case "approved":
+      return "approved"
+    case "pending":
+      return "pending"
+    default:
+      return "action_required"
+  }
+}
+
+/**
+ * Transforms raw API items into the Task[] shape expected by AssignedTasksList.
+ */
+function mapApiItemsToTasks(items: any[]): Task[] {
+  return items.map((item, index) => {
+    const status = mapApiStatusToTaskStatus(item.status)
+    const isCompleted = status === "completed" || status === "approved"
+
+    // Derive a human-readable title from the name field (strip the email prefix)
+    const rawName: string = item.name ?? ""
+    const titleFromName = rawName.includes(" - ")
+      ? rawName.split(" - ").slice(1).join(" - ").trim()
+      : rawName
+
+    // Use description as a fallback title if name parsing yields nothing useful
+    const title = titleFromName || item.description?.split("\n")[0] || "Task"
+
+    // Derive a category from reference_doctype
+    const category = item.reference_doctype
+      ? item.reference_doctype.replace(/_/g, " ")
+      : "General"
+
+    // Format modified date for display
+    const formattedDate = item.modified
+      ? new Date(item.modified).toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        })
+      : undefined
+
+    return {
+      id: item.name ?? `task-${index}`,
+      title,
+      category,
+      status,
+      description: item.description || "",
+      attachment: item.attachment || "",
+      ...(isCompleted
+        ? { completedDate: formattedDate }
+        : { dueDate: formattedDate }),
+      // Optionally carry through redirect for click handling
+      redirectUrl: item.redirect_url,
+    } satisfies Task & { redirectUrl?: string }
+  })
+}
+
+function mapApiStatusToRequestStatus(
+  apiStatus: string
+): Request["status"] {
+  switch (apiStatus?.toLowerCase()) {
+    case "pending":
+      return "pending_approval"
+
+    case "approved":
+      return "approved"
+
+    case "rejected":
+      return "rejected"
+
+    case "completed":   // ✅ ADD THIS
+      return "approved" // ya "rejected" nahi, logically approved type
+
+    case "in review":
+      return "in_review"
+
+    default:
+      return "pending_approval"
+  }
+}
+
+function mapApiItemsToRequests(items: any[]): Request[] {
+  return items.map((item, index) => {
+    const status = mapApiStatusToRequestStatus(item.status)
+
+    // Title
+    const title =
+      item.name ||
+      item.description?.split("\n")[0] ||
+      "Request"
+
+    // Category
+    const category = item.request_type
+      ? item.request_type.replace(/_/g, " ")
+      : "General"
+
+    // Date format
+    const formattedDate = item.creation
+      ? new Date(item.creation).toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        })
+      : undefined
+
+    return {
+      id: item.name ?? `req-${index}`,
+      title,
+      category,
+      status,
+      requestType: item.request_type || "General",
+      submittedDate: formattedDate,
+      description: item.description || "",
+      redirectUrl: item.redirect_url || "",
+      attachment: item.attachment || "",
+
+
+    }
+  })
+}
+/**
  * Action Center page -- shows assigned tasks and user requests in tabbed layout.
- * Includes a blue info banner, filter pills (Pending/Accepted/All), and a
- * "Raise a Request" button that opens a right-side sheet.
  */
 export default function ActionCenterPage() {
   const [activeTab, setActiveTab] = useState<"tasks" | "requests">("tasks")
@@ -87,19 +158,43 @@ export default function ActionCenterPage() {
   const [infoBannerVisible, setInfoBannerVisible] = useState(true)
   const [requestDialogOpen, setRequestDialogOpen] = useState(false)
 
-  // Count tasks and requests by filter category
-  const pendingTaskCount = MOCK_TASKS.filter(
+  const { user } = useAuth()
+  const userEmail = user?.email || user?.user_metadata?.email || ""
+
+  const {
+    data: actionCenterData,
+    isLoading: isFormConfigLoading,
+    isError: isFormConfigError,
+  } = useActionCenter(userEmail)
+
+  const {
+    data: actionCenterMyRequestData,
+  } = useActionCenterMyRequest(userEmail)
+  const { mutate: raiseRequest, isPending } = useCandidateRaiseRequest()
+  // Derive tasks from API response; fall back to empty array while loading
+  const tasks: Task[] = actionCenterData?.items
+    ? mapApiItemsToTasks(actionCenterData.items)
+    : []
+
+  // Requests remain empty until a requests API is wired up
+  const requests: Request[] = actionCenterMyRequestData
+  ? mapApiItemsToRequests(actionCenterMyRequestData)
+  : []
+
+  // Count tasks by filter category
+  const pendingTaskCount = tasks.filter(
     (t) => t.status === "action_required" || t.status === "pending"
   ).length
-  const acceptedTaskCount = MOCK_TASKS.filter(
+  const acceptedTaskCount = tasks.filter(
     (t) => t.status === "approved" || t.status === "completed"
   ).length
 
-  const pendingRequestCount = MOCK_REQUESTS.filter(
+  const pendingRequestCount = requests.filter(
     (r) => r.status === "pending_approval" || r.status === "in_review"
   ).length
-  const acceptedRequestCount = MOCK_REQUESTS.filter(
-    (r) => r.status === "approved"
+  
+  const acceptedRequestCount = requests.filter(
+    (r) => r.status === "approved" || r.status === "rejected"
   ).length
 
   const currentPendingCount =
@@ -107,26 +202,37 @@ export default function ActionCenterPage() {
   const currentAcceptedCount =
     activeTab === "tasks" ? acceptedTaskCount : acceptedRequestCount
 
-  const handleRequestSubmit = (data: {
-    requestType: string
-    description: string
-    attachments: File[]
-  }) => {
-    // In a real app, this would make an API call
-    console.log("Request submitted:", data)
-  }
+    const handleRequestSubmit = (data: {
+      requestType: string
+      description: string
+      attachment: string
+    }) => {
+      raiseRequest({
+        ...data,
+        request_type: data.requestType,
+        candidate_email: userEmail
+      }, {
+        onSuccess: () => {
+          toast.success("Request created successfully")
+        },
+        onError: (err) => {
+        toast.error("Error:", err)
+        },
+      })
+    }
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 sm:px-6 py-8">
       {/* Page header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight dark:text-gray-100">Action Center</h1>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight dark:text-gray-100">
+            Action Center
+          </h1>
           <p className="mt-1 text-base text-[#6A7282] dark:text-gray-400">
             Manage your tasks and requests efficiently.
           </p>
         </div>
-
       </div>
 
       {/* Tab bar */}
@@ -178,7 +284,8 @@ export default function ActionCenterPage() {
               Did you know?
             </span>
             <span className="text-[#344054] dark:text-gray-300 block sm:inline">
-              Tasks such as pre-offer submission and offer acceptance can be completed directly from this dashboard.
+              Tasks such as pre-offer submission and offer acceptance can be
+              completed directly from this dashboard.
             </span>
           </div>
           <button
@@ -190,8 +297,6 @@ export default function ActionCenterPage() {
           </button>
         </div>
       )}
-
-
 
       {/* Filter pills and Raise Request Button row */}
       <div className="flex flex-row items-center justify-between gap-4">
@@ -210,7 +315,7 @@ export default function ActionCenterPage() {
           <button
             className={cn(
               "inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-sm font-medium transition-all",
-              filter === "accepted" // Interpreting "Archived" as "accepted" in code logic
+              filter === "accepted"
                 ? "bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-gray-100"
                 : "text-slate-500 hover:text-slate-900 dark:text-gray-400 dark:hover:text-gray-300"
             )}
@@ -225,17 +330,31 @@ export default function ActionCenterPage() {
             className="flex items-center justify-center gap-2 bg-[#0F172A] hover:bg-[#0F172A]/90 text-white rounded-lg px-3 sm:px-4 py-2 font-semibold shrink-0"
           >
             <Plus className="h-4 w-4 sm:mr-1 shrink-0" strokeWidth={3} />
-            <span className="hidden sm:inline whitespace-nowrap">Raise Request</span>
+            <span className="hidden sm:inline whitespace-nowrap">
+              Raise Request
+            </span>
           </Button>
         )}
       </div>
 
+      {/* Loading / error states */}
+      {activeTab === "tasks" && isFormConfigLoading && (
+        <p className="text-sm text-slate-500 dark:text-gray-400 py-6 text-center">
+          Loading tasks…
+        </p>
+      )}
+      {activeTab === "tasks" && isFormConfigError && (
+        <p className="text-sm text-red-500 py-6 text-center">
+          Failed to load tasks. Please try again.
+        </p>
+      )}
+
       {/* Tab content */}
-      {activeTab === "tasks" && (
-        <AssignedTasksList tasks={MOCK_TASKS} filter={filter} />
+      {activeTab === "tasks" && !isFormConfigLoading && !isFormConfigError && (
+        <AssignedTasksList tasks={tasks} filter={filter} />
       )}
       {activeTab === "requests" && (
-        <MyRequestsList requests={MOCK_REQUESTS} filter={filter} />
+        <MyRequestsList requests={requests} filter={filter} />
       )}
 
       {/* Raise Request Dialog (Sheet) */}

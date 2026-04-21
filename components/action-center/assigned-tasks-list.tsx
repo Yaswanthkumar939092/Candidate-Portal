@@ -12,8 +12,13 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
 
 export interface Task {
+  attachment: string
+  redirectUrl: string
+  description: string
   id: string
   title: string
   category: string
@@ -35,7 +40,7 @@ const STATUS_STYLES: Record<string, { label: string; badgeClass: string; iconBgC
     label: "Completed",
     badgeClass: "bg-[#ECFDF3] text-[#027A48] hover:bg-[#ECFDF3] dark:bg-green-900/30 dark:text-green-400 border border-[#A6F4C5] font-medium text-[12px] px-2.5 py-0.5 rounded-full shadow-none",
     iconBgColor: "bg-[#12B76A]",
-    icon: CheckCircle2,
+    icon: FileText,
   },
   approved: {
     label: "Approved",
@@ -69,6 +74,10 @@ export function AssignedTasksList({
   className,
 }: AssignedTasksListProps) {
   // Apply filter if provided
+  const router = useRouter()
+  const [isOpen, setIsOpen] = useState(false)
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null)
+  const BASE_URL = process.env.NEXT_PUBLIC_FRAPPE_URL
   const filteredTasks =
     filter && filter !== "all"
       ? tasks.filter((task) => {
@@ -115,6 +124,7 @@ export function AssignedTasksList({
                   const statusConfig = STATUS_STYLES[task.status] ?? STATUS_STYLES.pending
                   const StatusIcon = task.icon ? (ICON_MAP[task.icon] || statusConfig.icon) : statusConfig.icon
                   const bgClass = task.iconColor || statusConfig.iconBgColor
+                  
 
                   return (
                     <Card key={task.id} className="flex flex-col rounded-2xl border border-slate-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950 transition-shadow hover:shadow-md p-0 gap-0 py-0 w-full md:max-w-[570px]">
@@ -126,7 +136,18 @@ export function AssignedTasksList({
                             </div>
                             <div className="flex flex-col pt-0.5 min-w-0">
                               <h4 className="font-bold text-base text-slate-900 dark:text-gray-100 leading-tight truncate">{task.title}</h4>
-                              <span className="text-xs text-[#667085] mt-1.5 font-medium dark:text-gray-400 leading-none truncate">Documentation</span>
+                              <span className="text-xs text-[#667085] mt-1.5 font-medium dark:text-gray-400 leading-none truncate">{task?.description || "No description available"}</span>
+                              <span className="text-xs text-[#667085] mt-1.5 font-medium dark:text-gray-400 leading-none truncate">
+                               Document:                             <button
+                               onClick={() => {
+                               setPdfUrl(`${task?.attachment}`)
+                               setIsOpen(true)
+                                }}
+                            className="text-blue-600 underline hover:text-blue-800 transition-colors"
+                            >
+                            View
+                            </button>
+                            </span>
                               <div className="mt-3.5 flex items-center gap-1.5 text-xs font-medium text-[#475467] whitespace-nowrap dark:text-gray-400 overflow-hidden text-ellipsis">
                                 <Clock className="h-3.5 w-3.5 shrink-0" />
                                 <span className="truncate">{task.dueDate ? `Due by ${task.dueDate}` : task.completedDate ? `Completed on ${task.completedDate}` : "No due date"}</span>
@@ -139,15 +160,27 @@ export function AssignedTasksList({
                         </div>
                       </CardContent>
 
-                      <div className="mx-5 my-[18px] h-[1px] bg-slate-100 dark:bg-slate-800" />
+                      <div className="mx-5 my-4.5 h-[1px] bg-slate-100 dark:bg-slate-800" />
 
                       <CardFooter className="px-5 pb-5 pt-0 justify-end">
                         {(task.status === "action_required" || task.status === "pending") ? (
-                          <button className="inline-flex items-center gap-1.5 text-[14px] font-bold text-[#2E90FA] hover:text-[#2E90FA]/80 transition-colors">
+                          <button 
+                          onClick={() => {
+                            if (task.redirectUrl) {
+                              router.push(`/action-center/tasks/${task.redirectUrl}`)
+                            }
+                          }}
+                          className="inline-flex items-center gap-1.5 text-[14px] font-bold text-[#2E90FA] hover:text-[#2E90FA]/80 transition-colors">
                             Complete now <ArrowRight className="h-3.5 w-3.5 mt-[1px]" />
                           </button>
                         ) : (
-                          <button className="inline-flex items-center gap-1.5 text-[14px] font-bold text-[#2E90FA] hover:text-[#2E90FA]/80 transition-colors">
+                          <button
+                          onClick={() => {
+                            if (task.redirectUrl) {
+                              router.push(`/action-center/tasks/${task.redirectUrl}`)
+                            }
+                          }}
+                           className="inline-flex items-center gap-1.5 text-[14px] font-bold text-[#2E90FA] hover:text-[#2E90FA]/80 transition-colors">
                             View Details <ArrowRight className="h-3.5 w-3.5 mt-[1px]" />
                           </button>
                         )}
@@ -160,6 +193,28 @@ export function AssignedTasksList({
           </Card>
         )
       })}
+{isOpen && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div className="bg-white rounded-lg w-[80%] h-[80%] p-8 relative">
+      
+      <button
+        onClick={() => setIsOpen(false)}
+        className="absolute top-1 right-3 text-gray-500"
+      >
+        ✕
+      </button>
+
+      {pdfUrl ? (
+        <iframe
+         src={`${BASE_URL}${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0`}
+         className="w-full h-full bg-white"
+         />
+      ):(
+        <p className="text-center text-gray-500 mt-10">No document available</p>
+      )}
+    </div>
+  </div>
+)}
     </div>
   )
 }
