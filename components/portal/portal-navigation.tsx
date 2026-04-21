@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/contexts/auth-context";
+import { useFeatureFlags } from "@/lib/contexts/feature-flags";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
@@ -45,6 +46,7 @@ interface NavItem {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   badgeCount?: number;
+  flagKey?: string;
 }
 
 /**
@@ -56,9 +58,9 @@ interface PortalNavigationProps {
 
 const navItems: NavItem[] = [
   { label: "Home", href: "/dashboard", icon: Home },
-  { label: "Open Jobs", href: "/open-jobs", icon: Briefcase },
-  { label: "My Jobs", href: "/my-jobs", icon: ClipboardList, badgeCount: 3 },
-  { label: "Action Center", href: "/action-center", icon: ClipboardList },
+  { label: "Open Jobs", href: "/open-jobs", icon: Briefcase, flagKey: "open_jobs" },
+  { label: "My Jobs", href: "/my-jobs", icon: ClipboardList, badgeCount: 3, flagKey: "my_jobs" },
+  { label: "Action Center", href: "/action-center", icon: ClipboardList, flagKey: "action_center" },
 ];
 
 /**
@@ -92,8 +94,16 @@ function formatRole(role: string): string {
  */
 export function PortalNavigation({ className }: PortalNavigationProps) {
   const { user, profile } = useAuth();
+  const { isEnabled } = useFeatureFlags();
   const pathname = usePathname();
   const router = useRouter();
+
+  const filteredNavItems = navItems.filter((item) => {
+    if (item.flagKey) {
+      return isEnabled(item.flagKey);
+    }
+    return true;
+  });
 
   const displayName =
     profile?.full_name ||
@@ -149,7 +159,7 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
                   <SheetTitle className="text-left font-bold text-lg">Navigation</SheetTitle>
                 </SheetHeader>
                 <div className="flex flex-col gap-2 py-6">
-                  {navItems.map((item) => {
+                  {filteredNavItems.map((item) => {
                     const active = isActive(item.href);
                     return (
                       <Link
@@ -200,7 +210,7 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
 
         {/* Center: Nav links with pill-style active states (Hidden on Mobile) */}
         <nav className="hidden md:flex items-center gap-1">
-          {navItems.map((item) => {
+          {filteredNavItems.map((item) => {
             const active = isActive(item.href);
 
             return (
