@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useCallback } from "react"
-import { Plus, Upload, Loader2 } from "lucide-react"
+import { useState,  useRef } from "react"
+import {  Upload, Loader2 } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { useFileUpload } from "@/lib/hooks/useFileUpload"
 
 interface RaiseRequestDialogProps {
   open: boolean
@@ -26,7 +27,7 @@ interface RaiseRequestDialogProps {
   onSubmit?: (data: {
     requestType: string
     description: string
-    attachments: File[]
+    attachment: string
   }) => void
 }
 
@@ -46,14 +47,18 @@ export function RaiseRequestDialog({
 }: RaiseRequestDialogProps) {
   const [requestType, setRequestType] = useState("")
   const [description, setDescription] = useState("")
-  const [attachments, setAttachments] = useState<File[]>([])
+  const [attachment, setAttachment] = useState("") // ✅ URL store hoga
+  const [fileName, setFileName] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+
+  const uploadMutation = useFileUpload()
 
   const resetForm = () => {
     setRequestType("")
     setDescription("")
-    setAttachments([])
+    setAttachment("")
     setError(null)
   }
 
@@ -74,7 +79,7 @@ export function RaiseRequestDialog({
       onSubmit?.({
         requestType,
         description: description.trim(),
-        attachments,
+        attachment,
       })
       resetForm()
       onOpenChange(false)
@@ -85,19 +90,26 @@ export function RaiseRequestDialog({
     }
   }
 
-  const handleFileSelect = () => {
-    const input = document.createElement("input")
-    input.type = "file"
-    input.multiple = true
-    input.onchange = (e) => {
-      const files = Array.from(
-        (e.target as HTMLInputElement).files ?? []
-      )
-      setAttachments((prev) => [...prev, ...files])
-    }
-    input.click()
-  }
 
+  const handleFileUpload = (file: File | null) => {
+    if (!file) {
+      setAttachment("")
+      setFileName("")
+      return
+    }
+
+    setFileName(file.name)
+
+    uploadMutation.mutate(file, {
+      onSuccess: (data: { file_url: string }) => {
+        setAttachment(data.file_url) // ✅ payload ke liye URL
+      },
+      onError: (err: Error) => {
+        console.error(err)
+        setError("File upload failed")
+      },
+    })
+  }
   return (
     <Dialog
       open={open}
@@ -106,7 +118,7 @@ export function RaiseRequestDialog({
         if (!val) resetForm()
       }}
     >
-      <DialogContent className="sm:max-w-[480px] p-6 rounded-xl border border-slate-200 shadow-xl overflow-y-auto max-h-[90vh]">
+      <DialogContent className="sm:max-w-120 p-6 rounded-xl border border-slate-200 shadow-xl overflow-y-auto max-h-[90vh]">
         <DialogHeader className="mb-2">
           <DialogTitle className="text-[18px] font-bold text-slate-900 dark:text-gray-100 font-sans">Raise a Request</DialogTitle>
           <DialogDescription className="text-[14px] font-normal text-[#475467] dark:text-slate-400 mt-1.5 leading-snug">
@@ -114,9 +126,9 @@ export function RaiseRequestDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-[22px]">
+        <div className="space-y-5.5">
           {/* Request Type */}
-          <div className="space-y-[8px]">
+          <div className="space-y-2">
             <Label htmlFor="req-type" className="text-[14px] font-medium text-[#344054] dark:text-slate-300">
               Request Type <span className="text-[#F04438]">*</span>
             </Label>
@@ -154,47 +166,65 @@ export function RaiseRequestDialog({
 
           {/* Attachments */}
           <div className="space-y-[8px]">
-            <Label className="text-[14px] font-medium text-[#344054] dark:text-slate-300">Attachments</Label>
-            <div
-              className="flex cursor-pointer flex-col items-center gap-[12px] rounded-lg border-dashed border-2 border-slate-200 dark:border-slate-800 bg-white hover:bg-slate-50 dark:bg-slate-950 px-6 py-8 text-center transition-colors shadow-xs"
-              onClick={handleFileSelect}
-            >
-              <div className="flex size-[42px] items-center justify-center rounded-full bg-[#F2F4F7] dark:bg-slate-800 border-[6px] box-content border-[#F9FAFB] dark:border-slate-900 mt-1">
-                <Upload className="h-[18px] w-[18px] text-[#475467] dark:text-slate-400" strokeWidth={2.5} />
-              </div>
-              <div className="mb-1 space-y-1">
-                <p className="text-[14px] text-[#101828] dark:text-slate-300 font-medium tracking-normal">
-                  <span className="font-medium text-[#2E90FA] hover:text-[#1849A9] transition-colors">Click to upload</span> or drag and drop
-                </p>
-                <p className="text-xs text-[#667085] dark:text-slate-400 font-medium">
-                  SVG, PNG, JPG or PDF (max. 5MB)
-                </p>
-              </div>
-            </div>
-            {attachments.length > 0 && (
-              <div className="space-y-1 mt-3">
-                {attachments.map((file, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between rounded-md bg-slate-50 border border-slate-200 px-3 py-2 text-sm"
-                  >
-                    <span className="truncate text-slate-700 font-medium">{file.name}</span>
-                    <button
-                      className="shrink-0 text-slate-400 hover:text-red-500 font-medium text-xs ml-4"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setAttachments((prev) =>
-                          prev.filter((_, idx) => idx !== i)
-                        )
-                      }}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+  <Label className="text-[14px] font-medium text-[#344054] dark:text-slate-300">
+    Attachments
+  </Label>
+
+  {/* ✅ hidden file input */}
+  <input
+    type="file"
+    ref={fileInputRef}
+    className="hidden"
+    onChange={(e) =>
+      handleFileUpload(e.target.files?.[0] || null)
+    }
+  />
+
+  <div
+    className="flex cursor-pointer flex-col items-center gap-[12px] rounded-lg border-dashed border-2 border-slate-200 dark:border-slate-800 bg-white hover:bg-slate-50 dark:bg-slate-950 px-6 py-8 text-center transition-colors shadow-xs"
+    onClick={() => fileInputRef.current?.click()} // ✅ FIX
+  >
+    <div className="flex size-[42px] items-center justify-center rounded-full bg-[#F2F4F7] dark:bg-slate-800 border-[6px] box-content border-[#F9FAFB] dark:border-slate-900 mt-1">
+      <Upload
+        className="h-[18px] w-[18px] text-[#475467] dark:text-slate-400"
+        strokeWidth={2.5}
+      />
+    </div>
+
+    <div className="mb-1 space-y-1">
+      <p className="text-[14px] text-[#101828] dark:text-slate-300 font-medium tracking-normal">
+        <span className="font-medium text-[#2E90FA] hover:text-[#1849A9] transition-colors">
+          Click to upload
+        </span>{" "}
+        or drag and drop
+      </p>
+      <p className="text-xs text-[#667085] dark:text-slate-400 font-medium">
+        SVG, PNG, JPG or PDF (max. 5MB)
+      </p>
+    </div>
+  </div>
+
+  {/* ✅ Fix: attachments string hai to map hatao */}
+  {attachment && (
+    <div className="space-y-1 mt-3">
+      <div className="flex items-center justify-between rounded-md bg-slate-50 border border-slate-200 px-3 py-2 text-sm">
+        <span className="truncate text-slate-700 font-medium">
+          {fileName}
+        </span>
+        <button
+          className="shrink-0 text-slate-400 hover:text-red-500 font-medium text-xs ml-4"
+          onClick={(e) => {
+            e.stopPropagation()
+            setAttachment("")
+            setFileName("")
+          }}
+        >
+          Remove
+        </button>
+      </div>
+    </div>
+  )}
+</div>
 
           {error && <p className="text-[13px] text-red-500 font-medium">{error}</p>}
 

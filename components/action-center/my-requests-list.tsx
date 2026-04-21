@@ -10,8 +10,13 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
 
 export interface Request {
+  attachment: string
+  redirectUrl: string
+  description: string
   id: string
   title: string
   category: string
@@ -71,7 +76,11 @@ export function MyRequestsList({
   filter,
   className,
 }: MyRequestsListProps) {
-  // Apply filter if provided
+  const router = useRouter()
+  const [isOpen, setIsOpen] = useState(false)
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null)
+  const BASE_URL = process.env.NEXT_PUBLIC_FRAPPE_URL
+ 
   const filteredRequests =
     filter && filter !== "all"
       ? requests.filter((req) => {
@@ -119,7 +128,7 @@ export function MyRequestsList({
                 const bgClass = req.iconColor || statusConfig.iconBgColor
 
                 return (
-                  <Card key={req.id} className="flex flex-col rounded-2xl border border-slate-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950 transition-shadow hover:shadow-md p-0 gap-0 py-0 w-full md:max-w-[570px]">
+                  <Card key={req.id} className="flex flex-col rounded-2xl border border-slate-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950 transition-shadow hover:shadow-md p-0 gap-0 py-0 w-full md:max-w-142.5">
                     <CardContent className="p-5 pb-0">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex items-start gap-4 min-w-0">
@@ -131,6 +140,24 @@ export function MyRequestsList({
                             <span className="text-xs text-[#667085] mt-1.5 font-medium dark:text-gray-400 leading-none truncate">
                               Request Type: {req.requestType || "General"}
                             </span>
+                            <span className="text-xs text-[#667085] mt-1.5 font-medium dark:text-gray-400 leading-none truncate">
+                            Description: {req.description || "No description provided"}
+                            </span>
+                            <div>
+                            <span className="text-xs text-[#667085] mt-1.5 font-medium dark:text-gray-400 leading-none truncate">
+                            Document:                             <button
+                            onClick={() => {
+                            setPdfUrl(`${req.attachment}`)// base url lagana padega
+                            setIsOpen(true)
+                            }}
+                            className="text-blue-600 underline hover:text-blue-800 transition-colors"
+                            >
+                            View
+                            </button>
+                            </span>
+
+                            </div>
+
                             <div className="mt-3.5 flex items-center gap-1.5 text-xs font-medium text-[#475467] whitespace-nowrap dark:text-gray-400 overflow-hidden text-ellipsis">
                               <Calendar className="h-3.5 w-3.5 shrink-0" />
                               <span className="truncate">
@@ -149,12 +176,19 @@ export function MyRequestsList({
                       </div>
                     </CardContent>
 
-                    <div className="mx-5 my-[18px] h-[1px] bg-slate-100 dark:bg-slate-800" />
+                    <div className="mx-5 my-4.5 h-px bg-slate-100 dark:bg-slate-800" />
 
                     <CardFooter className="px-5 pb-5 pt-0 justify-end">
-                      <button className="inline-flex items-center gap-1.5 text-[14px] font-bold text-[#2E90FA] hover:text-[#2E90FA]/80 transition-colors">
-                        View Status <ArrowRight className="h-3.5 w-3.5 mt-[1px]" />
+                      <button
+                      onClick={() => {
+                              if (req.redirectUrl) {
+                                router.push(`/action-center/tasks/${req.redirectUrl}`)
+                              }
+                            }}
+                      className="inline-flex items-center gap-1.5 text-[14px] font-bold text-[#2E90FA] hover:text-[#2E90FA]/80 transition-colors">
+                        View Status <ArrowRight className="h-3.5 w-3.5 mt-px" />
                       </button>
+
                     </CardFooter>
                   </Card>
                 )
@@ -163,6 +197,28 @@ export function MyRequestsList({
           </CardContent>
         </Card>
       ))}
+{isOpen && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div className="bg-white rounded-lg w-[80%] h-[80%] p-8 relative">
+      
+      <button
+        onClick={() => setIsOpen(false)}
+        className="absolute top-1 right-3 text-gray-500"
+      >
+        ✕
+      </button>
+
+      {pdfUrl ? (
+        <iframe
+         src={`${BASE_URL}${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0`}
+         className="w-full h-full bg-white"
+         />
+      ):(
+        <p className="text-center text-gray-500 mt-10">No document available</p>
+      )}
+    </div>
+  </div>
+)}
     </div>
   )
 }
