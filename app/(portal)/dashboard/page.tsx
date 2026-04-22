@@ -9,7 +9,9 @@ import { OnboardingSnapshot } from "@/components/dashboard/onboarding-snapshot"
 import { InfoCard } from "@/components/dashboard/info-card"
 import { KeyContacts } from "@/components/dashboard/key-contacts"
 import { JourneyCountdown } from "@/components/dashboard/journey-countdown"
+import { useDashboard } from "@/lib/hooks/useDashboard"
 import type { OnboardingData } from "@/types/database"
+
 
 /** Shape of the dashboard data fetched or mocked. */
 interface DashboardData {
@@ -82,9 +84,13 @@ function formatDisplayDate(iso: string): string {
  * data when no record exists yet.
  */
 export default function DashboardPage() {
-  const { profile, user } = useAuth()
+  const { user, profile } = useAuth()
+  const { data: dynamicDashboardData, isLoading: isDashboardLoading } = useDashboard(user?.email || "")
+
   const [data, setData] = useState<DashboardData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+
+
 
   useEffect(() => {
     async function fetchDashboardData() {
@@ -153,6 +159,7 @@ export default function DashboardPage() {
         completedSteps={dashboardData.completedSteps}
         totalSteps={dashboardData.totalSteps}
         joiningDate={dashboardData.joiningDate}
+        dynamicDashboardData={dynamicDashboardData?.data}
       />
 
       {/* Info cards row */}
@@ -180,9 +187,10 @@ export default function DashboardPage() {
         <InfoCard
           icon={<Building2 className="h-5 w-5" />}
           label="Role & Department"
-          value={dashboardData.designation}
-          subtitle={dashboardData.department}
-          tag={dashboardData.jobType}
+          // value={dashboardData.designation}
+          value={dynamicDashboardData?.data?.designation as string}
+          subtitle={dynamicDashboardData?.data?.department as string}
+          tag={dynamicDashboardData?.data?.job_type as string}
           tagVariant="default"
         />
       </div>

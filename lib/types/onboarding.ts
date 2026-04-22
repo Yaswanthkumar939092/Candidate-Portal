@@ -11,6 +11,7 @@ export interface OnboardingField {
   child_fields?: OnboardingField[];
   value?: any;
   default?: any;
+  approval_status?: string;
 }
 
 export interface OnboardingSection {
