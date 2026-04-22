@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, Suspense } from "react";
+import React, { useState, Suspense, useEffect } from "react";
 import NextImage from "next/image";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { useSearchParams } from "next/navigation";
 import { useJobOfferSummary, useJobOfferPdf, useUpdateJobOfferStatus, useJobOfferStatus, useRejectionReasons } from "@/lib/hooks/useJobOffer";
 import { useCurrentUser } from "@/lib/hooks/useUser";
 import { useCompanyLogo } from "@/lib/hooks/useCompanyLogo";
@@ -40,9 +41,13 @@ export default function JobOfferPage() {
 
 function JobOfferContent() {
   const { userEmail, isLoading: isUserLoading } = useCurrentUser();
-  //dummy user
-  const applicantEmail = "deepakrajput0006@gmail.com";
-  const { data: statusData, isLoading: isStatusLoading } = useJobOfferStatus(applicantEmail);
+  const searchParams = useSearchParams();
+  const applParam = searchParams.get("appl");
+  
+  // Use param if available, else fallback to userEmail
+  const applicantEmail = applParam || userEmail || "";
+  
+  const { data: statusData, isLoading: isStatusLoading, isError: isStatusError, error: statusError } = useJobOfferStatus(applicantEmail);
   const statusNormalized = statusData?.status?.toLowerCase();
 
   const [gameState, setGameState] = useState<"loading" | "main" | "rejection" | "accepted" | "processed" | "expired">("main");
@@ -58,7 +63,7 @@ function JobOfferContent() {
   const { mutateAsync: updateStatus } = useUpdateJobOfferStatus();
   const { data: reasonsData, isLoading: isReasonsLoading } = useRejectionReasons();
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (statusNormalized) {
       if (statusNormalized === "accepted") {
         // Show welcome screen 'only once' after acceptance. Refresh/Revisit shows processed screen.
@@ -69,6 +74,10 @@ function JobOfferContent() {
         }
       } else if (statusNormalized === "rejected") {
         setGameState("processed");
+      } else if (statusNormalized === "expired") {
+        setGameState("expired");
+      } else if (statusNormalized === "awaiting response") {
+        setGameState("main");
       }
     }
   }, [statusNormalized, justAccepted]);
@@ -126,7 +135,7 @@ function JobOfferContent() {
     }
   };
 
-  if (isApiLoading || isUserLoading || isStatusLoading || !userEmail) {
+  if (isUserLoading || isStatusLoading) {
     return (
       <div className="font-sans text-[#334155] bg-[#f8fafc] min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
@@ -137,182 +146,224 @@ function JobOfferContent() {
     );
   }
 
+  if (isStatusError || !applicantEmail) {
+    return (
+      <div className="font-sans text-[#334155] bg-[#f8fafc] min-h-screen flex items-center justify-center">
+        <div className="bg-white p-8 rounded-xl shadow-sm border border-red-100 flex flex-col items-center gap-4 max-w-md text-center">
+          <AlertCircle className="h-12 w-12 text-red-500" />
+          <h2 className="text-xl font-semibold text-slate-800">Oops! Something went wrong</h2>
+          <p className="text-slate-600">
+            {isStatusError 
+              ? (statusError as Error)?.message || "We couldn't fetch the offer status. Please try again later."
+              : "No applicant email provided. Please check the link in your email."}
+          </p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="mt-2 px-6 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (isApiLoading && isSummaryNeeded) {
+    return (
+      <div className="font-sans text-[#334155] bg-[#f8fafc] min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-[#1993e5]" />
+          <p className="text-sm text-[#64748b]">Fetching offer details...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="font-sans text-[#334155] bg-[#f8fafc] min-h-screen">
       {/* STATE: MAIN OFFER */}
-      {gameState === "main" && offerData && (
+      {gameState === "main" && (
         <div className="max-w-[1200px] mx-auto px-5 py-[30px]">
-          {hoursRemaining !== null && hoursRemaining > 0 && (
-            <div className="mb-1">
-              <span className="inline-block px-3.5 py-1 rounded-[4px] text-[11px] font-bold tracking-[1.2px] uppercase bg-[#fff3cd] text-[#856404]">
-                OFFER EXPIRES IN {hoursRemaining} HOURS
-              </span>
-            </div>
-          )}
-
-          <div className="flex items-start justify-between mb-0">
-            <NextImage
-              src={logoData?.logo_url ? `${process.env.NEXT_PUBLIC_FRAPPE_URL}${logoData.logo_url}` : "/Logo.jpg"}
-              alt="LOGO"
-              width={180}
-              height={60}
-              className="h-[60px] md:h-[60px] max-w-full w-auto object-contain"
-              priority
-              unoptimized={!!logoData?.logo_url} // Disable optimization for external Frappe URLs if needed, or keep for local
-            />
-            <div className="flex items-center gap-2.5 pr-2.5">
-              <div className="w-10 h-10 rounded-full bg-[#1a2332] text-white flex items-center justify-center text-[1rem] font-bold">
-                {(offerData.applicant_name || "U")[0].toUpperCase()}
-              </div>
-              <span className="text-[0.95rem] font-semibold text-[#1a2332]">
-                {offerData.applicant_name || ""}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex flex-col lg:flex-row gap-8 items-start">
-            {/* Left: Offer content */}
-            <div className="flex-1 min-w-0 overflow-hidden hidden sm:block">
-              <h1 className="text-[1.6rem] md:text-[1.6rem] font-semibold text-[#1a2332] my-3 md:my-[15px] leading-[1.15] text-center">
-                Offer of Employment
-              </h1>
-              {isPdfLoading ? (
-                <div className="bg-white border border-[#e2e8f0] rounded-xl p-8 shadow-[0_1px_3px_rgba(0,0,0,0.04)] flex items-center justify-center min-h-[600px]">
-                  <div className="flex flex-col items-center gap-3">
-                    <Loader2 className="h-6 w-6 animate-spin text-[#1993e5]" />
-                    <p className="text-sm text-[#64748b]">Loading offer letter...</p>
-                  </div>
-                </div>
-              ) : pdfUrl ? (
-                <div className="bg-[#f1f5f9] border border-[#e2e8f0] rounded-xl overflow-y-auto overflow-x-hidden shadow-[inset_0_1px_4px_rgba(0,0,0,0.05)] p-6" style={{ height: "80vh", minHeight: "600px" }}>
-                  <PdfViewer pdfUrl={pdfUrl} />
-                </div>
-              ) : (
-                <div className="bg-white border border-[#e2e8f0] rounded-xl p-8 overflow-x-auto shadow-[0_1px_3px_rgba(0,0,0,0.04)] flex flex-col items-center justify-center min-h-[400px]">
-                  <p className="text-[#64748b]">Offer letter content could not be loaded.</p>
+          {!offerData ? (
+             <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+                <AlertCircle className="h-10 w-10 text-slate-300 mb-4" />
+                <p className="text-slate-500">Offer details not found for this applicant.</p>
+             </div>
+          ) : (
+            <>
+              {hoursRemaining !== null && hoursRemaining > 0 && (
+                <div className="mb-1">
+                  <span className="inline-block px-3.5 py-1 rounded-[4px] text-[11px] font-bold tracking-[1.2px] uppercase bg-[#fff3cd] text-[#856404]">
+                    OFFER EXPIRES IN {hoursRemaining} HOURS
+                  </span>
                 </div>
               )}
-            </div>
 
-            {/* Right: Sidebar */}
-            <div className="w-full lg:w-[340px] shrink-0 -order-1 lg:order-0">
-              <h1 className="hidden lg:block text-[1.6rem] font-extrabold text-[#1a2332] my-[15px] leading-[1.15] text-center">
-                &nbsp;
-              </h1>
-              <h1 className="block lg:hidden text-[1.4rem] font-extrabold text-[#1a2332] my-3 leading-[1.15] text-center">
-                Offer of Employment
-              </h1>
-              <div className="lg:sticky lg:top-6 bg-white border border-[#e2e8f0] rounded-xl overflow-hidden">
-                <div className="text-[1.1rem] font-semibold text-[#1a2332] px-5 pt-4 pb-2.5">
-                  Offer Summary
-                </div>
-                <div className="bg-[#eaf4fb] p-5 border border-[#e2e8f0] rounded-lg mx-5 mb-4">
-                  <div className="flex justify-between items-center py-1.5">
-                    <span className="text-[0.85rem] text-[#64748b]">Role</span>
-                    <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right">
-                      {offerData.designation || "Intern"}
-                    </span>
+              <div className="flex items-start justify-between mb-0">
+                <NextImage
+                  src={logoData?.logo_url ? `${process.env.NEXT_PUBLIC_FRAPPE_URL}${logoData.logo_url}` : "/Logo.jpg"}
+                  alt="LOGO"
+                  width={180}
+                  height={60}
+                  className="h-[60px] md:h-[60px] max-w-full w-auto object-contain"
+                  priority
+                  unoptimized={!!logoData?.logo_url} // Disable optimization for external Frappe URLs if needed, or keep for local
+                />
+                <div className="flex items-center gap-2.5 pr-2.5">
+                  <div className="w-10 h-10 rounded-full bg-[#1a2332] text-white flex items-center justify-center text-[1rem] font-bold">
+                    {(offerData.applicant_name || "U")[0].toUpperCase()}
                   </div>
-                  {offerData.duration_display && (
-                    <div className="flex justify-between items-center py-1.5">
-                      <span className="text-[0.85rem] text-[#64748b]">Duration</span>
-                      <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right">
-                        {offerData.duration_display}
-                      </span>
-                    </div>
-                  )}
-                  {offerData.expected_doj_display && (
-                    <div className="flex justify-between items-center py-1.5">
-                      <span className="text-[0.85rem] text-[#64748b]">Joining Date</span>
-                      <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right">
-                        {offerData.expected_doj_display}
-                      </span>
-                    </div>
-                  )}
-                  {offerData.stipend_display && (
-                    <div className="flex justify-between items-center py-1.5">
-                      <span className="text-[0.85rem] text-[#64748b]">Amount</span>
-                      <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right">
-                        {offerData.stipend_display}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="p-5">
-                  <div className="block lg:hidden">
-                    <a
-                      href={pdfUrl || "#"}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      download="Offer_Letter.pdf"
-                      className={`flex items-center justify-center gap-2 w-full p-2.5 bg-transparent text-[#2563eb] border-[1.5px] border-[#2563eb] rounded-lg text-[0.85rem] font-semibold no-underline mb-2.5 text-center transition-colors duration-200 hover:bg-[#2563eb]/6 ${!pdfUrl ? 'opacity-50 pointer-events-none' : ''}`}
-                    >
-                      {isPdfLoading ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
-                      )}
-                      Download / Preview Offer Letter
-                    </a>
-                  </div>
-
-                  <label className="flex items-start gap-2.5 text-[0.82rem] text-[#334155] cursor-pointer leading-[1.45] mb-4 bg-[#fff8e1] border border-[#ffe0b2] rounded-lg p-3">
-                    <input
-                      type="checkbox"
-                      className="mt-[3px] shrink-0 w-4 h-4 accent-[#1a2332] cursor-pointer"
-                      checked={isTermsChecked}
-                      onChange={(e) => setIsTermsChecked(e.target.checked)}
-                    />
-                    <span>
-                      I declare that I have read and understood the entire offer letter and agree to the terms and conditions outlined above.
-                    </span>
-                  </label>
-
-                  <div className="hidden lg:block">
-                    <a
-                      href={pdfUrl || "#"}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`flex items-center justify-center gap-2 w-full p-2.5 bg-transparent text-[#2563eb] border-[1.5px] border-[#2563eb] rounded-lg text-[0.85rem] font-semibold no-underline mb-2.5 text-center transition-colors duration-200 hover:bg-[#2563eb]/6 ${!pdfUrl ? 'opacity-50 pointer-events-none' : ''}`}
-                    >
-                      {isPdfLoading ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
-                      )}
-                      Preview Offer Letter
-                    </a>
-                  </div>
-
-                  <button
-                    className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#00b48a] hover:bg-[#009e78] text-white rounded-lg text-[0.95rem] font-semibold transition-colors duration-200 mb-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={!isTermsChecked || isAccepting}
-                    onClick={handleAccept}
-                  >
-                    {isAccepting && (
-                      <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                    )}
-                    {!isAccepting && (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                    )}
-                    {isAccepting ? "Accepting..." : "Accept Offer"}
-                  </button>
-
-                  <button
-                    className="flex items-center justify-center gap-2 w-full p-2.5 bg-transparent text-[#dc3545] border-2 border-[#dc3545] rounded-lg text-[0.95rem] font-semibold transition-all duration-200 hover:bg-[#dc3545]/6"
-                    onClick={() => {
-                      setGameState("rejection");
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-                    Reject Offer
-                  </button>
+                  <span className="text-[0.95rem] font-semibold text-[#1a2332]">
+                    {offerData.applicant_name || ""}
+                  </span>
                 </div>
               </div>
-            </div>
-          </div>
+
+              <div className="flex flex-col lg:flex-row gap-8 items-start">
+                {/* Left: Offer content */}
+                <div className="flex-1 min-w-0 overflow-hidden hidden sm:block">
+                  <h1 className="text-[1.6rem] md:text-[1.6rem] font-semibold text-[#1a2332] my-3 md:my-[15px] leading-[1.15] text-center">
+                    Offer of Employment
+                  </h1>
+                  {isPdfLoading ? (
+                    <div className="bg-white border border-[#e2e8f0] rounded-xl p-8 shadow-[0_1px_3px_rgba(0,0,0,0.04)] flex items-center justify-center min-h-[600px]">
+                      <div className="flex flex-col items-center gap-3">
+                        <Loader2 className="h-6 w-6 animate-spin text-[#1993e5]" />
+                        <p className="text-sm text-[#64748b]">Loading offer letter...</p>
+                      </div>
+                    </div>
+                  ) : pdfUrl ? (
+                    <div className="bg-[#f1f5f9] border border-[#e2e8f0] rounded-xl overflow-y-auto overflow-x-hidden shadow-[inset_0_1px_4px_rgba(0,0,0,0.05)] p-6" style={{ height: "80vh", minHeight: "600px" }}>
+                      <PdfViewer pdfUrl={pdfUrl} />
+                    </div>
+                  ) : (
+                    <div className="bg-white border border-[#e2e8f0] rounded-xl p-8 overflow-x-auto shadow-[0_1px_3px_rgba(0,0,0,0.04)] flex flex-col items-center justify-center min-h-[400px]">
+                      <p className="text-[#64748b]">Offer letter content could not be loaded.</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Right: Sidebar */}
+                <div className="w-full lg:w-[340px] shrink-0 -order-1 lg:order-0">
+                  <h1 className="hidden lg:block text-[1.6rem] font-extrabold text-[#1a2332] my-[15px] leading-[1.15] text-center">
+                    &nbsp;
+                  </h1>
+                  <h1 className="block lg:hidden text-[1.4rem] font-extrabold text-[#1a2332] my-3 leading-[1.15] text-center">
+                    Offer of Employment
+                  </h1>
+                  <div className="lg:sticky lg:top-6 bg-white border border-[#e2e8f0] rounded-xl overflow-hidden">
+                    <div className="text-[1.1rem] font-semibold text-[#1a2332] px-5 pt-4 pb-2.5">
+                      Offer Summary
+                    </div>
+                    <div className="bg-[#eaf4fb] p-5 border border-[#e2e8f0] rounded-lg mx-5 mb-4">
+                      <div className="flex justify-between items-center py-1.5">
+                        <span className="text-[0.85rem] text-[#64748b]">Role</span>
+                        <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right">
+                          {offerData.designation || "Intern"}
+                        </span>
+                      </div>
+                      {offerData.duration_display && (
+                        <div className="flex justify-between items-center py-1.5">
+                          <span className="text-[0.85rem] text-[#64748b]">Duration</span>
+                          <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right">
+                            {offerData.duration_display}
+                          </span>
+                        </div>
+                      )}
+                      {offerData.expected_doj_display && (
+                        <div className="flex justify-between items-center py-1.5">
+                          <span className="text-[0.85rem] text-[#64748b]">Joining Date</span>
+                          <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right">
+                            {offerData.expected_doj_display}
+                          </span>
+                        </div>
+                      )}
+                      {offerData.stipend_display && (
+                        <div className="flex justify-between items-center py-1.5">
+                          <span className="text-[0.85rem] text-[#64748b]">Amount</span>
+                          <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right">
+                            {offerData.stipend_display}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="p-5">
+                      <div className="block lg:hidden">
+                        <a
+                          href={pdfUrl || "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          download="Offer_Letter.pdf"
+                          className={`flex items-center justify-center gap-2 w-full p-2.5 bg-transparent text-[#2563eb] border-[1.5px] border-[#2563eb] rounded-lg text-[0.85rem] font-semibold no-underline mb-2.5 text-center transition-colors duration-200 hover:bg-[#2563eb]/6 ${!pdfUrl ? 'opacity-50 pointer-events-none' : ''}`}
+                        >
+                          {isPdfLoading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                          )}
+                          Download / Preview Offer Letter
+                        </a>
+                      </div>
+
+                      <label className="flex items-start gap-2.5 text-[0.82rem] text-[#334155] cursor-pointer leading-[1.45] mb-4 bg-[#fff8e1] border border-[#ffe0b2] rounded-lg p-3">
+                        <input
+                          type="checkbox"
+                          className="mt-[3px] shrink-0 w-4 h-4 accent-[#1a2332] cursor-pointer"
+                          checked={isTermsChecked}
+                          onChange={(e) => setIsTermsChecked(e.target.checked)}
+                        />
+                        <span>
+                          I declare that I have read and understood the entire offer letter and agree to the terms and conditions outlined above.
+                        </span>
+                      </label>
+
+                      <div className="hidden lg:block">
+                        <a
+                          href={pdfUrl || "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`flex items-center justify-center gap-2 w-full p-2.5 bg-transparent text-[#2563eb] border-[1.5px] border-[#2563eb] rounded-lg text-[0.85rem] font-semibold no-underline mb-2.5 text-center transition-colors duration-200 hover:bg-[#2563eb]/6 ${!pdfUrl ? 'opacity-50 pointer-events-none' : ''}`}
+                        >
+                          {isPdfLoading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                          )}
+                          Preview Offer Letter
+                        </a>
+                      </div>
+
+                      <button
+                        className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#00b48a] hover:bg-[#009e78] text-white rounded-lg text-[0.95rem] font-semibold transition-colors duration-200 mb-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={!isTermsChecked || isAccepting}
+                        onClick={handleAccept}
+                      >
+                        {isAccepting && (
+                          <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                        )}
+                        {!isAccepting && (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                        )}
+                        {isAccepting ? "Accepting..." : "Accept Offer"}
+                      </button>
+
+                      <button
+                        className="flex items-center justify-center gap-2 w-full p-2.5 bg-transparent text-[#dc3545] border-2 border-[#dc3545] rounded-lg text-[0.95rem] font-semibold transition-all duration-200 hover:bg-[#dc3545]/6"
+                        onClick={() => {
+                          setGameState("rejection");
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                        Reject Offer
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
 
