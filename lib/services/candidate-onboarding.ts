@@ -26,15 +26,6 @@ export const candidateOnboardingService = {
     );
   },
 
-  /**
-   * Fetch dynamic gender options.
-   */
-  getGenderOptions: async () => {
-    return FrappeAPI.getResource(
-      "Gender",
-      { fields: '["gender"]' }
-    );
-  },
 };
 
 /**

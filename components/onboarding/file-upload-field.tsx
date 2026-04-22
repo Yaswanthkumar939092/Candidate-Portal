@@ -1,22 +1,30 @@
-"use client"
+"use client";
 
-import { useRef, useState, useCallback } from 'react'
-import { Upload, X, FileText, Loader2 } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { useFileUpload } from '@/lib/hooks/useFileUpload'
+import { useRef, useState, useCallback } from "react";
+import { Upload, X, FileText, Loader2, AlertCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { useFileUpload } from "@/lib/hooks/useFileUpload";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface FileUploadFieldProps {
-  label: string
-  required?: boolean
-  accept?: string
-  helpText?: string
-  value?: string | null
-  onChange?: (url: string | null) => void
-  disabled?: boolean
-  error?: string
-  className?: string
+  label: string;
+  required?: boolean;
+  accept?: string;
+  helpText?: string;
+  value?: string | null;
+  onChange?: (url: string | null) => void;
+  disabled?: boolean;
+  error?: string;
+  className?: string;
+  isRejected?: boolean;
+  hrComment?: string;
 }
 
 /**
@@ -41,67 +49,100 @@ export function FileUploadField({
   disabled = false,
   error,
   className,
+  isRejected = false,
+  hrComment,
 }: FileUploadFieldProps) {
-  const inputRef = useRef<HTMLInputElement>(null)
-  const [isDragOver, setIsDragOver] = useState(false)
-  
-  const { mutateAsync: uploadFile, isPending } = useFileUpload()
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
 
-  const fileName = typeof value === 'string' && value.length > 0
-    ? value.split('/').pop() || value
-    : null
+  const { mutateAsync: uploadFile, isPending } = useFileUpload();
+
+  const fileName =
+    typeof value === "string" && value.length > 0
+      ? value.split("/").pop() || value
+      : null;
 
   const handleClick = () => {
-    if (disabled || isPending) return
-    inputRef.current?.click()
-  }
+    if (disabled || isPending) return;
+    inputRef.current?.click();
+  };
 
-  const handleProcessFile = useCallback(async (file: File | null) => {
-    if (!file) return
-    try {
-      const response = await uploadFile(file)
-      onChange?.(response.file_url)
-    } catch (error) {
-      console.error("Upload failed", error)
-    }
-  }, [uploadFile, onChange])
+  const handleProcessFile = useCallback(
+    async (file: File | null) => {
+      if (!file) return;
+      try {
+        const response = await uploadFile(file);
+        onChange?.(response.file_url);
+      } catch (error) {
+        console.error("Upload failed", error);
+      }
+    },
+    [uploadFile, onChange],
+  );
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] ?? null
-    await handleProcessFile(file)
+    const file = e.target.files?.[0] ?? null;
+    await handleProcessFile(file);
     // Reset input so the same file can be re-selected
     if (inputRef.current) {
-      inputRef.current.value = ''
+      inputRef.current.value = "";
     }
-  }
+  };
 
   const handleRemove = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    onChange?.(null)
-  }
+    e.stopPropagation();
+    onChange?.(null);
+  };
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDragOver(true)
-  }, [])
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  }, []);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDragOver(false)
-  }, [])
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    if (disabled || isPending) return
-    setIsDragOver(false)
-    const file = e.dataTransfer.files?.[0] ?? null
-    if (file) {
-      handleProcessFile(file)
-    }
-  }, [disabled, isPending, handleProcessFile])
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (disabled || isPending) return;
+      setIsDragOver(false);
+      const file = e.dataTransfer.files?.[0] ?? null;
+      if (file) {
+        handleProcessFile(file);
+      }
+    },
+    [disabled, isPending, handleProcessFile],
+  );
+
+  const renderTooltip = () => {
+    if (!isRejected || !hrComment) return null;
+    return (
+      <TooltipProvider>
+        <Tooltip delayDuration={100}>
+          <TooltipTrigger asChild>
+            <div
+              className="flex cursor-help items-center justify-center text-yellow-500 bg-background rounded-full z-10"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <AlertCircle className="h-5 w-5" />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent
+            side="top"
+            className="max-w-62.5 whitespace-pre-wrap text-destructive font-medium border-yellow-500"
+          >
+            <p>{hrComment}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  };
 
   return (
     <div className={cn("space-y-2", className)}>
@@ -112,11 +153,19 @@ export function FileUploadField({
 
       {fileName ? (
         <div
-          className="flex items-center gap-3 rounded-lg border border-border bg-muted p-3 cursor-pointer"
+          className={cn(
+            "flex items-center gap-3 rounded-lg border p-3 cursor-pointer",
+            isRejected
+              ? "border-yellow-500 bg-yellow-500/5"
+              : "border-border bg-muted",
+          )}
           onClick={handleClick}
         >
           <FileText className="h-5 w-5 shrink-0 text-primary" />
-          <span className="flex-1 truncate text-sm text-foreground">{fileName}</span>
+          <span className="flex-1 truncate text-sm text-foreground">
+            {fileName}
+          </span>
+          {renderTooltip()}
           <Button
             type="button"
             variant="ghost"
@@ -136,18 +185,24 @@ export function FileUploadField({
           onDrop={handleDrop}
           className={cn(
             "relative flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-8 transition-colors overflow-hidden",
-            isDragOver
-              ? "border-primary bg-primary/5"
-              : "border-border bg-card hover:border-primary/50 hover:bg-muted/50",
-            (disabled || isPending) && "opacity-50 cursor-not-allowed hover:border-border hover:bg-card"
+            isRejected
+              ? "border-yellow-500 bg-yellow-500/5 hover:border-yellow-500/80"
+              : isDragOver
+                ? "border-primary bg-primary/5"
+                : "border-border bg-card hover:border-primary/50 hover:bg-muted/50",
+            (disabled || isPending) &&
+              "opacity-50 cursor-not-allowed hover:border-border hover:bg-card",
           )}
         >
           {isPending && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/50 backdrop-blur-sm z-10">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="mt-2 text-sm font-medium text-primary">Uploading...</p>
+              <p className="mt-2 text-sm font-medium text-primary">
+                Uploading...
+              </p>
             </div>
           )}
+          <div className="absolute top-3 right-3">{renderTooltip()}</div>
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
             <Upload className="h-5 w-5 text-primary" />
           </div>
@@ -167,9 +222,7 @@ export function FileUploadField({
         aria-label={label}
       />
 
-      {error && (
-        <p className="text-xs text-destructive">{error}</p>
-      )}
+      {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
-  )
+  );
 }
