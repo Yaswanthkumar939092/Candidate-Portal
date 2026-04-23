@@ -1,16 +1,26 @@
 import { FrappeAPI } from "../frappe-api";
+import type {
+  DashboardApiResponse,
+  DashboardData,
+} from "../../types/dashboard";
 
-export interface DashboardResponse {
-  success: boolean;
-  message: string;
-  data: Record<string, unknown>;
-}
+const API_METHODS = {
+  GET_DASHBOARD: "recruitment.api.onboarding_dashboard.get_dashboard",
+};
 
 export const dashboardService = {
-  getDashboard: async (email: string): Promise<DashboardResponse> => {
-    return FrappeAPI.get(
-      "recruitment.api.onboarding_dashboard.get_dashboard",
-      { email }
+  getDashboardData: async (email: string): Promise<DashboardData> => {
+    if (!email) throw new Error("Email is required");
+
+    const res: DashboardApiResponse = await FrappeAPI.get(
+      API_METHODS.GET_DASHBOARD,
+      { email },
     );
+
+    if (!res.success) {
+      throw new Error(res.message || "Failed to fetch dashboard");
+    }
+
+    return res.data;
   },
 };
