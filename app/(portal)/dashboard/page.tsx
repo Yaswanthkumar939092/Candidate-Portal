@@ -85,7 +85,9 @@ function formatDisplayDate(iso: string): string {
  */
 export default function DashboardPage() {
   const { user, profile } = useAuth()
-  const { data: dynamicDashboardData, isLoading: isDashboardLoading } = useDashboard(user?.email || "")
+  const { data: dashboardResponse, isLoading: isDashboardLoading } = useDashboard(user?.email || "")
+
+  const dashboardPayload = dashboardResponse?.data
 
   const [data, setData] = useState<DashboardData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -159,7 +161,7 @@ export default function DashboardPage() {
         completedSteps={dashboardData.completedSteps}
         totalSteps={dashboardData.totalSteps}
         joiningDate={dashboardData.joiningDate}
-        dynamicDashboardData={dynamicDashboardData?.data}
+        dashboardPayload={dashboardPayload}
       />
 
       {/* Info cards row */}
@@ -188,9 +190,9 @@ export default function DashboardPage() {
           icon={<Building2 className="h-5 w-5" />}
           label="Role & Department"
           // value={dashboardData.designation}
-          value={dynamicDashboardData?.data?.designation as string}
-          subtitle={dynamicDashboardData?.data?.department as string}
-          tag={dynamicDashboardData?.data?.job_type as string}
+          value={dashboardPayload?.designation as string}
+          subtitle={dashboardPayload?.department as string}
+          tag={dashboardPayload?.job_type as string}
           tagVariant="default"
         />
       </div>

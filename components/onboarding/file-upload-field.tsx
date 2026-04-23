@@ -67,7 +67,7 @@ export function FileUploadField({
     inputRef.current?.click();
   };
 
-  const handleProcessFile = useCallback(
+  const uploadAndSetFile = useCallback(
     async (file: File | null) => {
       if (!file) return;
       try {
@@ -82,7 +82,7 @@ export function FileUploadField({
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null;
-    await handleProcessFile(file);
+    await uploadAndSetFile(file);
     // Reset input so the same file can be re-selected
     if (inputRef.current) {
       inputRef.current.value = "";
@@ -114,115 +114,118 @@ export function FileUploadField({
       setIsDragOver(false);
       const file = e.dataTransfer.files?.[0] ?? null;
       if (file) {
-        handleProcessFile(file);
+        uploadAndSetFile(file);
       }
     },
-    [disabled, isPending, handleProcessFile],
+    [disabled, isPending, uploadAndSetFile],
   );
 
   const renderTooltip = () => {
     if (!isRejected || !hrComment) return null;
     return (
-      <TooltipProvider>
-        <Tooltip delayDuration={100}>
-          <TooltipTrigger asChild>
-            <div
-              className="flex cursor-help items-center justify-center text-yellow-500 bg-background rounded-full z-10"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <AlertCircle className="h-5 w-5" />
-            </div>
-          </TooltipTrigger>
-          <TooltipContent
-            side="top"
-            className="max-w-62.5 whitespace-pre-wrap text-destructive font-medium border-yellow-500"
+      <Tooltip delayDuration={100}>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            className="flex cursor-help items-center justify-center text-yellow-500 bg-transparent rounded-full z-10 transition-colors hover:text-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+            onClick={(e) => e.stopPropagation()}
+            aria-label="Rejection reason"
           >
-            <p>{hrComment}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+            <AlertCircle className="h-5 w-5" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent
+          side="top"
+          className="max-w-62.5 whitespace-pre-wrap text-destructive font-medium border-yellow-500"
+        >
+          <p>{hrComment}</p>
+        </TooltipContent>
+      </Tooltip>
     );
   };
 
   return (
-    <div className={cn("space-y-2", className)}>
-      <Label className="text-sm font-medium text-foreground">
-        {label}
-        {required && <span className="text-destructive"> *</span>}
-      </Label>
-
-      {fileName ? (
-        <div
-          className={cn(
-            "flex items-center gap-3 rounded-lg border p-3 cursor-pointer",
-            isRejected
-              ? "border-yellow-500 bg-yellow-500/5"
-              : "border-border bg-muted",
-          )}
-          onClick={handleClick}
-        >
-          <FileText className="h-5 w-5 shrink-0 text-primary" />
-          <span className="flex-1 truncate text-sm text-foreground">
-            {fileName}
-          </span>
+    <TooltipProvider>
+      <div className={cn("space-y-2", className)}>
+        <div className="flex items-center justify-between">
+          <Label className="text-sm font-medium text-foreground">
+            {label}
+            {required && <span className="text-destructive"> *</span>}
+          </Label>
           {renderTooltip()}
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
-            onClick={handleRemove}
-            aria-label={`Remove ${label}`}
+        </div>
+
+        {fileName ? (
+          <div
+            className={cn(
+              "flex items-center gap-3 rounded-lg border p-3 cursor-pointer",
+              isRejected
+                ? "border-yellow-500 bg-yellow-500/5"
+                : "border-border bg-muted",
+            )}
+            onClick={handleClick}
           >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-      ) : (
-        <div
-          onClick={handleClick}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          className={cn(
-            "relative flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-8 transition-colors overflow-hidden",
-            isRejected
-              ? "border-yellow-500 bg-yellow-500/5 hover:border-yellow-500/80"
-              : isDragOver
-                ? "border-primary bg-primary/5"
-                : "border-border bg-card hover:border-primary/50 hover:bg-muted/50",
-            (disabled || isPending) &&
-              "opacity-50 cursor-not-allowed hover:border-border hover:bg-card",
-          )}
-        >
-          {isPending && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/50 backdrop-blur-sm z-10">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="mt-2 text-sm font-medium text-primary">
-                Uploading...
-              </p>
-            </div>
-          )}
-          <div className="absolute top-3 right-3">{renderTooltip()}</div>
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-            <Upload className="h-5 w-5 text-primary" />
+            <FileText className="h-5 w-5 shrink-0 text-primary" />
+            <span className="flex-1 truncate text-sm text-foreground">
+              {fileName}
+            </span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
+              onClick={handleRemove}
+              aria-label={`Remove ${label}`}
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </div>
-          <p className="text-sm text-foreground">
-            Click to upload or drag and drop
-          </p>
-          <p className="text-xs text-muted-foreground">{helpText}</p>
-        </div>
-      )}
+        ) : (
+          <div
+            onClick={handleClick}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={cn(
+              "relative flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-8 transition-colors overflow-hidden",
+              isRejected
+                ? "border-yellow-500 bg-yellow-500/5 hover:border-yellow-500/80"
+                : isDragOver
+                  ? "border-primary bg-primary/5"
+                  : "border-border bg-card hover:border-primary/50 hover:bg-muted/50",
+              (disabled || isPending) &&
+              "opacity-50 cursor-not-allowed hover:border-border hover:bg-card",
+            )}
+          >
+            {isPending && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/50 backdrop-blur-sm z-10">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="mt-2 text-sm font-medium text-primary">
+                  Uploading...
+                </p>
+              </div>
+            )}
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+              <Upload className="h-5 w-5 text-primary" />
+            </div>
+            <p className="text-sm text-foreground">
+              Click to upload or drag and drop
+            </p>
+            <p className="text-xs text-muted-foreground">{helpText}</p>
+          </div>
+        )}
 
-      <input
-        ref={inputRef}
-        type="file"
-        accept={accept}
-        onChange={handleFileChange}
-        className="hidden"
-        aria-label={label}
-      />
+        <input
+          ref={inputRef}
+          type="file"
+          accept={accept}
+          onChange={handleFileChange}
+          className="hidden"
+          aria-label={label}
+        />
 
-      {error && <p className="text-xs text-destructive">{error}</p>}
-    </div>
+        {error && <p className="text-xs text-destructive">{error}</p>}
+      </div>
+    </TooltipProvider>
   );
 }

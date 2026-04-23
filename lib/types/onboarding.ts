@@ -12,6 +12,7 @@ export interface OnboardingField {
   value?: any;
   default?: any;
   approval_status?: string;
+  hr_comment?: string;
 }
 
 export interface OnboardingSection {
