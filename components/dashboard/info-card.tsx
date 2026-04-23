@@ -1,20 +1,20 @@
-import { cn } from "@/lib/utils"
-import { Card, CardContent } from "@/components/ui/card"
+import { cn } from "@/lib/utils";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface InfoCardProps {
   /** Icon element rendered inside a blue circle. */
-  icon: React.ReactNode
+  icon: React.ReactNode;
   /** Short label describing the value (e.g. "Joining Date"). */
-  label: string
+  label: string;
   /** The primary display value (e.g. "Mon, 8 Sep 2025"). */
-  value: string
+  value: string;
   /** Optional secondary text below the value (e.g. address details). */
-  subtitle?: string
+  subtitle?: string;
   /** Optional tag or React node displayed in the top-right corner (e.g. "Full Time", "In 24 Days"). */
-  tag?: React.ReactNode
+  tag?: React.ReactNode;
   /** Visual style of the tag. */
-  tagVariant?: "default" | "green" | "link"
-  className?: string
+  tagVariant?: "default" | "green" | "link";
+  className?: string;
 }
 
 /**
@@ -46,8 +46,10 @@ export function InfoCard({
               className={cn(
                 "shrink-0 text-xs font-medium",
                 tagVariant === "green" && "text-green-600 dark:text-green-400",
-                tagVariant === "link" && "cursor-pointer text-primary hover:underline",
-                tagVariant === "default" && "rounded-md bg-muted px-2 py-0.5 text-muted-foreground"
+                tagVariant === "link" &&
+                  "cursor-pointer text-primary hover:underline",
+                tagVariant === "default" &&
+                  "rounded-md bg-muted px-2 py-0.5 text-muted-foreground",
               )}
             >
               {tag}
@@ -67,5 +69,5 @@ export function InfoCard({
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

@@ -1,40 +1,28 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
-import DashboardPage from "@/app/(portal)/dashboard/page";
-import { useAuth } from "@/lib/contexts/auth-context";
-import { useDashboard } from "@/lib/hooks/useDashboard";
+import { describe, it, expect, vi, beforeEach } from "vitest"
+import { render, screen, waitFor } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
+import DashboardPage from "@/app/(portal)/dashboard/page"
+import { useAuth } from "@/lib/contexts/auth-context"
+import { useDashboard } from "@/lib/hooks/useDashboard"
+import type { DashboardData } from "@/types/dashboard"
 
-// Mock dependencies
 vi.mock("@/lib/contexts/auth-context", () => ({
   useAuth: vi.fn(),
-}));
+}))
 
 vi.mock("@/lib/hooks/useDashboard", () => ({
   useDashboard: vi.fn(),
-}));
+}))
 
-// Create a stable mock for the supabase chain
-const mockSingle = vi.fn();
-const mockEq = vi.fn(() => ({ single: mockSingle }));
-const mockSelect = vi.fn(() => ({ eq: mockEq }));
-const mockFrom = vi.fn((_table?: string) => ({ select: mockSelect }));
-
-vi.mock("@/lib/supabase", () => ({
-  supabase: {
-    from: (table: string) => mockFrom(table),
-  },
-}));
-
-// Mock child components
 vi.mock("@/components/dashboard/welcome-header", () => ({
   WelcomeHeader: ({ name, greeting }: any) => <div data-testid="welcome-header">{greeting}, {name}</div>,
-}));
+}))
 
 vi.mock("@/components/dashboard/onboarding-snapshot", () => ({
   OnboardingSnapshot: ({ completedSteps, totalSteps }: any) => (
     <div data-testid="onboarding-snapshot">Progress: {completedSteps}/{totalSteps}</div>
   ),
-}));
+}))
 
 vi.mock("@/components/dashboard/info-card", () => ({
   InfoCard: ({ label, value, subtitle, tag }: any) => (
@@ -45,7 +33,7 @@ vi.mock("@/components/dashboard/info-card", () => ({
       <div data-testid="card-tag">{tag}</div>
     </div>
   ),
-}));
+}))
 
 vi.mock("@/components/dashboard/key-contacts", () => ({
   KeyContacts: ({ contacts }: any) => (
@@ -53,90 +41,206 @@ vi.mock("@/components/dashboard/key-contacts", () => ({
       {contacts.map((c: any) => <div key={c.name}>{c.name} - {c.role}</div>)}
     </div>
   ),
-}));
+}))
 
 vi.mock("@/components/dashboard/journey-countdown", () => ({
   JourneyCountdown: () => <div data-testid="journey-countdown">Countdown</div>,
-}));
+}))
+
+const mockDashboardData: DashboardData = {
+  name: "John Doe",
+  date_of_joining: "2025-09-08",
+  designation: "Senior Dev",
+  department: "Engineering",
+  work_location: "Noida",
+  work_location_details: {
+    name: "Noida Office",
+    branch: "Sector 62",
+    custom_location_code: "NOI",
+    custom_address: "KLJ Noida One, First Floor",
+    custom_location_area: "Noida, Sector 62",
+    custom_office_area: null,
+    custom_office_city: "Noida",
+    custom_city: null,
+    custom_state: "Uttar Pradesh",
+    custom_country: "India",
+    custom_pin_code: null,
+    custom_office_email: null,
+    custom_mobile_no: null,
+    custom_telephone_no: null,
+    custom_google_map_link: null,
+    custom_location_url: null,
+  },
+  key_contacts: [
+    {
+      name: "HR Buddy",
+      employee: "EMP-001",
+      role: "HR Buddy",
+      email: "hr@example.com",
+      phone_number: "+91-9876543210",
+      idx: 1,
+      employee_name: "Pallavi Mahar",
+    },
+  ],
+}
+
+function mockUseDashboardState(overrides?: Partial<ReturnType<typeof useDashboard>>) {
+  ; (useDashboard as any).mockReturnValue({
+    data: null,
+    isLoading: false,
+    isError: false,
+    error: null,
+    refetch: vi.fn(),
+    ...overrides,
+  })
+}
 
 describe("DashboardPage", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    // Default to a pending promise to test loading state if needed
-    mockSingle.mockReturnValue(new Promise(() => { }));
-  });
+    vi.clearAllMocks()
+  })
 
-  it("renders loading state initially", () => {
-    (useAuth as any).mockReturnValue({ user: { id: "123" }, profile: null });
-    (useDashboard as any).mockReturnValue({ data: null, isLoading: true });
+  it("renders skeleton loading state initially", () => {
+    ; (useAuth as any).mockReturnValue({ user: { id: "123", email: "test@example.com" }, profile: null })
+    mockUseDashboardState({ isLoading: true })
 
-    render(<DashboardPage />);
+    const { container } = render(<DashboardPage />)
 
-    expect(screen.getByText("Loading dashboard...")).toBeTruthy();
-  });
+    expect(screen.queryByText("Loading dashboard...")).toBeNull()
+    expect(container.querySelectorAll('[data-slot="skeleton"]').length).toBeGreaterThan(0)
+  })
 
-  it("renders mock data when user is not logged in", async () => {
-    (useAuth as any).mockReturnValue({ user: null, profile: null });
-    (useDashboard as any).mockReturnValue({ data: null, isLoading: false });
+  it("renders dashboard data from useDashboard", async () => {
+    ; (useAuth as any).mockReturnValue({
+      user: { id: "user-123", email: "test@example.com" },
+      profile: { full_name: "John Doe" },
+    })
+    mockUseDashboardState({
+      data: mockDashboardData,
+    })
 
-    render(<DashboardPage />);
+    render(<DashboardPage />)
 
     await waitFor(() => {
-      expect(screen.getByTestId("welcome-header")).toHaveTextContent("Welcome back, User");
-      expect(screen.getByTestId("onboarding-snapshot")).toHaveTextContent("Progress: 8/8");
-    });
-  });
+      expect(screen.getByTestId("welcome-header")).toHaveTextContent("Welcome back, John Doe")
+      expect(screen.getByTestId("onboarding-snapshot")).toHaveTextContent("Progress: 8/8")
+      expect(screen.getByTestId("key-contacts")).toHaveTextContent("Pallavi Mahar - HR Buddy")
+    })
 
-  it("fetches and displays onboarding data from Supabase for logged-in user", async () => {
-    const mockUser = { id: "user-123", email: "test@example.com" };
-    const mockProfile = { full_name: "John Doe" };
-    const mockOnboarding = { completed_steps: ["Step 1", "Step 2"] };
+    const cards = screen.getAllByTestId("info-card")
+    expect(cards[0]).toHaveTextContent("Mon, 8 Sep 2025")
+    expect(cards[1]).toHaveTextContent("Noida")
+    expect(cards[1]).toHaveTextContent("KLJ Noida One, First Floor")
+    expect(cards[2]).toHaveTextContent("Senior Dev")
+    expect(cards[2]).toHaveTextContent("Engineering")
+  })
 
-    (useAuth as any).mockReturnValue({ user: mockUser, profile: mockProfile });
-    (useDashboard as any).mockReturnValue({
+  it("renders the view on map link when custom_google_map_link is present", async () => {
+    ; (useAuth as any).mockReturnValue({
+      user: { id: "user-123", email: "test@example.com" },
+      profile: null,
+    })
+    mockUseDashboardState({
       data: {
-        data: {
-          designation: "Senior Dev",
-          department: "Engineering",
-          job_type: "Permanent"
-        }
+        ...mockDashboardData,
+        work_location_details: {
+          ...mockDashboardData.work_location_details,
+          custom_google_map_link: "https://maps.google.com/?q=noida-office",
+        },
       },
-      isLoading: false
-    });
+    })
 
-    mockSingle.mockResolvedValue({
-      data: mockOnboarding,
-      error: null,
-    });
+    render(<DashboardPage />)
 
-    render(<DashboardPage />);
+    const mapLink = await screen.findByRole("link", { name: "View on Map" })
+    expect(mapLink).toHaveAttribute("href", "https://maps.google.com/?q=noida-office")
+  })
+
+  it("falls back to derived address, backend name, and default role labels when fields are missing", async () => {
+    ; (useAuth as any).mockReturnValue({
+      user: { id: "user-123", email: "test@example.com" },
+      profile: null,
+    })
+    mockUseDashboardState({
+      data: {
+        ...mockDashboardData,
+        name: "",
+        date_of_joining: "",
+        designation: "",
+        department: "",
+        work_location: "",
+        work_location_details: {
+          ...mockDashboardData.work_location_details,
+          custom_address: null,
+          custom_office_city: "Noida",
+          custom_state: "Uttar Pradesh",
+          custom_country: "India",
+          custom_google_map_link: null,
+        },
+        key_contacts: [
+          {
+            ...mockDashboardData.key_contacts[0],
+            employee_name: "",
+            name: "Fallback Contact",
+          },
+        ],
+      },
+    })
+
+    render(<DashboardPage />)
 
     await waitFor(() => {
-      expect(screen.getByTestId("welcome-header")).toHaveTextContent("Welcome back, John Doe");
-      expect(screen.getByTestId("onboarding-snapshot")).toHaveTextContent("Progress: 2/8");
+      expect(screen.getByTestId("welcome-header")).toHaveTextContent("Welcome back, User")
+      expect(screen.getByTestId("onboarding-snapshot")).toHaveTextContent("Progress: 0/8")
+      expect(screen.getByTestId("key-contacts")).toHaveTextContent("Fallback Contact - HR Buddy")
+    })
 
-      const cards = screen.getAllByTestId("info-card");
-      const roleCard = cards[2];
-      expect(roleCard).toHaveTextContent("Senior Dev");
-      expect(roleCard).toHaveTextContent("Engineering");
-      expect(roleCard).toHaveTextContent("Permanent");
-    });
-  });
+    const cards = screen.getAllByTestId("info-card")
+    expect(cards[1]).toHaveTextContent("Not available")
+    expect(cards[1]).toHaveTextContent("Noida, Uttar Pradesh, India")
+    expect(screen.queryByRole("link", { name: "View on Map" })).toBeNull()
+    expect(cards[2]).toHaveTextContent("Not assigned")
+    expect(cards[2]).toHaveTextContent("Department not available")
+  })
 
-  it("falls back to mock data if Supabase fetch fails", async () => {
-    const mockUser = { id: "user-123", email: "test@example.com" };
-    (useAuth as any).mockReturnValue({ user: mockUser, profile: null });
-    (useDashboard as any).mockReturnValue({ data: null, isLoading: false });
+  it("renders the missing-email error state and allows retry", async () => {
+    const refetch = vi.fn()
 
-    mockSingle.mockResolvedValue({
-      data: null,
-      error: { message: "Error fetching" },
-    });
+      ; (useAuth as any).mockReturnValue({
+        user: { id: "user-123" },
+        profile: null,
+      })
+    mockUseDashboardState({ refetch })
 
-    render(<DashboardPage />);
+    render(<DashboardPage />)
 
-    await waitFor(() => {
-      expect(screen.getByTestId("onboarding-snapshot")).toHaveTextContent("Progress: 8/8");
-    });
-  });
-});
+    expect(screen.getByText("We couldn't identify your account email for this dashboard yet.")).toBeTruthy()
+
+    await userEvent.click(screen.getByRole("button", { name: "Try again" }))
+
+    expect(refetch).toHaveBeenCalledTimes(1)
+  })
+
+  it("renders an error state and retries the query", async () => {
+    const refetch = vi.fn()
+
+      ; (useAuth as any).mockReturnValue({
+        user: { id: "user-123", email: "test@example.com" },
+        profile: null,
+      })
+    mockUseDashboardState({
+      isError: true,
+      error: new Error("Dashboard request failed"),
+      refetch,
+    })
+
+    render(<DashboardPage />)
+
+    expect(screen.getByText("Unable to load dashboard")).toBeTruthy()
+    expect(screen.getByText("Dashboard request failed")).toBeTruthy()
+
+    await userEvent.click(screen.getByRole("button", { name: "Try again" }))
+
+    expect(refetch).toHaveBeenCalledTimes(1)
+  })
+})
