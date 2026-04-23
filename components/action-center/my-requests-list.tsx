@@ -144,7 +144,7 @@ export function MyRequestsList({
                             Description: {req.description || "No description provided"}
                             </span>
                             <div>
-                            <span className="text-xs text-[#667085] mt-1.5 font-medium dark:text-gray-400 leading-none truncate">
+                            {req.attachment && (<span className="text-xs text-[#667085] mt-1.5 font-medium dark:text-gray-400 leading-none truncate">
                             Document:                             <button
                             onClick={() => {
                             setPdfUrl(`${req.attachment}`)// base url lagana padega
@@ -154,7 +154,7 @@ export function MyRequestsList({
                             >
                             View
                             </button>
-                            </span>
+                            </span>)}
 
                             </div>
 
