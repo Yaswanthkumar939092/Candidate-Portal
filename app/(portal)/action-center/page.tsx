@@ -169,8 +169,12 @@ export default function ActionCenterPage() {
 
   const {
     data: actionCenterMyRequestData,
-  } = useActionCenterMyRequest(userEmail)
-  const { mutate: raiseRequest, isPending } = useCandidateRaiseRequest()
+  } = useActionCenterMyRequest( {
+    page: 1,
+    limit: 10,
+    userEmail: userEmail || undefined, // Pass undefined if email is empty to prevent query from running
+  })
+  const { mutate: raiseRequest } = useCandidateRaiseRequest()
   // Derive tasks from API response; fall back to empty array while loading
   const tasks: Task[] = actionCenterData?.items
     ? mapApiItemsToTasks(actionCenterData.items)
