@@ -171,6 +171,7 @@ export function OnboardingFormStep({
             isRejected={
               !field.read_only && field.approval_status === "Rejected"
             }
+            hrComment={field.hr_comment}
           />
         ),
       },
@@ -193,6 +194,7 @@ export function OnboardingFormStep({
             isRejected={
               !field.read_only && field.approval_status === "Rejected"
             }
+            hrComment={field.hr_comment}
           />
         ),
       },

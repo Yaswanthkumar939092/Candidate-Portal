@@ -98,10 +98,10 @@ describe("JobOfferPage", () => {
   });
 
   it("uses applicant email from search params if available", () => {
-    const PARAM_EMAIL = "param@example.com";
-    mockGet.mockReturnValue(PARAM_EMAIL);
+    const paramEmail = "param@example.com";
+    mockGet.mockReturnValue(paramEmail);
     render(<JobOfferPage />);
-    expect(mockUseJobOfferStatus).toHaveBeenCalledWith(PARAM_EMAIL);
+    expect(mockUseJobOfferStatus).toHaveBeenCalledWith(paramEmail);
   });
 
   it("checks terms and conditions and allows accepting offer", async () => {
