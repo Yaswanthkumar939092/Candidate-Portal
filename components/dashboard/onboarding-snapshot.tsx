@@ -13,7 +13,7 @@ interface OnboardingSnapshotProps {
   totalSteps?: number
   /** ISO date string for the joining date. */
   joiningDate?: string
-  dynamicDashboardData?: Record<string, unknown>
+  dashboardPayload?: Record<string, any>
   className?: string
 }
 
@@ -47,13 +47,13 @@ export function OnboardingSnapshot({
   completedSteps,
   totalSteps = 8,
   joiningDate,
-  dynamicDashboardData,
+  dashboardPayload,
   className,
 }: OnboardingSnapshotProps) {
   const percentage =
     totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0
   const isComplete = percentage >= 100
-  const displayJoiningDate = (dynamicDashboardData?.date_of_joining as string) || joiningDate
+  const displayJoiningDate = (dashboardPayload?.date_of_joining as string) || joiningDate
   return (
     <div className={cn("space-y-4 border border-[#E5E7EB] rounded-[calc(1rem+8px)] p-2 bg-white shadow-sm", className)}>
       {/* Main onboarding card */}
