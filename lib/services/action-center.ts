@@ -12,25 +12,17 @@ import { FrappeAPI } from "../frappe-api";
 }
 
 export const ActionCenterMyRequestService = {
-  getActionCenterMyRequestService: async (
-    page: number,
-    limit: number,
-    userEmail: string
-  ): Promise<any> => {
-    const response = await FrappeAPI.getresourceDocumentData(
-      "Candidate%20Raise%20Request",
-      {
+    getActionCenterMyRequestService: async (page: number, limit: number): Promise<any> => {
+      const response = await FrappeAPI.getresourceDocumentData("Candidate%20Raise%20Request", {
         method: "GET",
-        page,
-        limit,
+        page,   
+        limit,  
         fields: ["*"],
-        filters: ["candidate_email", "=", userEmail],
-      }
-    )
-
-    return response.data
-  },
-}
+      })
+  
+      return response.data
+    },
+  }
 
   export const CandidateRaiseRequestService = {
     createCandidateRaiseRequest: async (payload: any): Promise<any> => {
@@ -41,4 +33,4 @@ export const ActionCenterMyRequestService = {
   
       return response.data;
     },
-  };
+  }; 

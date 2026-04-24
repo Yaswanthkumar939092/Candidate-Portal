@@ -130,7 +130,7 @@ describe("useActionCenterMyRequest", () => {
     )
 
     const { result } = renderHook(
-      () => useActionCenterMyRequest({ page: 1, limit: 10, userEmail }),
+      () => useActionCenterMyRequest({ page: 1, limit: 10, }),
       { wrapper: createWrapper() }
     )
 
@@ -156,7 +156,7 @@ describe("useActionCenterMyRequest", () => {
     )
 
     const { result } = renderHook(
-      () => useActionCenterMyRequest({ page: 2, limit: 5, userEmail }),
+      () => useActionCenterMyRequest({ page: 2, limit: 5,}),
       { wrapper }
     )
 
@@ -177,7 +177,7 @@ describe("useActionCenterMyRequest", () => {
     )
 
     const { result } = renderHook(
-      () => useActionCenterMyRequest({ page: 1, limit: 10, userEmail }),
+      () => useActionCenterMyRequest({ page: 1, limit: 10,}),
       { wrapper: createWrapper() }
     )
 
@@ -186,7 +186,7 @@ describe("useActionCenterMyRequest", () => {
 
   it("does not fetch when email empty", () => {
     const { result } = renderHook(
-      () => useActionCenterMyRequest({ page: 1, limit: 10, userEmail: "" }),
+      () => useActionCenterMyRequest({ page: 1, limit: 10,}),
       { wrapper: createWrapper() }
     )
 
