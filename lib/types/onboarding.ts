@@ -9,8 +9,8 @@ export interface OnboardingField {
   options?: string;
   child_doctype?: string;
   child_fields?: OnboardingField[];
-  value?: any;
-  default?: any;
+  value?: unknown;
+  default?: unknown;
   approval_status?: string;
   hr_comment?: string;
 }
@@ -25,10 +25,22 @@ export interface OnboardingTab {
   sections: OnboardingSection[];
 }
 
-export interface OnboardingFormResponse {
+export interface OnboardingFormMessage {
   status: string;
   onboarding_name: string;
   job_applicant: string;
   boarding_status: string;
   tabs: OnboardingTab[];
 }
+
+export interface OnboardingFormApiResponse {
+  message: OnboardingFormMessage;
+}
+
+export interface OnboardingForm {
+  applicantId: string;
+  status: string;
+  tabs: OnboardingTab[];
+}
+
+export type OnboardingFormResponse = OnboardingFormMessage;
