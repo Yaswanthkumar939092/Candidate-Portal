@@ -137,8 +137,9 @@ export function AssignedTasksList({
                             <div className="flex flex-col pt-0.5 min-w-0">
                               <h4 className="font-bold text-base text-slate-900 dark:text-gray-100 leading-tight truncate">{task.title}</h4>
                               <span className="text-xs text-[#667085] mt-1.5 font-medium dark:text-gray-400 leading-none truncate">{task?.description || "No description available"}</span>
-                              <span className="text-xs text-[#667085] mt-1.5 font-medium dark:text-gray-400 leading-none truncate">
-                               Document:                             <button
+          
+                              {task.attachment && (<span className="text-xs text-[#667085] mt-1.5 font-medium dark:text-gray-400 leading-none truncate">
+                               Document:<button
                                onClick={() => {
                                setPdfUrl(`${task?.attachment}`)
                                setIsOpen(true)
@@ -147,7 +148,7 @@ export function AssignedTasksList({
                             >
                             View
                             </button>
-                            </span>
+                            </span>)}
                               <div className="mt-3.5 flex items-center gap-1.5 text-xs font-medium text-[#475467] whitespace-nowrap dark:text-gray-400 overflow-hidden text-ellipsis">
                                 <Clock className="h-3.5 w-3.5 shrink-0" />
                                 <span className="truncate">{task.dueDate ? `Due by ${task.dueDate}` : task.completedDate ? `Completed on ${task.completedDate}` : "No due date"}</span>
