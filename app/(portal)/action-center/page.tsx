@@ -171,8 +171,7 @@ export default function ActionCenterPage() {
     data: actionCenterMyRequestData,
   } = useActionCenterMyRequest( {
     page: 1,
-    limit: 10,
-    userEmail: userEmail || undefined, // Pass undefined if email is empty to prevent query from running
+    limit: 100000,
   })
   const { mutate: raiseRequest } = useCandidateRaiseRequest()
   // Derive tasks from API response; fall back to empty array while loading

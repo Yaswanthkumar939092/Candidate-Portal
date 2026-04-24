@@ -1,70 +1,38 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import {
-  ActionCenterDataService,
-  ActionCenterMyRequestService,
-  CandidateRaiseRequestService,
-} from "@/lib/services/action-center"
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { ActionCenterDataService, ActionCenterMyRequestService, CandidateRaiseRequestService } from "../services/action-center";
 
-// ─────────────────────────────────────────────
-// useActionCenter
-// ─────────────────────────────────────────────
-export const useActionCenter = (email?: string) => {
-  return useQuery({
-    queryKey: ["action-center", email],
-    queryFn: () => ActionCenterDataService.getActionCenterData(email!),
-    enabled: !!email,
-  })
-}
 
-// ─────────────────────────────────────────────
-// useActionCenterMyRequest
-// ─────────────────────────────────────────────
-export const useActionCenterMyRequest = ({
-  page = 1,
-  limit = 10,
-  userEmail,
-}: {
-  page?: number
-  limit?: number
-  userEmail?: string
-}) => {
-  return useQuery({
-    queryKey: ["action-center-my-request", page, limit, userEmail],
-    
-    queryFn: () => {
-      if (!userEmail) {
-        return Promise.resolve([]) // ✅ safe fallback
-      }
-
-      // ✅ here TypeScript knows userEmail is string
-      return ActionCenterMyRequestService.getActionCenterMyRequestService(
-        page,
-        limit,
-        userEmail
-      )
-    },
-
-    enabled: !!userEmail,
-  })
-}
-
-// ─────────────────────────────────────────────
-// useCandidateRaiseRequest ✅ FIXED
-// ─────────────────────────────────────────────
-
-export const useCandidateRaiseRequest = () => {
-  const mutation = useMutation({
-    mutationFn: async (payload: any) => {
-      const res =
-        await CandidateRaiseRequestService.createCandidateRaiseRequest(payload)
-
-      return res
-    },
-  })
-
-  return {
-    ...mutation,
-    data: mutation.data, // ✅ explicitly expose
+export function useActionCenter(userEmail: string) {
+    return useQuery({
+      queryKey: ["action-center", userEmail],
+      queryFn: async () => {
+        const response = await ActionCenterDataService.getActionCenterData(userEmail);
+        return response ;
+      },
+      enabled: !!userEmail,
+    });
   }
-}
+
+export const useActionCenterMyRequest = ({ page, limit }: { page: number; limit: number }) => {
+      return useQuery<any>({
+        queryKey: ["action-center-my-request", page, limit], 
+        queryFn: () => ActionCenterMyRequestService.getActionCenterMyRequestService(page, limit),
+      });
+    };
+  
+
+    export const useCandidateRaiseRequest = () => {
+        return useMutation({
+          mutationFn: CandidateRaiseRequestService.createCandidateRaiseRequest ,
+      
+          onSuccess: (data) => {
+            console.log("✅ Job Applicant Created:", data);
+          },
+      
+          onError: (error: any) => {
+            console.error("❌ Error creating applicant:", error);
+          },
+        });
+      };
+ 
