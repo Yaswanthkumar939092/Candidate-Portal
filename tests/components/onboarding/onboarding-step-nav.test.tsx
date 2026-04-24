@@ -18,6 +18,7 @@ describe("OnboardingStepNav", () => {
     currentStep: 0,
     completedSteps: new Set(),
     goToStep: mockGoToStep,
+    status: "draft",
     formConfig: {
       tabs: [
         { tab: "Personal Information" },
