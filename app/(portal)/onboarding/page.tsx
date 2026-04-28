@@ -4,22 +4,14 @@ import { Suspense } from 'react'
 import { Loader2, ClipboardX, ArrowLeft } from 'lucide-react'
 import { OnboardingProvider, useOnboarding } from '@/lib/contexts/onboarding-context'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { OnboardingStepNav } from '@/components/onboarding/onboarding-step-nav'
 import { ReviewStep } from '@/components/onboarding/steps/review-step'
 import { OnboardingFormStep } from '@/components/onboarding/onboarding-form-step'
 import { Progress } from '@/components/ui/progress'
 
-/**
- * Inner onboarding content that consumes the onboarding context.
- *
- * Renders a sidebar navigation (desktop) alongside the currently
- * active step component with a page title and subtitle header.
- */
 function OnboardingContent() {
   const { currentStep, completedSteps, isLoading, formConfig, status, isError } = useOnboarding()
-  const router = useRouter()
 
   if (isLoading || (!formConfig && !isError)) {
     return (
@@ -44,13 +36,13 @@ function OnboardingContent() {
               </div>
             </div>
           </div>
-          
+
           <div className="space-y-3">
             <h1 className="text-3xl font-bold tracking-tight text-[#101828]">
               Onboarding not yet started
             </h1>
             <p className="text-lg text-[#475467]">
-              It seems your onboarding journey hasn't been initialized yet. This usually happens while we're setting up your profile.
+              It seems your onboarding journey hasn&apos;t been initialized yet. This usually happens while we&apos;re setting up your profile.
             </p>
           </div>
 
@@ -77,11 +69,11 @@ function OnboardingContent() {
 
   // Use dynamic tabs from API
   const tabs = formConfig?.tabs || []
-  
+
   // Total steps: one for each tab + one final review step
   const totalSteps = tabs.length + 1
   const progressPercentage = (completedSteps.size / totalSteps) * 100
-  
+
   let stepTitle = ''
   let StepComponent: React.ReactNode = null
 
@@ -89,9 +81,10 @@ function OnboardingContent() {
     const currentTab = tabs[currentStep]
     stepTitle = currentTab.tab
     StepComponent = (
-      <OnboardingFormStep 
-        tab={currentTab} 
-        stepKey={currentTab.tab.toLowerCase().replace(/\s+/g, '_')} 
+      <OnboardingFormStep
+        key={currentStep}
+        tab={currentTab}
+        stepKey={currentTab.tab.toLowerCase().replace(/\s+/g, '_')}
       />
     )
   } else {

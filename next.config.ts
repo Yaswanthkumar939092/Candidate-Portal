@@ -1,5 +1,35 @@
 import type { NextConfig } from "next";
 
+function getRemoteImagePatterns() {
+  const configuredFrappeUrl =
+    process.env.NEXT_PUBLIC_FRAPPE_URL ||
+    (process.env.NODE_ENV === "development"
+      ? "http://localhost:8000"
+      : undefined);
+
+  if (!configuredFrappeUrl) {
+    return [];
+  }
+
+  try {
+    const { protocol, hostname, port } = new URL(configuredFrappeUrl);
+
+    return [
+      {
+        protocol: protocol.replace(":", "") as "http" | "https",
+        hostname,
+        port,
+        pathname: "/**",
+      },
+    ];
+  } catch {
+    console.warn(
+      "Invalid NEXT_PUBLIC_FRAPPE_URL provided. External Frappe-hosted images will not be optimized.",
+    );
+    return [];
+  }
+}
+
 const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
@@ -13,12 +43,7 @@ const nextConfig: NextConfig = {
     },
   },
   images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
-    ],
+    remotePatterns: getRemoteImagePatterns(),
   },
   webpack: (config) => {
     config.resolve.alias.canvas = false;

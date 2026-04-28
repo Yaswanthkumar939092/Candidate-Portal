@@ -7,6 +7,8 @@ import { useAuth } from "@/lib/contexts/auth-context";
 import { useFeatureFlags } from "@/lib/contexts/feature-flags";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
+import { useWebsiteBranding } from "@/lib/hooks/useWebsiteBranding";
+
 
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -95,7 +97,9 @@ function formatRole(role: string): string {
 export function PortalNavigation({ className }: PortalNavigationProps) {
   const { user, profile } = useAuth();
   const { isEnabled } = useFeatureFlags();
+  const { data: branding } = useWebsiteBranding();
   const pathname = usePathname();
+
   const router = useRouter();
 
   const filteredNavItems = navItems.filter((item) => {
@@ -197,15 +201,18 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
           {/* Desktop/Mobile PW Logo */}
           <Link href="/dashboard" className="flex shrink-0 items-center gap-2">
             <Image
-              src="/brand2.png"
-              alt="Physics Wallah"
+              src={branding?.app_logo ? (branding.app_logo.startsWith('http') ? branding.app_logo : `${process.env.NEXT_PUBLIC_FRAPPE_URL}${branding.app_logo}`) : "/brand2.png"}
+              alt={branding?.title_prefix || "Physics Wallah"}
               width={32}
               height={32}
               priority
               className="shrink-0"
             />
-            <span className="text-[14px] sm:text-base font-extrabold text-black uppercase hidden sm:block">Physics Wallah</span>
+            <span className="text-[14px] sm:text-base font-extrabold text-black uppercase hidden sm:block">
+              {branding?.title_prefix || "Physics Wallah"}
+            </span>
           </Link>
+
         </div>
 
         {/* Center: Nav links with pill-style active states (Hidden on Mobile) */}
