@@ -20,19 +20,19 @@ interface OnboardingStepNavProps {
  * (active/completed/pending), and a "Back to Dashboard" link at the bottom.
  */
 export function OnboardingStepNav({ className }: OnboardingStepNavProps) {
-  const { currentStep, completedSteps, goToStep, formConfig } = useOnboarding()
+  const { currentStep, completedSteps, goToStep, formConfig, status } = useOnboarding()
 
   const tabs = formConfig?.tabs || []
   const steps = [
-    ...tabs.map(t => ({ 
-      key: t.tab.toLowerCase().replace(/\s+/g, '_'), 
-      label: t.tab 
-    })), 
+    ...tabs.map(t => ({
+      key: t.tab.toLowerCase().replace(/\s+/g, '_'),
+      label: t.tab
+    })),
     { key: 'review', label: 'Review' }
   ]
 
   const totalSteps = steps.length
-  const progressPercentage = totalSteps > 0 
+  const progressPercentage = totalSteps > 0
     ? Math.round((completedSteps.size / totalSteps) * 100)
     : 0
 
@@ -67,7 +67,8 @@ export function OnboardingStepNav({ className }: OnboardingStepNavProps) {
       <div className="flex-1 overflow-y-auto px-3 py-4">
         <div className="flex flex-col gap-0.5">
           {steps.map((step, index) => {
-            const isCompleted = completedSteps.has(step.key)
+            const isSubmitted = status !== 'draft'
+            const isCompleted = isSubmitted || completedSteps.has(step.key)
             const isCurrent = index === currentStep
             const isPast = index < currentStep
             const isClickable = isCompleted || isCurrent || isPast
@@ -91,13 +92,13 @@ export function OnboardingStepNav({ className }: OnboardingStepNavProps) {
                   className={cn(
                     "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-medium",
                     isCompleted &&
-                      "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+                    "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
                     isCurrent &&
-                      !isCompleted &&
-                      "bg-primary text-primary-foreground",
                     !isCompleted &&
-                      !isCurrent &&
-                      "border border-border bg-muted text-muted-foreground"
+                    "bg-primary text-primary-foreground",
+                    !isCompleted &&
+                    !isCurrent &&
+                    "border border-border bg-muted text-muted-foreground"
                   )}
                 >
                   {isCompleted ? (
