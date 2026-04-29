@@ -7,16 +7,26 @@ import PdfViewer from "@/app/job_offer/PdfViewer";
 vi.mock("react-pdf/dist/esm/Page/AnnotationLayer.css", () => ({}));
 vi.mock("react-pdf/dist/esm/Page/TextLayer.css", () => ({}));
 
+interface DocumentProps {
+  children?: React.ReactNode;
+  onLoadSuccess?: (data: { numPages: number }) => void;
+  file: string;
+}
+
+interface PageProps {
+  pageNumber: number;
+}
+
 // Mock react-pdf
 vi.mock("react-pdf", () => ({
-  Document: ({ children, onLoadSuccess, file }: any) => {
+  Document: ({ children, onLoadSuccess, file }: DocumentProps) => {
     // Simulate successful load
     if (onLoadSuccess) {
       onLoadSuccess({ numPages: 2 });
     }
     return <div data-testid="pdf-document" data-file={file}>{children}</div>;
   },
-  Page: ({ pageNumber }: any) => <div data-testid={`pdf-page-${pageNumber}`}>Page {pageNumber}</div>,
+  Page: ({ pageNumber }: PageProps) => <div data-testid={`pdf-page-${pageNumber}`}>Page {pageNumber}</div>,
   pdfjs: {
     GlobalWorkerOptions: {
       workerSrc: ""

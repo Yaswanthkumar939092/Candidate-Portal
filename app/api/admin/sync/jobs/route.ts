@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { z } from 'zod'
+import { JobType, ExperienceLevel } from '@/types/database'
 
 // Mock Frappe client - replace with actual implementation
 interface FrappeJob {
@@ -145,7 +146,7 @@ export async function POST(request: NextRequest) {
     try {
       // Test Frappe connection
       await frappeClient.ping()
-    } catch (error) {
+    } catch {
       return NextResponse.json(
         { error: 'Failed to connect to Frappe ERPNext' },
         { status: 503 }
@@ -154,7 +155,7 @@ export async function POST(request: NextRequest) {
 
     let synced = 0
     let updated = 0
-    let errors: string[] = []
+    const errors: string[] = []
 
     try {
       // Fetch jobs from Frappe
@@ -186,8 +187,8 @@ export async function POST(request: NextRequest) {
             salary_min: frappeJob.salary_min,
             salary_max: frappeJob.salary_max,
             location: frappeJob.location,
-            job_type: frappeJob.job_type as any,
-            experience_level: frappeJob.experience_level as any,
+            job_type: frappeJob.job_type as JobType,
+            experience_level: frappeJob.experience_level as ExperienceLevel,
             skills_required: frappeJob.skills_required || [],
             application_deadline: frappeJob.application_deadline,
             is_active: frappeJob.status === 'Open',

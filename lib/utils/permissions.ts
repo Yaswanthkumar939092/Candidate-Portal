@@ -159,7 +159,13 @@ export interface UserContext {
   role: Role
   company_id?: string
   permissions: Permission[]
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
+}
+
+export interface ResourceContext {
+  resourceType?: 'application' | 'job' | 'document' | 'profile'
+  resourceOwnerId?: string
+  resourceCompanyId?: string
 }
 
 // Permission check result
@@ -212,11 +218,7 @@ export async function getUserContext(userId: string): Promise<UserContext | null
 export function hasPermission(
   userContext: UserContext,
   permission: Permission,
-  resourceContext?: {
-    resourceType?: 'application' | 'job' | 'document' | 'profile'
-    resourceOwnerId?: string
-    resourceCompanyId?: string
-  }
+  resourceContext?: ResourceContext
 ): PermissionResult {
   // Check if user has the base permission
   if (!userContext.permissions.includes(permission)) {
@@ -363,7 +365,7 @@ export async function canAccessResource(
     const requiredPermission = permissionMap[resourceType][action]
 
     // Get resource details for ownership/company checks
-    let resourceContext: any = {}
+    let resourceContext: ResourceContext = {}
 
     if (resourceType === 'application') {
       const { data: application } = await supabaseAdmin
@@ -376,7 +378,7 @@ export async function canAccessResource(
         resourceContext = {
           resourceType,
           resourceOwnerId: application.candidate_id,
-          resourceCompanyId: (application.jobs as any)?.company_id,
+          resourceCompanyId: (application.jobs as unknown as { company_id: string })?.company_id,
         }
       }
     } else if (resourceType === 'job') {
@@ -389,7 +391,7 @@ export async function canAccessResource(
       if (job) {
         resourceContext = {
           resourceType,
-          resourceCompanyId: null, // TODO: Add company relationship if needed
+          resourceCompanyId: undefined, // TODO: Add company relationship if needed
         }
       }
     } else if (resourceType === 'document') {
@@ -472,7 +474,7 @@ export function requireRoles(roles: Role[]) {
 /**
  * Filter data based on user permissions
  */
-export async function filterDataByPermissions<T extends { id: string; [key: string]: any }>(
+export async function filterDataByPermissions<T extends { id: string; [key: string]: unknown }>(
   userId: string,
   data: T[],
   resourceType: 'application' | 'job' | 'document' | 'profile',
