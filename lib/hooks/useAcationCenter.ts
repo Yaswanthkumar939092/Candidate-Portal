@@ -14,10 +14,11 @@ export function useActionCenter(userEmail: string) {
     });
   }
 
-export const useActionCenterMyRequest = ({ page, limit }: { page: number; limit: number }) => {
+export const useActionCenterMyRequest = ({ page, limit, userEmail }: { page: number; limit: number; userEmail?: string }) => {
       return useQuery<any>({
-        queryKey: ["action-center-my-request", page, limit], 
-        queryFn: () => ActionCenterMyRequestService.getActionCenterMyRequestService(page, limit),
+        queryKey: ["action-center-my-request", page, limit, userEmail],
+        queryFn: () => ActionCenterMyRequestService.getActionCenterMyRequestService(page, limit, userEmail),
+        enabled: !!userEmail,
       });
     };
   
