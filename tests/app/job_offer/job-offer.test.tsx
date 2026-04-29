@@ -12,7 +12,7 @@ vi.mock("next/dynamic", () => ({
 
 vi.mock("next/image", () => ({
   __esModule: true,
-  default: (props: any) => <img {...props} />,
+  default: (props: React.ImgHTMLAttributes<HTMLImageElement>) => <img {...props} />,
 }));
 
 vi.mock("sonner", () => ({
@@ -29,11 +29,11 @@ const mockUseJobOfferStatus = vi.fn();
 const mockUseRejectionReasons = vi.fn();
 
 vi.mock("@/lib/hooks/useJobOffer", () => ({
-  useJobOfferSummary: (...args: any[]) => mockUseJobOfferSummary(...args),
-  useJobOfferPdf: (...args: any[]) => mockUseJobOfferPdf(...args),
+  useJobOfferSummary: (...args: unknown[]) => mockUseJobOfferSummary(...args),
+  useJobOfferPdf: (...args: unknown[]) => mockUseJobOfferPdf(...args),
   useUpdateJobOfferStatus: () => mockUseUpdateJobOfferStatus(),
-  useJobOfferStatus: (...args: any[]) => mockUseJobOfferStatus(...args),
-  useRejectionReasons: (...args: any[]) => mockUseRejectionReasons(...args),
+  useJobOfferStatus: (...args: unknown[]) => mockUseJobOfferStatus(...args),
+  useRejectionReasons: (...args: unknown[]) => mockUseRejectionReasons(...args),
 }));
 
 const mockUseCurrentUser = vi.fn();
@@ -43,7 +43,7 @@ vi.mock("@/lib/hooks/useUser", () => ({
 
 const mockUseCompanyLogo = vi.fn();
 vi.mock("@/lib/hooks/useCompanyLogo", () => ({
-  useCompanyLogo: (...args: any[]) => mockUseCompanyLogo(...args),
+  useCompanyLogo: (...args: unknown[]) => mockUseCompanyLogo(...args),
 }));
 
 const mockGet = vi.fn();

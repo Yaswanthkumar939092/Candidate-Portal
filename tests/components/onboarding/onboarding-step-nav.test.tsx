@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { OnboardingStepNav } from "@/components/onboarding/onboarding-step-nav";
-import { useOnboarding } from "@/lib/contexts/onboarding-context";
+import { useOnboarding, OnboardingContextType } from "@/lib/contexts/onboarding-context";
 
 vi.mock("@/lib/contexts/onboarding-context", () => ({
   useOnboarding: vi.fn(),
@@ -14,23 +14,36 @@ describe("OnboardingStepNav", () => {
     vi.clearAllMocks();
   });
 
-  const defaultProps = {
+  const defaultProps: OnboardingContextType = {
     currentStep: 0,
+    stepData: {},
     completedSteps: new Set(),
-    goToStep: mockGoToStep,
+    isDirty: false,
+    isLoading: false,
+    isError: false,
+    isSaving: false,
     status: "draft",
+    setStepData: vi.fn(),
+    goToStep: mockGoToStep,
+    nextStep: vi.fn(),
+    prevStep: vi.fn(),
+    markStepComplete: vi.fn(),
+    submitAll: vi.fn(),
+    getFieldValue: vi.fn(),
     formConfig: {
+      applicantId: "test-id",
+      status: "Pending",
       tabs: [
-        { tab: "Personal Information" },
-        { tab: "Education Details" }
+        { tab: "Personal Information", sections: [] },
+        { tab: "Education Details", sections: [] }
       ]
     }
   };
 
   it("renders onboarding header and progress bar", () => {
-    (useOnboarding as any).mockReturnValue(defaultProps);
+    vi.mocked(useOnboarding).mockReturnValue(defaultProps);
     render(<OnboardingStepNav />);
-    
+
     expect(screen.getByText("Onboarding")).toBeTruthy();
     expect(screen.getByText("Complete your profile to get started.")).toBeTruthy();
   });
@@ -38,67 +51,67 @@ describe("OnboardingStepNav", () => {
   it("calculates progress percentage correctly", () => {
     // 2 tabs + 1 review = 3 steps total.
     // 1 completed step.
-    (useOnboarding as any).mockReturnValue({
+    vi.mocked(useOnboarding).mockReturnValue({
       ...defaultProps,
       completedSteps: new Set(["personal_information"])
     });
-    
+
     const { container } = render(<OnboardingStepNav />);
     const progressBar = container.querySelector(".bg-primary-foreground.transition-all");
     expect(progressBar).toHaveStyle("width: 33%");
   });
 
   it("renders steps with correct status indicators", () => {
-    (useOnboarding as any).mockReturnValue({
+    vi.mocked(useOnboarding).mockReturnValue({
       ...defaultProps,
       currentStep: 1, // At Education Details
       completedSteps: new Set(["personal_information"])
     });
-    
+
     render(<OnboardingStepNav />);
-    
+
     // Personal Information should show check icon (completed)
     // Education Details should show active style (2)
     // Review should show pending style (3)
-    
+
     expect(screen.getByText("Personal Information")).toBeTruthy();
     expect(screen.getByText("Education Details")).toBeTruthy();
     expect(screen.getByText("Review")).toBeTruthy();
-    
+
     // Check for check icon in completed step
     const completedStep = screen.getByText("Personal Information").parentElement;
     expect(completedStep?.querySelector("svg")).toBeTruthy(); // Check icon
   });
 
   it("calls goToStep when a clickable step is clicked", () => {
-    (useOnboarding as any).mockReturnValue({
+    vi.mocked(useOnboarding).mockReturnValue({
       ...defaultProps,
       currentStep: 1,
       completedSteps: new Set(["personal_information"])
     });
-    
+
     render(<OnboardingStepNav />);
-    
+
     const firstStep = screen.getByText("Personal Information");
     fireEvent.click(firstStep);
     expect(mockGoToStep).toHaveBeenCalledWith(0);
   });
 
   it("disables future steps that are not yet clickable", () => {
-    (useOnboarding as any).mockReturnValue(defaultProps);
+    vi.mocked(useOnboarding).mockReturnValue(defaultProps);
     render(<OnboardingStepNav />);
-    
+
     const futureStep = screen.getByText("Education Details").parentElement;
     expect(futureStep).toBeDisabled();
-    
+
     fireEvent.click(futureStep!);
     expect(mockGoToStep).not.toHaveBeenCalled();
   });
 
   it("renders back to dashboard link", () => {
-    (useOnboarding as any).mockReturnValue(defaultProps);
+    vi.mocked(useOnboarding).mockReturnValue(defaultProps);
     render(<OnboardingStepNav />);
-    
+
     const backLink = screen.getByText("Back to Dashboard");
     expect(backLink).toBeTruthy();
     expect(backLink.closest('a')).toHaveAttribute('href', '/dashboard');

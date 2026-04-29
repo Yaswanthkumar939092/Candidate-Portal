@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import OnboardingPage from "@/app/(portal)/onboarding/page";
+import { OnboardingTab } from "@/lib/types/onboarding";
 
 // Mocks
 const mockUseOnboarding = vi.fn();
@@ -27,11 +28,11 @@ vi.mock("@/components/onboarding/steps/review-step", () => ({
 }));
 
 vi.mock("@/components/onboarding/onboarding-form-step", () => ({
-  OnboardingFormStep: ({ tab }: any) => <div data-testid="onboarding-form-step">Form Step Mock for {tab?.tab}</div>,
+  OnboardingFormStep: ({ tab }: { tab: OnboardingTab }) => <div data-testid="onboarding-form-step">Form Step Mock for {tab?.tab}</div>,
 }));
 
 vi.mock("@/components/ui/progress", () => ({
-  Progress: ({ value }: any) => <div data-testid="progress-bar">Progress: {value}%</div>,
+  Progress: ({ value }: { value: number }) => <div data-testid="progress-bar">Progress: {value}%</div>,
 }));
 
 describe("OnboardingPage", () => {

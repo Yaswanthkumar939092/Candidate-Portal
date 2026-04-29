@@ -1,11 +1,39 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { OnboardingFormStep } from "@/components/onboarding/onboarding-form-step";
-import { useOnboarding } from "@/lib/contexts/onboarding-context";
+import { useOnboarding, OnboardingContextType } from "@/lib/contexts/onboarding-context";
+import { OnboardingField, OnboardingTab } from "@/lib/types/onboarding";
+
+// Mock interfaces
+interface FileUploadFieldProps {
+  label: string;
+  onChange: (value: string) => void;
+  error?: string;
+}
+
+interface DynamicTableFieldProps {
+  field: OnboardingField;
+  errors: Record<string, { message: string }>;
+}
+
+interface OverrideComponentProps {
+  field: OnboardingField;
+  value: unknown;
+  onChange: (value: unknown) => void;
+  error?: string;
+}
+
+interface DynamicFieldRendererProps {
+  field: OnboardingField;
+  value: unknown;
+  onChange: (value: unknown) => void;
+  error?: string;
+  overrides?: Record<string, { component: React.ComponentType<OverrideComponentProps> }>;
+}
 
 // Hoist the mock component so it can be used in vi.mock
 const { FileUploadFieldMock } = vi.hoisted(() => ({
-  FileUploadFieldMock: ({ label, onChange, error }: any) => (
+  FileUploadFieldMock: ({ label, onChange, error }: FileUploadFieldProps) => (
     <div data-testid="file-upload">
       <label>{label}</label>
       <button type="button" onClick={() => onChange("uploaded-file-url")}>Upload</button>
@@ -24,7 +52,7 @@ vi.mock("@/components/onboarding/file-upload-field", () => ({
 }));
 
 vi.mock("@/components/onboarding/dynamic-table-field", () => ({
-  DynamicTableField: ({ field, errors }: any) => (
+  DynamicTableField: ({ field, errors }: DynamicTableFieldProps) => (
     <div data-testid="table-field">
       {field.label} Table
       {errors[field.fieldname] && <span data-testid="error-message">{errors[field.fieldname].message}</span>}
@@ -34,7 +62,7 @@ vi.mock("@/components/onboarding/dynamic-table-field", () => ({
 
 // Mock DynamicFieldRenderer to avoid deep UI rendering issues and focus on props
 vi.mock("@/components/ui/field-renderer", () => ({
-    DynamicFieldRenderer: ({ field, value, onChange, error, overrides }: any) => {
+    DynamicFieldRenderer: ({ field, value, onChange, error, overrides }: DynamicFieldRendererProps) => {
         if (field.fieldtype === "Attach" || field.fieldtype === "Attach Image") {
             // In OnboardingFormStep, overrides for Attach are provided
             if (overrides && overrides[field.fieldtype]) {
@@ -69,44 +97,57 @@ describe("OnboardingFormStep", () => {
     vi.clearAllMocks();
   });
 
-  const mockTab = {
+  const mockTab: OnboardingTab = {
     tab: "Personal Info",
     sections: [
       {
         section: "Basic Details",
         fields: [
-          { fieldname: "first_name", label: "First Name", fieldtype: "Data", reqd: 1 },
-          { fieldname: "last_name", label: "Last Name", fieldtype: "Data", reqd: 0 },
+          { fieldname: "first_name", label: "First Name", fieldtype: "Data", reqd: 1, is_mandatory: 1, read_only: 0, hidden: 0 },
+          { fieldname: "last_name", label: "Last Name", fieldtype: "Data", reqd: 0, is_mandatory: 0, read_only: 0, hidden: 0 },
         ]
       },
       {
         section: "Documents",
         fields: [
-          { fieldname: "profile_pic", label: "Profile Picture", fieldtype: "Attach", reqd: 1 }
+          { fieldname: "profile_pic", label: "Profile Picture", fieldtype: "Attach", reqd: 1, is_mandatory: 1, read_only: 0, hidden: 0 }
         ]
       },
       {
         section: "Work History",
         fields: [
-          { fieldname: "experience", label: "Experience", fieldtype: "Table", reqd: 0 }
+          { fieldname: "experience", label: "Experience", fieldtype: "Table", reqd: 0, is_mandatory: 0, read_only: 0, hidden: 0 }
         ]
       }
     ]
   };
 
-  const defaultContext = {
+  const defaultContext: OnboardingContextType = {
+    currentStep: 1,
     stepData: {},
+    completedSteps: new Set(),
+    isDirty: false,
+    isLoading: false,
+    isError: false,
+    isSaving: false,
+    status: "draft",
     setStepData: mockSetStepData,
+    goToStep: vi.fn(),
     nextStep: mockNextStep,
     prevStep: mockPrevStep,
     markStepComplete: mockMarkStepComplete,
-    isSaving: false,
-    currentStep: 1,
+    submitAll: vi.fn(),
+    getFieldValue: vi.fn(),
+    formConfig: {
+        applicantId: "test",
+        status: "Pending",
+        tabs: []
+    }
   };
 
   it("renders all sections and fields defined in the tab", () => {
-    (useOnboarding as any).mockReturnValue(defaultContext);
-    render(<OnboardingFormStep tab={mockTab as any} stepKey="personal_info" />);
+    vi.mocked(useOnboarding).mockReturnValue(defaultContext);
+    render(<OnboardingFormStep tab={mockTab} stepKey="personal_info" />);
     
     expect(screen.getByText("First Name")).toBeTruthy();
     expect(screen.getByText("Last Name")).toBeTruthy();
@@ -116,20 +157,20 @@ describe("OnboardingFormStep", () => {
   });
 
   it("initializes form with existing data if available", () => {
-    (useOnboarding as any).mockReturnValue({
+    vi.mocked(useOnboarding).mockReturnValue({
       ...defaultContext,
       stepData: { personal_info: { first_name: "Bruce", last_name: "Wayne" } }
     });
     
-    render(<OnboardingFormStep tab={mockTab as any} stepKey="personal_info" />);
+    render(<OnboardingFormStep tab={mockTab} stepKey="personal_info" />);
     
     const input = screen.getByTestId("input-first_name") as HTMLInputElement;
     expect(input.value).toBe("Bruce");
   });
 
   it("validates mandatory fields and prevents submission", async () => {
-    (useOnboarding as any).mockReturnValue(defaultContext);
-    render(<OnboardingFormStep tab={mockTab as any} stepKey="personal_info" />);
+    vi.mocked(useOnboarding).mockReturnValue(defaultContext);
+    render(<OnboardingFormStep tab={mockTab} stepKey="personal_info" />);
     
     const nextBtn = screen.getByText("Next Step");
     fireEvent.click(nextBtn);
@@ -141,8 +182,8 @@ describe("OnboardingFormStep", () => {
   });
 
   it("calls setStepData and nextStep on successful form submission", async () => {
-    (useOnboarding as any).mockReturnValue(defaultContext);
-    render(<OnboardingFormStep tab={mockTab as any} stepKey="personal_info" />);
+    vi.mocked(useOnboarding).mockReturnValue(defaultContext);
+    render(<OnboardingFormStep tab={mockTab} stepKey="personal_info" />);
     
     fireEvent.change(screen.getByTestId("input-first_name"), { target: { value: "Clark" } });
     fireEvent.click(screen.getByText("Upload"));
@@ -161,16 +202,16 @@ describe("OnboardingFormStep", () => {
   });
 
   it("enables 'Same as Current Address' logic when Permanent Address section exists", () => {
-    const tabWithAddress = {
+    const tabWithAddress: OnboardingTab = {
       tab: "Address",
       sections: [
-        { section: "Current Address", fields: [{ fieldname: "current_city", label: "Current City", fieldtype: "Data" }] },
-        { section: "Permanent Address", fields: [{ fieldname: "permanent_city", label: "Permanent City", fieldtype: "Data" }] }
+        { section: "Current Address", fields: [{ fieldname: "current_city", label: "Current City", fieldtype: "Data", is_mandatory: 0, read_only: 0, hidden: 0 }] },
+        { section: "Permanent Address", fields: [{ fieldname: "permanent_city", label: "Permanent City", fieldtype: "Data", is_mandatory: 0, read_only: 0, hidden: 0 }] }
       ]
     };
     
-    (useOnboarding as any).mockReturnValue(defaultContext);
-    render(<OnboardingFormStep tab={tabWithAddress as any} stepKey="address" />);
+    vi.mocked(useOnboarding).mockReturnValue(defaultContext);
+    render(<OnboardingFormStep tab={tabWithAddress} stepKey="address" />);
     
     const sameAsBtn = screen.getByText("Same as Current Address");
     expect(sameAsBtn).toBeTruthy();
@@ -183,23 +224,23 @@ describe("OnboardingFormStep", () => {
   });
 
   it("disables buttons when isSaving is true", () => {
-    (useOnboarding as any).mockReturnValue({
+    vi.mocked(useOnboarding).mockReturnValue({
       ...defaultContext,
       isSaving: true
     });
     
-    render(<OnboardingFormStep tab={mockTab as any} stepKey="personal_info" />);
+    render(<OnboardingFormStep tab={mockTab} stepKey="personal_info" />);
     
     expect(screen.getByText("Previous")).toBeDisabled();
     expect(screen.getByText("Next Step")).toBeDisabled();
   });
 
   it("disables 'Previous' button on the first step", () => {
-    (useOnboarding as any).mockReturnValue({
+    vi.mocked(useOnboarding).mockReturnValue({
       ...defaultContext,
       currentStep: 0
     });
-    render(<OnboardingFormStep tab={mockTab as any} stepKey="personal_info" />);
+    render(<OnboardingFormStep tab={mockTab} stepKey="personal_info" />);
     
     expect(screen.getByText("Previous")).toBeDisabled();
   });

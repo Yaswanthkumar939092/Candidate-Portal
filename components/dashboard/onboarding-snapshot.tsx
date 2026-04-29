@@ -13,7 +13,7 @@ interface OnboardingSnapshotProps {
   totalSteps?: number
   /** ISO date string for the joining date. */
   joiningDate?: string
-  dashboardPayload?: Record<string, any>
+  dashboardPayload?: Record<string, unknown>
   className?: string
 }
 

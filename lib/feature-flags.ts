@@ -1,9 +1,9 @@
 // Server-side feature flag utilities
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { FeatureFlag, FeatureFlagOverride } from '@/types/database'
+import { FeatureFlag, FeatureFlagOverride, Json } from '@/types/database'
 
 // Cache for feature flags (server-side)
-let flagsCache: Record<string, any> = {}
+let flagsCache: Record<string, Json> = {}
 let cacheTimestamp = 0
 const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
 
@@ -28,7 +28,7 @@ function evaluateFeatureFlagForUser(
   flag: FeatureFlag,
   userId: string | null,
   userOverride: FeatureFlagOverride | null
-): any {
+): Json {
   // If user has an override, use that value
   if (userOverride) {
     return userOverride.value
@@ -81,7 +81,7 @@ export async function getAllFeatureFlags(): Promise<FeatureFlag[]> {
 }
 
 // Get feature flags for a specific user
-export async function getFeatureFlagsForUser(userId: string | null): Promise<Record<string, any>> {
+export async function getFeatureFlagsForUser(userId: string | null): Promise<Record<string, Json>> {
   try {
     // Check cache first
     const now = Date.now()
@@ -121,7 +121,7 @@ export async function getFeatureFlagsForUser(userId: string | null): Promise<Rec
     })
 
     // Evaluate each feature flag for the user
-    const evaluatedFlags: Record<string, any> = { ...DEFAULT_FLAGS }
+    const evaluatedFlags: Record<string, Json> = { ...DEFAULT_FLAGS } as Record<string, Json>
 
     if (featureFlags) {
       featureFlags.forEach(flag => {
@@ -160,8 +160,8 @@ export async function isFeatureEnabled(
 export async function getFeatureFlagValue(
   flagKey: FeatureFlagKey,
   userId: string | null = null,
-  defaultValue?: any
-): Promise<any> {
+  defaultValue?: Json
+): Promise<Json> {
   try {
     const flags = await getFeatureFlagsForUser(userId)
     return flags[flagKey] !== undefined ? flags[flagKey] : (defaultValue ?? DEFAULT_FLAGS[flagKey])
@@ -207,7 +207,7 @@ export async function updateFeatureFlag(
 export async function createUserOverride(
   flagId: string,
   userId: string,
-  value: any
+  value: Json
 ): Promise<FeatureFlagOverride | null> {
   try {
     const { data: override, error } = await supabaseAdmin
@@ -272,6 +272,6 @@ export function clearFeatureFlagsCache(): void {
 }
 
 // Middleware helper to inject feature flags into request context
-export async function injectFeatureFlags(userId: string | null): Promise<Record<string, any>> {
+export async function injectFeatureFlags(userId: string | null): Promise<Record<string, Json>> {
   return await getFeatureFlagsForUser(userId)
 }

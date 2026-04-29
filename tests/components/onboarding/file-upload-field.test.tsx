@@ -13,10 +13,10 @@ describe("FileUploadField", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (useFileUpload as any).mockReturnValue({
+    vi.mocked(useFileUpload).mockReturnValue({
       mutateAsync: mockUploadFile,
       isPending: false,
-    });
+    } as unknown as ReturnType<typeof useFileUpload>);
   });
 
   it("renders essential labels and requirements", () => {
@@ -27,10 +27,10 @@ describe("FileUploadField", () => {
   });
 
   it("shows uploading state when isPending is true", () => {
-    (useFileUpload as any).mockReturnValue({
+    vi.mocked(useFileUpload).mockReturnValue({
       mutateAsync: mockUploadFile,
       isPending: true,
-    });
+    } as unknown as ReturnType<typeof useFileUpload>);
     render(<FileUploadField label="Resume" />);
     expect(screen.getByText("Uploading...")).toBeTruthy();
   });
