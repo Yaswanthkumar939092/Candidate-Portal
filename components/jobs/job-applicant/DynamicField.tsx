@@ -194,7 +194,7 @@ export function JobApplicationStep({
       job_applicant_email: userEmail, 
       status: "Pending",
       form_data: JSON.stringify(formData),
-      job_title: jobID,
+      job_opening: jobID,
     };
   };
 
