@@ -22,33 +22,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  AppliedJobsTimeline,
-  type ApplicationWithTimeline,
-} from "@/components/my-jobs/applied-jobs-timeline"
+import { AppliedJobsTimeline } from "@/components/my-jobs/applied-jobs-timeline"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/lib/contexts/auth-context"
+import { useApplicantStatus } from "@/lib/hooks/useApplicantStatus"
 
-// Mock data for applied jobs
-const MOCK_APPLIED: ApplicationWithTimeline[] = [
-  {
-    id: "1",
-    jobTitle: "Trainee",
-    company: "Physics Wallah",
-    location: "Noida, Uttar Pradesh, India",
-    experience: "0-1 Years",
-    jobType: "Full Time",
-    currentStage: "transitioning",
-    stages: [
-      { key: "applied", label: "Applied", date: "04 Jan 2025" },
-      { key: "review", label: "Review", date: "06 Jan 2025" },
-      { key: "interview", label: "Interview", date: "17 Jan 2025" },
-      { key: "transitioning", label: "Transitioning", date: "04 Feb 2025" },
-    ],
-    appliedDate: "04 Jan 2025",
-  },
-]
-
-// Mock data for draft applications
+// Mock data for draft applications (no API for drafts yet)
 interface DraftApplication {
   id: string
   jobTitle: string
@@ -71,17 +50,19 @@ const MOCK_DRAFTS: DraftApplication[] = [
   },
 ]
 
-/**
- * My Jobs page -- shows applied jobs with a timeline view and draft
- * applications with a progress bar. Features a blue info banner and
- * filter dropdowns matching the design screenshots.
- */
 export default function MyJobsPage() {
+  const { user } = useAuth()
+  const userEmail = user?.email || user?.user_metadata?.email || ""
+  const { data: response, isLoading, error } = useApplicantStatus(userEmail)
+
+  const apiData = response?.data
+
   const [activeTab, setActiveTab] = useState<"applied" | "drafts">("applied")
   const [filter, setFilter] = useState("active")
   const [infoBannerVisible, setInfoBannerVisible] = useState(true)
 
-  const appliedCount = MOCK_APPLIED.length
+  // Derive applied count from API applications array
+  const appliedCount = apiData?.applications?.length ?? 0
   const draftCount = MOCK_DRAFTS.length
 
   return (
@@ -130,10 +111,7 @@ export default function MyJobsPage() {
         >
           Applied Jobs
           {appliedCount > 0 && (
-            <Badge
-              variant="secondary"
-              className="ml-0.5 h-5 px-1.5 text-[10px]"
-            >
+            <Badge variant="secondary" className="ml-0.5 h-5 px-1.5 text-[10px]">
               {appliedCount}
             </Badge>
           )}
@@ -141,6 +119,7 @@ export default function MyJobsPage() {
             <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground" />
           )}
         </button>
+
         <button
           className={cn(
             "relative flex items-center gap-1.5 pb-2.5 text-sm font-medium transition-colors",
@@ -152,10 +131,7 @@ export default function MyJobsPage() {
         >
           Draft Applications
           {draftCount > 0 && (
-            <Badge
-              variant="secondary"
-              className="ml-0.5 h-5 px-1.5 text-[10px]"
-            >
+            <Badge variant="secondary" className="ml-0.5 h-5 px-1.5 text-[10px]">
               {draftCount}
             </Badge>
           )}
@@ -182,14 +158,35 @@ export default function MyJobsPage() {
             </Select>
           </div>
 
-          {MOCK_APPLIED.length === 0 ? (
+          {/* Loading state */}
+          {isLoading && (
+            <p className="text-sm text-muted-foreground">
+              Loading your applications…
+            </p>
+          )}
+
+          {/* Error state */}
+          {error && (
+            <p className="text-sm text-destructive">
+              Could not load applications: {(error as Error).message}
+            </p>
+          )}
+
+          {/* Empty state */}
+          {!isLoading && !error && appliedCount === 0 && (
             <div className="rounded-lg border border-dashed p-12 text-center">
               <p className="text-sm text-muted-foreground">
                 No applications yet. Start browsing open jobs to apply.
               </p>
             </div>
-          ) : (
-            <AppliedJobsTimeline applications={MOCK_APPLIED} />
+          )}
+
+          {/* Applications list — pass full apiData down */}
+          {!isLoading && !error && apiData && apiData.applications.length > 0 && (
+            <AppliedJobsTimeline
+              applicantName={apiData.name}
+              applications={apiData.applications}
+            />
           )}
         </div>
       )}
