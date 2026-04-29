@@ -132,7 +132,7 @@ describe("useActionCenterMyRequest", () => {
     expect(result.current.data).toEqual(mock)
     expect(
       ActionCenterMyRequestService.getActionCenterMyRequestService
-    ).toHaveBeenCalledWith(1, 10)
+    ).toHaveBeenCalledWith(1, 10, userEmail)
   })
 
   it("query key correct", async () => {
