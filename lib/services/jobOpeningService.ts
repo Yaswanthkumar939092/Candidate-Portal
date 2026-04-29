@@ -30,7 +30,7 @@ export const draftJobApplicantService = {
       "recruitment.api.draft_application.get_draft",
       {
         job_applicant_email: email,
-        job_applicant: jobId
+        job_opening: jobId
         }
     );
     return response;
