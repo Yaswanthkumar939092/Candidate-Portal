@@ -22,13 +22,13 @@ export const useCreateJobApplicant = () => {
   });
 };
 
-// ✅ GET draft by email — enabled only when email is available
+// ✅ FIX: enabled must require BOTH email AND jobId (use && not ||)
 export const useGetDraftJobApplicant = (email: string, jobId: string) => {
   return useQuery<any>({
     queryKey: ["draft-job-applicant", email, jobId],
     queryFn: () => draftJobApplicantService.getDraftJobApplicant(email, jobId),
-    enabled: !!email || !!jobId, // only fetch when email is present
-    retry: false,     // don't retry if no draft found
+    enabled: !!email && !!jobId, // ← was || which caused fetch with empty email
+    retry: false,
   });
 };
 
