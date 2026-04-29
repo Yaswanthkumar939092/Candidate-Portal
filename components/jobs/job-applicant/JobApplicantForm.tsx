@@ -104,13 +104,27 @@ export default function JobApplicationPage({
         <div className="mx-auto w-full px-4 py-8 sm:px-6 lg:px-8">
           {/* Step header */}
           <div className="mb-6">
-            <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-              Step {currentStep + 1} of {tabs.length}
-            </p>
-            <h1 className="mt-1 text-2xl font-bold text-foreground">
-              {currentTab.tab}
-            </h1>
-          </div>
+  <div className="flex items-center justify-between mb-1">
+    <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+      Step {currentStep + 1} of {tabs.length}
+    </p>
+    <p className="text-xs font-medium text-muted-foreground">
+      {Math.round(((currentStep + 1) / tabs.length) * 100)}%
+    </p>
+  </div>
+
+  {/* Progress bar */}
+  <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden mb-3">
+    <div
+      className="h-full rounded-full bg-primary transition-all duration-500 ease-out"
+      style={{ width: `${((currentStep + 1) / tabs.length) * 100}%` }}
+    />
+  </div>
+
+  <h1 className="mt-1 text-2xl font-bold text-foreground">
+    {currentTab.tab}
+  </h1>
+</div>
 
           <JobApplicationStep
             tab={currentTab}

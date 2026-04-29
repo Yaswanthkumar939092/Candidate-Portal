@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,11 +11,16 @@ import { SectionCard } from "@/components/onboarding/section-card";
 import { DynamicFieldRenderer } from "@/components/ui/field-renderer";
 import { cn } from "@/lib/utils";
 import { useJobApp } from "@/lib/contexts/job-application-context";
-import { useCreateJobApplicant } from "@/lib/hooks/useJobOpening";
+import {
+  useCreateDraftJobApplicant,
+  useUpdateDraftJobApplicant,
+  useCreateJobApplicant,
+  useGetDraftJobApplicant,
+} from "@/lib/hooks/useJobOpening";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { JobApplicationTableField } from "./ChildTable";
-
+import { useAuth } from "@/lib/contexts/auth-context";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -75,16 +81,25 @@ export function JobApplicationStep({
 }: JobApplicationStepProps) {
   const { stepData, setStepData } = useJobApp();
   const { mutate, isPending } = useCreateJobApplicant();
+  const { mutate: draftMutate, isPending: isDraftPending } = useCreateDraftJobApplicant();
+  const { mutate: draftUpdateMutate, isPending: isDraftUpdatePending } = useUpdateDraftJobApplicant();
   const router = useRouter();
+  const { user } = useAuth();
+  // ✅ Logged-in user email — used for all draft operations
+  const userEmail = user?.email || user?.user_metadata?.email || "";
+
+  const [draftName, setDraftName] = useState<string | null>(null);
 
   const isLastStep = currentStep === totalSteps - 1;
+
+  // ✅ Fetch draft using logged-in user email directly — no need to watch form
+  const { data: draftData } = useGetDraftJobApplicant(userEmail, jobID);
 
   const existingData = useMemo(
     () => (stepData[stepKey] ?? {}) as Record<string, unknown>,
     [stepData, stepKey]
   );
 
-  // Build default values: merge saved data + empty defaults per field type
   const defaultValues = useMemo(() => {
     const values: Record<string, unknown> = { ...existingData };
     tab.sections.forEach((section) => {
@@ -105,16 +120,50 @@ export function JobApplicationStep({
     formState: { errors },
   } = useForm({ defaultValues });
 
-  // Re-sync form when step changes
   useEffect(() => {
     reset(defaultValues);
   }, [defaultValues, reset]);
+
+  // ✅ When draft data is fetched — prefill form and store draft name
+  useEffect(() => {
+    if (draftData?.success && draftData?.data) {
+      const draft = draftData.data;
+
+      // Store draft name for future updates
+      setDraftName(draft.name);
+
+      // Parse form_data — it may come as string or object
+      const formData: Record<string, unknown> =
+        typeof draft.form_data === "string"
+          ? JSON.parse(draft.form_data)
+          : draft.form_data ?? {};
+
+      // Distribute parsed form_data back into stepData context
+      setStepData(stepKey, formData);
+
+      // Reset form with draft values — only fields belonging to this tab
+      const tabFieldNames = new Set(
+        tab.sections.flatMap((s) => s.fields.map((f) => f.fieldname))
+      );
+
+      const tabValues: Record<string, unknown> = {};
+      Object.entries(formData).forEach(([key, value]) => {
+        if (tabFieldNames.has(key)) {
+          tabValues[key] = value ?? "";
+        }
+      });
+
+      reset((prev) => ({ ...prev, ...tabValues }));
+
+      toast.info("Draft data restored successfully.");
+    }
+  }, [draftData]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Helpers ──────────────────────────────────────────────────────────────
 
   const handleFileUpload =
     (fieldname: string) => (url: string | null) => {
-      setValue(fieldname, url ?? "", { shouldValidate: true });
+      setValue(fieldname, url ?? "", { shouldValidate: false });
     };
 
   const buildFinalPayload = (currentData: Record<string, unknown>) => {
@@ -122,24 +171,41 @@ export function JobApplicationStep({
     const final: Record<string, unknown> = {};
 
     Object.values(merged).forEach((step) => {
-      Object.entries(step as Record<string, unknown>).forEach(
-        ([key, value]) => {
-          final[key] = value === "" || value === undefined ? null : value;
-        }
-      );
+      Object.entries(step as Record<string, unknown>).forEach(([key, value]) => {
+        final[key] = value === "" || value === undefined ? null : value;
+      });
     });
 
     final.job_opening = jobID;
     return final;
   };
 
-  // ── Submit ────────────────────────────────────────────────────────────────
+  const buildDraftPayload = (data: Record<string, unknown>) => {
+    const merged = { ...stepData, [stepKey]: data };
+    const formData: Record<string, unknown> = {};
+
+    Object.values(merged).forEach((step) => {
+      Object.entries(step as Record<string, unknown>).forEach(([key, value]) => {
+        formData[key] = value === "" || value === undefined ? null : value;
+      });
+    });
+
+    return {
+      job_applicant_email: userEmail, 
+      status: "Pending",
+      form_data: JSON.stringify(formData),
+      job_title: jobID,
+    };
+  };
+
+  // ── FINAL SUBMIT (WITH VALIDATION) ────────────────────────────────────────
 
   const onSubmit = handleSubmit((data) => {
     setStepData(stepKey, data);
 
     if (isLastStep) {
       const payload = buildFinalPayload(data);
+
       mutate(payload as Parameters<typeof mutate>[0], {
         onSuccess: () => {
           toast.success("Application submitted successfully!");
@@ -155,6 +221,42 @@ export function JobApplicationStep({
 
     onNext();
   });
+
+  // ── SAVE DRAFT (NO VALIDATION) ────────────────────────────────────────────
+
+  const onDraftSave = () => {
+    const data = watch();
+
+    setStepData(stepKey, data);
+
+    const draftPayload = buildDraftPayload(data);
+
+    if (draftName) {
+      // ✅ Draft exists — UPDATE using logged-in user email
+      draftUpdateMutate(
+        { name: draftName, payload: draftPayload },
+        {
+          onSuccess: () => {
+            toast.success("Draft updated successfully!");
+          },
+          onError: () => {
+            toast.error("Draft update failed.");
+          },
+        }
+      );
+    } else {
+      // ✅ No draft yet — CREATE using logged-in user email
+      draftMutate(draftPayload as any, {
+        onSuccess: (responseData) => {
+          setDraftName(responseData?.name ?? null);
+          toast.success("Draft saved successfully!");
+        },
+        onError: () => {
+          toast.error("Draft save failed.");
+        },
+      });
+    }
+  };
 
   // ── Field overrides ───────────────────────────────────────────────────────
 
@@ -221,7 +323,7 @@ export function JobApplicationStep({
             field={field}
             value={watch(field.fieldname)}
             onChange={(val) =>
-              setValue(field.fieldname, val, { shouldValidate: true })
+              setValue(field.fieldname, val, { shouldValidate: false })
             }
             onAttachChange={handleFileUpload}
           />
@@ -235,7 +337,7 @@ export function JobApplicationStep({
         field={field}
         value={watch(field.fieldname)}
         onChange={(val) =>
-          setValue(field.fieldname, val, { shouldValidate: true })
+          setValue(field.fieldname, val, { shouldValidate: false })
         }
         error={errors[field.fieldname]?.message as string}
         disabled={!!field.read_only}
@@ -275,16 +377,29 @@ export function JobApplicationStep({
           type="button"
           variant="outline"
           onClick={onPrev}
-          disabled={currentStep === 0 || isPending}
+          disabled={currentStep === 0 || isPending || isDraftPending || isDraftUpdatePending}
         >
           <ChevronLeft className="mr-1 h-4 w-4" />
           Previous
         </Button>
 
-        <Button type="submit" disabled={isPending}>
-          {isLastStep ? "Submit Application" : "Next Step"}
-          {!isLastStep && <ChevronRight className="ml-1 h-4 w-4" />}
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* SAVE DRAFT */}
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={onDraftSave}
+            disabled={isDraftPending || isDraftUpdatePending}
+          >
+            Save Draft
+          </Button>
+
+          {/* SUBMIT / NEXT */}
+          <Button type="submit" disabled={isPending}>
+            {isLastStep ? "Submit Application" : "Next Step"}
+            {!isLastStep && <ChevronRight className="ml-1 h-4 w-4" />}
+          </Button>
+        </div>
       </div>
     </form>
   );
