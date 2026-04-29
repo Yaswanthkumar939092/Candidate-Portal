@@ -130,7 +130,7 @@ describe("useActionCenterMyRequest", () => {
     )
 
     const { result } = renderHook(
-      () => useActionCenterMyRequest({ page: 1, limit: 10, }),
+      () => useActionCenterMyRequest({ page: 1, limit: 10, userEmail }),
       { wrapper: createWrapper() }
     )
 
@@ -156,7 +156,7 @@ describe("useActionCenterMyRequest", () => {
     )
 
     const { result } = renderHook(
-      () => useActionCenterMyRequest({ page: 2, limit: 5,}),
+      () => useActionCenterMyRequest({ page: 2, limit: 5, userEmail }),
       { wrapper }
     )
 
@@ -177,7 +177,7 @@ describe("useActionCenterMyRequest", () => {
     )
 
     const { result } = renderHook(
-      () => useActionCenterMyRequest({ page: 1, limit: 10,}),
+      () => useActionCenterMyRequest({ page: 1, limit: 10, userEmail }),
       { wrapper: createWrapper() }
     )
 
