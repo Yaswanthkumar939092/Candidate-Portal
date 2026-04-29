@@ -132,7 +132,7 @@ describe("useActionCenterMyRequest", () => {
     expect(result.current.data).toEqual(mock)
     expect(
       ActionCenterMyRequestService.getActionCenterMyRequestService
-    ).toHaveBeenCalledWith(1, 10, userEmail)
+    ).toHaveBeenCalledWith(1, 10)
   })
 
   it("query key correct", async () => {
@@ -177,14 +177,6 @@ describe("useActionCenterMyRequest", () => {
     await waitFor(() => expect(result.current.isError).toBe(true))
   })
 
-  it("does not fetch when email empty", () => {
-    const { result } = renderHook(
-      () => useActionCenterMyRequest({ page: 1, limit: 10, }),
-      { wrapper: createWrapper() }
-    )
-
-    expect(result.current.isFetching).toBe(false)
-  })
 })
 
 // ─── useCandidateRaiseRequest ──────────────────────────────────────

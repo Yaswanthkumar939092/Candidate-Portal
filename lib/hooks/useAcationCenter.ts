@@ -16,8 +16,7 @@ export function useActionCenter(userEmail: string) {
 export const useActionCenterMyRequest = ({ page, limit, userEmail }: { page: number; limit: number; userEmail?: string }) => {
   return useQuery<any>({
     queryKey: ["action-center-my-request", page, limit, userEmail],
-    queryFn: () => ActionCenterMyRequestService.getActionCenterMyRequestService(page, limit, userEmail),
-    enabled: !!userEmail,
+    queryFn: () => ActionCenterMyRequestService.getActionCenterMyRequestService(page, limit),
   });
 };
 
