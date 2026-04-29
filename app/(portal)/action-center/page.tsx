@@ -172,7 +172,7 @@ export default function ActionCenterPage() {
   } = useActionCenterMyRequest({
     page: 1,
     limit: 100000,
-    userEmail
+    userEmail: userEmail as string
   })
   const { mutate: raiseRequest } = useCandidateRaiseRequest()
   // Derive tasks from API response; fall back to empty array while loading
