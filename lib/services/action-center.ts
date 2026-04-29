@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FrappeAPI } from "../frappe-api";
 
-  
-  export const ActionCenterDataService = {
+
+export const ActionCenterDataService = {
   getActionCenterData: async (userEmail: string) => {
     return FrappeAPI.get(
       "recruitment.api.action_center.get_action_center_items",
@@ -12,25 +12,26 @@ import { FrappeAPI } from "../frappe-api";
 }
 
 export const ActionCenterMyRequestService = {
-    getActionCenterMyRequestService: async (page: number, limit: number): Promise<any> => {
-      const response = await FrappeAPI.getresourceDocumentData("Candidate%20Raise%20Request", {
-        method: "GET",
-        page,   
-        limit,  
-        fields: ["*"],
-      })
-  
-      return response.data
-    },
-  }
+  getActionCenterMyRequestService: async (page: number, limit: number, userEmail: string): Promise<any> => {
+    const response = await FrappeAPI.getresourceDocumentData("Candidate%20Raise%20Request", {
+      method: "GET",
+      page,
+      limit,
+      fields: ["*"],
+      filters: [["candidate_email", "=", userEmail]],
+    })
 
-  export const CandidateRaiseRequestService = {
-    createCandidateRaiseRequest: async (payload: any): Promise<any> => {
-      const response = await FrappeAPI.getresourceDocumentData("Candidate Raise Request", {
-        method: "POST",
-        data: payload,
-      });
-  
-      return response.data;
-    },
-  }; 
+    return response.data
+  },
+}
+
+export const CandidateRaiseRequestService = {
+  createCandidateRaiseRequest: async (payload: any): Promise<any> => {
+    const response = await FrappeAPI.getresourceDocumentData("Candidate Raise Request", {
+      method: "POST",
+      data: payload,
+    });
+
+    return response.data;
+  },
+}; 
