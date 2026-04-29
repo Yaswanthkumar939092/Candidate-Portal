@@ -15,8 +15,14 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      include: ['lib/**', 'components/**', 'app/**'],
-      exclude: ['**/*.test.*', '**/node_modules/**'],
+      include: ['lib/**/*.{ts,tsx}', 'components/**/*.{ts,tsx}', 'app/**/*.{ts,tsx}'],
+      exclude: ['**/*.test.*', '**/node_modules/**', '**/.DS_Store'],
+      thresholds: {
+        statements: 85,
+        branches: 85,
+        functions: 85,
+        lines: 85,
+      },
     },
   },
   resolve: {
