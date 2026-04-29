@@ -955,7 +955,7 @@ export interface NotificationData {
   companyId?: string;
   action?: string;
   url?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 // Job search filters
@@ -1039,14 +1039,14 @@ export type CreateJobData = Omit<TablesInsert<'jobs'>, 'id' | 'created_at' | 'up
 export type UpdateJobData = Omit<TablesUpdate<'jobs'>, 'id' | 'frappe_job_id' | 'created_at'>;
 
 // API Response types
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
   message?: string;
 }
 
-export interface PaginatedResponse<T = any> extends ApiResponse<T[]> {
+export interface PaginatedResponse<T = unknown> extends ApiResponse<T[]> {
   pagination?: {
     page: number;
     limit: number;

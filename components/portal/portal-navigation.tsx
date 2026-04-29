@@ -202,14 +202,14 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
           <Link href="/dashboard" className="flex shrink-0 items-center gap-2">
             <Image
               src={branding?.app_logo ? (branding.app_logo.startsWith('http') ? branding.app_logo : `${process.env.NEXT_PUBLIC_FRAPPE_URL}${branding.app_logo}`) : "/brand2.png"}
-              alt={branding?.title_prefix || "Physics Wallah"}
+              alt={branding?.title_prefix || "Logo"}
               width={32}
               height={32}
               priority
               className="shrink-0"
             />
             <span className="text-[14px] sm:text-base font-extrabold text-black uppercase hidden sm:block">
-              {branding?.title_prefix || "Physics Wallah"}
+              {branding?.title_prefix || "BRAND NAME"}
             </span>
           </Link>
 
@@ -292,9 +292,9 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
                     {initials}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex flex-col space-y-1 leading-none">
+                <div className="flex flex-col space-y-1 leading-none truncate">
                   <p className="text-sm font-medium">{displayName}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground truncate">
                     {user?.email}
                   </p>
                   {profile?.lifecycle_stage && (

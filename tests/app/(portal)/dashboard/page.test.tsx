@@ -14,18 +14,35 @@ vi.mock("@/lib/hooks/useDashboard", () => ({
   useDashboard: vi.fn(),
 }))
 
+interface WelcomeHeaderProps {
+  name: string;
+  greeting: string;
+}
+
 vi.mock("@/components/dashboard/welcome-header", () => ({
-  WelcomeHeader: ({ name, greeting }: any) => <div data-testid="welcome-header">{greeting}, {name}</div>,
+  WelcomeHeader: ({ name, greeting }: WelcomeHeaderProps) => <div data-testid="welcome-header">{greeting}, {name}</div>,
 }))
 
+interface OnboardingSnapshotProps {
+  completedSteps: number;
+  totalSteps: number;
+}
+
 vi.mock("@/components/dashboard/onboarding-snapshot", () => ({
-  OnboardingSnapshot: ({ completedSteps, totalSteps }: any) => (
+  OnboardingSnapshot: ({ completedSteps, totalSteps }: OnboardingSnapshotProps) => (
     <div data-testid="onboarding-snapshot">Progress: {completedSteps}/{totalSteps}</div>
   ),
 }))
 
+interface InfoCardProps {
+  label: string;
+  value: string;
+  subtitle: string;
+  tag?: string;
+}
+
 vi.mock("@/components/dashboard/info-card", () => ({
-  InfoCard: ({ label, value, subtitle, tag }: any) => (
+  InfoCard: ({ label, value, subtitle, tag }: InfoCardProps) => (
     <div data-testid="info-card">
       <div data-testid="card-label">{label}</div>
       <div data-testid="card-value">{value}</div>
@@ -35,10 +52,14 @@ vi.mock("@/components/dashboard/info-card", () => ({
   ),
 }))
 
+interface KeyContactsProps {
+  contacts: Array<{ name: string; role: string }>;
+}
+
 vi.mock("@/components/dashboard/key-contacts", () => ({
-  KeyContacts: ({ contacts }: any) => (
+  KeyContacts: ({ contacts }: KeyContactsProps) => (
     <div data-testid="key-contacts">
-      {contacts.map((c: any) => <div key={c.name}>{c.name} - {c.role}</div>)}
+      {contacts.map((c) => <div key={c.name}>{c.name} - {c.role}</div>)}
     </div>
   ),
 }))
@@ -85,14 +106,14 @@ const mockDashboardData: DashboardData = {
 }
 
 function mockUseDashboardState(overrides?: Partial<ReturnType<typeof useDashboard>>) {
-  ; (useDashboard as any).mockReturnValue({
+  vi.mocked(useDashboard).mockReturnValue({
     data: null,
     isLoading: false,
     isError: false,
     error: null,
     refetch: vi.fn(),
     ...overrides,
-  })
+  } as unknown as ReturnType<typeof useDashboard>)
 }
 
 describe("DashboardPage", () => {
@@ -101,7 +122,7 @@ describe("DashboardPage", () => {
   })
 
   it("renders skeleton loading state initially", () => {
-    ; (useAuth as any).mockReturnValue({ user: { id: "123", email: "test@example.com" }, profile: null })
+    vi.mocked(useAuth).mockReturnValue({ user: { id: "123", email: "test@example.com" }, profile: null } as unknown as ReturnType<typeof useAuth>)
     mockUseDashboardState({ isLoading: true })
 
     const { container } = render(<DashboardPage />)
@@ -111,10 +132,10 @@ describe("DashboardPage", () => {
   })
 
   it("renders dashboard data from useDashboard", async () => {
-    ; (useAuth as any).mockReturnValue({
+    vi.mocked(useAuth).mockReturnValue({
       user: { id: "user-123", email: "test@example.com" },
       profile: { full_name: "John Doe" },
-    })
+    } as unknown as ReturnType<typeof useAuth>)
     mockUseDashboardState({
       data: mockDashboardData,
     })
@@ -136,10 +157,10 @@ describe("DashboardPage", () => {
   })
 
   it("renders the view on map link when custom_google_map_link is present", async () => {
-    ; (useAuth as any).mockReturnValue({
+    vi.mocked(useAuth).mockReturnValue({
       user: { id: "user-123", email: "test@example.com" },
       profile: null,
-    })
+    } as unknown as ReturnType<typeof useAuth>)
     mockUseDashboardState({
       data: {
         ...mockDashboardData,
@@ -157,10 +178,10 @@ describe("DashboardPage", () => {
   })
 
   it("falls back to derived address, backend name, and default role labels when fields are missing", async () => {
-    ; (useAuth as any).mockReturnValue({
+    vi.mocked(useAuth).mockReturnValue({
       user: { id: "user-123", email: "test@example.com" },
       profile: null,
-    })
+    } as unknown as ReturnType<typeof useAuth>)
     mockUseDashboardState({
       data: {
         ...mockDashboardData,
@@ -206,10 +227,10 @@ describe("DashboardPage", () => {
   it("renders the missing-email error state and allows retry", async () => {
     const refetch = vi.fn()
 
-      ; (useAuth as any).mockReturnValue({
+      vi.mocked(useAuth).mockReturnValue({
         user: { id: "user-123" },
         profile: null,
-      })
+      } as unknown as ReturnType<typeof useAuth>)
     mockUseDashboardState({ refetch })
 
     render(<DashboardPage />)
@@ -224,10 +245,10 @@ describe("DashboardPage", () => {
   it("renders an error state and retries the query", async () => {
     const refetch = vi.fn()
 
-      ; (useAuth as any).mockReturnValue({
+      vi.mocked(useAuth).mockReturnValue({
         user: { id: "user-123", email: "test@example.com" },
         profile: null,
-      })
+      } as unknown as ReturnType<typeof useAuth>)
     mockUseDashboardState({
       isError: true,
       error: new Error("Dashboard request failed"),

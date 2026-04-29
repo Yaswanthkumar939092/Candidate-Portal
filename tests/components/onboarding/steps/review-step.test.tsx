@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { ReviewStep } from "@/components/onboarding/steps/review-step";
-import { useOnboarding } from "@/lib/contexts/onboarding-context";
+import { useOnboarding, OnboardingContextType } from "@/lib/contexts/onboarding-context";
 
 vi.mock("@/lib/contexts/onboarding-context", () => ({
   useOnboarding: vi.fn(),
@@ -25,26 +24,36 @@ describe("ReviewStep", () => {
     vi.clearAllMocks();
   });
 
-  const getMockContext = (overrides = {}) => ({
+  const getMockContext = (overrides = {}): OnboardingContextType => ({
+    currentStep: 0,
     stepData: {
       personal_info: {
         first_name: "John",
       },
     },
     completedSteps: new Set(["personal_info"]),
-    submitAll: mockSubmitAll,
-    prevStep: mockPrevStep,
-    goToStep: mockGoToStep,
+    isDirty: false,
+    isLoading: false,
+    isError: false,
     isSaving: false,
-    status: "in_progress",
+    status: "draft",
+    setStepData: vi.fn(),
+    goToStep: mockGoToStep,
+    nextStep: vi.fn(),
+    prevStep: mockPrevStep,
+    markStepComplete: vi.fn(),
+    submitAll: mockSubmitAll,
+    getFieldValue: vi.fn(),
     formConfig: {
+      applicantId: "test-id",
+      status: "Pending",
       tabs: [
         {
           tab: "Personal Info",
           sections: [
             {
               section: "Basic Details",
-              fields: [{ fieldname: "first_name", label: "First Name", fieldtype: "Data", hidden: 0 }],
+              fields: [{ fieldname: "first_name", label: "First Name", fieldtype: "Data", hidden: 0, is_mandatory: 0, read_only: 0 }],
             },
           ],
         },
@@ -54,21 +63,21 @@ describe("ReviewStep", () => {
   });
 
   it("renders success state when submitted", () => {
-    (useOnboarding as any).mockReturnValue(getMockContext({ status: "submitted" }));
+    vi.mocked(useOnboarding).mockReturnValue(getMockContext({ status: "submitted" }));
     render(<ReviewStep />);
-    
+
     expect(screen.getByText("Onboarding Submitted!")).toBeTruthy();
     expect(screen.getByText(/Your onboarding information has been submitted successfully/)).toBeTruthy();
   });
 
   it("renders incomplete steps warning and disables submit", () => {
-    (useOnboarding as any).mockReturnValue(
+    vi.mocked(useOnboarding).mockReturnValue(
       getMockContext({ completedSteps: new Set() }) // Personal Info is incomplete
     );
     render(<ReviewStep />);
-    
+
     expect(screen.getByText("Please complete all steps before submitting.")).toBeTruthy();
-    
+
     const submitBtn = screen.getByRole("button", { name: /Submit/i });
     expect(submitBtn).toBeDisabled();
 
@@ -81,12 +90,12 @@ describe("ReviewStep", () => {
   });
 
   it("renders step tabs and allows expanding sections to see summary data", () => {
-    (useOnboarding as any).mockReturnValue(getMockContext());
+    vi.mocked(useOnboarding).mockReturnValue(getMockContext());
     render(<ReviewStep />);
-    
+
     const accordionBtn = screen.getByRole("button", { name: /Personal Info/i });
     expect(accordionBtn).toBeTruthy();
-    
+
     // Expanded data shouldn't be visible initially in the details block
     expect(screen.queryByText("Edit this section")).toBeNull();
 
@@ -97,31 +106,31 @@ describe("ReviewStep", () => {
     expect(screen.getByText("First Name:")).toBeTruthy();
     expect(screen.getAllByText("John")[0]).toBeTruthy();
     expect(screen.getByRole("button", { name: "Edit this section" })).toBeTruthy();
-    
+
     fireEvent.click(screen.getByRole("button", { name: "Edit this section" }));
     expect(mockGoToStep).toHaveBeenCalledWith(0);
   });
 
   it("calls prevStep when Back button is clicked", () => {
-    (useOnboarding as any).mockReturnValue(getMockContext());
+    vi.mocked(useOnboarding).mockReturnValue(getMockContext());
     render(<ReviewStep />);
-    
+
     const backBtn = screen.getByRole("button", { name: /Back/i });
     fireEvent.click(backBtn);
     expect(mockPrevStep).toHaveBeenCalled();
   });
 
   it("handles standard successful submission flow after declaration acceptance", async () => {
-    (useOnboarding as any).mockReturnValue(getMockContext());
+    vi.mocked(useOnboarding).mockReturnValue(getMockContext());
     render(<ReviewStep />);
-    
+
     const submitBtn = screen.getByRole("button", { name: /Submit/i });
     expect(submitBtn).not.toBeDisabled();
 
     // Check the declaration checkbox (required)
     const checkbox = screen.getByRole("checkbox");
     fireEvent.click(checkbox);
-    
+
     fireEvent.click(submitBtn);
 
     await waitFor(() => {
@@ -131,14 +140,14 @@ describe("ReviewStep", () => {
 
   it("displays server error message on submit failure", async () => {
     mockSubmitAll.mockRejectedValueOnce(new Error("Network Error occurred"));
-    (useOnboarding as any).mockReturnValue(getMockContext());
+    vi.mocked(useOnboarding).mockReturnValue(getMockContext());
 
     render(<ReviewStep />);
-    
+
     // Check the declaration checkbox (required)
     const checkbox = screen.getByRole("checkbox");
     fireEvent.click(checkbox);
-    
+
     const submitBtn = screen.getByRole("button", { name: /Submit/i });
     fireEvent.click(submitBtn);
 

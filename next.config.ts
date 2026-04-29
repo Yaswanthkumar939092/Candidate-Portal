@@ -21,6 +21,11 @@ function getRemoteImagePatterns() {
         port,
         pathname: "/**",
       },
+      {
+        protocol: "https" as const,
+        hostname: "images.unsplash.com",
+        pathname: "/**",
+      },
     ];
   } catch {
     console.warn(

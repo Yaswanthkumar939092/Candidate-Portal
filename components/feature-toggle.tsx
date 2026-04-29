@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
 import { FeatureFlag, FeatureFlagUpdate } from '@/types/database'
-import { Settings, Edit, Trash2, Users, Percent, Tag } from 'lucide-react'
+import { Edit, Trash2, Percent, Tag } from 'lucide-react'
 
 interface FeatureToggleProps {
   flag: FeatureFlag
@@ -202,7 +202,7 @@ export function FeatureToggle({
                       <Label htmlFor="value_type">Value Type</Label>
                       <Select
                         value={editData.value_type}
-                        onValueChange={(value) => setEditData({ ...editData, value_type: value as any })}
+                        onValueChange={(value) => setEditData({ ...editData, value_type: value as FeatureFlag['value_type'] })}
                       >
                         <SelectTrigger>
                           <SelectValue />
