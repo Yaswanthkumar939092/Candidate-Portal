@@ -1,25 +1,42 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { Database } from '@/types/database'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+let adminClient: SupabaseClient<Database> | null = null
 
-if (!supabaseUrl || !supabaseServiceRoleKey) {
-  throw new Error('Missing Supabase environment variables for admin client')
+function getSupabaseAdmin() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!supabaseUrl || !supabaseServiceRoleKey) {
+    throw new Error('Missing Supabase environment variables for admin client')
+  }
+
+  adminClient ??= createClient<Database>(
+    supabaseUrl,
+    supabaseServiceRoleKey,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  )
+
+  return adminClient
 }
 
 // Server-side Supabase client with service role key
 // This bypasses Row Level Security (RLS) and should only be used server-side
-export const supabaseAdmin = createClient<Database>(
-  supabaseUrl,
-  supabaseServiceRoleKey,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
+export const supabaseAdmin = new Proxy({} as SupabaseClient<Database>, {
+  get(_target, prop, receiver) {
+    const value = Reflect.get(getSupabaseAdmin(), prop, receiver)
+    if (typeof value === 'function') {
+      return value.bind(getSupabaseAdmin())
     }
+
+    return value
   }
-)
+})
 
 // Admin functions for user management
 export const adminAuth = {
