@@ -221,6 +221,8 @@ describe("useCandidateRaiseRequest", () => {
   })
 
   it("handles error", async () => {
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+
     ;(CandidateRaiseRequestService.createCandidateRaiseRequest as any).mockRejectedValueOnce(
       new Error("fail")
     )
@@ -230,5 +232,7 @@ describe("useCandidateRaiseRequest", () => {
     })
 
     await expect(result.current.mutateAsync({})).rejects.toThrow()
+
+    consoleErrorSpy.mockRestore()
   })
 })
