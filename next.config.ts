@@ -31,6 +31,7 @@ function getRemoteImagePatterns() {
 }
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   typescript: {
     ignoreBuildErrors: true,
   },

@@ -1,0 +1,115 @@
+name: Release Develop
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - develop
+
+permissions:
+  contents: write
+  packages: write
+
+concurrency:
+  group: release-develop
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Tag, Release, and Publish Image
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+          fetch-depth: 0
+
+      - name: Validate release build variables
+        run: |
+          missing=0
+          for name in NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY NEXT_PUBLIC_SITE_URL NEXT_PUBLIC_FRAPPE_URL; do
+            if [ -z "${!name}" ]; then
+              echo "::error::$name must be configured as a repository variable for release builds."
+              missing=1
+            fi
+          done
+          exit "$missing"
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+          NEXT_PUBLIC_FRAPPE_URL: ${{ vars.NEXT_PUBLIC_FRAPPE_URL }}
+
+      - name: Compute next patch version
+        id: version
+        run: |
+          git fetch --tags --force
+          latest="$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n 1)"
+
+          if [ -z "$latest" ]; then
+            next="v0.1.0"
+          else
+            version="${latest#v}"
+            major="${version%%.*}"
+            rest="${version#*.}"
+            minor="${rest%%.*}"
+            patch="${rest##*.}"
+            next="v${major}.${minor}.$((patch + 1))"
+          fi
+
+          echo "version=$next" >> "$GITHUB_OUTPUT"
+          echo "VERSION=$next" >> "$GITHUB_ENV"
+
+      - name: Create and push git tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$VERSION" -m "Release $VERSION"
+          git push origin "$VERSION"
+
+      - name: Normalize image name
+        run: echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.IMAGE_NAME }}:develop-latest
+          build-args: |
+            NEXT_PUBLIC_SUPABASE_URL=${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+            NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL }}
+            NEXT_PUBLIC_FRAPPE_URL=${{ vars.NEXT_PUBLIC_FRAPPE_URL }}
+            NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ vars.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
+            NEXT_PUBLIC_LINKEDIN_CLIENT_ID=${{ vars.NEXT_PUBLIC_LINKEDIN_CLIENT_ID }}
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$VERSION" \
+            --title "$VERSION" \
+            --notes "Automated develop release for commit $GITHUB_SHA.
+
+          Docker image:
+          - $IMAGE_NAME:$VERSION
+          - $IMAGE_NAME:$GITHUB_SHA
+          - $IMAGE_NAME:develop-latest"

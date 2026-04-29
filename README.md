@@ -111,8 +111,11 @@ The application can be deployed on:
 - [Vercel](https://vercel.com) (recommended for Next.js)
 - [Netlify](https://netlify.com)
 - Any Node.js hosting platform
+- Docker-compatible platforms using the included `Dockerfile`
 
 Make sure to configure environment variables in your deployment platform.
+
+For container deployment, see [Docker Deployment](./docs/docker-deployment.md).
 
 ## Contributing
 
