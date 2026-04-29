@@ -45,6 +45,7 @@ const nextConfig: NextConfig = {
   },
   images: {
     remotePatterns: getRemoteImagePatterns(),
+    domains: ['upload.wikimedia.org'],
   },
   webpack: (config) => {
     config.resolve.alias.canvas = false;
