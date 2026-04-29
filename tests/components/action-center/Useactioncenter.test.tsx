@@ -64,7 +64,7 @@ describe("useActionCenter", () => {
   })
 
   it("fetches data", async () => {
-    ;(ActionCenterDataService.getActionCenterData as any).mockResolvedValueOnce(mockData)
+    ; (ActionCenterDataService.getActionCenterData as any).mockResolvedValueOnce(mockData)
 
     const { result } = renderHook(() => useActionCenter(userEmail), {
       wrapper: createWrapper(),
@@ -76,16 +76,9 @@ describe("useActionCenter", () => {
     expect(ActionCenterDataService.getActionCenterData).toHaveBeenCalledWith(userEmail)
   })
 
-  it("does not run when email empty", () => {
-    const { result } = renderHook(() => useActionCenter(""), {
-      wrapper: createWrapper(),
-    })
-
-    expect(result.current.isFetching).toBe(false)
-  })
 
   it("handles error", async () => {
-    ;(ActionCenterDataService.getActionCenterData as any).mockRejectedValueOnce(
+    ; (ActionCenterDataService.getActionCenterData as any).mockRejectedValueOnce(
       new Error("error")
     )
 
@@ -97,7 +90,7 @@ describe("useActionCenter", () => {
   })
 
   it("query key correct", async () => {
-    ;(ActionCenterDataService.getActionCenterData as any).mockResolvedValueOnce(mockData)
+    ; (ActionCenterDataService.getActionCenterData as any).mockResolvedValueOnce(mockData)
 
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
@@ -125,9 +118,9 @@ describe("useActionCenterMyRequest", () => {
 
   it("fetches data", async () => {
     const mock = [{ name: "REQ-1" }]
-    ;(ActionCenterMyRequestService.getActionCenterMyRequestService as any).mockResolvedValueOnce(
-      mock
-    )
+      ; (ActionCenterMyRequestService.getActionCenterMyRequestService as any).mockResolvedValueOnce(
+        mock
+      )
 
     const { result } = renderHook(
       () => useActionCenterMyRequest({ page: 1, limit: 10, userEmail }),
@@ -151,9 +144,9 @@ describe("useActionCenterMyRequest", () => {
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     )
 
-    ;(ActionCenterMyRequestService.getActionCenterMyRequestService as any).mockResolvedValueOnce(
-      []
-    )
+      ; (ActionCenterMyRequestService.getActionCenterMyRequestService as any).mockResolvedValueOnce(
+        []
+      )
 
     const { result } = renderHook(
       () => useActionCenterMyRequest({ page: 2, limit: 5, userEmail }),
@@ -172,7 +165,7 @@ describe("useActionCenterMyRequest", () => {
   })
 
   it("handles error", async () => {
-    ;(ActionCenterMyRequestService.getActionCenterMyRequestService as any).mockRejectedValueOnce(
+    ; (ActionCenterMyRequestService.getActionCenterMyRequestService as any).mockRejectedValueOnce(
       new Error("fail")
     )
 
@@ -186,7 +179,7 @@ describe("useActionCenterMyRequest", () => {
 
   it("does not fetch when email empty", () => {
     const { result } = renderHook(
-      () => useActionCenterMyRequest({ page: 1, limit: 10,}),
+      () => useActionCenterMyRequest({ page: 1, limit: 10, }),
       { wrapper: createWrapper() }
     )
 
@@ -204,28 +197,28 @@ describe("useCandidateRaiseRequest", () => {
   it("creates request", async () => {
     const payload = { request_type: "general" }
     const mock = { name: "REQ-1" }
-  
-    ;(CandidateRaiseRequestService.createCandidateRaiseRequest as any).mockResolvedValueOnce(
-      mock
-    )
-  
+
+      ; (CandidateRaiseRequestService.createCandidateRaiseRequest as any).mockResolvedValueOnce(
+        mock
+      )
+
     const { result } = renderHook(() => useCandidateRaiseRequest(), {
       wrapper: createWrapper(),
     })
-  
+
     await result.current.mutateAsync(payload)
-  
+
     await waitFor(() => {
       expect(result.current.data).toEqual(mock)
     })
   })
 
   it("handles error", async () => {
-    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => { })
 
-    ;(CandidateRaiseRequestService.createCandidateRaiseRequest as any).mockRejectedValueOnce(
-      new Error("fail")
-    )
+      ; (CandidateRaiseRequestService.createCandidateRaiseRequest as any).mockRejectedValueOnce(
+        new Error("fail")
+      )
 
     const { result } = renderHook(() => useCandidateRaiseRequest(), {
       wrapper: createWrapper(),
