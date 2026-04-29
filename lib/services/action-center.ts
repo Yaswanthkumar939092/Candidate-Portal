@@ -12,13 +12,13 @@ export const ActionCenterDataService = {
 }
 
 export const ActionCenterMyRequestService = {
-  getActionCenterMyRequestService: async (page: number, limit: number, userEmail?: string): Promise<any> => {
+  getActionCenterMyRequestService: async (page: number, limit: number, userEmail: string): Promise<any> => {
     const response = await FrappeAPI.getresourceDocumentData("Candidate%20Raise%20Request", {
       method: "GET",
       page,
       limit,
       fields: ["*"],
-      filters: [`["candidate_email", "=", "${userEmail}"]`],
+      filters: [["candidate_email", "=", userEmail]],
     })
 
     return response.data
