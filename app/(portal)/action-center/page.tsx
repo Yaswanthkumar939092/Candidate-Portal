@@ -64,10 +64,10 @@ function mapApiItemsToTasks(items: any[]): Task[] {
     // Format modified date for display
     const formattedDate = item.modified
       ? new Date(item.modified).toLocaleDateString("en-GB", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        })
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
       : undefined
 
     return {
@@ -128,10 +128,10 @@ function mapApiItemsToRequests(items: any[]): Request[] {
     // Date format
     const formattedDate = item.creation
       ? new Date(item.creation).toLocaleDateString("en-GB", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        })
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
       : undefined
 
     return {
@@ -169,9 +169,10 @@ export default function ActionCenterPage() {
 
   const {
     data: actionCenterMyRequestData,
-  } = useActionCenterMyRequest( {
+  } = useActionCenterMyRequest({
     page: 1,
     limit: 100000,
+    userEmail: userEmail as string
   })
   const { mutate: raiseRequest } = useCandidateRaiseRequest()
   // Derive tasks from API response; fall back to empty array while loading
@@ -181,8 +182,8 @@ export default function ActionCenterPage() {
 
   // Requests remain empty until a requests API is wired up
   const requests: Request[] = actionCenterMyRequestData
-  ? mapApiItemsToRequests(actionCenterMyRequestData)
-  : []
+    ? mapApiItemsToRequests(actionCenterMyRequestData)
+    : []
 
   // Count tasks by filter category
   const pendingTaskCount = tasks.filter(
@@ -195,7 +196,7 @@ export default function ActionCenterPage() {
   const pendingRequestCount = requests.filter(
     (r) => r.status === "pending_approval" || r.status === "in_review"
   ).length
-  
+
   const acceptedRequestCount = requests.filter(
     (r) => r.status === "approved" || r.status === "rejected"
   ).length
@@ -205,24 +206,24 @@ export default function ActionCenterPage() {
   const currentAcceptedCount =
     activeTab === "tasks" ? acceptedTaskCount : acceptedRequestCount
 
-    const handleRequestSubmit = (data: {
-      requestType: string
-      description: string
-      attachment: string
-    }) => {
-      raiseRequest({
-        ...data,
-        request_type: data.requestType,
-        candidate_email: userEmail
-      }, {
-        onSuccess: () => {
-          toast.success("Request created successfully")
-        },
-        onError: (err) => {
+  const handleRequestSubmit = (data: {
+    requestType: string
+    description: string
+    attachment: string
+  }) => {
+    raiseRequest({
+      ...data,
+      request_type: data.requestType,
+      candidate_email: userEmail
+    }, {
+      onSuccess: () => {
+        toast.success("Request created successfully")
+      },
+      onError: (err) => {
         toast.error("Error:", err)
-        },
-      })
-    }
+      },
+    })
+  }
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 sm:px-6 py-8">
