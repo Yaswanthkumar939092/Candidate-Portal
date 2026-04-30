@@ -36,6 +36,17 @@ export const draftJobApplicantService = {
     return response;
   },
 
+  // ✅ GET — fetch ALL drafts by email
+  getAllDrafts: async (email: string): Promise<any> => {
+    const response = await FrappeAPI.get(
+      "recruitment.api.draft_application.get_draft",
+      {
+        job_applicant_email: email,
+      }
+    );
+    return response;
+  },
+
   // ✅ CREATE — POST new draft
   createDraftJobApplicant: async (payload: any): Promise<any> => {
     const response = await FrappeAPI.getresourceDocumentData("Draft Application", {
@@ -61,6 +72,20 @@ export const draftJobApplicantService = {
       }
     );
     return response.data;
+  },
+
+  // ✅ DELETE — delete draft
+  deleteDraftJobApplicant: async ({
+    email,
+    jobId,
+  }: {
+    email: string;
+    jobId: string;
+  }): Promise<any> => {
+    return FrappeAPI.post("recruitment.api.draft_application.delete_draft", {
+      job_applicant_email: email,
+      job_opening: jobId,
+    });
   },
 };
 

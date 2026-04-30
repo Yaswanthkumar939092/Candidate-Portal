@@ -12,13 +12,12 @@ export interface ApplicantFlag {
     name: string
     status: string
     flags: ApplicantFlag[]
+    applications: any[] // Added this as it's used in the UI
   }
   
   export interface ApplicantStatusResponse {
-    message: {
-      success: boolean
-      data: ApplicantStatusData
-    }
+    success: boolean
+    data: ApplicantStatusData
   }
 
   
