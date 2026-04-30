@@ -31,9 +31,8 @@ export const FrappeAPI = {
 
   get: async (method: string, params: Record<string, string> = {}) => {
     const queryString = new URLSearchParams(params).toString();
-    const url = `${process.env.NEXT_PUBLIC_FRAPPE_URL}/api/method/${method}${
-      queryString ? `?${queryString}` : ""
-    }`;
+    const url = `${process.env.NEXT_PUBLIC_FRAPPE_URL}/api/method/${method}${queryString ? `?${queryString}` : ""
+      }`;
 
     const res = await fetch(url, {
       method: "GET",
@@ -53,9 +52,8 @@ export const FrappeAPI = {
     // The user specifically requested unencoded brackets for the array query params
     queryString = queryString.replace(/%5B/g, '[').replace(/%5D/g, ']');
 
-    const url = `${process.env.NEXT_PUBLIC_FRAPPE_URL}/api/resource/${resource}${
-      queryString ? `?${queryString}` : ""
-    }`;
+    const url = `${process.env.NEXT_PUBLIC_FRAPPE_URL}/api/resource/${resource}${queryString ? `?${queryString}` : ""
+      }`;
 
     const res = await fetch(url, {
       method: "GET",
@@ -73,9 +71,8 @@ export const FrappeAPI = {
 
   getBlob: async (method: string, params: Record<string, string> = {}): Promise<Blob> => {
     const queryString = new URLSearchParams(params).toString();
-    const url = `${process.env.NEXT_PUBLIC_FRAPPE_URL}/api/method/${method}${
-      queryString ? `?${queryString}` : ""
-    }`;
+    const url = `${process.env.NEXT_PUBLIC_FRAPPE_URL}/api/method/${method}${queryString ? `?${queryString}` : ""
+      }`;
 
     const res = await fetch(url, {
       method: "GET",
@@ -109,67 +106,69 @@ export const FrappeAPI = {
     return data.message;
   },
 
-getresourceDocumentData: async (
-  doctype: string,
-  options?: {
-    method?: "GET" | "POST" | "PUT" | "DELETE";
-    name?: string;
-    fields?: string[];
-    filters?: string[];
-    data?: any;
-    page?: number;   // ✅ added
-    limit?: number;  // ✅ added
-  }
-) => {
-  const {
-    method = "GET",
-    name,
-    fields,
-    filters,
-    data,
-    page = 1,        
-    limit = 20,      
-  } = options || {};
-
-  let url = `${process.env.NEXT_PUBLIC_FRAPPE_URL}/api/resource/${doctype}`;
-
-  // 👉 GET (List or Single)
-  if (method === "GET") {
-    if (name) {
-      url += `/${name}`;
-    } else {
-      const params = new URLSearchParams();
-
-      if (fields) {
-        params.append("fields", JSON.stringify(fields));
-      }
-
-      if (filters) {
-        params.append("filters", JSON.stringify(filters));
-      }
-
-      // ✅ Frappe pagination params
-      params.append("limit_page_length", String(limit));
-      params.append("limit_start", String((page - 1) * limit));
-
-      url += `?${params.toString()}`;
+  getresourceDocumentData: async (
+    doctype: string,
+    options?: {
+      method?: "GET" | "POST" | "PUT" | "DELETE";
+      name?: string;
+      fields?: string[];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      filters?: string[] | Record<string, any>;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      data?: any;
+      page?: number;   // ✅ added
+      limit?: number;  // ✅ added
     }
-  }
+  ) => {
+    const {
+      method = "GET",
+      name,
+      fields,
+      filters,
+      data,
+      page = 1,
+      limit = 20,
+    } = options || {};
 
-  const res = await fetch(url, {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: method !== "GET" ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
+    let url = `${process.env.NEXT_PUBLIC_FRAPPE_URL}/api/resource/${doctype}`;
 
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(err || "API request failed");
-  }
+    // 👉 GET (List or Single)
+    if (method === "GET") {
+      if (name) {
+        url += `/${name}`;
+      } else {
+        const params = new URLSearchParams();
 
-  return res.json();
-},
+        if (fields) {
+          params.append("fields", JSON.stringify(fields));
+        }
+
+        if (filters) {
+          params.append("filters", JSON.stringify(filters));
+        }
+
+        // ✅ Frappe pagination params
+        params.append("limit_page_length", String(limit));
+        params.append("limit_start", String((page - 1) * limit));
+
+        url += `?${params.toString()}`;
+      }
+    }
+
+    const res = await fetch(url, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: method !== "GET" ? JSON.stringify(data) : undefined,
+      credentials: "include",
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(err || "API request failed");
+    }
+
+    return res.json();
+  },
 };

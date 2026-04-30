@@ -5,8 +5,11 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { useFeatureFlags } from "@/lib/contexts/feature-flags";
+import { useTheme } from "@/lib/contexts/theme-context";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
+import { useWebsiteBranding } from "@/lib/hooks/useWebsiteBranding";
+
 
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -36,6 +39,8 @@ import {
   User,
   Settings,
   Menu,
+  Sun,
+  Moon,
 } from "lucide-react";
 
 /**
@@ -95,7 +100,10 @@ function formatRole(role: string): string {
 export function PortalNavigation({ className }: PortalNavigationProps) {
   const { user, profile } = useAuth();
   const { isEnabled } = useFeatureFlags();
+  const { data: branding } = useWebsiteBranding();
+  const { isDark, toggleTheme } = useTheme();
   const pathname = usePathname();
+
   const router = useRouter();
 
   const filteredNavItems = navItems.filter((item) => {
@@ -168,7 +176,7 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
                         className={cn(
                           "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                           active
-                            ? "bg-foreground text-background"
+                            ? "bg-[var(--nav-active-bg)] text-[var(--nav-active-text)]"
                             : "hover:bg-muted text-muted-foreground"
                         )}
                       >
@@ -179,8 +187,8 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
                             className={cn(
                               "flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-semibold border-none",
                               active
-                                ? "bg-background/20 text-background"
-                                : "bg-orange-500 text-white"
+                                ? "bg-[var(--nav-active-text)]/20 text-[var(--nav-active-text)]"
+                                : "bg-muted text-muted-foreground"
                             )}
                           >
                             {item.badgeCount}
@@ -197,15 +205,18 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
           {/* Desktop/Mobile PW Logo */}
           <Link href="/dashboard" className="flex shrink-0 items-center gap-2">
             <Image
-              src="/brand2.png"
-              alt="Physics Wallah"
+              src={branding?.app_logo ? (branding.app_logo.startsWith('http') ? branding.app_logo : `${process.env.NEXT_PUBLIC_FRAPPE_URL}${branding.app_logo}`) : "/brand2.png"}
+              alt={branding?.title_prefix || "Physics Wallah"}
               width={32}
               height={32}
               priority
               className="shrink-0"
             />
-            <span className="text-[14px] sm:text-base font-extrabold text-black uppercase hidden sm:block">Physics Wallah</span>
+            <span className="text-[14px] sm:text-base font-extrabold text-foreground uppercase hidden sm:block">
+              {branding?.title_prefix || "Physics Wallah"}
+            </span>
           </Link>
+
         </div>
 
         {/* Center: Nav links with pill-style active states (Hidden on Mobile) */}
@@ -220,7 +231,7 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
                 className={cn(
                   "relative flex items-center gap-2 text-sm font-medium px-4 py-1.5 rounded-full transition-all duration-300 ease-in-out",
                   active
-                    ? "bg-foreground text-background"
+                    ? "bg-[var(--nav-active-bg)] text-[var(--nav-active-text)]"
                     : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                 )}
               >
@@ -231,8 +242,8 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
                     className={cn(
                       "ml-0.5 flex items-center justify-center rounded-full px-1.5 py-1 text-[10px] font-semibold border-none",
                       active
-                        ? "bg-white/20 text-white"
-                        : "bg-gray-200 text-gray-500"
+                        ? "bg-[var(--nav-active-text)]/20 text-[var(--nav-active-text)]"
+                        : "bg-muted text-muted-foreground"
                     )}
                   >
                     {item.badgeCount}
@@ -314,6 +325,11 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Settings</span>
                 </Link>
+              </DropdownMenuItem>
+
+              <DropdownMenuItem onClick={toggleTheme} className="cursor-pointer">
+                {isDark ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
+                <span>{isDark ? "Light mode" : "Dark mode"}</span>
               </DropdownMenuItem>
 
               <DropdownMenuSeparator />

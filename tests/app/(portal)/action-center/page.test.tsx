@@ -677,7 +677,7 @@ describe("ActionCenterPage – Raise Request Dialog Logic", () => {
   });
 
   it("closes dialog and logs data on successful submit", async () => {
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => { });
     await openDialog();
 
     // Select request type
