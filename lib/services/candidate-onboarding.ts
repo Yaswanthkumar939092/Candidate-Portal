@@ -1,71 +1,93 @@
+import { OnboardingForm, OnboardingFormMessage } from "@/types/onboarding";
 import { FrappeAPI } from "../frappe-api";
 
-/**
- * Service specifically for candidate-facing onboarding API operations.
- */
+const API_METHODS = {
+  GET_ONBOARDING_FORM:
+    "recruitment.api.candidate_portal.get_candidate_portal_form",
+  SUBMIT_ONBOARDING:
+    "recruitment.api.employee_onboarding.update_onboarding_details",
+};
+
 export const candidateOnboardingService = {
-  /**
-   * Submit the final onboarding data to Frappe.
-   */
-  submitOnboarding: async (stepData: Record<string, Record<string, unknown>>, userEmail: string) => {
+  getOnboardingForm: async (userEmail: string): Promise<OnboardingForm> => {
+    if (!userEmail) throw new Error("User email is required");
+
+    const res = await FrappeAPI.get(API_METHODS.GET_ONBOARDING_FORM, {
+      job_applicant_id: userEmail,
+    });
+
+    if (!res || res.status !== "success") {
+      throw new Error("Failed to fetch onboarding form");
+    }
+
+    return transformOnboardingForm(res);
+  },
+
+  submitOnboarding: async (
+    stepData: Record<string, Record<string, unknown>>,
+    userEmail: string,
+  ): Promise<{ success: boolean; message: string }> => {
+    if (!userEmail) throw new Error("User email is required");
+
     const payload = mapOnboardingDataToFrappe(stepData, userEmail);
-    
-    return FrappeAPI.post(
-      "recruitment.api.employee_onboarding.update_onboarding_details",
-      payload
-    );
-  },
 
-  /**
-   * Fetch the dynamic onboarding form configuration.
-   */
-  getOnboardingForm: async (userEmail: string) => {
-    return FrappeAPI.get(
-      "recruitment.api.candidate_portal.get_candidate_portal_form",
-      { job_applicant_id: userEmail }
-    );
-  },
+    const res = await FrappeAPI.post(API_METHODS.SUBMIT_ONBOARDING, payload);
 
-  /**
-   * Fetch dynamic gender options.
-   */
-  getGenderOptions: async () => {
-    return FrappeAPI.getResource(
-      "Gender",
-      { fields: '["gender"]' }
-    );
+    if (!res || res.status !== "success") {
+      throw new Error(res?.message || "Submission failed");
+    }
+
+    return {
+      success: true,
+      message: res.message,
+    };
   },
 };
 
-/**
- * Maps the flat onboarding state from the UI/Context into the
- * format expected by the Frappe Employee Onboarding endpoint.
- *
- * This version is fully dynamic and relies on the fact that fieldnames in the UI
- * match the fieldnames expected by the Frappe API.
- */
-function mapOnboardingDataToFrappe(onboardingData: Record<string, Record<string, unknown>>, userEmail: string) {
-  // Collect all fields from all steps into a single object
+//Backend to frontend transformation
+export function transformOnboardingForm(
+  data: OnboardingFormMessage,
+): OnboardingForm {
+  return {
+    applicantId: data.job_applicant,
+    status: data.boarding_status,
+    tabs: data.tabs,
+  };
+}
+
+const getToday = () => new Date().toISOString().split("T")[0];
+
+//Mapping of frontend data to Frappe's expected format for submission
+function mapOnboardingDataToFrappe(
+  onboardingData: Record<string, Record<string, unknown>>,
+  userEmail: string,
+) {
+  if (!userEmail) throw new Error("User email is required");
+
   const mappedData: Record<string, unknown> = {
     boarding_status: "Pending",
     custom_email: userEmail,
-    // Add other essential defaults if required by the Frappe DocType
-    boarding_begins_on: new Date().toISOString().split('T')[0],
+    boarding_begins_on: getToday(),
     notify_users_by_email: 1,
-  }
-  
-  Object.values(onboardingData).forEach(stepValues => {
-    Object.entries(stepValues).forEach(([key, val]) => {
-      // Direct mapping of fieldname to value
-      // This includes Table fields (which are arrays of objects)
-      mappedData[key] = val
-    })
-  })
+  };
 
-  // Ensure date_of_joining is present
+  for (const stepValues of Object.values(onboardingData)) {
+    for (const [key, val] of Object.entries(stepValues)) {
+      // Skip undefined values (important)
+      if (val === undefined) continue;
+
+      mappedData[key] = val;
+    }
+  }
+
+  // Ensure date_of_joining
   if (!mappedData.date_of_joining) {
-    mappedData.date_of_joining = mappedData.custom_date_of_joining || new Date().toISOString().split('T')[0]
+    mappedData.date_of_joining =
+      mappedData.custom_date_of_joining || getToday();
   }
 
-  return { email: userEmail, data: mappedData };
+  return {
+    email: userEmail,
+    data: mappedData,
+  };
 }

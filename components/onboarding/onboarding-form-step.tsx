@@ -1,125 +1,304 @@
-"use client"
+"use client";
 
-import React, { useEffect, useMemo, useCallback } from 'react'
-import { useForm } from 'react-hook-form'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { useOnboarding } from '@/lib/contexts/onboarding-context'
-import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
-import { FileUploadField } from '@/components/onboarding/file-upload-field'
-import { cn } from '@/lib/utils'
-import { OnboardingTab, OnboardingField } from '@/lib/types/onboarding'
-import { SectionCard } from '@/components/onboarding/section-card'
-import { DynamicFieldRenderer, defaultFields } from '@/components/ui/field-renderer'
-import { DynamicTableField } from '@/components/onboarding/dynamic-table-field'
-import { useGenderOptions } from '@/lib/hooks/useGenderOptions'
-
+import React, { useEffect, useMemo, useCallback } from "react";
+import {
+  Control,
+  FieldErrors,
+  FieldValues,
+  Resolver,
+  UseFormSetValue,
+  UseFormTrigger,
+  useForm,
+  useWatch,
+  Controller,
+} from "react-hook-form";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useOnboarding } from "@/lib/contexts/onboarding-context";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { FileUploadField } from "@/components/onboarding/file-upload-field";
+import { cn } from "@/lib/utils";
+import { OnboardingTab, OnboardingField } from "@/lib/types/onboarding";
+import { SectionCard } from "@/components/onboarding/section-card";
+import { DynamicFieldRenderer } from "@/components/ui/field-renderer";
+import { DynamicTableField } from "@/components/onboarding/dynamic-table-field";
 interface OnboardingFormStepProps {
-  tab: OnboardingTab
-  stepKey: string
-  className?: string
+  tab: OnboardingTab;
+  stepKey: string;
+  className?: string;
 }
 
-export function OnboardingFormStep({ tab, stepKey, className }: OnboardingFormStepProps) {
-  const { stepData, setStepData, nextStep, prevStep, markStepComplete, isSaving, currentStep } = useOnboarding()
-  const { data: genderOptions } = useGenderOptions()
-  const existingData = useMemo(() => (stepData[stepKey] ?? {}) as Record<string, unknown>, [stepData, stepKey])
+type OnboardingFormValues = Record<string, unknown>;
+
+type OverrideComponentProps = {
+  field: OnboardingField;
+  value: unknown;
+  onChange: (value: unknown) => void;
+  onBlur?: () => void;
+  error?: string;
+  disabled?: boolean;
+  className?: string;
+};
+
+interface FormStepFieldProps {
+  field: OnboardingField;
+  control: Control<OnboardingFormValues>;
+  setValue: UseFormSetValue<OnboardingFormValues>;
+  trigger: UseFormTrigger<OnboardingFormValues>;
+  error?: string;
+  handleFileUpload: (fieldname: string) => (url: string | null) => void;
+  overrides: {
+    Attach: {
+      component: (props: OverrideComponentProps) => React.JSX.Element;
+    };
+    "Attach Image": {
+      component: (props: OverrideComponentProps) => React.JSX.Element;
+    };
+  };
+}
+
+const FormStepField = React.memo(function FormStepField({
+  field,
+  control,
+  // setValue,
+  // trigger,
+  error,
+  handleFileUpload,
+  overrides,
+}: FormStepFieldProps) {
+  // Determine grid classes
+  const isFullWidthByLabel =
+    field.label.toLowerCase().includes("address proof") ||
+    field.fieldname.toLowerCase().includes("custom_upload_pan_card") ||
+    field.fieldname
+      .toLowerCase()
+      .includes("custom_upload_cancelled_cheque_passbook_statement") ||
+    field.fieldname.toLowerCase().includes("address_proof");
+
+  const isAadhaarFront = field.fieldname === "custom_upload_aadhaarfront";
+
+  const fieldClassName = cn(
+    isFullWidthByLabel && "md:col-span-full",
+    isAadhaarFront && "md:col-start-1",
+  );
+
+  return (
+    <Controller
+      name={field.fieldname}
+      control={control}
+      render={({ field: rhfField }) => (
+        <DynamicFieldRenderer
+          field={field}
+          value={rhfField.value}
+          onChange={(val) => {
+            rhfField.onChange(val);
+            // Optionally trigger validation immediately
+            // void trigger(field.fieldname);
+          }}
+          onBlur={rhfField.onBlur}
+          error={error}
+          className={fieldClassName}
+          onAttachChange={handleFileUpload}
+          overrides={overrides}
+        />
+      )}
+    />
+  );
+});
+
+export function OnboardingFormStep({
+  tab,
+  stepKey,
+  className,
+}: OnboardingFormStepProps) {
+  const {
+    stepData,
+    setStepData,
+    nextStep,
+    prevStep,
+    markStepComplete,
+    isSaving,
+    currentStep,
+  } = useOnboarding();
+  const existingData = useMemo(
+    () => (stepData[stepKey] ?? {}) as Record<string, unknown>,
+    [stepData, stepKey],
+  );
 
   // Initialize default values from formConfig and existingData
   const defaultValues = useMemo(() => {
-    const values: Record<string, unknown> = { ...existingData }
-    tab.sections.forEach(section => {
-      section.fields.forEach(field => {
+    const values: Record<string, unknown> = { ...existingData };
+    tab.sections.forEach((section) => {
+      section.fields.forEach((field) => {
         if (values[field.fieldname] === undefined) {
-          const fieldValue = field.value !== undefined ? field.value : field.default;
+          const fieldValue =
+            field.value !== undefined ? field.value : field.default;
           if (fieldValue !== undefined && fieldValue !== null) {
             values[field.fieldname] = fieldValue;
-          } else if (field.fieldtype === 'Table') {
+          } else if (field.fieldtype === "Table") {
             values[field.fieldname] = [];
           } else {
-            values[field.fieldname] = '';
+            values[field.fieldname] = "";
           }
         }
       });
     });
-    return values
-  }, [tab, existingData])
+    return values;
+  }, [tab, existingData]);
 
-  const validationResolver = useCallback((values: Record<string, any>) => {
-    const errorList: Record<string, any> = {};
-    tab.sections.forEach(section => {
-      section.fields.forEach(field => {
-        if (!field.hidden && (field.is_mandatory || field.reqd)) {
-          const val = values[field.fieldname];
-          const isCheck = field.fieldtype === 'Check';
-          const isTable = field.fieldtype === 'Table';
+  const validationResolver = useCallback<Resolver<OnboardingFormValues>>(
+    (values) => {
+      const errorList: FieldErrors<OnboardingFormValues> = {};
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const phoneRegex = /^\d{10}$/;
+      tab.sections.forEach((section) => {
+        section.fields.forEach((field) => {
+          const fieldValue = values[field.fieldname];
+          const normalizedValue =
+            typeof fieldValue === "string" ? fieldValue.trim() : fieldValue;
+          const isEmailField =
+            field.fieldtype.toLowerCase() === "email" ||
+            field.label.toLowerCase().includes("email") ||
+            field.fieldname.toLowerCase().includes("email");
+          const isPhoneField =
+            field.label.toLowerCase().includes("mobile") ||
+            field.label.toLowerCase().includes("contact number") ||
+            field.label.toLowerCase().includes("contact no") ||
+            field.label.toLowerCase().includes("phone") ||
+            field.fieldname.toLowerCase().includes("mobile") ||
+            field.fieldname.toLowerCase().includes("phone") ||
+            field.fieldname.toLowerCase().includes("contact_no") ||
+            field.fieldname.toLowerCase().includes("contactnumber");
 
-          if (isTable) {
-            if (!val || !Array.isArray(val) || val.length === 0) {
-              errorList[field.fieldname] = { type: 'required', message: `${field.label || 'This field'} is required` };
-            }
-          } else if (isCheck) {
-            if (!Boolean(val)) {
-              errorList[field.fieldname] = { type: 'required', message: `${field.label || 'This field'} is required` };
-            }
-          } else {
-            if (val === undefined || val === null || val === '') {
-              errorList[field.fieldname] = { type: 'required', message: `${field.label || 'This field'} is required` };
+          if (!field.hidden && (field.is_mandatory || field.reqd)) {
+            const isCheck = field.fieldtype === "Check";
+            const isTable = field.fieldtype === "Table";
+
+            if (isTable) {
+              if (!normalizedValue || !Array.isArray(normalizedValue) || normalizedValue.length === 0) {
+                errorList[field.fieldname] = {
+                  type: "required",
+                  message: `${field.label || "This field"} is required`,
+                };
+              }
+            } else if (isCheck) {
+              if (!Boolean(normalizedValue)) {
+                errorList[field.fieldname] = {
+                  type: "required",
+                  message: `${field.label || "This field"} is required`,
+                };
+              }
+            } else {
+              if (
+                normalizedValue === undefined ||
+                normalizedValue === null ||
+                normalizedValue === ""
+              ) {
+                errorList[field.fieldname] = {
+                  type: "required",
+                  message: `${field.label || "This field"} is required`,
+                };
+                return;
+              }
             }
           }
-        }
-      });
-    });
 
-    return {
-      values,
-      errors: errorList
-    };
-  }, [tab]);
+          if (
+            !field.hidden &&
+            isEmailField &&
+            typeof normalizedValue === "string" &&
+            normalizedValue !== "" &&
+            !emailRegex.test(normalizedValue)
+          ) {
+            errorList[field.fieldname] = {
+              type: "pattern",
+              message: "Please enter a valid email address",
+            };
+          }
+
+          if (
+            !field.hidden &&
+            isPhoneField &&
+            typeof normalizedValue === "string" &&
+            normalizedValue !== "" &&
+            !phoneRegex.test(normalizedValue)
+          ) {
+            errorList[field.fieldname] = {
+              type: "pattern",
+              message: "Please enter a valid 10-digit mobile number",
+            };
+          }
+        });
+      });
+
+      if (Object.keys(errorList).length) {
+        return {
+          values: {},
+          errors: errorList,
+        };
+      }
+
+      return {
+        values,
+        errors: {},
+      };
+    },
+    [tab],
+  );
 
   const {
     handleSubmit,
-    watch,
     setValue,
+    trigger,
     control,
     formState: { errors },
-    reset,
+    // reset,
     getValues,
-  } = useForm({
+  } = useForm<OnboardingFormValues>({
     defaultValues,
     resolver: validationResolver,
-  })
+    mode: "onBlur",
+    reValidateMode: "onBlur",
+  });
 
+  // defaultValues is passed directly to useForm, so it is initialized on mount.
+  // We do NOT call reset(defaultValues) here because it causes an infinite loop 
+  // with the auto-save mechanism below.
+
+  const currentFormValues = useWatch({ control });
+
+  // Auto-save form values to context to prevent data loss on navigation
   useEffect(() => {
-    reset(defaultValues)
-  }, [defaultValues, reset])
+    const timer = setTimeout(() => {
+      const values = getValues();
+      setStepData(stepKey, values);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [currentFormValues, getValues, setStepData, stepKey]);
 
   const onNext = handleSubmit(async (data) => {
-    setStepData(stepKey, data)
-    markStepComplete(stepKey)
-    nextStep()
-  })
+    setStepData(stepKey, data);
+    markStepComplete(stepKey);
+    nextStep();
+  });
 
-  const handleFileUpload = (fieldname: string) => (url: string | null) => {
-    setValue(fieldname, url || "", { shouldValidate: true })
-  }
+  const handleFileUpload = useCallback(
+    (fieldname: string) => (url: string | null) => {
+      setValue(fieldname, url || "", { shouldValidate: true });
+    },
+    [setValue],
+  );
 
-  type OverrideComponentProps = {
-    field: OnboardingField
-    value: unknown
-    onChange: (value: unknown) => void
-    error?: string
-    disabled?: boolean
-    className?: string
-  }
-
-  const renderField = (field: OnboardingField) => {
-    if (field.hidden) return null
-
-    const fieldOverrides = {
-      // Use FileUploadField for Attach fields
+  const fieldOverrides = useMemo(
+    () => ({
       Attach: {
-        component: ({ field, value, error, disabled, className }: OverrideComponentProps) => (
+        component: ({
+          field,
+          value,
+          error,
+          disabled,
+          className,
+        }: OverrideComponentProps) => (
           <FileUploadField
             label={field.label}
             required={!!(field.is_mandatory || field.reqd)}
@@ -128,11 +307,19 @@ export function OnboardingFormStep({ tab, stepKey, className }: OnboardingFormSt
             disabled={disabled || !!field.read_only}
             error={error}
             className={className}
+            isRejected={!field.read_only && field.approval_status === "Rejected"}
+            hrComment={field.hr_comment}
           />
-        )
+        ),
       },
-      'Attach Image': {
-        component: ({ field, value, error, disabled, className }: OverrideComponentProps) => (
+      "Attach Image": {
+        component: ({
+          field,
+          value,
+          error,
+          disabled,
+          className,
+        }: OverrideComponentProps) => (
           <FileUploadField
             label={field.label}
             required={!!(field.is_mandatory || field.reqd)}
@@ -141,67 +328,14 @@ export function OnboardingFormStep({ tab, stepKey, className }: OnboardingFormSt
             disabled={disabled || !!field.read_only}
             error={error}
             className={className}
+            isRejected={!field.read_only && field.approval_status === "Rejected"}
+            hrComment={field.hr_comment}
           />
-        )
+        ),
       },
-      // Specific override for gender if it's a Link field
-      Link: {
-        component: (props: OverrideComponentProps) => {
-          const modifiedField = { ...props.field };
-          if (modifiedField.fieldname.toLowerCase().includes("gender")) {
-            if (genderOptions && genderOptions.length > 0) {
-              modifiedField.options = genderOptions.join('\n');
-            } else {
-              modifiedField.options = "Male\nFemale\nOther"; // Fallback
-            }
-          }
-          const LinkComp = defaultFields.Link?.component;
-          return LinkComp ? <LinkComp {...props} field={modifiedField} /> : null;
-        }
-      }
-    };
-
-    if (field.fieldtype === 'Table') {
-      return (
-        <DynamicTableField
-          key={field.fieldname}
-          field={field}
-          control={control}
-          setValue={setValue}
-          watch={watch}
-          errors={errors}
-          onAttachChange={handleFileUpload}
-          overrides={fieldOverrides}
-        />
-      )
-    }
-
-    // Determine grid classes
-    const isFullWidthByLabel = field.label.toLowerCase().includes("address proof") ||
-      field.fieldname.toLowerCase().includes("custom_upload_pan_card") ||
-      field.fieldname.toLowerCase().includes("custom_upload_cancelled_cheque_passbook_statement") ||
-      field.fieldname.toLowerCase().includes("address_proof");
-
-    const isAadhaarFront = field.fieldname === "custom_upload_aadhaarfront";
-
-    const fieldClassName = cn(
-      isFullWidthByLabel && "md:col-span-full",
-      isAadhaarFront && "md:col-start-1"
-    );
-
-    return (
-      <DynamicFieldRenderer
-        key={field.fieldname}
-        field={field}
-        value={watch(field.fieldname)}
-        onChange={(val) => setValue(field.fieldname, val, { shouldValidate: true })}
-        error={errors[field.fieldname]?.message as string}
-        className={fieldClassName}
-        onAttachChange={handleFileUpload}
-        overrides={fieldOverrides}
-      />
-    )
-  }
+    }),
+    [handleFileUpload],
+  );
 
   return (
     <form onSubmit={onNext} className={cn("space-y-8", className)}>
@@ -215,10 +349,13 @@ export function OnboardingFormStep({ tab, stepKey, className }: OnboardingFormSt
                 size="sm"
                 onClick={() => {
                   const values = getValues();
-                  Object.keys(values).forEach(key => {
-                    if (key.toLowerCase().includes('current')) {
-                      const permKey = key.replace(/current/i, 'permanent');
-                      setValue(permKey, values[key], { shouldValidate: true, shouldDirty: true });
+                  Object.keys(values).forEach((key) => {
+                    if (key.toLowerCase().includes("current")) {
+                      const permKey = key.replace(/current/i, "permanent");
+                      setValue(permKey, values[key], {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      });
                     }
                   });
                 }}
@@ -227,12 +364,41 @@ export function OnboardingFormStep({ tab, stepKey, className }: OnboardingFormSt
               </Button>
             </div>
           )}
-          <SectionCard title={section.section === tab.tab ? undefined : section.section}>
-            <div className={cn(
-              "grid grid-cols-1 gap-x-4 gap-y-5",
-              section.section === "Basic Details" ? "md:grid-cols-3" : "md:grid-cols-2"
-            )}>
-              {section.fields.map(field => renderField(field))}
+          <SectionCard
+            title={section.section === tab.tab ? undefined : section.section}
+          >
+            <div
+              className={cn(
+                "grid grid-cols-1 gap-x-4 gap-y-5",
+                section.section === "Basic Details"
+                  ? "md:grid-cols-3"
+                  : "md:grid-cols-2",
+              )}
+            >
+              {section.fields.map((field) =>
+                field.fieldtype === "Table" ? (
+                  <DynamicTableField
+                    key={field.fieldname}
+                    field={field}
+                    control={control}
+                    setValue={setValue as UseFormSetValue<FieldValues>}
+                    errors={errors as FieldErrors<FieldValues>}
+                    onAttachChange={handleFileUpload}
+                    overrides={fieldOverrides}
+                  />
+                ) : (
+                  <FormStepField
+                    key={field.fieldname}
+                    field={field}
+                    control={control}
+                    setValue={setValue}
+                    trigger={trigger}
+                    error={errors[field.fieldname]?.message as string}
+                    handleFileUpload={handleFileUpload}
+                    overrides={fieldOverrides}
+                  />
+                ),
+              )}
             </div>
           </SectionCard>
         </React.Fragment>
@@ -256,5 +422,5 @@ export function OnboardingFormStep({ tab, stepKey, className }: OnboardingFormSt
         </Button>
       </div>
     </form>
-  )
+  );
 }
