@@ -32,6 +32,15 @@ export const useGetDraftJobApplicant = (email: string, jobId: string) => {
   });
 };
 
+export const useGetAllDrafts = (email: string) => {
+  return useQuery<any>({
+    queryKey: ["all-drafts", email],
+    queryFn: () => draftJobApplicantService.getAllDrafts(email),
+    enabled: !!email,
+    retry: false,
+  });
+};
+
 export const useCreateDraftJobApplicant = () => {
   return useMutation({
     mutationFn: draftJobApplicantService.createDraftJobApplicant,
@@ -45,6 +54,14 @@ export const useUpdateDraftJobApplicant = () => {
     mutationFn: draftJobApplicantService.updateDraftJobApplicant,
     onSuccess: (data) => console.log("✅ Draft Updated:", data),
     onError: (error: any) => console.error("❌ Error updating draft:", error),
+  });
+};
+
+export const useDeleteDraftJobApplicant = () => {
+  return useMutation({
+    mutationFn: draftJobApplicantService.deleteDraftJobApplicant,
+    onSuccess: (data) => console.log("✅ Draft Deleted:", data),
+    onError: (error: any) => console.error("❌ Error deleting draft:", error),
   });
 };
 
