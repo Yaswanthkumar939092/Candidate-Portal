@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { useFeatureFlags } from "@/lib/contexts/feature-flags";
+import { useTheme } from "@/lib/contexts/theme-context";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { useWebsiteBranding } from "@/lib/hooks/useWebsiteBranding";
@@ -38,6 +39,8 @@ import {
   User,
   Settings,
   Menu,
+  Sun,
+  Moon,
 } from "lucide-react";
 
 /**
@@ -98,6 +101,7 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
   const { user, profile } = useAuth();
   const { isEnabled } = useFeatureFlags();
   const { data: branding } = useWebsiteBranding();
+  const { isDark, toggleTheme } = useTheme();
   const pathname = usePathname();
 
   const router = useRouter();
@@ -172,7 +176,7 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
                         className={cn(
                           "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                           active
-                            ? "bg-foreground text-background"
+                            ? "bg-[var(--nav-active-bg)] text-[var(--nav-active-text)]"
                             : "hover:bg-muted text-muted-foreground"
                         )}
                       >
@@ -183,8 +187,8 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
                             className={cn(
                               "flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-semibold border-none",
                               active
-                                ? "bg-background/20 text-background"
-                                : "bg-orange-500 text-white"
+                                ? "bg-[var(--nav-active-text)]/20 text-[var(--nav-active-text)]"
+                                : "bg-muted text-muted-foreground"
                             )}
                           >
                             {item.badgeCount}
@@ -208,7 +212,7 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
               priority
               className="shrink-0"
             />
-            <span className="text-[14px] sm:text-base font-extrabold text-black uppercase hidden sm:block">
+            <span className="text-[14px] sm:text-base font-extrabold text-foreground uppercase hidden sm:block">
               {branding?.title_prefix || "Physics Wallah"}
             </span>
           </Link>
@@ -227,7 +231,7 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
                 className={cn(
                   "relative flex items-center gap-2 text-sm font-medium px-4 py-1.5 rounded-full transition-all duration-300 ease-in-out",
                   active
-                    ? "bg-foreground text-background"
+                    ? "bg-[var(--nav-active-bg)] text-[var(--nav-active-text)]"
                     : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                 )}
               >
@@ -238,8 +242,8 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
                     className={cn(
                       "ml-0.5 flex items-center justify-center rounded-full px-1.5 py-1 text-[10px] font-semibold border-none",
                       active
-                        ? "bg-white/20 text-white"
-                        : "bg-gray-200 text-gray-500"
+                        ? "bg-[var(--nav-active-text)]/20 text-[var(--nav-active-text)]"
+                        : "bg-muted text-muted-foreground"
                     )}
                   >
                     {item.badgeCount}
@@ -321,6 +325,11 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Settings</span>
                 </Link>
+              </DropdownMenuItem>
+
+              <DropdownMenuItem onClick={toggleTheme} className="cursor-pointer">
+                {isDark ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
+                <span>{isDark ? "Light mode" : "Dark mode"}</span>
               </DropdownMenuItem>
 
               <DropdownMenuSeparator />
