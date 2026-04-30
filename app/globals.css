@@ -1,6 +1,5 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap');
 
 @custom-variant dark (&:is(.dark *));
 
@@ -154,6 +153,6 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-geist-sans), 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+    font-family: var(--font-geist-sans), var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
   }
 }
