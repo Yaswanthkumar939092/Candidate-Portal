@@ -16,6 +16,7 @@ import {
   useUpdateDraftJobApplicant,
   useCreateJobApplicant,
   useGetDraftJobApplicant,
+  useDeleteDraftJobApplicant,
 } from "@/lib/hooks/useJobOpening";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -85,6 +86,7 @@ export function JobApplicationStep({
     useCreateDraftJobApplicant();
   const { mutate: draftUpdateMutate, isPending: isDraftUpdatePending } =
     useUpdateDraftJobApplicant();
+  const { mutate: deleteDraftMutate } = useDeleteDraftJobApplicant();
   const router = useRouter();
   const { user } = useAuth();
 
@@ -95,8 +97,8 @@ export function JobApplicationStep({
   const draftNameRef = useRef<string | null>(null);
   const [draftName, setDraftName] = useState<string | null>(null);
 
-  // Track whether draft has been applied to avoid re-applying on every render
-  const draftAppliedRef = useRef(false);
+  // Track which steps have already had draft data applied to avoid overwriting user input
+  const lastAppliedStepRef = useRef<string | null>(null);
 
   // Per-field manual validation errors
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -119,25 +121,27 @@ export function JobApplicationStep({
   // ── Default values: existing stepData context → fallback to empty ─────────
   const defaultValuesRef = useRef<Record<string, unknown>>({});
 
+  const existingData = useMemo(
+    () => (stepData[stepKey] ?? {}) as Record<string, unknown>,
+    [stepData, stepKey]
+  );
+
   const defaultValues = useMemo(() => {
-    const existing = (stepData[stepKey] ?? {}) as Record<string, unknown>;
-    const values: Record<string, unknown> = { ...existing };
-  
+    const values: Record<string, unknown> = { ...existingData };
+
     allTabFields.forEach((field) => {
-      if (values[field.fieldname] === undefined) {
+      if (values[field.fieldname] === undefined || values[field.fieldname] === null) {
         values[field.fieldname] = field.fieldtype === "Table" ? [] : "";
       }
     });
-  
+
     defaultValuesRef.current = values; // persist
     return values;
-  }, [stepKey, allTabFields]);
+  }, [allTabFields, existingData]);
   
   // intentionally exclude stepData to avoid loop
 
-  useEffect(() => {
-    draftAppliedRef.current = false;
-  }, [stepKey]);
+  // removed separate reset effect to avoid race conditions with data application
 
 
   const {
@@ -148,49 +152,41 @@ export function JobApplicationStep({
     formState: { errors },
   } = useForm({ defaultValues });
 
-  // Initial reset when tab changes
+  // Initial reset when tab changes or data updates
   useEffect(() => {
-    reset(defaultValuesRef.current);
+    reset(defaultValues);
     setFieldErrors({});
-  }, [stepKey]);
+  }, [defaultValues, reset]);
 
 
-  // ── Apply draft data once per session ────────────────────────────────────
+  // ── Apply draft data once per session per step ───────────────────────────
   useEffect(() => {
     if (!draftData?.success || !draftData?.data) return;
-    if (draftAppliedRef.current) return;
-  
-    const draft = draftData.data;
-  
+    
+    // Only apply if we haven't applied for this specific step yet
+    if (lastAppliedStepRef.current === stepKey) return;
+
+    // The API returns a list of drafts, take the first one
+    const draft = Array.isArray(draftData.data) ? draftData.data[0] : draftData.data;
+    if (!draft) return;
+
     draftNameRef.current = draft.name;
     setDraftName(draft.name);
-  
+
     const formData =
       typeof draft.form_data === "string"
         ? JSON.parse(draft.form_data || "{}")
         : draft.form_data || {};
-  
+
     if (!Object.keys(formData).length) return;
-  
+
     // ✅ IMPORTANT: first update context
+    // This will trigger defaultValues update and form reset via useEffect
     setStepData(stepKey, formData);
-  
-    // ✅ then update form WITHOUT reset loop
-    Object.entries(formData).forEach(([key, val]) => {
-      const field = allTabFields.find((f) => f.fieldname === key);
-  
-      if (!field) return;
-  
-      if (field.fieldtype === "Table") {
-        setValue(key, Array.isArray(val) ? val : []);
-      } else {
-        setValue(key, val ?? "");
-      }
-    });
-  
-    draftAppliedRef.current = true;
+
+    lastAppliedStepRef.current = stepKey;
     toast.info("Draft data restored successfully.");
-  }, [draftData]);
+  }, [draftData, stepKey, setStepData]);
 
   // ── Manual required-field validation ─────────────────────────────────────
   const validateRequiredFields = (): boolean => {
@@ -254,8 +250,11 @@ export function JobApplicationStep({
       );
     });
 
-    final.job_opening = jobID;
-    return final;
+    return {
+      ...final,
+      job_opening: jobID,
+      email_id: userEmail || null,
+    };
   };
 
   const buildDraftPayload = (data: Record<string, unknown>) => {
@@ -288,6 +287,8 @@ export function JobApplicationStep({
       mutate(payload as Parameters<typeof mutate>[0], {
         onSuccess: () => {
           toast.success("Application submitted successfully!");
+          // ✅ Delete draft after successful submission
+          deleteDraftMutate({ email: userEmail, jobId: jobID });
           reset({});
           router.push(`/open-jobs/${jobID}/apply-job/thank-you`);
         },
