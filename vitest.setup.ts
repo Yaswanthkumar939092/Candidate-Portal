@@ -44,3 +44,7 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: () => false,
   }),
 })
+// Mock Supabase environment variables
+process.env.NEXT_PUBLIC_SUPABASE_URL = 'http://localhost:54321'
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'dummy-key'
+process.env.NEXT_PUBLIC_FRAPPE_URL = 'http://localhost:8000'
