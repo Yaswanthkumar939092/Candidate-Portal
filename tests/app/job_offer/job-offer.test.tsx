@@ -23,6 +23,15 @@ vi.mock("sonner", () => ({
   },
 }));
 
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => ({
+    get: vi.fn().mockReturnValue("deepakrajput0006@gmail.com"),
+  }),
+  useRouter: () => ({
+    push: vi.fn(),
+  }),
+}));
+
 const mockUseJobOfferSummary = vi.fn();
 const mockUseJobOfferPdf = vi.fn();
 const mockUseUpdateJobOfferStatus = vi.fn();
@@ -52,7 +61,7 @@ describe("JobOfferPage", () => {
     vi.clearAllMocks();
     
     // Default mocks for loading state
-    mockUseCurrentUser.mockReturnValue({ userEmail: "test@example.com", isLoading: false });
+    mockUseCurrentUser.mockReturnValue({ userEmail: "deepakrajput0006@gmail.com", isLoading: false });
     mockUseJobOfferStatus.mockReturnValue({ data: { status: "Awaiting Response" }, isLoading: false });
     mockUseJobOfferSummary.mockReturnValue({ 
       data: { applicant_name: "Test User", designation: "Software Engineer", duration_display: "6 Months", stipend_display: "$5000" }, 
