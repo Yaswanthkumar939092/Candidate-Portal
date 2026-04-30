@@ -72,13 +72,13 @@ Object.defineProperty(window, 'location', {
 });
 
 describe("JobOfferPage", () => {
-  const DEFAULT_EMAIL = "test@example.com";
+  const DEFAULT_EMAIL = "deepakrajput0006@gmail.com";
 
   beforeEach(() => {
     vi.clearAllMocks();
 
     // Default mocks for loading state
-    mockUseCurrentUser.mockReturnValue({ userEmail: "deepakrajput0006@gmail.com", isLoading: false });
+    mockUseCurrentUser.mockReturnValue({ userEmail: DEFAULT_EMAIL, isLoading: false });
     mockUseJobOfferStatus.mockReturnValue({ data: { status: "Awaiting Response" }, isLoading: false });
     mockUseJobOfferSummary.mockReturnValue({
       data: { applicant_name: "Test User", designation: "Software Engineer", duration_display: "6 Months", stipend_display: "$5000" },
