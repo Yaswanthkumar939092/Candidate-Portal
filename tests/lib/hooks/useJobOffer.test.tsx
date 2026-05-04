@@ -5,7 +5,8 @@ import {
   useJobOfferSummary, 
   useJobOfferStatus, 
   useRejectionReasons,
-  useUpdateJobOfferStatus
+  useUpdateJobOfferStatus,
+  useJobOfferPdf
 } from "@/lib/hooks/useJobOffer";
 import { jobOfferService } from "@/lib/services/jobOffer";
 import React from "react";
@@ -17,6 +18,7 @@ vi.mock("@/lib/services/jobOffer", () => ({
     getJobOfferStatus: vi.fn(),
     getRejectionReasons: vi.fn(),
     updateJobOfferStatus: vi.fn(),
+    downloadJobOfferPdf: vi.fn(),
   },
 }));
 
@@ -85,5 +87,20 @@ describe("useJobOffer Hooks", () => {
       expect.anything()
     );
     expect(invalidateSpy).toHaveBeenCalled();
+  });
+
+  it("useJobOfferPdf fetches PDF and handles cleanup", async () => {
+    const mockPdfUrl = "blob:http://localhost:3000/test-blob";
+    (jobOfferService.downloadJobOfferPdf as any).mockResolvedValue(mockPdfUrl);
+    const revokeSpy = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+
+    const { result, unmount } = renderHook(() => useJobOfferPdf("test@example.com"), { wrapper });
+
+    await waitFor(() => expect(result.current.pdfUrl).toBe(mockPdfUrl));
+    expect(jobOfferService.downloadJobOfferPdf).toHaveBeenCalledWith("test@example.com");
+
+    unmount();
+    expect(revokeSpy).toHaveBeenCalledWith(mockPdfUrl);
+    revokeSpy.mockRestore();
   });
 });
