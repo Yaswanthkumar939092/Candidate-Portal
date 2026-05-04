@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import React from "react"
+import { ViewApplicationModal } from "./view-application-modal"
 
 // ─────────────────────────────────────────────
 // Types — mirroring the API response shape
@@ -137,6 +138,8 @@ export function AppliedJobsTimeline({
   applications,
   className,
 }: AppliedJobsTimelineProps) {
+  const [selectedApplication, setSelectedApplication] = React.useState<string | null>(null)
+
   return (
     <div className={cn("space-y-4", className)}>
       {applications.map((app) => {
@@ -278,7 +281,11 @@ export function AppliedJobsTimeline({
 
               {/* ── Action ── */}
               <div>
-                <Button variant="outline" size="sm">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setSelectedApplication(app.id)}
+                >
                   View Application
                 </Button>
               </div>
@@ -286,6 +293,12 @@ export function AppliedJobsTimeline({
           </Card>
         )
       })}
+
+      <ViewApplicationModal 
+        jobApplicantName={selectedApplication}
+        isOpen={!!selectedApplication}
+        onClose={() => setSelectedApplication(null)}
+      />
     </div>
   )
 }
