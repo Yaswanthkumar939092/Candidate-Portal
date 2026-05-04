@@ -394,6 +394,103 @@ describe('FrappeEnvironmentManager', () => {
     const frappeClient = await manager.getClient()
     expect(frappeClient).toBeInstanceOf(FrappeClient)
   })
+
+  it('testConnection returns success result and updates DB', async () => {
+    const mockEnv = {
+      id: 'env-1',
+      frappe_url: 'http://test.com',
+      environment_key: 'TEST',
+    }
+
+    const mockSingle = vi.fn().mockResolvedValue({ data: mockEnv, error: null })
+    const mockUpdateSingle = vi.fn().mockResolvedValue({ error: null })
+    const mockUpdate = vi.fn().mockReturnValue({ eq: mockUpdateSingle })
+    const mockEq = vi.fn().mockReturnValue({ single: mockSingle })
+    const mockSelect = vi.fn().mockReturnValue({ eq: mockEq })
+
+    ;(supabaseAdmin.from as any).mockImplementation((table: string) => {
+      if (table === 'frappe_environments') {
+        return { select: mockSelect, update: mockUpdate }
+      }
+    })
+
+    // Mock ping
+    vi.spyOn(FrappeClient.prototype, 'ping').mockResolvedValue(true)
+
+    const result = await manager.testConnection('env-1')
+
+    expect(result.success).toBe(true)
+    expect(mockUpdate).toHaveBeenCalled()
+  })
+
+  it('listEnvironments returns all environments from DB', async () => {
+    const mockEnvs = [{ id: '1', environment_key: 'DEV' }]
+    const mockOrder = vi.fn().mockResolvedValue({ data: mockEnvs, error: null })
+    const mockSelect = vi.fn().mockReturnValue({ order: mockOrder })
+    ;(supabaseAdmin.from as any).mockReturnValue({ select: mockSelect })
+
+    const result = await manager.listEnvironments()
+    expect(result).toEqual(mockEnvs)
+    expect(mockOrder).toHaveBeenCalledWith('created_at', { ascending: true })
+  })
+
+  it('seedLocalEnv inserts local env if none exist', async () => {
+    // Mock count = 0
+    const mockHead = vi.fn().mockResolvedValue({ count: 0 })
+    const mockSelect = vi.fn().mockReturnValue({ count: 'exact', head: true })
+    const mockInsert = vi.fn().mockResolvedValue({ error: null })
+
+    ;(supabaseAdmin.from as any).mockImplementation((table: string) => {
+      if (table === 'frappe_environments') {
+        return { select: () => ({ count: 'exact', head: mockHead }), insert: mockInsert }
+      }
+    })
+
+    process.env.FRAPPE_BASE_URL = 'http://local.test'
+    await manager.seedLocalEnv()
+
+    expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({
+      environment_key: 'LOCAL',
+      frappe_url: 'http://local.test',
+    }))
+  })
+})
+
+describe('FrappeClient methods', () => {
+  let client: FrappeClient
+
+  beforeEach(() => {
+    client = new FrappeClient({
+      frappe_url: 'http://localhost:8000',
+      api_key: 'key',
+      api_secret: 'secret',
+      username: null,
+      password: null,
+      environment_key: 'LOCAL',
+    })
+  })
+
+  it('createUser sends POST request', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ data: { name: 'user1' } }),
+    })
+
+    const result = await client.createUser({ email: 'test@test.com', first_name: 'John' })
+    expect(result.data.name).toBe('user1')
+  })
+
+  it('createEmployee sends POST request', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ data: { name: 'emp1' } }),
+    })
+
+    const result = await client.createEmployee({ employee_name: 'John', first_name: 'John', company: 'Acme' })
+    expect(result.data.name).toBe('emp1')
+  })
 })
 
 // ---------------------------------------------------------------------------
