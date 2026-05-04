@@ -9,3 +9,12 @@ export const useApplicantStatus = (email: string) => {
       retry: false,     
     });
   };
+
+export const useJobApplicantDetails = (jobApplicantName: string | null) => {
+  return useQuery({
+    queryKey: ["job-applicant-details", jobApplicantName],
+    queryFn: () => ApplicantStatusResponse.getJobApplicant(jobApplicantName!),
+    enabled: !!jobApplicantName,
+    retry: false,
+  });
+};
