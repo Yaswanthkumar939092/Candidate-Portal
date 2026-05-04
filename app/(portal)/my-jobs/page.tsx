@@ -42,7 +42,6 @@ export default function MyJobsPage() {
   const apiData = response?.data
   const drafts = draftsResponse?.data || []
 
-  console.log("drafts", draftsResponse)
 
   const [activeTab, setActiveTab] = useState<"applied" | "drafts">("applied")
   const [filter, setFilter] = useState("active")
