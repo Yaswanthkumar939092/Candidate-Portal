@@ -254,8 +254,16 @@ export function withRateLimit(
       // Execute the handler
       const response = await handler(request)
 
-      // Add rate limit headers to successful responses
-      if (response.status < 400 || !options.skipSuccessfulRequests) {
+      // Add rate limit headers based on options
+      let shouldSetHeaders = true
+      if (response.status < 400 && options.skipSuccessfulRequests) {
+        shouldSetHeaders = false
+      }
+      if (response.status >= 400 && options.skipFailedRequests) {
+        shouldSetHeaders = false
+      }
+
+      if (shouldSetHeaders) {
         response.headers.set('X-RateLimit-Limit', rateLimiter['config'].maxRequests.toString())
         response.headers.set('X-RateLimit-Remaining', result.remaining.toString())
         response.headers.set('X-RateLimit-Reset', Math.ceil(result.resetTime / 1000).toString())

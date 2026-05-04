@@ -22,9 +22,11 @@ vi.mock("sonner", () => ({
   },
 }));
 
+const mockGet = vi.fn();
+
 vi.mock("next/navigation", () => ({
   useSearchParams: () => ({
-    get: vi.fn().mockReturnValue("deepakrajput0006@gmail.com"),
+    get: mockGet,
   }),
   useRouter: () => ({
     push: vi.fn(),
@@ -53,13 +55,6 @@ vi.mock("@/lib/hooks/useUser", () => ({
 const mockUseCompanyLogo = vi.fn();
 vi.mock("@/lib/hooks/useCompanyLogo", () => ({
   useCompanyLogo: (...args: any[]) => mockUseCompanyLogo(...args),
-}));
-
-const mockGet = vi.fn();
-vi.mock("next/navigation", () => ({
-  useSearchParams: () => ({
-    get: mockGet,
-  }),
 }));
 
 // Mock window.scrollTo and window.location.reload
