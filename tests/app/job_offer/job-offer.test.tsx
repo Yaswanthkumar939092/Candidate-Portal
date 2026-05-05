@@ -137,14 +137,14 @@ describe("JobOfferPage", () => {
     mockUseUpdateJobOfferStatus.mockReturnValue({ mutateAsync });
 
     render(<JobOfferPage />);
-    
+
     const rejectBtn = screen.getByRole("button", { name: /Reject Offer/i });
     fireEvent.click(rejectBtn);
 
     expect(screen.getByText("Reject Offer")).toBeTruthy();
 
     const confirmRejectBtn = screen.getByRole("button", { name: /Confirm Rejection/i });
-    
+
     // Select reason
     const select = screen.getByRole("combobox");
     fireEvent.change(select, { target: { value: "Salary" } });
@@ -161,8 +161,11 @@ describe("JobOfferPage", () => {
       });
     });
 
-    // Should show declined popup
-    expect(screen.getByText("Offer Rejected")).toBeTruthy();
+    // Should show declined popup - wait for it to render
+    await waitFor(() => {
+      expect(screen.getByText("Offer Rejected")).toBeTruthy();
+    });
+
     expect(screen.getByText(/We appreciate the time and effort/)).toBeTruthy();
 
     // Close popup should reload
