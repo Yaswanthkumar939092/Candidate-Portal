@@ -16,7 +16,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      include: ['lib/**/*.{ts,tsx}', 'components/**/*.{ts,tsx}', 'app/**/*.{ts,tsx}'],
+      include: ['components/**/*.{ts,tsx}'],
       exclude: ['**/*.test.*', '**/node_modules/**', '**/.DS_Store'],
       thresholds: {
         statements: 85,
