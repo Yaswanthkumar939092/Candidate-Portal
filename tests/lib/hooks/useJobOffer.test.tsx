@@ -3,6 +3,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   useJobOfferSummary,
+  useJobOfferPdf,
   useJobOfferStatus,
   useRejectionReasons,
   useUpdateJobOfferStatus
@@ -14,6 +15,7 @@ import React from "react";
 vi.mock("@/lib/services/jobOffer", () => ({
   jobOfferService: {
     getJobOfferSummary: vi.fn(),
+    downloadJobOfferPdf: vi.fn(),
     getJobOfferStatus: vi.fn(),
     getRejectionReasons: vi.fn(),
     updateJobOfferStatus: vi.fn(),
@@ -63,6 +65,39 @@ describe("useJobOffer Hooks", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual(mockData);
+  });
+
+  it("useJobOfferPdf fetches the PDF URL and revokes it on unmount", async () => {
+    const revokeSpy = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => { });
+    vi.mocked(jobOfferService.downloadJobOfferPdf).mockResolvedValue("blob:job-offer-pdf-url");
+
+    const { result, unmount } = renderHook(
+      () => useJobOfferPdf("test@example.com"),
+      { wrapper }
+    );
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.pdfUrl).toBe("blob:job-offer-pdf-url");
+    expect(result.current.error).toBeNull();
+    expect(jobOfferService.downloadJobOfferPdf).toHaveBeenCalledWith("test@example.com");
+
+    unmount();
+
+    expect(revokeSpy).toHaveBeenCalledWith("blob:job-offer-pdf-url");
+    revokeSpy.mockRestore();
+  });
+
+  it("useJobOfferPdf stays idle when disabled", async () => {
+    const { result } = renderHook(
+      () => useJobOfferPdf("test@example.com", false),
+      { wrapper }
+    );
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.pdfUrl).toBeNull();
+    expect(jobOfferService.downloadJobOfferPdf).not.toHaveBeenCalled();
   });
 
   it("useRejectionReasons fetches data correctly", async () => {

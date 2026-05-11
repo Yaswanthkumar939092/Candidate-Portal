@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useCallback } from "react";
-import { Upload, X, FileText, Loader2, AlertCircle } from "lucide-react";
+import { Upload, X, FileText, Loader2, AlertCircle, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { ResubmitButton } from "@/components/ui/field-renderer";
 
 interface FileUploadFieldProps {
   label: string;
@@ -25,6 +26,8 @@ interface FileUploadFieldProps {
   className?: string;
   isRejected?: boolean;
   hrComment?: string;
+  isApproved?: boolean;
+  fieldname?: string;
 }
 
 /**
@@ -51,6 +54,8 @@ export function FileUploadField({
   className,
   isRejected = false,
   hrComment,
+  isApproved = false,
+  fieldname,
 }: FileUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -121,26 +126,36 @@ export function FileUploadField({
   );
 
   const renderTooltip = () => {
+    if (isApproved) {
+      return (
+        <div className="flex items-center justify-center text-success" aria-label="Approved field">
+          <Check className="h-5 w-5" />
+        </div>
+      );
+    }
     if (!isRejected || !hrComment) return null;
     return (
-      <Tooltip delayDuration={100}>
-        <TooltipTrigger asChild>
-          <button
-            type="button"
-            className="flex cursor-help items-center justify-center text-yellow-500 bg-transparent rounded-full z-10 transition-colors hover:text-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
-            onClick={(e) => e.stopPropagation()}
-            aria-label="Rejection reason"
+      <div className="flex items-center gap-1.5">
+        <Tooltip delayDuration={100}>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              className="flex cursor-help items-center justify-center text-destructive bg-transparent rounded-full z-10 transition-colors hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-destructive focus:ring-offset-2"
+              onClick={(e) => e.stopPropagation()}
+              aria-label="Rejection reason"
+            >
+              <AlertCircle className="h-5 w-5" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent
+            side="top"
+            className="max-w-62.5 whitespace-pre-wrap text-white font-medium bg-black"
           >
-            <AlertCircle className="h-5 w-5" />
-          </button>
-        </TooltipTrigger>
-        <TooltipContent
-          side="top"
-          className="max-w-62.5 whitespace-pre-wrap text-destructive font-medium border-yellow-500"
-        >
-          <p>{hrComment}</p>
-        </TooltipContent>
-      </Tooltip>
+            <p>{hrComment}</p>
+          </TooltipContent>
+        </Tooltip>
+        <ResubmitButton fieldname={fieldname} />
+      </div>
     );
   };
 
@@ -160,8 +175,10 @@ export function FileUploadField({
             className={cn(
               "flex items-center gap-3 rounded-lg border p-3 cursor-pointer",
               isRejected
-                ? "border-yellow-500 bg-yellow-500/5"
-                : "border-border bg-muted",
+                ? "border-destructive bg-destructive/5"
+                : isApproved
+                  ? "border-success bg-success/5"
+                  : "border-border bg-muted",
             )}
             onClick={handleClick}
           >
@@ -189,8 +206,10 @@ export function FileUploadField({
             className={cn(
               "relative flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-8 transition-colors overflow-hidden",
               isRejected
-                ? "border-yellow-500 bg-yellow-500/5 hover:border-yellow-500/80"
-                : isDragOver
+                ? "border-destructive bg-destructive/5 hover:border-destructive/80"
+                : isApproved
+                  ? "border-success bg-success/5 hover:border-success/80"
+                  : isDragOver
                   ? "border-primary bg-primary/5"
                   : "border-border bg-card hover:border-primary/50 hover:bg-muted/50",
               (disabled || isPending) &&

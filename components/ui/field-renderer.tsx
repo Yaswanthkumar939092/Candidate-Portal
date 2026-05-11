@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { FrappeAPI } from "@/lib/frappe-api";
 import { cn } from "@/lib/utils";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Check, Loader2 } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -20,6 +20,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import React from "react";
+import { Button } from "@/components/ui/button";
+import { useOnboarding } from "@/lib/contexts/onboarding-context";
 
 export interface FormField {
   fieldname: string;
@@ -78,9 +80,14 @@ interface FieldConfig<T extends FormField> {
 }
 
 function getValidationClass(field: FormField) {
-  return !field.read_only && field.approval_status === "Rejected"
-    ? "border-yellow-500 outline-yellow-500 focus-visible:ring-yellow-500 border-2 pr-10"
-    : "";
+  if (field.approval_status === "Approved") {
+    return "border-success outline-success focus-visible:ring-success border-2 pr-10";
+  }
+  if (field.read_only) return "";
+  if (field.approval_status === "Rejected") {
+    return "border-destructive outline-destructive focus-visible:ring-destructive border-2 pr-24";
+  }
+  return "";
 }
 
 function isEmailField(field: FormField) {
@@ -137,6 +144,46 @@ function normalizeInputValue(field: FormField, rawValue: string) {
 }
 
 
+export function ResubmitButton({ fieldname }: { fieldname?: string }) {
+  const [loading, setLoading] = React.useState(false);
+  let onboarding: ReturnType<typeof useOnboarding> | null = null;
+  try {
+    onboarding = useOnboarding();
+  } catch {
+    onboarding = null;
+  }
+
+  if (!onboarding) return null;
+
+  const handleResubmit = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      setLoading(true);
+      await onboarding.submitAll(fieldname);
+    } catch (err) {
+      console.error("Resubmit failed:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Button
+      type="button"
+      onClick={handleResubmit}
+      disabled={loading || onboarding.isSaving}
+      className="h-6 px-2 text-[10px] bg-destructive text-white hover:bg-destructive/90 rounded-md font-semibold flex items-center gap-1 shadow-sm shrink-0"
+    >
+      {loading ? (
+        <Loader2 className="h-3 w-3 animate-spin" />
+      ) : (
+        "Resubmit"
+      )}
+    </Button>
+  );
+}
+
 function FieldStatusTooltip({
   field,
   rightOffset = "right-3",
@@ -144,34 +191,50 @@ function FieldStatusTooltip({
   field: FormField;
   rightOffset?: string;
 }) {
-  if (
-    field.read_only ||
-    field.approval_status !== "Rejected" ||
-    !field.hr_comment
-  )
-    return null;
-  return (
-    <TooltipProvider>
-      <Tooltip delayDuration={100}>
-        <TooltipTrigger asChild>
-          <div
-            className={cn(
-              "absolute top-1/2 -translate-y-1/2 flex cursor-help items-center justify-center text-yellow-500 bg-background rounded-full z-10",
-              rightOffset,
-            )}
-          >
-            <AlertCircle className="h-4 w-4" />
-          </div>
-        </TooltipTrigger>
-        <TooltipContent
-          side="top"
-          className="max-w-62.5 whitespace-pre-wrap text-destructive font-medium border-yellow-500"
-        >
-          <p>{field.hr_comment}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
+  if (field.approval_status === "Approved") {
+    return (
+      <div
+        className={cn(
+          "absolute top-1/2 -translate-y-1/2 flex items-center justify-center text-success bg-background rounded-full z-10",
+          rightOffset,
+        )}
+      >
+        <Check className="h-4 w-4" />
+      </div>
+    );
+  }
+
+  if (field.read_only) return null;
+
+  if (field.approval_status === "Rejected" && field.hr_comment) {
+    return (
+      <div
+        className={cn(
+          "absolute top-1/2 -translate-y-1/2 flex items-center gap-1.5 z-10",
+          rightOffset,
+        )}
+      >
+        <TooltipProvider>
+          <Tooltip delayDuration={100}>
+            <TooltipTrigger asChild>
+              <div className="flex cursor-help items-center justify-center text-destructive bg-background rounded-full">
+                <AlertCircle className="h-4 w-4" />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent
+              side="top"
+              className="max-w-62.5 whitespace-pre-wrap text-white font-medium bg-black"
+            >
+              <p>{field.hr_comment}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <ResubmitButton fieldname={field.fieldname} />
+      </div>
+    );
+  }
+
+  return null;
 }
 
 const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {

@@ -7,6 +7,19 @@ vi.mock("@/lib/hooks/useFileUpload", () => ({
   useFileUpload: vi.fn(),
 }));
 
+vi.mock("@/lib/supabase", () => ({
+  supabase: {
+    auth: {
+      getSession: vi.fn(),
+      getUser: vi.fn(),
+      signOut: vi.fn(),
+    },
+  },
+  getSession: vi.fn(),
+  getCurrentUser: vi.fn(),
+  signOut: vi.fn(),
+}));
+
 describe("FileUploadField", () => {
   const mockUploadFile = vi.fn();
   const mockOnChange = vi.fn();
