@@ -20,8 +20,17 @@ export interface OnboardingSection {
   fields: OnboardingField[];
 }
 
+export interface FieldCounts {
+  total: number;
+  approved: number;
+  rejected: number;
+  pending: number;
+  filled: number;
+}
+
 export interface OnboardingTab {
   tab: string;
+  field_counts?: FieldCounts;
   sections: OnboardingSection[];
 }
 

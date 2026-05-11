@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 
 interface WelcomeHeaderProps {
   /** The user's display name (first name is extracted automatically). */
-  name: string
+  name?: string
   /** Override the default greeting text. */
   greeting?: string
   className?: string
@@ -25,7 +25,8 @@ function getGreeting(): string {
 /**
  * Extracts the first name from a full name string.
  */
-function getFirstName(name: string): string {
+function getFirstName(name?: string): string {
+  if (!name) return "User"
   return name.split(" ")[0] || name
 }
 

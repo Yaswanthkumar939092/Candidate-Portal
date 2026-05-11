@@ -53,15 +53,21 @@ vi.mock("@/components/dashboard/info-card", () => ({
 }))
 
 interface KeyContactsProps {
-  contacts: Array<{ name: string; role: string }>;
+  contacts: Array<{ name: string; role: string; email?: string; phone?: string }>;
 }
 
+const keyContactsMock = vi.fn(({ contacts }: KeyContactsProps) => (
+  <div data-testid="key-contacts">
+    {contacts.map((c) => (
+      <div key={c.name}>
+        {c.name} - {c.role} - {c.email ?? "no-email"} - {c.phone ?? "no-phone"}
+      </div>
+    ))}
+  </div>
+))
+
 vi.mock("@/components/dashboard/key-contacts", () => ({
-  KeyContacts: ({ contacts }: KeyContactsProps) => (
-    <div data-testid="key-contacts">
-      {contacts.map((c) => <div key={c.name}>{c.name} - {c.role}</div>)}
-    </div>
-  ),
+  KeyContacts: (props: KeyContactsProps) => keyContactsMock(props),
 }))
 
 vi.mock("@/components/dashboard/journey-countdown", () => ({
@@ -103,6 +109,7 @@ const mockDashboardData: DashboardData = {
       employee_name: "Pallavi Mahar",
     },
   ],
+  onboarding_status: true,
 }
 
 function mockUseDashboardState(overrides?: Partial<ReturnType<typeof useDashboard>>) {
@@ -145,7 +152,7 @@ describe("DashboardPage", () => {
     await waitFor(() => {
       expect(screen.getByTestId("welcome-header")).toHaveTextContent("Welcome back, John Doe")
       expect(screen.getByTestId("onboarding-snapshot")).toHaveTextContent("Progress: 8/8")
-      expect(screen.getByTestId("key-contacts")).toHaveTextContent("Pallavi Mahar - HR Buddy")
+      expect(screen.getByTestId("key-contacts")).toHaveTextContent("Pallavi Mahar - HR Buddy - hr@example.com - +91-9876543210")
     })
 
     const cards = screen.getAllByTestId("info-card")
@@ -213,7 +220,7 @@ describe("DashboardPage", () => {
     await waitFor(() => {
       expect(screen.getByTestId("welcome-header")).toHaveTextContent("Welcome back, User")
       expect(screen.getByTestId("onboarding-snapshot")).toHaveTextContent("Progress: 0/8")
-      expect(screen.getByTestId("key-contacts")).toHaveTextContent("Fallback Contact - HR Buddy")
+      expect(screen.getByTestId("key-contacts")).toHaveTextContent("Fallback Contact - HR Buddy - hr@example.com - +91-9876543210")
     })
 
     const cards = screen.getAllByTestId("info-card")
@@ -224,13 +231,73 @@ describe("DashboardPage", () => {
     expect(cards[2]).toHaveTextContent("Department not available")
   })
 
+  it("maps missing contact details to undefined and prefers a custom office address", async () => {
+    vi.mocked(useAuth).mockReturnValue({
+      user: { id: "user-123", email: "test@example.com" },
+      profile: null,
+    } as unknown as ReturnType<typeof useAuth>)
+    mockUseDashboardState({
+      data: {
+        ...mockDashboardData,
+        work_location_details: {
+          ...mockDashboardData.work_location_details,
+          custom_address: "Tower A, Floor 3",
+          custom_office_city: "",
+          custom_state: "",
+          custom_country: "",
+        },
+        key_contacts: [
+          {
+            ...mockDashboardData.key_contacts[0],
+            email: "",
+            phone_number: "",
+          },
+        ],
+      },
+    })
+
+    render(<DashboardPage />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId("key-contacts")).toHaveTextContent("Pallavi Mahar - HR Buddy - no-email - no-phone")
+    })
+
+    const cards = screen.getAllByTestId("info-card")
+    expect(cards[1]).toHaveTextContent("Tower A, Floor 3")
+  })
+
+  it("falls back to 'Address not available' when no office address details exist", async () => {
+    vi.mocked(useAuth).mockReturnValue({
+      user: { id: "user-123", email: "test@example.com" },
+      profile: null,
+    } as unknown as ReturnType<typeof useAuth>)
+    mockUseDashboardState({
+      data: {
+        ...mockDashboardData,
+        work_location_details: {
+          ...mockDashboardData.work_location_details,
+          custom_address: "",
+          custom_office_city: "",
+          custom_state: "",
+          custom_country: "",
+        },
+      },
+    })
+
+    render(<DashboardPage />)
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId("info-card")[1]).toHaveTextContent("Address not available")
+    })
+  })
+
   it("renders the missing-email error state and allows retry", async () => {
     const refetch = vi.fn()
 
-      vi.mocked(useAuth).mockReturnValue({
-        user: { id: "user-123" },
-        profile: null,
-      } as unknown as ReturnType<typeof useAuth>)
+    vi.mocked(useAuth).mockReturnValue({
+      user: { id: "user-123" },
+      profile: null,
+    } as unknown as ReturnType<typeof useAuth>)
     mockUseDashboardState({ refetch })
 
     render(<DashboardPage />)
@@ -245,10 +312,10 @@ describe("DashboardPage", () => {
   it("renders an error state and retries the query", async () => {
     const refetch = vi.fn()
 
-      vi.mocked(useAuth).mockReturnValue({
-        user: { id: "user-123", email: "test@example.com" },
-        profile: null,
-      } as unknown as ReturnType<typeof useAuth>)
+    vi.mocked(useAuth).mockReturnValue({
+      user: { id: "user-123", email: "test@example.com" },
+      profile: null,
+    } as unknown as ReturnType<typeof useAuth>)
     mockUseDashboardState({
       isError: true,
       error: new Error("Dashboard request failed"),
@@ -263,5 +330,20 @@ describe("DashboardPage", () => {
     await userEvent.click(screen.getByRole("button", { name: "Try again" }))
 
     expect(refetch).toHaveBeenCalledTimes(1)
+  })
+
+  it("renders the generic error message when the query error is not an Error instance", () => {
+    vi.mocked(useAuth).mockReturnValue({
+      user: { id: "user-123", email: "test@example.com" },
+      profile: null,
+    } as unknown as ReturnType<typeof useAuth>)
+    mockUseDashboardState({
+      isError: true,
+      error: "Unknown failure" as unknown as Error,
+    })
+
+    render(<DashboardPage />)
+
+    expect(screen.getByText("Something went wrong while fetching your dashboard data.")).toBeTruthy()
   })
 })
