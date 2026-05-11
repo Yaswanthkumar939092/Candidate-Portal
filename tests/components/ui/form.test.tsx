@@ -1,6 +1,27 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi } from "vitest"
+import * as React from "react"
+
+// Prepare the injection registries immediately before downstream dependencies evaluate
+const contextState = vi.hoisted(() => ({
+  contextMock: vi.fn(),
+  originalImpl: null as any,
+}))
+
+// Safely intercept Core React resolver exclusively to facilitate ephemeral injection cycles
+vi.mock("react", async (importOriginal) => {
+  const actual = await importOriginal() as any
+  contextState.originalImpl = actual.useContext
+  contextState.contextMock.mockImplementation((ctx: any) => actual.useContext(ctx))
+  return {
+    ...actual,
+    useContext: (ctx: any) => contextState.contextMock(ctx),
+  }
+})
+
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
+import * as RHF from "react-hook-form"
 import { useForm } from "react-hook-form"
 import {
   Form,
@@ -598,6 +619,35 @@ describe("Form Components", () => {
       )
 
       expect(screen.getByText("This field is required")).toBeTruthy()
+    })
+  })
+
+  describe("Invariant Integrity Edge Cases", () => {
+    it("successfully forces execution of missing context throw via proxy injection (Line 53)", () => {
+      const ComponentTrigger = () => {
+         // Surgical Strike Execution:
+         // 1. Prime proxy for exactly ONE pass (Line 46 call within useFormField).
+         // 2. JS evaluates 'false.name' smoothly (no crash), achieves '!false' evaluate to true (Line 52).
+         // 3. Confirms intended Line 53 throw without collapsing parent context stability!
+         contextState.contextMock.mockImplementationOnce(() => false)
+         useFormField()
+         return null
+      }
+
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+      
+      expect(() => {
+         render(
+            <FormWrapper>
+               <ComponentTrigger />
+            </FormWrapper>
+         )
+      }).toThrow("useFormField should be used within <FormField>")
+      
+      consoleSpy.mockRestore()
+      
+      // Re-lock implementation to baseline original
+      contextState.contextMock.mockImplementation(contextState.originalImpl)
     })
   })
 })
