@@ -178,7 +178,10 @@ export function AssignedTasksList({
                           <button
                           onClick={() => {
                             if (task.redirectUrl) {
-                              router.push(`/action-center/tasks/${task.redirectUrl}`)
+                              const targetUrl = task.redirectUrl.startsWith('/')
+                                ? task.redirectUrl
+                                : `${task.redirectUrl}`;
+                              window.location.href = targetUrl;
                             }
                           }}
                            className="inline-flex items-center gap-1.5 text-[14px] font-bold text-[#2E90FA] hover:text-[#2E90FA]/80 transition-colors">
