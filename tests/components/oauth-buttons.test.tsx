@@ -93,4 +93,30 @@ describe("OAuthButtons", () => {
       expect(screen.getByText("OAuth failed")).toBeTruthy()
     })
   })
+  it("displays error message if auth fails with a non-error object", async () => {
+    // Rejects with a pure string to trigger non-Error instance branch (Line 27 fallback)
+    ;(auth.signInWithOAuth as unknown as { mockRejectedValue: (val: string) => void }).mockRejectedValue("Critical system crash")
+    
+    render(<OAuthButtons />)
+    const googleButton = screen.getByText("Sign in with Google")
+    
+    await user.click(googleButton)
+    
+    await waitFor(() => {
+      // Ensures default 'Failed to sign in with...' text is produced by Line 27 falsy ternary
+      expect(screen.getByText("Failed to sign in with google")).toBeTruthy()
+    })
+  })
+
+  it("renders correctly when only LinkedIn is enabled", () => {
+    // Mocks single-side enablement to completely satisfy the logic branch evaluation at Line 88
+    ;(isOAuthProviderEnabled as unknown as { mockImplementation: (fn: (provider: string) => boolean) => void }).mockImplementation((provider: string) => provider === "linkedin")
+    
+    render(<OAuthButtons />)
+    
+    expect(screen.queryByText("Sign in with Google")).toBeNull()
+    expect(screen.getByText("Sign in with LinkedIn")).toBeTruthy()
+    // Validates continuation text which only renders when OR is satisfyed (Line 88-97)
+    expect(screen.getByText("Or continue with email")).toBeTruthy()
+  })
 })

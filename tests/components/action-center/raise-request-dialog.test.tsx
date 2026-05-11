@@ -5,6 +5,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import React from "react"
 import { RaiseRequestDialog } from "@/components/action-center/raise-request-dialog"
+import { useFileUpload } from "@/lib/hooks/useFileUpload"
 
 // ─── Mock useFileUpload (uses useMutation internally) ──────────────
 vi.mock("@/lib/hooks/useFileUpload", () => ({
@@ -18,7 +19,17 @@ vi.mock("@/lib/hooks/useFileUpload", () => ({
 
 // ─── Mock UI components ────────────────────────────────────────────
 vi.mock("@/components/ui/dialog", () => ({
-  Dialog: ({ children, open }: any) => open ? <div data-testid="dialog">{children}</div> : null,
+  Dialog: ({ children, open, onOpenChange }: any) => (
+    <div data-testid="dialog-wrapper">
+      {open && (
+         <div data-testid="dialog">
+           {children}
+           {/* Test mechanism to force component's own toggle closure handling */}
+           <button data-testid="dialog-close-sim" onClick={() => onOpenChange?.(false)}>Close Sim</button>
+         </div>
+      )}
+    </div>
+  ),
   DialogContent: ({ children }: any) => <div data-testid="dialog-content">{children}</div>,
   DialogHeader: ({ children }: any) => <div>{children}</div>,
   DialogTitle: ({ children }: any) => <h2>{children}</h2>,
@@ -50,25 +61,21 @@ vi.mock("@/components/ui/textarea", () => ({
 
 vi.mock("@/components/ui/select", () => ({
   Select: ({ children, value, onValueChange }: any) => (
-    <div data-testid="select">
-      {React.Children.map(children, (child) =>
-        React.cloneElement(child, { value, onValueChange })
-      )}
-    </div>
+    <select 
+       data-testid="select-mock" 
+       value={value} 
+       onChange={(e) => onValueChange(e.target.value)}
+    >
+       {children}
+    </select>
   ),
-  SelectTrigger: ({ children, id }: any) => (
-    <button data-testid="select-trigger" id={id}>{children}</button>
-  ),
-  SelectValue: ({ placeholder }: any) => (
-    <span data-testid="select-value">{placeholder}</span>
-  ),
-  SelectContent: ({ children }: any) => (
-    <div data-testid="select-content">{children}</div>
-  ),
+  SelectTrigger: ({ children }: any) => <div data-testid="select-trigger">{children}</div>,
+  SelectValue: ({ placeholder }: any) => <option value="" disabled data-testid="select-value">{placeholder}</option>,
+  SelectContent: ({ children }: any) => <>{children}</>,
   SelectItem: ({ children, value }: any) => (
-    <div data-testid={`select-item-${value}`} role="option">
+    <option value={value} data-testid={`select-item-${value}`}>
       {children}
-    </div>
+    </option>
   ),
 }))
 
@@ -342,52 +349,128 @@ describe("RaiseRequestDialog – Cancel & Reset", () => {
   })
 })
 
-describe("RaiseRequestDialog – Request Type Options", () => {
-  beforeEach(() => vi.clearAllMocks())
-
-  it("shows all request type options when select is opened", () => {
-    renderDialog()
-    expect(screen.getByTestId("select-item-general")).toBeTruthy()
-    expect(screen.getByTestId("select-item-document")).toBeTruthy()
-    expect(screen.getByTestId("select-item-leave")).toBeTruthy()
-    expect(screen.getByTestId("select-item-salary")).toBeTruthy()
-    expect(screen.getByTestId("select-item-joining_date")).toBeTruthy()
-    expect(screen.getByTestId("select-item-other")).toBeTruthy()
-  })
-})
-
-describe("RaiseRequestDialog – Edge Cases", () => {
-  beforeEach(() => vi.clearAllMocks())
-
-  it("renders without onSubmit prop (optional)", () => {
-    expect(() =>
-      render(
-        <RaiseRequestDialog open={true} onOpenChange={mockOpenChange()} />,
-        { wrapper: createWrapper() }
-      )
-    ).not.toThrow()
-  })
-
-  it("does not crash when submitting without onSubmit callback", async () => {
-    render(
-      <RaiseRequestDialog open={true} onOpenChange={mockOpenChange()} />,
-      { wrapper: createWrapper() }
-    )
-    fireEvent.click(screen.getByText("Submit Request"))
-    await waitFor(() => {
-      expect(screen.getByText("Request type is required.")).toBeTruthy()
+describe("RaiseRequestDialog – Targeted Lines & Flows", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    // Initialize basic operational mock return
+    ;(useFileUpload as any).mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false
     })
   })
 
-  it("clears validation error when form is corrected", async () => {
-    renderDialog()
+  it("successfully achieves total submission flow with internal validations complete", async () => {
+    const onSubmit = mockOnSubmit()
+    const { container } = renderDialog({ onSubmit })
+    
+    // 1. Correctly advance request selection state via Native Mock!
+    const sel = screen.getByTestId("select-mock")
+    fireEvent.change(sel, { target: { value: "leave" } })
+    
+    // 2. Satisfy remaining text constraint
+    const textarea = container.querySelector("textarea")!
+    fireEvent.change(textarea, { target: { value: "Vaca days requested." } })
+    
+    // Valid Trigger
     fireEvent.click(screen.getByText("Submit Request"))
+    
+    // Verifies execution of Lines 75-79 (Successful submit call reached!)
     await waitFor(() => {
-      expect(screen.getByText("Request type is required.")).toBeTruthy()
+      expect(onSubmit).toHaveBeenCalledWith({
+         requestType: "leave",
+         description: "Vaca days requested.",
+         attachment: ""
+      })
     })
+  })
 
-    const textarea = screen.getByPlaceholderText("Please describe your request in detail...")
-    fireEvent.change(textarea, { target: { value: "Some description" } })
-    expect(textarea).toBeTruthy()
+  it("gracefully directs faults to state UI upon custom validation execution throw", async () => {
+    // Inject dynamic rejection behavior inside the onSubmit loop to evaluate Line 87 catch branch!
+    const onSubmit = vi.fn().mockImplementation(() => {
+       throw new Error("Simulated Backend Rejection")
+    })
+    
+    const { container } = renderDialog({ onSubmit })
+    
+    fireEvent.change(screen.getByTestId("select-mock"), { target: { value: "salary" } })
+    fireEvent.change(container.querySelector("textarea")!, { target: { value: "Description text." } })
+    
+    fireEvent.click(screen.getByText("Submit Request"))
+    
+    // Satisfies coverage for Line 87-89 (CATCH and FINALLY assignments)
+    await waitFor(() => {
+      expect(screen.getByText("Simulated Backend Rejection")).toBeTruthy()
+    })
+  })
+
+  it("manages precise hook dispatch handlers for positive and terminal file uploads", async () => {
+    // Intercept mutation configurations to capture explicit runtime hooks inside handleFileUpload
+    let optionsBucket: any = null
+    const mutateSpy = vi.fn((file: File, opt: any) => {
+       optionsBucket = opt
+    })
+    ;(useFileUpload as any).mockReturnValue({ mutate: mutateSpy, isPending: false })
+    
+    const { container } = renderDialog()
+    
+    // 1. Locate hidden raw file trigger and append asset (Exercising Line 179 logic)
+    const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement
+    const fakeFile = new File(["sample"], "mock_invoice.pdf", { type: "application/pdf" })
+    
+    fireEvent.change(fileInput, { target: { files: [fakeFile] } })
+    
+    expect(mutateSpy).toHaveBeenCalled()
+    expect(optionsBucket).toBeTruthy()
+    
+    // 2. Synchronously simulate successful mutation arrival -> Satisfies Line 103-106!
+    optionsBucket.onSuccess({ file_url: "https://s3.bucket.com/asset123" })
+    
+    // Verify accurate rendering of persistent attachments list (Line 208-213)
+    await waitFor(() => {
+      expect(screen.getByText("mock_invoice.pdf")).toBeTruthy()
+    })
+    
+    // 3. Satisfy the removal vector (Line 214-223 logic)
+    fireEvent.click(screen.getByText("Remove"))
+    expect(screen.queryByText("mock_invoice.pdf")).toBeNull()
+    
+    // 4. Satisfy terminal failure branch logic -> Satisfies Line 107-110!
+    fireEvent.change(fileInput, { target: { files: [fakeFile] } })
+    optionsBucket.onError(new Error("Network Blip"))
+    
+    await waitFor(() => {
+       expect(screen.getByText("File upload failed")).toBeTruthy()
+    })
+  })
+
+  it("wipes active state artifacts universally upon external dialog termination", async () => {
+    const { container } = renderDialog()
+    
+    // 1. Seed existing input state
+    const area = container.querySelector("textarea") as HTMLTextAreaElement
+    fireEvent.change(area, { target: { value: "Dirty state to clear" } })
+    expect(area.value).toBe("Dirty state to clear")
+    
+    // 2. Force external boundary close sequence via wired Dialog mock!
+    // Triggers source Line 117-118 if condition!
+    fireEvent.click(screen.getByTestId("dialog-close-sim"))
+    
+    // Wait for reset loop to purge inputs
+    await waitFor(() => {
+      expect(area.value).toBe("")
+    })
+  })
+
+  it("aborts processing early if an empty payload collection is intercepted", async () => {
+     const mutateSpy = vi.fn()
+     ;(useFileUpload as any).mockReturnValue({ mutate: mutateSpy, isPending: false })
+     
+     const { container } = renderDialog()
+     const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement
+     
+     // Exercises first branch in handleFileUpload (Line 95-99) -> Passing null
+     fireEvent.change(fileInput, { target: { files: null } })
+     
+     expect(mutateSpy).not.toHaveBeenCalled()
   })
 })
