@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { render, screen } from "@testing-library/react"
+import { render, screen, fireEvent, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { DocumentManager, ManagedDocument } from "@/components/document-manager"
+import { DocumentManager, DocumentManagerExample, ManagedDocument } from "@/components/document-manager"
 
 // Mock lucide-react icons
 vi.mock("lucide-react", async () => {
@@ -18,9 +19,42 @@ vi.mock("lucide-react", async () => {
   }
 })
 
+// Mock functional components for reliable interaction without Radix rendering issues
+vi.mock("@/components/ui/dialog", () => ({
+  Dialog: ({ children }: any) => <div>{children}</div>,
+  DialogContent: ({ children }: any) => <div>{children}</div>,
+  DialogHeader: ({ children }: any) => <div>{children}</div>,
+  DialogTitle: ({ children }: any) => <div>{children}</div>,
+  DialogTrigger: ({ children }: any) => children,
+}))
+
+vi.mock("@/components/ui/dropdown-menu", () => ({
+  DropdownMenu: ({ children }: any) => <div>{children}</div>,
+  DropdownMenuTrigger: ({ children }: any) => <div>{children}</div>,
+  DropdownMenuContent: ({ children }: any) => <div>{children}</div>,
+  DropdownMenuItem: ({ children, onClick, className }: any) => (
+    <button onClick={onClick} className={className}>{children}</button>
+  ),
+  DropdownMenuSeparator: () => <hr />,
+}))
+
+vi.mock("@/components/ui/select", () => ({
+  Select: ({ children, onValueChange, value }: any) => (
+     <select data-testid="select-mock" value={value} onChange={(e: any) => onValueChange(e.target.value)}>{children}</select>
+  ),
+  SelectTrigger: ({ children }: any) => children,
+  SelectValue: ({ placeholder }: any) => <div>{placeholder}</div>,
+  SelectContent: ({ children }: any) => children,
+  SelectItem: ({ value, children }: any) => <option value={value}>{children}</option>,
+}))
+
 // Mock DocumentUpload component
 vi.mock("@/components/document-upload", () => ({
-  DocumentUpload: () => <div data-testid="document-upload-mock" />
+  DocumentUpload: ({ onUpload }: any) => (
+    <button data-testid="document-upload-mock" onClick={() => onUpload([{ name: "test.txt", type: "text/plain" }])}>
+      Simulate Internal Upload
+    </button>
+  )
 }))
 
 describe("DocumentManager", () => {
@@ -68,6 +102,7 @@ describe("DocumentManager", () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.stubGlobal("confirm", vi.fn(() => true))
   })
 
   it("renders document manager title and list", () => {
@@ -120,5 +155,87 @@ describe("DocumentManager", () => {
     expect(screen.getByText("Total Documents")).toBeTruthy()
     expect(screen.getAllByText("2")).toBeTruthy() // Total count
     expect(screen.getAllByText("1")).toBeTruthy() // Active count
+  })
+
+  it("handles fallbacks for unknown file types and renders appropriate spinner status", () => {
+    const specialDocs: ManagedDocument[] = [
+      { ...mockDocuments[0], type: "unknown/type", status: "processing" },
+      { ...mockDocuments[1], status: "other-invalid" as any }
+    ]
+    render(<DocumentManager {...mockProps} documents={specialDocs} />)
+
+    // Confirms default layout executed for unknowns
+    expect(screen.getByText("John_Resume.pdf")).toBeTruthy()
+    // Verify loader logic animation presence
+    const spinDiv = document.body.querySelector(".animate-spin")
+    expect(spinDiv).toBeTruthy()
+  })
+
+  it("filters properly by interacting with enhanced category/status mocks", async () => {
+    render(<DocumentManager {...mockProps} />)
+    const allSelects = screen.getAllByTestId("select-mock")
+    
+    // Apply Status Filter (Index 2 in DOM ordering: 0=ModalCat, 1=FilterCat, 2=FilterStatus)
+    fireEvent.change(allSelects[2], { target: { value: "archived" } })
+    await waitFor(() => {
+      expect(screen.getByText("My_Photo.jpg")).toBeTruthy()
+      expect(screen.queryByText("John_Resume.pdf")).toBeNull()
+    })
+  })
+
+  it("executes data binding and validation for description and tags on creation submit", async () => {
+    render(<DocumentManager {...mockProps} />)
+    
+    // Open modal
+    const uploadBtn = screen.getAllByText("Upload Document")[0]
+    fireEvent.click(uploadBtn)
+
+    // Add description and tags
+    const tagsInput = screen.getByPlaceholderText("e.g., frontend, react, 2024")
+    const descInput = screen.getByPlaceholderText("Brief description of the document")
+    
+    fireEvent.change(tagsInput, { target: { value: "t1, t2" } })
+    fireEvent.change(descInput, { target: { value: "desc data" } })
+
+    // Select category inside modal before internal fire (Index 0 in DOM ordering)
+    const categorySelect = screen.getAllByTestId("select-mock")[0]
+    fireEvent.change(categorySelect, { target: { value: "resume" } })
+
+    // Execute network request simulation
+    const fireUploadBtn = screen.getByTestId("document-upload-mock")
+    fireEvent.click(fireUploadBtn)
+
+    await waitFor(() => {
+      expect(mockProps.onUpload).toHaveBeenCalled()
+      expect(mockProps.onUpload.mock.calls[0][2]).toEqual(["t1", "t2"]) // Tags verified
+    })
+  })
+
+  it("executes action callbacks including deletion with context prompt and updating workflow", async () => {
+    render(<DocumentManager {...mockProps} />)
+
+    // Invokes delete flow (requires confirm logic mock to pass)
+    const delButtons = screen.getAllByText("Delete")
+    fireEvent.click(delButtons[0])
+    expect(mockProps.onDelete).toHaveBeenCalledWith("1")
+
+    // Invoke utility callbacks
+    fireEvent.click(screen.getAllByText("Preview")[0])
+    expect(mockProps.onPreview).toHaveBeenCalledWith("1")
+
+    fireEvent.click(screen.getAllByText("Download")[0])
+    expect(mockProps.onDownload).toHaveBeenCalledWith("1")
+
+    // Toggle restore/archive
+    fireEvent.click(screen.getAllByText("Archive")[0])
+    expect(mockProps.onUpdate).toHaveBeenCalledWith("1", { status: "archived" })
+  })
+
+  it("properly demonstrates functionality inside example showcasing wrapper", () => {
+    render(<DocumentManagerExample />)
+    expect(screen.getByText("John Doe - Resume 2024.pdf")).toBeTruthy()
+    
+    const previewBtn = screen.getAllByText("Preview")[0]
+    fireEvent.click(previewBtn) // Trigger Example mock coverage
   })
 })

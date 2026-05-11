@@ -95,6 +95,7 @@ describe("OnboardingFormStep", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useRealTimers();
   });
 
   const mockTab: OnboardingTab = {
@@ -243,5 +244,121 @@ describe("OnboardingFormStep", () => {
     render(<OnboardingFormStep tab={mockTab} stepKey="personal_info" />);
     
     expect(screen.getByText("Previous")).toBeDisabled();
+  });
+
+  describe("Extended Edge Verification", () => {
+    it("initializes form from definition defaults when existing data is blank", () => {
+      // Exercises Line 137 fallback chain
+      const defaultMapTab: OnboardingTab = {
+        tab: "Defaults",
+        sections: [{
+          section: "Default Section",
+          fields: [
+            { fieldname: "preset", label: "Preset", fieldtype: "Data", default: "AutoValue", is_mandatory: 0, read_only: 0, hidden: 0 }
+          ]
+        }]
+      };
+      
+      vi.mocked(useOnboarding).mockReturnValue(defaultContext);
+      render(<OnboardingFormStep tab={defaultMapTab} stepKey="def_test" />);
+      
+      const input = screen.getByTestId("input-preset") as HTMLInputElement;
+      expect(input.value).toBe("AutoValue");
+    });
+
+    it("validates special collection types ensuring required states are populated", async () => {
+       // Exercises Line 178-179 (Table Required) and Line 185-186 (Check Required)
+       const strictTab: OnboardingTab = {
+          tab: "Strict",
+          sections: [{
+             section: "Required Checklist",
+             fields: [
+                { fieldname: "req_table", label: "Mandatory Table", fieldtype: "Table", is_mandatory: 1, read_only: 0, hidden: 0 },
+                { fieldname: "req_check", label: "Mandatory Check", fieldtype: "Check", is_mandatory: 1, read_only: 0, hidden: 0 }
+             ]
+          }]
+       };
+       
+       vi.mocked(useOnboarding).mockReturnValue(defaultContext);
+       render(<OnboardingFormStep tab={strictTab} stepKey="strict_test" />);
+       
+       fireEvent.click(screen.getByText("Next Step"));
+       
+       await waitFor(() => {
+          expect(screen.getByText("Mandatory Table is required")).toBeTruthy();
+          expect(screen.getByTestId("error-req_check")).toBeTruthy();
+       });
+    });
+
+    it("enforces custom pattern matching constraints on defined contact dimensions", async () => {
+       // Exercises Line 213 (Email Regex) and Line 226 (Phone Regex)
+       const contactTab: OnboardingTab = {
+          tab: "Contacts",
+          sections: [{
+             section: "Direct Contact Info",
+             fields: [
+                { fieldname: "email_addr", label: "Contact Email", fieldtype: "Data", is_mandatory: 0, read_only: 0, hidden: 0 },
+                { fieldname: "phone_num", label: "Mobile Phone", fieldtype: "Data", is_mandatory: 0, read_only: 0, hidden: 0 }
+             ]
+          }]
+       };
+       
+       vi.mocked(useOnboarding).mockReturnValue(defaultContext);
+       render(<OnboardingFormStep tab={contactTab} stepKey="contact_test" />);
+       
+       fireEvent.change(screen.getByTestId("input-email_addr"), { target: { value: "not_an_email" } });
+       fireEvent.change(screen.getByTestId("input-phone_num"), { target: { value: "123" } }); // Too short
+       
+       // Trigger blur logic to initiate resolver run
+       fireEvent.blur(screen.getByTestId("input-email_addr"));
+       fireEvent.blur(screen.getByTestId("input-phone_num"));
+       fireEvent.click(screen.getByText("Next Step")); // Force immediate resolver sync check
+       
+       await waitFor(() => {
+          expect(screen.getByText("Please enter a valid email address")).toBeTruthy();
+          expect(screen.getByText("Please enter a valid 10-digit mobile number")).toBeTruthy();
+       });
+    });
+
+    it("triggers background state replication on throttle loop completion", () => {
+       // Exercises Line 273-274 Auto-save logic
+       vi.useFakeTimers();
+       vi.mocked(useOnboarding).mockReturnValue(defaultContext);
+       
+       render(<OnboardingFormStep tab={mockTab} stepKey="auto_save_test" />);
+       
+       // Trigger form state mutation
+       fireEvent.change(screen.getByTestId("input-first_name"), { target: { value: "Diana" } });
+       
+       // Advance partially
+       vi.advanceTimersByTime(200);
+       expect(mockSetStepData).not.toHaveBeenCalledWith("auto_save_test", expect.any(Object));
+       
+       // Fulfill 500ms window
+       vi.advanceTimersByTime(400);
+       expect(mockSetStepData).toHaveBeenCalledWith("auto_save_test", expect.objectContaining({ first_name: "Diana" }));
+       
+       vi.useRealTimers();
+    });
+
+    it("satisfies specialized container mappings when resolving image attachments", () => {
+       // Exercises Line 325 mapping logic
+       const imageTab: OnboardingTab = {
+          tab: "Photo",
+          sections: [{
+             section: "Visual Verify",
+             fields: [
+                { fieldname: "selfie", label: "Portrait Upload", fieldtype: "Attach Image", is_mandatory: 0, read_only: 0, hidden: 0 }
+             ]
+          }]
+       };
+       
+       vi.mocked(useOnboarding).mockReturnValue(defaultContext);
+       render(<OnboardingFormStep tab={imageTab} stepKey="image_test" />);
+       
+       // Validate mapping through custom overrides container verified in mock renderer logic line 66-70
+       expect(screen.getByTestId("file-upload")).toBeTruthy();
+       expect(screen.getByText("Portrait Upload")).toBeTruthy();
+    });
   });
 });

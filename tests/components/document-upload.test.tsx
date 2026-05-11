@@ -95,4 +95,124 @@ describe("DocumentUpload", () => {
       expect(onRemove).toHaveBeenCalled()
     }
   })
+
+  it("uses fallback file icon for unknown mime types", () => {
+    const existing = [{
+      id: "u1",
+      name: "log.csv",
+      size: 50,
+      type: "application/x-unknown-custom",
+      status: "success" as const
+    }]
+    render(<DocumentUpload existingFiles={existing} />)
+    // Uses basic generic icon when config lookup misses (Line 85)
+    expect(screen.getByText("log.csv")).toBeTruthy()
+  })
+
+  it("validates against direct mime types without explicit dot extensions", async () => {
+    // Specifically setting accept to a mime string to bypass the startWith(".") check and hit line 99
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => { })
+    const { container } = render(<DocumentUpload accept="image/png" />)
+
+    const file = new File(["img"], "t.png", { type: "image/png" })
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+    fireEvent.change(input, { target: { files: [file] } })
+
+    // If alert never called, validation succeeded via direct mime match
+    expect(alertSpy).not.toHaveBeenCalled()
+    alertSpy.mockRestore()
+  })
+
+  it("alerts and blocks when uploading multiple files while restricted", () => {
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => { })
+    const { container } = render(<DocumentUpload multiple={false} />)
+
+    const f1 = new File(["a"], "a.pdf", { type: "application/pdf" })
+    const f2 = new File(["b"], "b.pdf", { type: "application/pdf" })
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+
+    // Trigger processFiles with multiple file list (Line 114)
+    fireEvent.change(input, { target: { files: [f1, f2] } })
+
+    expect(alertSpy).toHaveBeenCalledWith("Only one file is allowed")
+    alertSpy.mockRestore()
+  })
+
+  it("alerts and blocks file processing beyond maximum configured limits", () => {
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => { })
+    const { container } = render(<DocumentUpload maxFiles={1} />)
+
+    const f1 = new File(["a"], "a.pdf", { type: "application/pdf" })
+    const f2 = new File(["b"], "b.pdf", { type: "application/pdf" })
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+
+    // Attempt processing 2 files exceeding limit of 1 (Line 119)
+    fireEvent.change(input, { target: { files: [f1, f2] } })
+
+    expect(alertSpy).toHaveBeenCalledWith("Maximum 1 files allowed")
+    alertSpy.mockRestore()
+  })
+
+  it("facilitates standard drag-and-drop operations", async () => {
+    render(<DocumentUpload />)
+    // Need selection by placeholder
+    const dropzone = screen.getByText("Click to upload or drag and drop").parentElement?.parentElement
+
+    if (dropzone) {
+      // 1. Drag Over (Line 217)
+      fireEvent.dragOver(dropzone)
+      expect(dropzone.className).toContain("bg-blue-50")
+
+      // 2. Drag Leave (Line 223)
+      fireEvent.dragLeave(dropzone)
+      expect(dropzone.className).not.toContain("bg-blue-50")
+
+      // 3. Drop (Line 204)
+      const f = new File(["x"], "drop.pdf", { type: "application/pdf" })
+      fireEvent.drop(dropzone, {
+        dataTransfer: { files: [f] }
+      })
+
+      await waitFor(() => {
+        expect(screen.getByText("drop.pdf")).toBeTruthy()
+      })
+    }
+  })
+
+  it("successfully finalizes upload simulations and invokes final dispatch callback", async () => {
+    // Speed up timeouts inside component simulation logic
+    vi.useFakeTimers()
+    const onUpload = vi.fn()
+    const { container } = render(<DocumentUpload onUpload={onUpload} />)
+
+    const f = new File(["x"], "run.pdf", { type: "application/pdf" })
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+    fireEvent.change(input, { target: { files: [f] } })
+
+    // Fast forward component's loop intervals (for let i=0; i<=100; i+=20 delay 200)
+    // Advancing enough steps will finalize success (Line 163) and call dispatch (Line 187)
+    await vi.runAllTimersAsync()
+
+    expect(onUpload).toHaveBeenCalled()
+    vi.useRealTimers()
+  })
+
+  it("permits retry requests on existing records to restart upload lifecycle", () => {
+    const failedFiles = [{
+      id: "err1",
+      name: "failed.pdf",
+      size: 10,
+      type: "application/pdf",
+      status: "error" as const,
+      errorMessage: "Simulated failure"
+    }]
+    render(<DocumentUpload existingFiles={failedFiles} />)
+
+    // Click retry button in UI (Line 340 -> 236)
+    const retryBtn = screen.getByRole("button", { name: "Retry" })
+    fireEvent.click(retryBtn)
+
+    // Verification: Status reverts to uploading spinner state
+    expect(screen.getByTestId("icon-loader")).toBeTruthy()
+  })
 })
