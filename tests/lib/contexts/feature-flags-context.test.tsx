@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 vi.mock('@/lib/hooks/useCandidateFeatureFlags', () => ({
@@ -19,7 +19,7 @@ import { useCandidateFeatureFlags } from '@/lib/hooks/useCandidateFeatureFlags'
 
 const mockUseCandidateFeatureFlags = useCandidateFeatureFlags as ReturnType<typeof vi.fn>
 
-function defaultMock(overrides: Partial<{ data: any; isLoading: boolean; error: any; refetch: any }> = {}) {
+function defaultMock(overrides: Partial<{ data: unknown; isLoading: boolean; error: unknown; refetch: unknown }> = {}) {
   mockUseCandidateFeatureFlags.mockReturnValue({
     data: null,
     isLoading: false,
@@ -255,7 +255,7 @@ describe('FeatureFlagContext', () => {
       defaultMock()
 
       function ValueTest() {
-        const val = useFeatureFlagValue('home' as any, true)
+        const val = useFeatureFlagValue('home' as never, true)
         return <span data-testid="val">{String(val)}</span>
       }
 
@@ -308,7 +308,7 @@ describe('FeatureFlagContext', () => {
     it('renders null fallback by default when flag disabled', () => {
       defaultMock()
 
-      const { container } = render(
+      render(
         <FeatureFlagProvider>
           <FeatureGate flag="social_job_sharing">
             <div>Content</div>

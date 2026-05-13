@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, Mock } from 'vitest'
 
 vi.mock('@/lib/supabase', () => ({
   supabase: {
@@ -20,23 +20,23 @@ vi.mock('@/lib/supabase', () => ({
 import { auth, createProfile, getProfile, updateProfile, isAuthenticated, getUserRole, getEnabledOAuthProviders, isOAuthProviderEnabled, onAuthStateChange } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
 
-const mockSupabase = supabase as any
+const mockSupabase = supabase as unknown as { auth: Record<string, Mock>; from: Mock }
 
-function mockInsertChain(result: any) {
+function mockInsertChain(result: unknown) {
   const single = vi.fn().mockResolvedValue(result)
   const select = vi.fn().mockReturnValue({ single })
   const insert = vi.fn().mockReturnValue({ select })
   mockSupabase.from.mockReturnValue({ insert })
 }
 
-function mockSelectChain(result: any) {
+function mockSelectChain(result: unknown) {
   const single = vi.fn().mockResolvedValue(result)
   const eq = vi.fn().mockReturnValue({ single })
   const select = vi.fn().mockReturnValue({ eq })
   mockSupabase.from.mockReturnValue({ select })
 }
 
-function mockUpdateChain(result: any) {
+function mockUpdateChain(result: unknown) {
   const single = vi.fn().mockResolvedValue(result)
   const select = vi.fn().mockReturnValue({ single })
   const eq = vi.fn().mockReturnValue({ select })
@@ -47,8 +47,9 @@ function mockUpdateChain(result: any) {
 describe('auth', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    delete (window as any).location
-    ;(window as any).location = { origin: 'http://localhost:3000' }
+    const win = window as unknown as { location: { origin: string } | undefined }
+    delete win.location
+    win.location = { origin: 'http://localhost:3000' }
   })
 
   describe('signUp', () => {

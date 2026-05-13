@@ -253,7 +253,7 @@ describe("Empty Components", () => {
             <EmptyTitle>No results found</EmptyTitle>
           </EmptyHeader>
           <EmptyDescription>
-            We couldn't find any matching items. Try adjusting your filters.
+            {"We couldn't find any matching items. Try adjusting your filters."}
           </EmptyDescription>
           <EmptyContent>
             <button>Clear filters</button>
