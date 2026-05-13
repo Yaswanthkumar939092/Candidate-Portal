@@ -1,3 +1,4 @@
+import React from "react"
 import { describe, it, expect } from "vitest"
 import { render, screen } from "@testing-library/react"
 import {
@@ -73,13 +74,13 @@ describe("Table Components", () => {
     })
 
     it("forwards ref to table element", () => {
-      const ref = { current: null }
-      const { container } = render(<Table ref={ref as any} />)
+      const ref = React.createRef<HTMLTableElement>()
+      const { container } = render(<Table ref={ref} />)
       expect(ref.current).toBe(container.querySelector("table"))
     })
 
     it("forwards additional props", () => {
-      const { container } = render(<Table data-testid="my-table" />)
+      render(<Table data-testid="my-table" />)
       expect(screen.getByTestId("my-table")).toBeTruthy()
     })
   })

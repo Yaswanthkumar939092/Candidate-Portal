@@ -8,7 +8,7 @@ vi.mock("@/lib/contexts/job-application-context", () => ({
 }))
 
 vi.mock("@/components/jobs/job-applicant/job-applicationstep-nav", () => ({
-  JobApplicationStepNav: ({ currentStep, completedSteps, onStepChange }: any) => (
+  JobApplicationStepNav: ({ currentStep, completedSteps, onStepChange }: { currentStep: number; completedSteps: Set<string>; onStepChange: (step: number) => void }) => (
     <div data-testid="step-nav">
       <span data-testid="current-step">{currentStep}</span>
       <span data-testid="completed-steps">{completedSteps.size}</span>
@@ -19,7 +19,7 @@ vi.mock("@/components/jobs/job-applicant/job-applicationstep-nav", () => ({
 }))
 
 vi.mock("@/components/jobs/job-applicant/DynamicField", () => ({
-  JobApplicationStep: ({ tab, currentStep, totalSteps, onNext, onPrev }: any) => (
+  JobApplicationStep: ({ tab, currentStep, totalSteps, onNext, onPrev }: { tab: { tab: string }; currentStep: number; totalSteps: number; onNext: () => void; onPrev: () => void }) => (
     <div data-testid="job-application-step">
       <h2>{tab.tab}</h2>
       <span data-testid="step-info">{currentStep + 1}/{totalSteps}</span>
@@ -167,9 +167,8 @@ describe("JobApplicantForm", () => {
         },
       })
 
-      const { rerender } = render(<JobApplicationPage jobID="job-123" />)
+      render(<JobApplicationPage jobID="job-123" />)
 
-      let currentStep = 0
       mockUseJobApp.mockReturnValue({
         tabs: mockTabs,
         isLoading: false,
@@ -270,7 +269,7 @@ describe("JobApplicantForm", () => {
     })
 
     it("accumulates completed steps", async () => {
-      const { rerender } = render(<JobApplicationPage jobID="job-123" />)
+      render(<JobApplicationPage jobID="job-123" />)
 
       expect(screen.getByTestId("completed-steps").textContent).toBe("0")
     })
