@@ -19,12 +19,12 @@ vi.mock("@/components/ui/field-renderer", () => ({
   DynamicFieldRenderer: ({ field, value, onChange, onAttachChange, overrides }: any) => {
     // 1. Dynamically apply provided override component to cover lines 136-159 targets!
     if (overrides && overrides[field.fieldtype]) {
-       const OverrideComp = overrides[field.fieldtype].component
-       return (
-         <div data-testid={`override-wrap-${field.fieldname}`}>
-           <OverrideComp field={field} value={value} onChange={onChange} />
-         </div>
-       )
+      const OverrideComp = overrides[field.fieldtype].component
+      return (
+        <div data-testid={`override-wrap-${field.fieldname}`}>
+          <OverrideComp field={field} value={value} onChange={onChange} />
+        </div>
+      )
     }
 
     // 2. Expose standard logic and direct attachment hook triggers to exercise line 203-206!
@@ -38,10 +38,10 @@ vi.mock("@/components/ui/field-renderer", () => ({
           onChange={(e) => onChange?.(e.target.value)}
         />
         {onAttachChange && (
-           <button
-              data-testid={`attach-hook-${field.fieldname}`}
-              onClick={() => onAttachChange(field.fieldname)("hook-asset.png")}
-           >Fire Attachment Hook</button>
+          <button
+            data-testid={`attach-hook-${field.fieldname}`}
+            onClick={() => onAttachChange(field.fieldname)("hook-asset.png")}
+          >Fire Attachment Hook</button>
         )}
       </div>
     )
@@ -52,7 +52,7 @@ vi.mock("@/components/onboarding/file-upload-field", () => ({
   FileUploadField: ({ label, onChange }: any) => (
     <div>
       <label>{label}</label>
-      <button 
+      <button
         data-testid={`mock-upload-trigger`}
         onClick={() => onChange("uploaded-final-asset.pdf")}
       >
@@ -324,7 +324,7 @@ describe("JobApplicationTableField", () => {
   describe("Extended Coverage: Handlers & Remote Feeds", () => {
     it("propagates updated matrix delta upon explicit cell data modification", async () => {
       const activeRows = [{ company: "Initial Value", position: "Pos" }]
-      
+
       const { container } = render(
         <JobApplicationTableField
           field={mockField}
@@ -332,122 +332,122 @@ describe("JobApplicationTableField", () => {
           onChange={mockOnChange}
         />
       )
-      
+
       // Exercises Line 120-122 (handleCellChange propagation loop) and Line 199
       const input = container.querySelector("#company") as HTMLInputElement
       await user.type(input, " Delta")
-      
+
       // Expecting total reconstructed frame dispatched upward
       expect(mockOnChange).toHaveBeenCalledWith([
-         { company: "Initial Value Delta", position: "Pos" }
+        { company: "Initial Value Delta", position: "Pos" }
       ])
     })
 
     it("resolves runtime dependency map via fallback endpoint when child definitions are absent", async () => {
-       // Line 80-93 target: Omit child_fields, trigger useEffect fetch flow!
-       const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue({
-          json: async () => ({
-             message: {
-                fields: [
-                   { fieldname: "remote_field", label: "Remote Label", fieldtype: "Data" },
-                   { fieldname: "ignore_me", label: "Ignored", fieldtype: "Section Break" }
-                ]
-             }
-          })
-       } as any)
+      // Line 80-93 target: Omit child_fields, trigger useEffect fetch flow!
+      const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue({
+        json: async () => ({
+          message: {
+            fields: [
+              { fieldname: "remote_field", label: "Remote Label", fieldtype: "Data" },
+              { fieldname: "ignore_me", label: "Ignored", fieldtype: "Section Break" }
+            ]
+          }
+        })
+      } as any)
 
-       const bareField = {
-          fieldname: "remote_table",
-          label: "Remote View",
-          fieldtype: "Table",
-          options: "RemoteDocType"
-       }
+      const bareField = {
+        fieldname: "remote_table",
+        label: "Remote View",
+        fieldtype: "Table",
+        options: "RemoteDocType"
+      }
 
-       render(
-          <JobApplicationTableField
-            field={bareField}
-            value={[{ remote_field: "seed" }]}
-            onChange={mockOnChange}
-          />
-       )
+      render(
+        <JobApplicationTableField
+          field={bareField}
+          value={[{ remote_field: "seed" }]}
+          onChange={mockOnChange}
+        />
+      )
 
-       // Ensure async lifecycle state rehydration completes
-       await vi.waitFor(() => {
-          expect(fetchSpy).toHaveBeenCalledWith(expect.stringContaining("frappe.client.get_meta?doctype=RemoteDocType"))
-          // Verifies dynamic filtering logic on Line 88-92 succeeded!
-          expect(screen.getByLabelText("Remote Label")).toBeTruthy()
-          expect(screen.queryByLabelText("Ignored")).toBeNull()
-       })
+      // Ensure async lifecycle state rehydration completes
+      await vi.waitFor(() => {
+        expect(fetchSpy).toHaveBeenCalledWith(expect.stringContaining("frappe.client.get_meta?doctype=RemoteDocType"))
+        // Verifies dynamic filtering logic on Line 88-92 succeeded!
+        expect(screen.getByLabelText("Remote Label")).toBeTruthy()
+        expect(screen.queryByLabelText("Ignored")).toBeNull()
+      })
 
-       fetchSpy.mockRestore()
+      fetchSpy.mockRestore()
     })
 
     it("gracefully manages remote request rejection states and routes safely to catch handler", async () => {
-       // Line 95-97 target: Catch and console.error verification
-       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-       const fetchSpy = vi.spyOn(global, 'fetch').mockRejectedValue(new Error("Network Death"))
+      // Line 95-97 target: Catch and console.error verification
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { })
+      const fetchSpy = vi.spyOn(global, 'fetch').mockRejectedValue(new Error("Network Death"))
 
-       const bareField = { fieldname: "fail_table", label: "Failed Load", fieldtype: "Table", options: "BrokenDocType" }
+      const bareField = { fieldname: "fail_table", label: "Failed Load", fieldtype: "Table", options: "BrokenDocType" }
 
-       render(<JobApplicationTableField field={bareField} value={[]} onChange={mockOnChange} />)
+      render(<JobApplicationTableField field={bareField} value={[]} onChange={mockOnChange} />)
 
-       await vi.waitFor(() => {
-          expect(consoleSpy).toHaveBeenCalledWith("Table meta fetch error:", expect.any(Error))
-       })
-       
-       fetchSpy.mockRestore()
-       consoleSpy.mockRestore()
+      await vi.waitFor(() => {
+        expect(consoleSpy).toHaveBeenCalledWith("Table meta fetch error:", expect.any(Error))
+      })
+
+      fetchSpy.mockRestore()
+      consoleSpy.mockRestore()
     })
 
     it("activates complex file override mechanics ensuring bespoke attachment handling logic", async () => {
-       const attachField = {
-         fieldname: "docs",
-         label: "Doc Vault",
-         fieldtype: "Table",
-         child_fields: [
-            { fieldname: "resume", label: "Resume Item", fieldtype: "Attach" }
-         ]
-       }
+      const attachField = {
+        fieldname: "docs",
+        label: "Doc Vault",
+        fieldtype: "Table",
+        child_fields: [
+          { fieldname: "resume", label: "Resume Item", fieldtype: "Attach" }
+        ]
+      }
 
-       const { getByTestId } = render(
-         <JobApplicationTableField
-            field={attachField}
-            value={[{ resume: "" }]}
-            onChange={mockOnChange}
-         />
-       )
+      const { getByTestId } = render(
+        <JobApplicationTableField
+          field={attachField}
+          value={[{ resume: "" }]}
+          onChange={mockOnChange}
+        />
+      )
 
-       // Verifies dynamic override component rendered inside cell (Exercises Line 136-145 + 199 logic)
-       const overrideBtn = getByTestId("mock-upload-trigger")
-       expect(overrideBtn).toBeTruthy()
-       
-       await user.click(overrideBtn)
-       
-       expect(mockOnChange).toHaveBeenCalledWith([
-          { resume: "uploaded-final-asset.pdf" }
-       ])
+      // Verifies dynamic override component rendered inside cell (Exercises Line 136-145 + 199 logic)
+      const overrideBtn = getByTestId("mock-upload-trigger")
+      expect(overrideBtn).toBeTruthy()
+
+      await user.click(overrideBtn)
+
+      expect(mockOnChange).toHaveBeenCalledWith([
+        { resume: "uploaded-final-asset.pdf" }
+      ])
     })
 
     it("reliably executes explicit curried attachment routing callbacks", async () => {
-       // Target: Line 202-207 validation
-       const mainAttachSpy = vi.fn(() => (_url: string | null) => {})
-       
-       const { getByTestId } = render(
-         <JobApplicationTableField
-            field={mockField}
-            value={[{ company: "" }]}
-            onChange={mockOnChange}
-            onAttachChange={mainAttachSpy} // Inject optional handler to activate line 203 branch
-         />
-       )
-       
-       const hookTrigger = getByTestId("attach-hook-company")
-       await user.click(hookTrigger)
-       
-       // Confirms the fallback handleCellChange dispatch bound implicitly inside the conditional loop fired
-       expect(mockOnChange).toHaveBeenCalledWith([
-          { company: "hook-asset.png" }
-       ])
+      // Target: Line 202-207 validation
+      const mainAttachSpy = vi.fn(() => (_url: string | null) => { })
+
+      const { getByTestId } = render(
+        <JobApplicationTableField
+          field={mockField}
+          value={[{ company: "" }]}
+          onChange={mockOnChange}
+          onAttachChange={mainAttachSpy} // Inject optional handler to activate line 203 branch
+        />
+      )
+
+      const hookTrigger = getByTestId("attach-hook-company")
+      await user.click(hookTrigger)
+
+      // Confirms the fallback handleCellChange dispatch bound implicitly inside the conditional loop fired
+      expect(mockOnChange).toHaveBeenCalledWith([
+        { company: "hook-asset.png" }
+      ])
     })
   })
 })

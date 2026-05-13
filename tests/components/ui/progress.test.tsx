@@ -36,7 +36,7 @@ describe("Progress Component", () => {
       const { container } = render(<Progress value={0} />)
       const indicator = container.querySelector('[role="progressbar"] > div')
       const style = indicator?.getAttribute("style")
-      expect(style?.includes("translateX(-100%)")|| style?.includes("translateX(0)")).toBeTruthy()
+      expect(style?.includes("translateX(-100%)") || style?.includes("translateX(0)")).toBeTruthy()
     })
 
     it("handles 100 value", () => {

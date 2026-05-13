@@ -23,8 +23,8 @@ vi.mock("lucide-react", async () => {
 vi.mock("@/components/ui/slider", () => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Slider: ({ onValueChange, disabled }: any) => (
-    <input 
-      type="range" 
+    <input
+      type="range"
       data-testid="slider-mock"
       disabled={disabled}
       onChange={(e) => onValueChange?.([parseInt(e.target.value)])}
@@ -35,7 +35,7 @@ vi.mock("@/components/ui/slider", () => ({
 vi.mock("@/components/ui/select", () => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Select: ({ onValueChange, value, children }: any) => (
-     <select data-testid="select-mock" value={value} onChange={(e: any) => onValueChange(e.target.value)}>{children}</select>
+    <select data-testid="select-mock" value={value} onChange={(e: any) => onValueChange(e.target.value)}>{children}</select>
   ),
   SelectTrigger: ({ children }: any) => children,
   SelectValue: () => null,
@@ -46,7 +46,7 @@ vi.mock("@/components/ui/select", () => ({
 
 describe("FeatureToggle", () => {
   const user = userEvent.setup()
-  
+
   const mockFlag: FeatureFlag = {
     id: "flag-1",
     name: "New UI",
@@ -82,16 +82,16 @@ describe("FeatureToggle", () => {
   it("calls onUpdate when switch is toggled", async () => {
     render(<FeatureToggle flag={mockFlag} onUpdate={mockOnUpdate} />)
     const toggle = screen.getByRole("switch")
-    
+
     await user.click(toggle)
-    
+
     expect(mockOnUpdate).toHaveBeenCalledWith(mockFlag.id, { is_enabled: false })
   })
 
   it("shows rollout percentage slider when enabled and < 100%", () => {
     const partialRolloutFlag = { ...mockFlag, rollout_percentage: 50 }
     render(<FeatureToggle flag={partialRolloutFlag} onUpdate={mockOnUpdate} />)
-    
+
     expect(screen.getByText("50% Rollout")).toBeTruthy()
     expect(screen.getByText("Rollout Percentage")).toBeTruthy()
   })
@@ -99,9 +99,9 @@ describe("FeatureToggle", () => {
   it("opens edit dialog when clicking edit button", async () => {
     render(<FeatureToggle flag={mockFlag} onUpdate={mockOnUpdate} />)
     const editButton = screen.getByText("Edit")
-    
+
     await user.click(editButton)
-    
+
     expect(screen.getByText("Edit Feature Flag")).toBeTruthy()
     expect(screen.getByLabelText("Name")).toHaveValue("New UI")
   })
@@ -109,10 +109,10 @@ describe("FeatureToggle", () => {
   it("calls onDelete when clicking delete and confirming", async () => {
     const confirmSpy = vi.spyOn(window, 'confirm').mockImplementation(() => true)
     render(<FeatureToggle flag={mockFlag} onUpdate={mockOnUpdate} onDelete={mockOnDelete} />)
-    
+
     const deleteButton = screen.getByTestId("icon-trash").parentElement!
     await user.click(deleteButton)
-    
+
     expect(confirmSpy).toHaveBeenCalled()
     expect(mockOnDelete).toHaveBeenCalledWith(mockFlag.id)
     confirmSpy.mockRestore()

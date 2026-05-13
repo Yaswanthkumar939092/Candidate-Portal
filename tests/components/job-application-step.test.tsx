@@ -39,12 +39,12 @@ vi.mock("@/components/ui/field-renderer", () => ({
     const defaultRender = (
       <div data-testid={`field-${field.fieldname}`}>
         <label htmlFor={field.fieldname}>{field.label}</label>
-        <input 
-          id={field.fieldname} 
+        <input
+          id={field.fieldname}
           data-testid={`input-${field.fieldname}`}
-          type="text" 
-          defaultValue="" 
-          onChange={(e) => onChange?.(e.target.value)} 
+          type="text"
+          defaultValue=""
+          onChange={(e) => onChange?.(e.target.value)}
         />
       </div>
     )
@@ -54,16 +54,16 @@ vi.mock("@/components/ui/field-renderer", () => ({
     const overrideElements: any[] = []
     if (overrides && field.fieldname === "resume") {
       if (overrides.Attach?.component) {
-         const C = overrides.Attach.component
-         overrideElements.push(<div key="a" data-testid="force-render-attach"><C {...props}/></div>)
+        const C = overrides.Attach.component
+        overrideElements.push(<div key="a" data-testid="force-render-attach"><C {...props} /></div>)
       }
       if (overrides["Attach Image"]?.component) {
-         const C = overrides["Attach Image"].component
-         overrideElements.push(<div key="ai" data-testid="force-render-attach-image"><C {...props}/></div>)
+        const C = overrides["Attach Image"].component
+        overrideElements.push(<div key="ai" data-testid="force-render-attach-image"><C {...props} /></div>)
       }
       if (overrides.Table?.component) {
-         const C = overrides.Table.component
-         overrideElements.push(<div key="t" data-testid="force-render-table-override"><C {...props}/></div>)
+        const C = overrides.Table.component
+        overrideElements.push(<div key="t" data-testid="force-render-table-override"><C {...props} /></div>)
       }
     }
 
@@ -77,7 +77,7 @@ vi.mock("@/components/onboarding/file-upload-field", () => ({
     <div>
       <label>{label}</label>
       <input type="file" />
-      <button 
+      <button
         data-testid="trigger-upload-button"
         onClick={() => onChange?.("http://mockurl.com/doc.pdf")}
       >
@@ -448,18 +448,18 @@ describe("JobApplicationStep Coverage Enhancements", () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(jobAppContext.useJobApp as any).mockReturnValue({
-      stepData: { "step1": { otherField: "otherVal", emptyField: "" } },
-      setStepData: mockSetStepData,
-    })
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(jobOpeningHooks.useCreateJobApplicant as any).mockReturnValue({
-      mutate: mockMutate,
-      isPending: false,
-    })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ; (jobAppContext.useJobApp as any).mockReturnValue({
+        stepData: { "step1": { otherField: "otherVal", emptyField: "" } },
+        setStepData: mockSetStepData,
+      })
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ; (jobOpeningHooks.useCreateJobApplicant as any).mockReturnValue({
+        mutate: mockMutate,
+        isPending: false,
+      })
   })
 
   it("renders table field correctly and handles input change via dynamic renderer", async () => {
@@ -559,7 +559,7 @@ describe("JobApplicationStep Coverage Enhancements", () => {
     // The button inside FileUploadField triggers `onChange` which invokes handleFileUpload.
     const uploadButtons = screen.getAllByTestId("trigger-upload-button")
     fireEvent.click(uploadButtons[0])
-    
+
     // Check execution of validation listener inside state
     await waitFor(() => {
       expect(uploadButtons[0]).toBeTruthy()
@@ -605,9 +605,9 @@ describe("JobApplicationStep Coverage Enhancements", () => {
 
     // 1. Check successful buildFinalPayload properties in payload argument
     const payloadSent = mockMutate.mock.calls[0][0];
-    expect(payloadSent.job_opening).toBe("job-submission-id"); 
+    expect(payloadSent.job_opening).toBe("job-submission-id");
     // ensure undefined/empty mapping from previous step "emptyField" is handled:
-    expect(payloadSent.emptyField).toBe(null); 
+    expect(payloadSent.emptyField).toBe(null);
 
     // 2. Trigger onSuccess logic
     expect(mutateCallbacks).toBeTruthy();
@@ -622,7 +622,7 @@ describe("JobApplicationStep Coverage Enhancements", () => {
   it("handles existing step data fallback and triggers effect re-sync on prop update", async () => {
     // Force stepData for 'missingKey' to be undefined
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(jobAppContext.useJobApp as any).mockReturnValue({
+    ; (jobAppContext.useJobApp as any).mockReturnValue({
       stepData: {}, // empty
       setStepData: vi.fn(),
     })
@@ -683,7 +683,7 @@ describe("JobApplicationStep Coverage Enhancements", () => {
         currentStep={0} // 0 out of 2 means isLastStep is false
         totalSteps={2}
         jobID="job-multi"
-        onNext={onNextMock} 
+        onNext={onNextMock}
         onPrev={vi.fn()}
       />
     )

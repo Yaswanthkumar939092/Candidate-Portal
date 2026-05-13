@@ -40,7 +40,7 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
 
 vi.mock("@/components/ui/select", () => ({
   Select: ({ children, onValueChange, value }: any) => (
-     <select data-testid="select-mock" value={value} onChange={(e: any) => onValueChange(e.target.value)}>{children}</select>
+    <select data-testid="select-mock" value={value} onChange={(e: any) => onValueChange(e.target.value)}>{children}</select>
   ),
   SelectTrigger: ({ children }: any) => children,
   SelectValue: ({ placeholder }: any) => <div>{placeholder}</div>,
@@ -59,7 +59,7 @@ vi.mock("@/components/document-upload", () => ({
 
 describe("DocumentManager", () => {
   const user = userEvent.setup()
-  
+
   const mockDocuments: ManagedDocument[] = [
     {
       id: "1",
@@ -115,16 +115,16 @@ describe("DocumentManager", () => {
   it("filters documents by search query", async () => {
     render(<DocumentManager {...mockProps} />)
     const searchInput = screen.getByPlaceholderText("Search documents...")
-    
+
     await user.type(searchInput, "Resume")
-    
+
     expect(screen.getByText("John_Resume.pdf")).toBeTruthy()
     expect(screen.queryByText("My_Photo.jpg")).toBeNull()
   })
 
   it("filters documents by category", async () => {
     render(<DocumentManager {...mockProps} />)
-    
+
     // Open category select (simplified because Select is hard to test in JSDOM without mocks)
     // We'll just verify the initial count and that filtering logic works via props if we were testing internal state
     // But since we can't easily trigger Radix Select, we'll assume basic rendering is correct
@@ -134,18 +134,18 @@ describe("DocumentManager", () => {
   it("shows empty state when no documents match filters", async () => {
     render(<DocumentManager {...mockProps} />)
     const searchInput = screen.getByPlaceholderText("Search documents...")
-    
+
     await user.type(searchInput, "nonexistent")
-    
+
     expect(screen.getByText("No documents found")).toBeTruthy()
   })
 
   it("opens upload modal when clicking Upload Document", async () => {
     render(<DocumentManager {...mockProps} />)
     const uploadButton = screen.getByText("Upload Document")
-    
+
     await user.click(uploadButton)
-    
+
     expect(screen.getByText("Upload New Document")).toBeTruthy()
     expect(screen.getByTestId("document-upload-mock")).toBeTruthy()
   })
@@ -174,7 +174,7 @@ describe("DocumentManager", () => {
   it("filters properly by interacting with enhanced category/status mocks", async () => {
     render(<DocumentManager {...mockProps} />)
     const allSelects = screen.getAllByTestId("select-mock")
-    
+
     // Apply Status Filter (Index 2 in DOM ordering: 0=ModalCat, 1=FilterCat, 2=FilterStatus)
     fireEvent.change(allSelects[2], { target: { value: "archived" } })
     await waitFor(() => {
@@ -185,7 +185,7 @@ describe("DocumentManager", () => {
 
   it("executes data binding and validation for description and tags on creation submit", async () => {
     render(<DocumentManager {...mockProps} />)
-    
+
     // Open modal
     const uploadBtn = screen.getAllByText("Upload Document")[0]
     fireEvent.click(uploadBtn)
@@ -193,7 +193,7 @@ describe("DocumentManager", () => {
     // Add description and tags
     const tagsInput = screen.getByPlaceholderText("e.g., frontend, react, 2024")
     const descInput = screen.getByPlaceholderText("Brief description of the document")
-    
+
     fireEvent.change(tagsInput, { target: { value: "t1, t2" } })
     fireEvent.change(descInput, { target: { value: "desc data" } })
 
@@ -234,7 +234,7 @@ describe("DocumentManager", () => {
   it("properly demonstrates functionality inside example showcasing wrapper", () => {
     render(<DocumentManagerExample />)
     expect(screen.getByText("John Doe - Resume 2024.pdf")).toBeTruthy()
-    
+
     const previewBtn = screen.getAllByText("Preview")[0]
     fireEvent.click(previewBtn) // Trigger Example mock coverage
   })
