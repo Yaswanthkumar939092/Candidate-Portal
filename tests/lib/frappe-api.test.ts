@@ -8,7 +8,7 @@ beforeEach(() => {
   vi.restoreAllMocks()
 })
 
-function mockFetch(body: any, ok = true, status = 200) {
+function mockFetch(body: unknown, ok = true, status = 200) {
   const response = {
     ok,
     status,

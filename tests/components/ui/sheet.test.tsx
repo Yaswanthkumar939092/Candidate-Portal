@@ -324,7 +324,7 @@ describe("Sheet Components", () => {
           <SheetTrigger>Open</SheetTrigger>
           <SheetContent>
             <SheetClose asChild>
-              <a href="/">Go Home</a>
+              <a href="#home">Go Home</a>
             </SheetClose>
           </SheetContent>
         </Sheet>

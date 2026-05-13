@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, Mock } from 'vitest'
 
 vi.mock('@/lib/supabase-admin', () => ({
   supabaseAdmin: { from: vi.fn() },
@@ -17,24 +17,12 @@ import {
 } from '@/lib/feature-flags'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
-const mockAdmin = supabaseAdmin as any
+const mockAdmin = supabaseAdmin as unknown as { from: Mock }
 
-function makeChain(result: any) {
-  const single = vi.fn().mockResolvedValue(result)
-  const select = vi.fn().mockReturnValue({ ...result, single })
-  return { single, select }
-}
-
-function mockFromSelect(data: any, error: any = null) {
+function mockFromSelect(data: unknown, error: unknown = null) {
   const orderResult = { data, error }
   const order = vi.fn().mockResolvedValue(orderResult)
   const select = vi.fn().mockReturnValue({ order })
-  mockAdmin.from.mockReturnValue({ select })
-}
-
-function mockFromSelectAll(data: any, error: any = null) {
-  const selectResult = { data, error }
-  const select = vi.fn().mockResolvedValue(selectResult)
   mockAdmin.from.mockReturnValue({ select })
 }
 
@@ -140,7 +128,7 @@ describe('getFeatureFlagsForUser', () => {
       },
     ]
 
-    let callCount = 0
+
     mockAdmin.from.mockImplementation((table: string) => {
       if (table === 'feature_flags') {
         return { select: vi.fn().mockResolvedValue({ data: dbFlags, error: null }) }
