@@ -55,7 +55,12 @@ export function OnboardingSnapshot({
   const form_completion = dashboardPayload?.form_completion;
   const onboardingStage = dashboardPayload?.onboarding_stage;
 
-  const percentage = Math.round(form_completion?.percentage ?? 0);
+  const percentage =
+    form_completion?.percentage != null
+      ? Math.round(form_completion.percentage)
+      : totalSteps > 0
+        ? Math.round((completedSteps / totalSteps) * 100)
+        : 0;
 
   const isComplete = onboardingStage?.toLowerCase() === "onboarding complete" ||
     onboardingStage?.toLowerCase() === "complete" ||
@@ -82,7 +87,7 @@ export function OnboardingSnapshot({
               )}
             >
               {isComplete && <ShieldCheck className="h-4 w-4 text-[#12B76A]" />}
-              {onboardingStage}
+              {onboardingStage || (isComplete ? "ONBOARDING COMPLETE" : "ONBOARDING IN PROGRESS")}
             </span>
 
             {/* Heading */}

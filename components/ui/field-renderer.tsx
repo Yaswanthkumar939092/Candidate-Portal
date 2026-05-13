@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/tooltip";
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { useOnboarding } from "@/lib/contexts/onboarding-context";
+import { useOptionalOnboarding } from "@/lib/contexts/onboarding-context";
 
 export interface FormField {
   fieldname: string;
@@ -146,13 +146,7 @@ function normalizeInputValue(field: FormField, rawValue: string) {
 
 export function ResubmitButton({ fieldname }: { fieldname?: string }) {
   const [loading, setLoading] = React.useState(false);
-  let onboarding: ReturnType<typeof useOnboarding> | null = null;
-  try {
-    onboarding = useOnboarding();
-  } catch {
-    onboarding = null;
-  }
-
+  const onboarding = useOptionalOnboarding();
   if (!onboarding) return null;
 
   const handleResubmit = async (e: React.MouseEvent) => {

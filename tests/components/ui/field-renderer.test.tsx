@@ -22,12 +22,16 @@ vi.mock("@/lib/supabase", () => ({
   signOut: vi.fn(),
 }))
 
-vi.mock("@/lib/contexts/onboarding-context", () => ({
-  useOnboarding: vi.fn(() => ({
+vi.mock("@/lib/contexts/onboarding-context", () => {
+  const useOnboarding = vi.fn(() => ({
     submitAll: vi.fn(),
     isSaving: false
   }))
-}))
+  return {
+    useOnboarding,
+    useOptionalOnboarding: vi.fn(() => useOnboarding())
+  }
+})
 
 import { FrappeAPI } from "@/lib/frappe-api"
 import { useOnboarding } from "@/lib/contexts/onboarding-context"
