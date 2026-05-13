@@ -132,7 +132,7 @@ describe('FeatureFlagContext', () => {
 
   describe('useFeatureFlags', () => {
     it('throws when used outside FeatureFlagProvider', () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { })
 
       function BadComponent() {
         useFeatureFlags()

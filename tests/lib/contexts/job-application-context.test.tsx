@@ -203,7 +203,7 @@ describe('JobAppContext', () => {
 
   describe('useJobApp hook', () => {
     it('throws when used outside JobAppProvider', () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { })
 
       function BadComponent() {
         useJobApp()

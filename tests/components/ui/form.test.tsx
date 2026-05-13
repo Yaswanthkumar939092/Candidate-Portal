@@ -49,7 +49,7 @@ function TestFormComponent() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(() => {})} className="space-y-4">
+      <form onSubmit={form.handleSubmit(() => { })} className="space-y-4">
         <FormField
           control={form.control}
           name="email"
@@ -144,7 +144,7 @@ describe("Form Components", () => {
 
         return (
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(() => {})}>
+            <form onSubmit={form.handleSubmit(() => { })}>
               <FormField
                 control={form.control}
                 name="email"
@@ -625,27 +625,27 @@ describe("Form Components", () => {
   describe("Invariant Integrity Edge Cases", () => {
     it("successfully forces execution of missing context throw via proxy injection (Line 53)", () => {
       const ComponentTrigger = () => {
-         // Surgical Strike Execution:
-         // 1. Prime proxy for exactly ONE pass (Line 46 call within useFormField).
-         // 2. JS evaluates 'false.name' smoothly (no crash), achieves '!false' evaluate to true (Line 52).
-         // 3. Confirms intended Line 53 throw without collapsing parent context stability!
-         contextState.contextMock.mockImplementationOnce(() => false)
-         useFormField()
-         return null
+        // Surgical Strike Execution:
+        // 1. Prime proxy for exactly ONE pass (Line 46 call within useFormField).
+        // 2. JS evaluates 'false.name' smoothly (no crash), achieves '!false' evaluate to true (Line 52).
+        // 3. Confirms intended Line 53 throw without collapsing parent context stability!
+        contextState.contextMock.mockImplementationOnce(() => false)
+        useFormField()
+        return null
       }
 
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
-      
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => { })
+
       expect(() => {
-         render(
-            <FormWrapper>
-               <ComponentTrigger />
-            </FormWrapper>
-         )
+        render(
+          <FormWrapper>
+            <ComponentTrigger />
+          </FormWrapper>
+        )
       }).toThrow("useFormField should be used within <FormField>")
-      
+
       consoleSpy.mockRestore()
-      
+
       // Re-lock implementation to baseline original
       contextState.contextMock.mockImplementation(contextState.originalImpl)
     })
