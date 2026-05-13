@@ -8,10 +8,15 @@
  * It can be run locally or in CI/CD environments.
  */
 
-const { createClient } = require('@supabase/supabase-js');
-const fs = require('fs').promises;
-const path = require('path');
-const { execSync } = require('child_process');
+// const { createClient } = require('@supabase/supabase-js');
+// const fs = require('fs').promises;
+// const path = require('path');
+// const { execSync } = require('child_process');
+
+import { createClient } from '@supabase/supabase-js';
+import fs from 'fs/promises';
+import path from 'path';
+import { execSync } from 'child_process';
 
 // Configuration
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;

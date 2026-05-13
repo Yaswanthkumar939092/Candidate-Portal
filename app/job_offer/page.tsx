@@ -4,11 +4,12 @@ import React, { useState, Suspense, useEffect } from "react";
 import NextImage from "next/image";
 import { Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useJobOfferSummary, useJobOfferPdf, useUpdateJobOfferStatus, useJobOfferStatus, useRejectionReasons } from "@/lib/hooks/useJobOffer";
 import { useCurrentUser } from "@/lib/hooks/useUser";
 import { useCompanyLogo } from "@/lib/hooks/useCompanyLogo";
 import dynamic from "next/dynamic";
+import { Button } from "@/components/ui/button";
 
 const PdfViewer = dynamic(() => import("./PdfViewer"), {
   ssr: false,
@@ -40,13 +41,14 @@ export default function JobOfferPage() {
 }
 
 function JobOfferContent() {
+  const router = useRouter();
   const { userEmail, isLoading: isUserLoading } = useCurrentUser();
   const searchParams = useSearchParams();
   const applParam = searchParams.get("appl");
-  
+
   // Use param if available, else fallback to userEmail
   const applicantEmail = applParam || userEmail || "";
-  
+
   const { data: statusData, isLoading: isStatusLoading, isError: isStatusError, error: statusError } = useJobOfferStatus(applicantEmail);
   const statusNormalized = statusData?.status?.toLowerCase();
 
@@ -153,11 +155,11 @@ function JobOfferContent() {
           <AlertCircle className="h-12 w-12 text-red-500" />
           <h2 className="text-xl font-semibold text-slate-800">Oops! Something went wrong</h2>
           <p className="text-slate-600">
-            {isStatusError 
+            {isStatusError
               ? (statusError as Error)?.message || "We couldn't fetch the offer status. Please try again later."
               : "No applicant email provided. Please check the link in your email."}
           </p>
-          <button 
+          <button
             onClick={() => window.location.reload()}
             className="mt-2 px-6 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors"
           >
@@ -185,10 +187,10 @@ function JobOfferContent() {
       {gameState === "main" && (
         <div className="max-w-[1200px] mx-auto px-5 py-[30px]">
           {!offerData ? (
-             <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
-                <AlertCircle className="h-10 w-10 text-slate-300 mb-4" />
-                <p className="text-slate-500">Offer details not found for this applicant.</p>
-             </div>
+            <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+              <AlertCircle className="h-10 w-10 text-slate-300 mb-4" />
+              <p className="text-slate-500">Offer details not found for this applicant.</p>
+            </div>
           ) : (
             <>
               {hoursRemaining !== null && hoursRemaining > 0 && (
@@ -330,7 +332,7 @@ function JobOfferContent() {
                           ) : (
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
                           )}
-                          Preview Offer Letter
+                          Download / Preview Offer Letter
                         </a>
                       </div>
 
@@ -444,9 +446,15 @@ function JobOfferContent() {
               Keep checking your email for further updates on your onboarding and LMS journey.
             </div>
           </div>
-          <div className="mt-7">
-            <span className="text-[1.2rem] font-semibold text-[#00b48a]">Stay Tuned!</span>
-            <p className="text-[12px] text-gray-400 mt-2">You can close this browser window</p>
+          <div className="mt-7 flex flex-col items-center gap-3">
+            <Button
+              onClick={() => router.push("/dashboard")}
+              className="px-6 py-2.5 bg-[#4caf50] text-white rounded-lg font-semibold hover:bg-[#43a047] transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 h-11"
+            >
+              Go to Dashboard
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+            </Button>
+            <p className="text-[12px] text-gray-400 mt-2">You can also close this browser window</p>
           </div>
         </div>
       )}
@@ -460,9 +468,18 @@ function JobOfferContent() {
           <h2 className="text-[1.5rem] font-semibold text-[#1a2332] mb-3">
             You have already accepted or rejected the Offer Letter.
           </h2>
-          <p className="text-[0.95rem] text-[#64748b] leading-[1.6]">
+          <p className="text-[0.95rem] text-[#64748b] leading-[1.6] mb-8">
             If you believe this is an error, please contact our HR department for assistance.
           </p>
+          <div className="flex flex-col items-center gap-3">
+            <Button
+              onClick={() => router.push("/dashboard")}
+              className="px-6 py-2.5 bg-[#1993e5] text-white rounded-lg font-semibold hover:bg-[#157ec4] transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 h-11"
+            >
+              Go to Dashboard
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+            </Button>
+          </div>
         </div>
       )}
 

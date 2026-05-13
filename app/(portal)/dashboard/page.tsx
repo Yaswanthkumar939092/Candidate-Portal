@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, MapPin, Building2, AlertCircle } from "lucide-react";
+import { CalendarDays, MapPin, Building2, AlertCircle, Inbox } from "lucide-react";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { WelcomeHeader } from "@/components/dashboard/welcome-header";
 import { OnboardingSnapshot } from "@/components/dashboard/onboarding-snapshot";
@@ -29,11 +29,13 @@ function formatDisplayDate(iso: string): string {
 }
 
 function getCompletedSteps(data: DashboardData) {
-  return data.date_of_joining ? TOTAL_STEPS : 0;
+  return data?.date_of_joining ? TOTAL_STEPS : 0;
 }
 
 function getOfficeAddress(data: DashboardData) {
-  const details = data.work_location_details;
+  const details = data?.work_location_details;
+
+  if (!details) return "Address not available";
 
   return (
     details.custom_address ||
@@ -136,6 +138,22 @@ function DashboardErrorState({
   );
 }
 
+function DashboardEmptyState() {
+  return (
+    <div className="w-full rounded-3xl border bg-card p-12 text-center shadow-sm">
+      <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+        <Inbox className="h-6 w-6" />
+      </div>
+      <h2 className="text-xl font-semibold text-foreground">
+        No Data Available
+      </h2>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Currently there is no data to display.
+      </p>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const { user, profile } = useAuth();
   const {
@@ -172,59 +190,67 @@ export default function DashboardPage() {
     );
   }
 
+
+
   const completedSteps = getCompletedSteps(dashboardData);
   const officeAddress = getOfficeAddress(dashboardData);
-  const contacts = mapContacts(dashboardData.key_contacts);
+  const contacts = mapContacts(dashboardData?.key_contacts || []);
   const googleMapLink =
-    dashboardData.work_location_details.custom_google_map_link;
+    dashboardData?.work_location_details?.custom_google_map_link;
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 py-8 sm:px-6">
       <WelcomeHeader
-        name={profile?.full_name || dashboardData.name || "User"}
+        name={profile?.full_name || dashboardData?.name || "User"}
         greeting="Welcome back"
       />
 
-      <OnboardingSnapshot
-        completedSteps={completedSteps}
-        totalSteps={TOTAL_STEPS}
-        joiningDate={dashboardData.date_of_joining}
-        dashboardPayload={dashboardData}
-      />
+      {dashboardData?.onboarding_status === false ? (
+        <DashboardEmptyState />
+      ) : (
+        <>
+          <OnboardingSnapshot
+            completedSteps={completedSteps}
+            totalSteps={TOTAL_STEPS}
+            joiningDate={dashboardData?.date_of_joining}
+            dashboardPayload={dashboardData}
+          />
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <InfoCard
-          icon={<CalendarDays className="h-5 w-5" />}
-          label="Joining Date"
-          value={formatDisplayDate(dashboardData.date_of_joining)}
-          tag={<JourneyCountdown joiningDate={dashboardData.date_of_joining} />}
-          tagVariant="green"
-        />
+          <div className="grid gap-4 sm:grid-cols-3">
+            <InfoCard
+              icon={<CalendarDays className="h-5 w-5" />}
+              label="Joining Date"
+              value={formatDisplayDate(dashboardData?.date_of_joining)}
+              tag={<JourneyCountdown joiningDate={dashboardData?.date_of_joining} />}
+              tagVariant="green"
+            />
 
-        <InfoCard
-          icon={<MapPin className="h-5 w-5" />}
-          label="Office Location"
-          value={dashboardData.work_location || "Not available"}
-          subtitle={officeAddress}
-          tag={
-            googleMapLink ? (
-              <a href={googleMapLink} target="_blank" rel="noreferrer">
-                View on Map
-              </a>
-            ) : undefined
-          }
-          tagVariant="link"
-        />
+            <InfoCard
+              icon={<MapPin className="h-5 w-5" />}
+              label="Office Location"
+              value={dashboardData?.work_location || "Not available"}
+              subtitle={officeAddress}
+              tag={
+                googleMapLink ? (
+                  <a href={googleMapLink} target="_blank" rel="noreferrer">
+                    View on Map
+                  </a>
+                ) : undefined
+              }
+              tagVariant="link"
+            />
 
-        <InfoCard
-          icon={<Building2 className="h-5 w-5" />}
-          label="Role & Department"
-          value={dashboardData.designation || "Not assigned"}
-          subtitle={dashboardData.department || "Department not available"}
-        />
-      </div>
+            <InfoCard
+              icon={<Building2 className="h-5 w-5" />}
+              label="Role & Department"
+              value={dashboardData?.designation || "Not assigned"}
+              subtitle={dashboardData?.department || "Department not available"}
+            />
+          </div>
 
-      <KeyContacts contacts={contacts} />
+          <KeyContacts contacts={contacts} />
+        </>
+      )}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { z } from 'zod'
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/utils/response'

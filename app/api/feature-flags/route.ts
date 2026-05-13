@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { FeatureFlag, FeatureFlagOverride, Json } from '@/types/database'
 
 // Helper function to get user from token (optional for public endpoint)
 async function getUserFromRequest(request: NextRequest) {
@@ -21,10 +22,10 @@ async function getUserFromRequest(request: NextRequest) {
 
 // Helper function to evaluate feature flag for user
 function evaluateFeatureFlagForUser(
-  flag: any,
+  flag: FeatureFlag,
   userId: string | null,
-  userOverride: any | null
-): any {
+  userOverride: FeatureFlagOverride | null
+): Json {
   // If user has an override, use that value
   if (userOverride) {
     return userOverride.value
@@ -90,7 +91,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user overrides if user is authenticated
-    let userOverrides: any[] = []
+    let userOverrides: FeatureFlagOverride[] = []
     if (user && featureFlags?.length) {
       const flagIds = featureFlags.map(flag => flag.id)
       const { data: overrides } = await supabaseAdmin
@@ -109,7 +110,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Evaluate each feature flag for the user
-    const evaluatedFlags: Record<string, any> = {}
+    const evaluatedFlags: Record<string, Json> = {}
 
     if (featureFlags) {
       featureFlags.forEach(flag => {
@@ -162,7 +163,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user overrides if user is authenticated
-    let userOverrides: any[] = []
+    let userOverrides: FeatureFlagOverride[] = []
     if (user && featureFlags?.length) {
       const flagIds = featureFlags.map(flag => flag.id)
       const { data: overrides } = await supabaseAdmin
@@ -181,7 +182,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Evaluate each feature flag for the user
-    const evaluatedFlags: Record<string, any> = {}
+    const evaluatedFlags: Record<string, Json> = {}
 
     if (featureFlags) {
       featureFlags.forEach(flag => {

@@ -28,7 +28,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import type { SSOProvider } from '@/types/database'
-import { Plus, Shield, Loader2, Pencil, Trash2, KeyRound } from 'lucide-react'
+import { Plus, Shield, Loader2, Trash2, KeyRound } from 'lucide-react'
 
 interface User {
   id: string

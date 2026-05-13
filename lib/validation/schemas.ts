@@ -65,7 +65,7 @@ export const jobsQuerySchema = z.object({
   sort_order: z.enum(['asc', 'desc']).default('desc'),
 })
 
-export const createJobSchema = z.object({
+const jobBaseSchema = z.object({
   title: z.string().min(1, 'Job title is required').max(255, 'Title too long'),
   company: z.string().min(1, 'Company name is required').max(255, 'Company name too long'),
   company_logo: z.string().url('Invalid logo URL').optional(),
@@ -79,6 +79,20 @@ export const createJobSchema = z.object({
   experience_level: z.enum(['entry', 'junior', 'mid', 'senior', 'lead']),
   skills_required: z.array(z.string()).optional(),
   application_deadline: z.string().datetime().optional(),
+})
+
+export const createJobSchema = jobBaseSchema.refine((data) => {
+  if (data.salary_min && data.salary_max) {
+    return data.salary_min <= data.salary_max
+  }
+  return true
+}, {
+  message: 'Minimum salary cannot be greater than maximum salary',
+  path: ['salary_min']
+})
+
+export const updateJobSchema = jobBaseSchema.partial().extend({
+  is_active: z.boolean().optional(),
 }).refine((data) => {
   if (data.salary_min && data.salary_max) {
     return data.salary_min <= data.salary_max

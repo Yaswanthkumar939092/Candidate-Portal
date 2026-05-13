@@ -22,6 +22,20 @@ export interface MatchedJob {
   status: string
 }
 
+interface FrappeJobOpening {
+  name: string
+  job_title: string
+  designation?: string
+  company: string
+  location?: string
+  custom_work_experience?: string
+  custom_salary?: string
+  employment_type?: string
+  description: string
+  status: string
+  skills_required?: string
+}
+
 interface Props {
   onAnalysisComplete?: (results: MatchedJob[]) => void
   className?: string
@@ -76,7 +90,7 @@ export function SmartCareerMatch({ onAnalysisComplete, className }: Props) {
     return SKILLS.filter(skill => cleaned.includes(skill))
   }
 
-  const extractSkillsFromJob = (job: any) => {
+  const extractSkillsFromJob = (job: FrappeJobOpening) => {
     const text = cleanText(`
       ${job.job_title}
       ${job.description}
@@ -126,7 +140,7 @@ export function SmartCareerMatch({ onAnalysisComplete, className }: Props) {
 
     setProgress(75)
 
-    const results: MatchedJob[] = jobs.map((job: any) => {
+    const results: MatchedJob[] = jobs.map((job: FrappeJobOpening) => {
       const jobSkills = extractSkillsFromJob(job)
       const match = getMatchScore(candidateSkills, jobSkills)
 
