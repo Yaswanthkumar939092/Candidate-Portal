@@ -8,19 +8,24 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { FeatureGate, useFeatureFlag } from '@/lib/contexts/feature-flags'
 import { Eye, EyeOff, CheckCircle, AlertTriangle } from 'lucide-react'
 
+interface OAuthData {
+  google_client_id: string
+  google_client_secret: string
+  google_enabled: boolean
+  linkedin_client_id: string
+  linkedin_client_secret: string
+  linkedin_enabled: boolean
+}
+
+interface OAuthConfigPayload {
+  oauth?: OAuthData
+}
+
 interface OAuthConfigProps {
-  onNext: (data: any) => void
-  initialData?: {
-    google_client_id?: string
-    google_client_secret?: string
-    linkedin_client_id?: string
-    linkedin_client_secret?: string
-    google_enabled?: boolean
-    linkedin_enabled?: boolean
-  }
+  onNext: (data?: OAuthConfigPayload) => void
+  initialData?: Partial<OAuthData>
 }
 
 export function OAuthConfig({ onNext, initialData }: OAuthConfigProps) {
@@ -212,7 +217,7 @@ export function OAuthConfig({ onNext, initialData }: OAuthConfigProps) {
 
                 {!formData.google_enabled && (
                   <div className="py-8 text-center text-muted-foreground">
-                    <p>Google OAuth is disabled. Users won't be able to sign in with Google.</p>
+                    <p>Google OAuth is disabled. Users won&apos;t be able to sign in with Google.</p>
                   </div>
                 )}
 
@@ -222,7 +227,7 @@ export function OAuthConfig({ onNext, initialData }: OAuthConfigProps) {
                     <li>Go to the <a href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer" className="underline">Google Cloud Console</a></li>
                     <li>Create a new project or select an existing one</li>
                     <li>Enable the Google+ API</li>
-                    <li>Go to "Credentials" and create OAuth 2.0 Client IDs</li>
+                    <li>Go to &quot;Credentials&quot; and create OAuth 2.0 Client IDs</li>
                     <li>Set the redirect URI as shown above</li>
                     <li>Copy the Client ID and Client Secret here</li>
                   </ol>
@@ -311,7 +316,7 @@ export function OAuthConfig({ onNext, initialData }: OAuthConfigProps) {
 
                 {!formData.linkedin_enabled && (
                   <div className="py-8 text-center text-muted-foreground">
-                    <p>LinkedIn OAuth is disabled. Users won't be able to sign in with LinkedIn.</p>
+                    <p>LinkedIn OAuth is disabled. Users won&apos;t be able to sign in with LinkedIn.</p>
                   </div>
                 )}
 
@@ -321,8 +326,8 @@ export function OAuthConfig({ onNext, initialData }: OAuthConfigProps) {
                     <li>Go to <a href="https://www.linkedin.com/developers/" target="_blank" rel="noopener noreferrer" className="underline">LinkedIn Developers</a></li>
                     <li>Create a new app or select an existing one</li>
                     <li>Add your company information and verify your company</li>
-                    <li>In "Auth" tab, add the redirect URL shown above</li>
-                    <li>Request access to "Sign In with LinkedIn" product</li>
+                    <li>In &quot;Auth&quot; tab, add the redirect URL shown above</li>
+                    <li>Request access to &quot;Sign In with LinkedIn&quot; product</li>
                     <li>Copy the Client ID and Client Secret here</li>
                   </ol>
                 </div>

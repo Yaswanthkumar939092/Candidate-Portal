@@ -18,11 +18,7 @@ interface UserProfile {
   role?: string
 }
 
-interface AdminSettings {
-  user_id: string
-  onboarding_completed: boolean
-  updated_at: string
-}
+
 
 export default function AdminOnboardingPage() {
   const router = useRouter()

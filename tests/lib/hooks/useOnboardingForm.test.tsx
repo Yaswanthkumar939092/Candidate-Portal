@@ -31,8 +31,13 @@ describe("useOnboardingForm", () => {
   });
 
   it("fetches onboarding form correctly", async () => {
-    const mockForm = { boarding_status: "Pending", tabs: [] };
-    (candidateOnboardingService.getOnboardingForm as any).mockResolvedValue(mockForm);
+    const mockForm = {
+      boarding_status: "Pending",
+      tabs: [],
+      applicantId: "test-id",
+      status: "draft"
+    };
+    vi.mocked(candidateOnboardingService.getOnboardingForm).mockResolvedValue(mockForm);
 
     const { result } = renderHook(() => useOnboardingForm("test@example.com"), { wrapper });
 

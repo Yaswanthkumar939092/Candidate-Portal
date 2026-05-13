@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase, getCurrentUser } from '@/lib/supabase'
 import { AdminNavigation } from '@/components/admin-navigation'
+import type { User } from '@supabase/supabase-js'
+import { Profile } from '@/types/database'
 import { UserManagementTable } from '@/components/user-management-table'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -27,11 +29,8 @@ import {
 import {
   Users,
   Search,
-  Filter,
   Download,
   UserPlus,
-  Settings,
-  MoreVertical
 } from 'lucide-react'
 
 interface UserFilters {
@@ -43,9 +42,9 @@ interface UserFilters {
 
 export default function AdminUsersPage() {
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  const [users, setUsers] = useState<any[]>([])
+  const [users, setUsers] = useState<Profile[]>([])
   const [userStats, setUserStats] = useState({
     total: 0,
     active: 0,
@@ -167,9 +166,7 @@ export default function AdminUsersPage() {
     setFilters(prev => ({ ...prev, [key]: value }))
   }
 
-  const handleUserSelection = (userIds: string[]) => {
-    setSelectedUsers(userIds)
-  }
+
 
   const handleExportUsers = async () => {
     try {
@@ -179,7 +176,7 @@ export default function AdminUsersPage() {
       // Mock CSV download
       const csvContent = "data:text/csv;charset=utf-8," +
         "Name,Email,Created At,Status\n" +
-        users.map((user: any) =>
+        users.map((user: Profile) =>
           `${user.full_name || ''},${user.email},${user.created_at},"Active"`
         ).join("\n")
 

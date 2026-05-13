@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import { ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
@@ -195,10 +196,12 @@ export default function VerticalTabs() {
                     className="absolute inset-0 w-full h-full cursor-pointer"
                     onClick={handleNext}
                   >
-                    <img
+                    <Image
                       src={SERVICES[activeIndex].image}
                       alt={SERVICES[activeIndex].title}
-                      className="w-full h-full object-cover transition-transform duration-700 hover:scale-105 m-0! p-0! block"
+                      fill
+                      className="object-cover transition-transform duration-700 hover:scale-105"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
 
                     <div className="absolute inset-x-0 bottom-0 h-1/3 bg-linear-to-t from-black/20 via-transparent to-transparent opacity-60" />

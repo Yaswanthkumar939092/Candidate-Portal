@@ -25,13 +25,11 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { Switch } from '@/components/ui/switch'
 import type { FrappeEnvironment } from '@/types/database'
 import {
   Plus,
   Server,
   CheckCircle,
-  XCircle,
   Loader2,
   Radio,
   Wifi,
@@ -350,9 +348,8 @@ export default function FrappeEnvironmentsPage() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
                           <div
-                            className={`w-3 h-3 rounded-full ${
-                              env.is_active ? 'bg-green-500' : 'bg-muted-foreground'
-                            }`}
+                            className={`w-3 h-3 rounded-full ${env.is_active ? 'bg-green-500' : 'bg-muted-foreground'
+                              }`}
                           />
                           <CardTitle className="text-lg">{env.label}</CardTitle>
                         </div>

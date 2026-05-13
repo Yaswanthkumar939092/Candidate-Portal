@@ -171,6 +171,7 @@ export function DocumentManager({
     setFilteredDocuments(filtered);
   }, [documents, searchQuery, selectedCategory, selectedStatus]);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleUpload = async (files: any[]) => {
     if (!uploadCategory) return;
 
@@ -501,7 +502,7 @@ export function DocumentManager({
                     const uploadDate = new Date(d.uploadedAt);
                     const now = new Date();
                     return uploadDate.getMonth() === now.getMonth() &&
-                           uploadDate.getFullYear() === now.getFullYear();
+                      uploadDate.getFullYear() === now.getFullYear();
                   }).length}
                 </p>
               </div>
