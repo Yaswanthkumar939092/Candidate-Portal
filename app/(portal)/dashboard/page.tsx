@@ -205,7 +205,9 @@ export default function DashboardPage() {
         greeting="Welcome back"
       />
 
-      {dashboardData?.onboarding_status === true ? (
+      {dashboardData?.onboarding_status === false ? (
+        <DashboardEmptyState />
+      ) : (
         <>
           <OnboardingSnapshot
             completedSteps={completedSteps}
@@ -248,8 +250,6 @@ export default function DashboardPage() {
 
           <KeyContacts contacts={contacts} />
         </>
-      ) : (
-        <DashboardEmptyState />
       )}
     </div>
   );
