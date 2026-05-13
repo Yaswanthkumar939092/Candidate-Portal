@@ -321,17 +321,23 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
       // Prepare filtered stepData
       const filteredStepData: Record<string, Record<string, unknown>> = {};
       for (const [stepKey, fields] of Object.entries(stepData)) {
-        filteredStepData[stepKey] = {};
+        const filteredFields: Record<string, unknown> = {};
+        let hasFields = false;
         for (const [fieldname, val] of Object.entries(fields)) {
           if (specificField) {
             // If a specific field is resubmitted, ONLY send that specific field!
             if (fieldname === specificField) {
-              filteredStepData[stepKey][fieldname] = val;
+              filteredFields[fieldname] = val;
+              hasFields = true;
             }
           } else {
             // General submission (Review page / Full submit): send all fields unconditionally!
-            filteredStepData[stepKey][fieldname] = val;
+            filteredFields[fieldname] = val;
+            hasFields = true;
           }
+        }
+        if (hasFields) {
+          filteredStepData[stepKey] = filteredFields;
         }
       }
 
@@ -407,12 +413,19 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
 }
 
 /**
+ * Hook to safely consume the OnboardingContext, returning undefined if used outside of an `<OnboardingProvider>`.
+ */
+export function useOptionalOnboarding(): OnboardingContextType | undefined {
+  return useContext(OnboardingContext);
+}
+
+/**
  * Hook to consume the OnboardingContext.
  *
  * @throws Error if used outside of an `<OnboardingProvider>`.
  */
 export function useOnboarding(): OnboardingContextType {
-  const context = useContext(OnboardingContext);
+  const context = useOptionalOnboarding();
   if (context === undefined) {
     throw new Error("useOnboarding must be used within an OnboardingProvider");
   }
