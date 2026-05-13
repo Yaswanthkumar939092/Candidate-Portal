@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { Profile, ProfileInsert } from '@/types/database'
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js'
 
 export interface SignUpData {
   email: string
@@ -277,7 +278,7 @@ export const updateProfile = async (userId: string, updates: Partial<Profile>) =
 }
 
 // Hook for auth state changes
-export const onAuthStateChange = (callback: (event: string, session: any) => void) => {
+export const onAuthStateChange = (callback: (event: AuthChangeEvent, session: Session | null) => void) => {
   return supabase.auth.onAuthStateChange(callback)
 }
 

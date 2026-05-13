@@ -10,7 +10,7 @@ import { FcGoogle } from "react-icons/fc";
 import Image from "next/image";
 import Link from "next/link";
 
-interface AuthFormData {
+export interface AuthFormData {
   email: string;
   password: string;
   confirmPassword: string;

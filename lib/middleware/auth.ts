@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import type { User } from '@supabase/supabase-js'
+import { Database } from '@/types/database'
+import type { User, PostgrestError } from '@supabase/supabase-js'
 
 export interface AuthenticatedRequest extends NextRequest {
   user?: User
@@ -106,7 +107,7 @@ export function withOwnership(
   return async (
     request: AuthenticatedRequest,
     handler: (req: AuthenticatedRequest) => Promise<Response>,
-    params: any
+    params: Record<string, string | string[] | undefined>
   ): Promise<Response> => {
     if (!request.user) {
       return NextResponse.json(
@@ -125,11 +126,11 @@ export function withOwnership(
     }
 
     // Check resource ownership
-    const { data: resource, error } = await (supabaseAdmin as any)
-      .from(resourceTable)
+    const { data: resource, error } = await supabaseAdmin
+      .from(resourceTable as keyof Database['public']['Tables'])
       .select(`id, ${ownershipField}`)
-      .eq('id', resourceId)
-      .single()
+      .eq('id', Array.isArray(resourceId) ? resourceId[0] : resourceId)
+      .single() as { data: Record<string, unknown> | null, error: PostgrestError | null }
 
     if (error || !resource) {
       return NextResponse.json(
@@ -139,7 +140,7 @@ export function withOwnership(
     }
 
     // Check if user owns the resource
-    if ((resource as any)[ownershipField] !== request.user.id) {
+    if ((resource as Record<string, unknown>)[ownershipField] !== request.user.id) {
       // Check if user is admin (simplified check)
       const { data: profile } = await supabaseAdmin
         .from('profiles')
@@ -266,22 +267,22 @@ export async function isAdmin(userId: string): Promise<boolean> {
  * Combine multiple middleware functions
  */
 export function combineMiddleware(
-  ...middlewares: Array<(req: any, handler: any, ...args: any[]) => Promise<Response>>
+  ...middlewares: Array<(req: AuthenticatedRequest, handler: (req: AuthenticatedRequest) => Promise<Response>, ...args: unknown[]) => Promise<Response>>
 ) {
   return async (
     request: NextRequest,
-    handler: (req: any) => Promise<Response>,
-    ...args: any[]
+    handler: (req: AuthenticatedRequest) => Promise<Response>,
+    ...args: unknown[]
   ): Promise<Response> => {
-    let currentHandler = handler
+    let currentHandler: (req: AuthenticatedRequest) => Promise<Response> = handler
 
     // Apply middleware in reverse order so they execute in the correct order
     for (let i = middlewares.length - 1; i >= 0; i--) {
       const middleware = middlewares[i]
       const prevHandler = currentHandler
-      currentHandler = (req: any) => middleware(req, prevHandler, ...args)
+      currentHandler = (req: AuthenticatedRequest) => middleware(req, prevHandler, ...args)
     }
 
-    return await currentHandler(request)
+    return await currentHandler(request as AuthenticatedRequest)
   }
 }

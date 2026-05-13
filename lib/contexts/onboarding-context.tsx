@@ -51,7 +51,7 @@ export interface OnboardingContextType {
   markStepComplete: (stepKey: string) => void;
 
   /** Submit all onboarding data */
-  submitAll: () => Promise<void>;
+  submitAll: (specificField?: string) => Promise<void>;
   /** Dynamic form configuration */
   formConfig?: OnboardingForm;
   /** Helper to get current value of a field across all steps */
@@ -298,21 +298,69 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     }
   }, [currentStep, router]);
 
-  const submitAll = useCallback(async () => {
+  const submitAll = useCallback(async (specificField?: string) => {
     try {
       // Get correct user email
       const email =
         user?.email || user?.user_metadata?.email || "unknown@example.com";
 
+      // Find all rejected fields from formConfig
+      const rejectedFields = new Set<string>();
+      if (formConfig?.tabs) {
+        formConfig.tabs.forEach((tab) => {
+          tab.sections.forEach((section) => {
+            section.fields.forEach((field) => {
+              if (field.approval_status === "Rejected") {
+                rejectedFields.add(field.fieldname);
+              }
+            });
+          });
+        });
+      }
+
+      // Prepare filtered stepData
+      const filteredStepData: Record<string, Record<string, unknown>> = {};
+      for (const [stepKey, fields] of Object.entries(stepData)) {
+        const filteredFields: Record<string, unknown> = {};
+        let hasFields = false;
+        for (const [fieldname, val] of Object.entries(fields)) {
+          if (specificField) {
+            // If a specific field is resubmitted, ONLY send that specific field!
+            if (fieldname === specificField) {
+              filteredFields[fieldname] = val;
+              hasFields = true;
+            }
+          } else {
+            // General submission (Review page / Full submit): send all fields unconditionally!
+            filteredFields[fieldname] = val;
+            hasFields = true;
+          }
+        }
+        if (hasFields) {
+          filteredStepData[stepKey] = filteredFields;
+        }
+      }
+
       await submitMutation.mutateAsync({
-        stepData,
+        stepData: filteredStepData,
         userEmail: email,
       });
 
-      setStatus("submitted");
-      localStorage.removeItem(STORAGE_KEY);
+      // Only set status to "submitted" if there are no other rejected fields left, 
+      // or if we are doing a general full submit (no specificField)
+      const hasOtherRejectedFields = Array.from(rejectedFields).some(
+        (f) => f !== specificField
+      );
+      if (!specificField || !hasOtherRejectedFields) {
+        setStatus("submitted");
+        localStorage.removeItem(STORAGE_KEY);
+      }
 
-      toast.success("Onboarding submitted successfully!");
+      toast.success(
+        specificField
+          ? "Field resubmitted successfully!"
+          : "Onboarding submitted successfully!"
+      );
 
       // Invalidate the onboarding form query to fetch the latest status
       void queryClient.invalidateQueries({
@@ -323,7 +371,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
       toast.error("Failed to submit onboarding. Please try again.");
       throw error;
     }
-  }, [stepData, user, submitMutation]);
+  }, [stepData, user, submitMutation, formConfig, queryClient]);
 
   const getFieldValue = useCallback(
     (fieldname: string) => {
@@ -365,12 +413,19 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
 }
 
 /**
+ * Hook to safely consume the OnboardingContext, returning undefined if used outside of an `<OnboardingProvider>`.
+ */
+export function useOptionalOnboarding(): OnboardingContextType | undefined {
+  return useContext(OnboardingContext);
+}
+
+/**
  * Hook to consume the OnboardingContext.
  *
  * @throws Error if used outside of an `<OnboardingProvider>`.
  */
 export function useOnboarding(): OnboardingContextType {
-  const context = useContext(OnboardingContext);
+  const context = useOptionalOnboarding();
   if (context === undefined) {
     throw new Error("useOnboarding must be used within an OnboardingProvider");
   }

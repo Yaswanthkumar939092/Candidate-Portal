@@ -6,7 +6,6 @@ import {
   Search,
   MapPin,
   Briefcase,
-  Bookmark,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import {
@@ -32,7 +31,6 @@ import { JobMatchCard } from "@/components/jobs/job-match-card"
 import { JobDetailDialog } from "@/components/jobs/job-detail-dialog"
 import { cn } from "@/lib/utils"
 import { useJobOpening } from "@/lib/hooks/useJobOpening"
-import JobApplicantForm from "@/components/jobs/job-applicant-form"
 
 type PageState = "upload" | "analyzing" | "results"
 
@@ -93,7 +91,7 @@ function Pagination({
 // ---------------------------------------------------------------------------
 export default function OpenJobsPage() {
   const [currentPage, setCurrentPage] = useState(1)
-console.log("Fetching jobs for page:", currentPage)
+  console.log("Fetching jobs for page:", currentPage)
   const { data: jobOpenings } = useJobOpening({
     page: currentPage,
     limit: JOBS_PER_PAGE,
@@ -102,11 +100,12 @@ console.log("Fetching jobs for page:", currentPage)
   const [activeTab, setActiveTab] = useState<"smart-match" | "view-all">(
     "smart-match"
   )
+
   const [pageState, setPageState] = useState<PageState>("upload")
+  const [applyFormOpen, setApplyFormOpen] = useState(false)
   const [matchResults, setMatchResults] = useState<MatchedJob[]>([])
   const [savedJobIds, setSavedJobIds] = useState<Set<string>>(new Set())
   const [savedDrawerOpen, setSavedDrawerOpen] = useState(false)
-  const [applyFormOpen, setApplyFormOpen] = useState(false)
 
   // filters state
   const [searchText, setSearchText] = useState("")
@@ -313,11 +312,11 @@ console.log("Fetching jobs for page:", currentPage)
 
               {/* PAGINATION */}
               {totalPages > 0 && (
-              <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            />
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
               )}
             </>
           )}
