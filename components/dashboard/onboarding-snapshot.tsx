@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { CircularProgress } from "@/components/shared/circular-progress"
 
+import { DashboardData } from "@/types/dashboard"
+
 interface OnboardingSnapshotProps {
   /** Number of onboarding steps that have been completed. */
   completedSteps: number
@@ -13,7 +15,7 @@ interface OnboardingSnapshotProps {
   totalSteps?: number
   /** ISO date string for the joining date. */
   joiningDate?: string
-  dashboardPayload?: Record<string, any>
+  dashboardPayload?: DashboardData
   className?: string
 }
 
@@ -50,10 +52,23 @@ export function OnboardingSnapshot({
   dashboardPayload,
   className,
 }: OnboardingSnapshotProps) {
+  const form_completion = dashboardPayload?.form_completion;
+  const onboardingStage = dashboardPayload?.onboarding_stage;
+
   const percentage =
-    totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0
-  const isComplete = percentage >= 100
-  const displayJoiningDate = (dashboardPayload?.date_of_joining as string) || joiningDate
+    form_completion?.percentage != null
+      ? Math.round(form_completion.percentage)
+      : totalSteps > 0
+        ? Math.round((completedSteps / totalSteps) * 100)
+        : 0;
+
+  const isComplete = onboardingStage?.toLowerCase() === "onboarding complete" ||
+    onboardingStage?.toLowerCase() === "complete" ||
+    onboardingStage?.toLowerCase() === "completed" ||
+    dashboardPayload?.onboarding_status === true ||
+    percentage >= 100;
+
+  const displayJoiningDate = dashboardPayload?.date_of_joining || joiningDate;
   return (
     <div className={cn("space-y-4 border border-[#E5E7EB] rounded-[calc(1rem+8px)] p-2 bg-white shadow-sm", className)}>
       {/* Main onboarding card */}
@@ -72,7 +87,7 @@ export function OnboardingSnapshot({
               )}
             >
               {isComplete && <ShieldCheck className="h-4 w-4 text-[#12B76A]" />}
-              {isComplete ? "ONBOARDING COMPLETE" : "ONBOARDING IN PROGRESS"}
+              {onboardingStage || (isComplete ? "ONBOARDING COMPLETE" : "ONBOARDING IN PROGRESS")}
             </span>
 
             {/* Heading */}

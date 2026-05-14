@@ -10,10 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import {
-  Users,
-  Briefcase,
   FileText,
-  Calendar,
   TrendingUp,
   Activity,
   Settings
@@ -162,7 +159,7 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-                <p className="text-gray-600">Welcome back! Here's what's happening with your job portal.</p>
+                <p className="text-gray-600">Welcome back! Here&apos;s what&apos;s happening with your job portal.</p>
               </div>
               <div className="flex items-center space-x-4">
                 <JobSyncStatus />
@@ -218,13 +215,12 @@ export default function AdminDashboard() {
                                 </div>
                               </div>
                               <div className="text-right">
-                                <div className={`text-xs px-2 py-1 rounded-full ${
-                                  application.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                <div className={`text-xs px-2 py-1 rounded-full ${application.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                                   application.status === 'reviewing' ? 'bg-blue-100 text-blue-800' :
-                                  application.status === 'interviewing' ? 'bg-purple-100 text-purple-800' :
-                                  application.status === 'offered' ? 'bg-green-100 text-green-800' :
-                                  'bg-gray-100 text-gray-800'
-                                }`}>
+                                    application.status === 'interviewing' ? 'bg-purple-100 text-purple-800' :
+                                      application.status === 'offered' ? 'bg-green-100 text-green-800' :
+                                        'bg-gray-100 text-gray-800'
+                                  }`}>
                                   {application.status}
                                 </div>
                                 <div className="text-xs text-gray-500 mt-1">
@@ -258,14 +254,13 @@ export default function AdminDashboard() {
                             return (
                               <div key={status} className="flex items-center justify-between">
                                 <div className="flex items-center space-x-3">
-                                  <div className={`w-3 h-3 rounded-full ${
-                                    status === 'pending' ? 'bg-yellow-400' :
+                                  <div className={`w-3 h-3 rounded-full ${status === 'pending' ? 'bg-yellow-400' :
                                     status === 'reviewing' ? 'bg-blue-400' :
-                                    status === 'interviewing' ? 'bg-purple-400' :
-                                    status === 'offered' ? 'bg-green-400' :
-                                    status === 'rejected' ? 'bg-red-400' :
-                                    'bg-gray-400'
-                                  }`} />
+                                      status === 'interviewing' ? 'bg-purple-400' :
+                                        status === 'offered' ? 'bg-green-400' :
+                                          status === 'rejected' ? 'bg-red-400' :
+                                            'bg-gray-400'
+                                    }`} />
                                   <span className="text-sm font-medium capitalize">{status}</span>
                                 </div>
                                 <div className="text-right">
@@ -307,11 +302,10 @@ export default function AdminDashboard() {
                                 {new Date(application.applied_at).toLocaleString()}
                               </div>
                             </div>
-                            <div className={`px-3 py-1 rounded-full text-xs ${
-                              application.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                            <div className={`px-3 py-1 rounded-full text-xs ${application.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                               application.status === 'reviewing' ? 'bg-blue-100 text-blue-800' :
-                              'bg-gray-100 text-gray-800'
-                            }`}>
+                                'bg-gray-100 text-gray-800'
+                              }`}>
                               {application.status}
                             </div>
                           </div>

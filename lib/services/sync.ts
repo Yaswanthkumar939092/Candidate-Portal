@@ -9,7 +9,7 @@ const syncOptionsSchema = z.object({
   force: z.boolean().default(false),
   dateFrom: z.string().datetime().optional(),
   dateTo: z.string().datetime().optional(),
-  filters: z.record(z.string(), z.any()).optional(),
+  filters: z.record(z.string(), z.unknown()).optional(),
 })
 
 // Frappe entity schemas
@@ -92,7 +92,7 @@ class FrappeSyncService {
   private async frappeRequest(
     endpoint: string,
     _options: RequestInit = {}
-  ): Promise<{ success: boolean; data?: any; error?: string }> {
+  ): Promise<{ success: boolean; data?: unknown; error?: string }> {
     try {
       const client = await this.getClient()
       const data = await client.request(endpoint)
@@ -120,7 +120,7 @@ class FrappeSyncService {
 
     try {
       // Build filters
-      const filters: any = {}
+      const filters: Record<string, unknown> = {}
       if (options.dateFrom) {
         filters.modified = ['>=', options.dateFrom]
       }
@@ -146,7 +146,7 @@ class FrappeSyncService {
         return result
       }
 
-      const frappeJobs = data.data || []
+      const frappeJobs = (data as { data: Record<string, unknown>[] }).data || []
 
       // Process each job
       for (const frappeJob of frappeJobs) {
@@ -155,7 +155,7 @@ class FrappeSyncService {
           await this.processJob(validatedJob, result)
         } catch (error) {
           result.errors.push({
-            entity_id: frappeJob.name || 'unknown',
+            entity_id: (frappeJob.name as string) || 'unknown',
             error: error instanceof Error ? error.message : 'Job processing failed',
             timestamp: new Date().toISOString()
           })
@@ -263,7 +263,7 @@ class FrappeSyncService {
 
     try {
       // Build filters
-      const filters: any = {}
+      const filters: Record<string, unknown> = {}
       if (options.dateFrom) {
         filters.modified = ['>=', options.dateFrom]
       }
@@ -289,7 +289,7 @@ class FrappeSyncService {
         return result
       }
 
-      const frappeApplications = data.data || []
+      const frappeApplications = (data as { data: Record<string, unknown>[] }).data || []
 
       // Process each application
       for (const frappeApp of frappeApplications) {
@@ -298,7 +298,7 @@ class FrappeSyncService {
           await this.processApplication(validatedApp, result)
         } catch (error) {
           result.errors.push({
-            entity_id: frappeApp.name || 'unknown',
+            entity_id: (frappeApp.name as string) || 'unknown',
             error: error instanceof Error ? error.message : 'Application processing failed',
             timestamp: new Date().toISOString()
           })
@@ -422,7 +422,7 @@ class FrappeSyncService {
 
     try {
       // Build filters
-      const filters: any = {}
+      const filters: Record<string, unknown> = {}
       if (options.dateFrom) {
         filters.modified = ['>=', options.dateFrom]
       }
@@ -445,7 +445,7 @@ class FrappeSyncService {
         return result
       }
 
-      const frappeCompanies = data.data || []
+      const frappeCompanies = (data as { data: Record<string, unknown>[] }).data || []
 
       // Process each company
       for (const frappeCompany of frappeCompanies) {
@@ -454,7 +454,7 @@ class FrappeSyncService {
           await this.processCompany(validatedCompany, result)
         } catch (error) {
           result.errors.push({
-            entity_id: frappeCompany.name || 'unknown',
+            entity_id: (frappeCompany.name as string) || 'unknown',
             error: error instanceof Error ? error.message : 'Company processing failed',
             timestamp: new Date().toISOString()
           })

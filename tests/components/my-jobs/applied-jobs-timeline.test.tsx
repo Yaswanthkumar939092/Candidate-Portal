@@ -203,7 +203,7 @@ describe("AppliedJobsTimeline", () => {
     it("handles unknown stage keys gracefully", () => {
       const app: ApplicationWithTimeline = {
         ...mockApplication,
-        currentStage: "unknown" as any,
+        currentStage: "unknown" as never,
       }
       render(<AppliedJobsTimeline applications={[app]} />)
       expect(screen.getByText("Senior Frontend Developer")).toBeTruthy()

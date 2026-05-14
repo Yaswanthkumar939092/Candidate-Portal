@@ -15,10 +15,20 @@ interface JobAppContextType {
 
 const JobAppContext = createContext<JobAppContextType | undefined>(undefined);
 
-export function JobAppProvider({ children }: { children: React.ReactNode }) {
-  const [stepData, setStepDataState] = useState<Record<string, Record<string, unknown>>>({});
+export function JobAppProvider({
+  children,
+  job_opening,
+  form_name,
+}: {
+  children: React.ReactNode;
+  job_opening?: string;
+  form_name?: string;
+}) {
+  const [stepData, setStepDataState] = useState<
+    Record<string, Record<string, unknown>>
+  >({});
 
-  const { data, isLoading } = useJobApplicationForm();
+  const { data, isLoading } = useJobApplicationForm(job_opening, form_name);
 
   // ✅ API se flat fields array — data se seedha lo, useState ki zaroorat nahi
   const allFields = useMemo(() => {

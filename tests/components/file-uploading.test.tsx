@@ -122,7 +122,7 @@ describe("AttachField", () => {
   })
 
   it("calls onChange with null when file is cleared", async () => {
-    const { rerender } = render(
+    render(
       <AttachField
         field={mockField}
         value="old-file.pdf"
@@ -140,7 +140,7 @@ describe("AttachField", () => {
 
   it("handles file upload and calls mutate", async () => {
     mockMutate.mockImplementation(
-      (file: File, options: any) => {
+      (file: File, options: { onSuccess: (data: { file_url: string }) => void }) => {
         options.onSuccess({ file_url: "https://example.com/resume.pdf" })
       }
     )
@@ -164,7 +164,7 @@ describe("AttachField", () => {
 
   it("calls onChange with file URL after successful upload", async () => {
     mockMutate.mockImplementation(
-      (file: File, options: any) => {
+      (file: File, options: { onSuccess: (data: { file_url: string }) => void }) => {
         options.onSuccess({ file_url: "https://example.com/resume.pdf" })
       }
     )
@@ -204,7 +204,7 @@ describe("AttachField", () => {
 
   it("displays file name while uploading", async () => {
     mockMutate.mockImplementation(
-      (file: File, options: any) => {
+      (file: File, options: { onSuccess: (data: { file_url: string }) => void }) => {
         // Simulate async upload
         setTimeout(() => {
           options.onSuccess({ file_url: "https://example.com/file.pdf" })
@@ -246,7 +246,7 @@ describe("AttachField", () => {
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => { })
 
     mockMutate.mockImplementation(
-      (file: File, options: any) => {
+      (file: File, options: { onError: (error: Error) => void }) => {
         options.onError(new Error("Upload failed"))
       }
     )
@@ -282,7 +282,7 @@ describe("AttachField", () => {
   })
 
   it("has correct HTML structure", () => {
-    const { container } = render(
+    render(
       <AttachField
         field={mockField}
         value=""
