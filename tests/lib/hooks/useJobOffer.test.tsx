@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { 
-  useJobOfferSummary, 
-  useJobOfferStatus, 
+import {
+  useJobOfferSummary,
+  useJobOfferPdf,
+  useJobOfferStatus,
   useRejectionReasons,
   useUpdateJobOfferStatus
 } from "@/lib/hooks/useJobOffer";
@@ -14,6 +15,7 @@ import React from "react";
 vi.mock("@/lib/services/jobOffer", () => ({
   jobOfferService: {
     getJobOfferSummary: vi.fn(),
+    downloadJobOfferPdf: vi.fn(),
     getJobOfferStatus: vi.fn(),
     getRejectionReasons: vi.fn(),
     updateJobOfferStatus: vi.fn(),
@@ -39,8 +41,14 @@ describe("useJobOffer Hooks", () => {
   });
 
   it("useJobOfferSummary fetches data correctly", async () => {
-    const mockData = { applicant_name: "Test User" };
-    (jobOfferService.getJobOfferSummary as any).mockResolvedValue(mockData);
+    const mockData = {
+      applicant_name: "Test User",
+      designation: "Software Engineer",
+      duration_display: "6 Months",
+      expected_doj_display: "2026-05-01",
+      stipend_display: "₹50,000"
+    };
+    vi.mocked(jobOfferService.getJobOfferSummary).mockResolvedValue(mockData);
 
     const { result } = renderHook(() => useJobOfferSummary("test@example.com"), { wrapper });
 
@@ -51,7 +59,7 @@ describe("useJobOffer Hooks", () => {
 
   it("useJobOfferStatus fetches data correctly", async () => {
     const mockData = { status: "Awaiting Response" };
-    (jobOfferService.getJobOfferStatus as any).mockResolvedValue(mockData);
+    vi.mocked(jobOfferService.getJobOfferStatus).mockResolvedValue(mockData);
 
     const { result } = renderHook(() => useJobOfferStatus("test@example.com"), { wrapper });
 
@@ -59,9 +67,42 @@ describe("useJobOffer Hooks", () => {
     expect(result.current.data).toEqual(mockData);
   });
 
+  it("useJobOfferPdf fetches the PDF URL and revokes it on unmount", async () => {
+    const revokeSpy = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => { });
+    vi.mocked(jobOfferService.downloadJobOfferPdf).mockResolvedValue("blob:job-offer-pdf-url");
+
+    const { result, unmount } = renderHook(
+      () => useJobOfferPdf("test@example.com"),
+      { wrapper }
+    );
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.pdfUrl).toBe("blob:job-offer-pdf-url");
+    expect(result.current.error).toBeNull();
+    expect(jobOfferService.downloadJobOfferPdf).toHaveBeenCalledWith("test@example.com");
+
+    unmount();
+
+    expect(revokeSpy).toHaveBeenCalledWith("blob:job-offer-pdf-url");
+    revokeSpy.mockRestore();
+  });
+
+  it("useJobOfferPdf stays idle when disabled", async () => {
+    const { result } = renderHook(
+      () => useJobOfferPdf("test@example.com", false),
+      { wrapper }
+    );
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.pdfUrl).toBeNull();
+    expect(jobOfferService.downloadJobOfferPdf).not.toHaveBeenCalled();
+  });
+
   it("useRejectionReasons fetches data correctly", async () => {
-    const mockData = [{ reason: "Salary" }];
-    (jobOfferService.getRejectionReasons as any).mockResolvedValue(mockData);
+    const mockData = [{ name: "Salary", reason: "Salary" }];
+    vi.mocked(jobOfferService.getRejectionReasons).mockResolvedValue(mockData);
 
     const { result } = renderHook(() => useRejectionReasons(), { wrapper });
 
@@ -70,7 +111,7 @@ describe("useJobOffer Hooks", () => {
   });
 
   it("useUpdateJobOfferStatus calls service and invalidates queries", async () => {
-    (jobOfferService.updateJobOfferStatus as any).mockResolvedValue({});
+    vi.mocked(jobOfferService.updateJobOfferStatus).mockResolvedValue({ jo_id: "test-id", webform: "" });
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
 
     const { result } = renderHook(() => useUpdateJobOfferStatus(), { wrapper });
@@ -78,9 +119,9 @@ describe("useJobOffer Hooks", () => {
     await result.current.mutateAsync({ appl: "test@example.com", status: "Accepted" });
 
     expect(jobOfferService.updateJobOfferStatus).toHaveBeenCalledWith(
-      expect.objectContaining({ 
-        appl: "test@example.com", 
-        status: "Accepted" 
+      expect.objectContaining({
+        appl: "test@example.com",
+        status: "Accepted"
       }),
       expect.anything()
     );

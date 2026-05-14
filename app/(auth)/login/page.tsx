@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { AuthForm } from "@/components/auth-form";
+import { AuthForm, AuthFormData } from "@/components/auth-form";
 import { auth } from "@/lib/auth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
@@ -12,7 +12,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  const handleLogin = async (formData: any) => {
+  const handleLogin = async (formData: AuthFormData) => {
     setIsLoading(true);
     setError(null);
 

@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getUserFromRequest, isAdmin } from '@/lib/middleware/auth'
 import { z } from 'zod'
+import { ApplicationUpdate } from '@/types/database'
 import { successResponse, errorResponse, unauthorizedResponse, forbiddenResponse, validationErrorResponse } from '@/lib/utils/response'
 
 const adminApplicationsQuerySchema = z.object({
@@ -142,7 +143,7 @@ export async function GET(request: NextRequest) {
 
     // Apply sorting
     filteredApplications.sort((a, b) => {
-      let aValue: any, bValue: any
+      let aValue: string | number, bValue: string | number
 
       switch (sort_by) {
         case 'applied_at':
@@ -302,7 +303,7 @@ export async function PATCH(request: NextRequest) {
         }
 
         // Update application
-        const updateData: any = {
+        const updateData: ApplicationUpdate = {
           status: validatedData.status,
           updated_at: new Date().toISOString(),
         }

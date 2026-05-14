@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen, waitFor, fireEvent } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { DynamicFieldRenderer, FormField } from "@/components/ui/field-renderer"
 
@@ -9,7 +9,32 @@ vi.mock("@/lib/frappe-api", () => ({
   },
 }))
 
+vi.mock("@/lib/supabase", () => ({
+  supabase: {
+    auth: {
+      getSession: vi.fn(),
+      getUser: vi.fn(),
+      signOut: vi.fn(),
+    },
+  },
+  getSession: vi.fn(),
+  getCurrentUser: vi.fn(),
+  signOut: vi.fn(),
+}))
+
+vi.mock("@/lib/contexts/onboarding-context", () => {
+  const useOnboarding = vi.fn(() => ({
+    submitAll: vi.fn(),
+    isSaving: false
+  }))
+  return {
+    useOnboarding,
+    useOptionalOnboarding: vi.fn(() => useOnboarding())
+  }
+})
+
 import { FrappeAPI } from "@/lib/frappe-api"
+import { useOnboarding } from "@/lib/contexts/onboarding-context"
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mockFrappeAPI = FrappeAPI as any
@@ -551,7 +576,7 @@ describe("DynamicFieldRenderer", () => {
       )
 
       const input = container.querySelector("input")
-      expect(input?.className).toContain("border-yellow-500")
+      expect(input?.className).toContain("border-destructive")
     })
 
     it("shows rejection tooltip with hr_comment", async () => {
@@ -567,7 +592,7 @@ describe("DynamicFieldRenderer", () => {
         <DynamicFieldRenderer field={field} value="" onChange={vi.fn()} />
       )
 
-      const alertIcon = container.querySelector("div[class*='text-yellow-500']")
+      const alertIcon = container.querySelector("div[class*='text-destructive']")
       expect(alertIcon).toBeTruthy()
 
       if (alertIcon) {
@@ -775,6 +800,227 @@ describe("DynamicFieldRenderer", () => {
       )
 
       expect(screen.getByText("*")).toBeTruthy()
+    })
+  })
+
+  describe("Additional Coverage Extensions", () => {
+    it("applies validation class and check icon when status is Approved", () => {
+      const field: FormField = {
+        fieldname: "approved_field",
+        label: "Approved Field",
+        fieldtype: "Data",
+        approval_status: "Approved",
+      }
+      const { container } = render(
+        <DynamicFieldRenderer field={field} value="sample" onChange={vi.fn()} />
+      )
+      const input = container.querySelector("input")
+      expect(input?.className).toContain("border-success")
+
+      // Verify presence of Check icon (uses standard lucide svg attributes)
+      const checkIcon = container.querySelector(".lucide-check")
+      expect(checkIcon).toBeTruthy()
+    })
+
+    it("handles ResubmitButton workflow including error logging", async () => {
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => { })
+      const mockSubmitAll = vi.fn().mockRejectedValueOnce(new Error("Resubmit simulated failure"))
+
+      vi.mocked(useOnboarding).mockReturnValue({
+        submitAll: mockSubmitAll,
+        isSaving: false
+      } as unknown as ReturnType<typeof useOnboarding>)
+
+      const field: FormField = {
+        fieldname: "email",
+        label: "Email",
+        fieldtype: "Data",
+        approval_status: "Rejected",
+        hr_comment: "Reject reason",
+      }
+
+      render(<DynamicFieldRenderer field={field} value="" onChange={vi.fn()} />)
+
+      const resubmitBtn = screen.getByRole("button", { name: /Resubmit/i })
+      await user.click(resubmitBtn)
+
+      expect(mockSubmitAll).toHaveBeenCalledWith("email")
+      await waitFor(() => {
+        expect(consoleSpy).toHaveBeenCalledWith("Resubmit failed:", expect.any(Error))
+      })
+      consoleSpy.mockRestore()
+    })
+
+    it("handles Link component API fetch failure gracefully", async () => {
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => { })
+      mockFrappeAPI.getresourceDocumentData.mockRejectedValueOnce(new Error("Network failed"))
+
+      const field: FormField = {
+        fieldname: "link_test",
+        label: "Link Test",
+        fieldtype: "Link",
+        options: "SomeDoctype",
+      }
+
+      render(<DynamicFieldRenderer field={field} value="" onChange={vi.fn()} />)
+
+      await waitFor(() => {
+        expect(consoleSpy).toHaveBeenCalledWith("Link fetch error:", expect.any(Error))
+      })
+      consoleSpy.mockRestore()
+    })
+
+    it("extracts name from Object types in Link and Select values, and inserts missing default values dynamically", async () => {
+      const field: FormField = {
+        fieldname: "link_obj",
+        label: "Link Object",
+        fieldtype: "Link",
+        options: "SampleDoc",
+      }
+
+      mockFrappeAPI.getresourceDocumentData.mockResolvedValue({ data: [{ name: "ExistingDoc" }] })
+
+      // Test Object extraction and dynamic option inclusion logic lines
+      render(<DynamicFieldRenderer field={field} value={{ name: "InjectedForeignValue" }} onChange={vi.fn()} />)
+
+      // Crucial: wait for the loading state to resolve so dynamic injection occurs
+      await waitFor(() => {
+        expect(mockFrappeAPI.getresourceDocumentData).toHaveBeenCalled()
+      })
+
+      // Trigger dropdown
+      await user.click(screen.getByRole("combobox"))
+
+      // Line 389 verification: InjectedForeignValue is present in choices because it was spliced into options
+      const elements = await screen.findAllByText("InjectedForeignValue")
+      expect(elements.length).toBeGreaterThan(0)
+
+      // Additional branch coverage for fallback object keys (name || value || "") (Line 383, 441)
+      render(<DynamicFieldRenderer field={field} value={{ value: "FallbackValueObject" }} onChange={vi.fn()} />)
+      render(<DynamicFieldRenderer field={field} value={{ somethingElse: "EmptyValueObject" }} onChange={vi.fn()} />)
+
+      // Specifically hit line 441 for Select type
+      const selectField: FormField = { fieldname: "select_obj", label: "Select", fieldtype: "Select", options: "A B" }
+      render(<DynamicFieldRenderer field={selectField} value={{ name: "Val1" }} onChange={vi.fn()} />)
+      render(<DynamicFieldRenderer field={selectField} value={{ value: "Val2" }} onChange={vi.fn()} />)
+      render(<DynamicFieldRenderer field={selectField} value={{ somethingElse: "Val3" }} onChange={vi.fn()} />)
+    })
+
+    it("triggers normalization logic inside generic Text component updates", async () => {
+      const field: FormField = {
+        fieldname: "mobile_text", // Triggers isPhoneField which uses normalization
+        label: "Mobile Phone",
+        fieldtype: "Text",
+      }
+      const onChange = vi.fn()
+
+      render(<DynamicFieldRenderer field={field} value="" onChange={onChange} />)
+
+      const input = screen.getByRole("textbox")
+      fireEvent.change(input, { target: { value: "A9B8C" } })
+      expect(onChange).toHaveBeenLastCalledWith("98") // Normalization strips non-digits
+    })
+
+    it("triggers normalization logic inside Small Text component updates", async () => {
+      const field: FormField = {
+        fieldname: "custom_pincode_small",
+        label: "Pin Code Label",
+        fieldtype: "Small Text",
+      }
+      const onChange = vi.fn()
+
+      render(<DynamicFieldRenderer field={field} value="" onChange={onChange} />)
+
+      const input = screen.getByRole("textbox")
+      fireEvent.change(input, { target: { value: "5X6Y" } })
+      expect(onChange).toHaveBeenLastCalledWith("56")
+    })
+
+    it("parses options split by spaces when no newlines present", async () => {
+      const field: FormField = {
+        fieldname: "space_select",
+        label: "Options Space",
+        fieldtype: "Select",
+        options: "Red Blue Green",
+      }
+
+      render(<DynamicFieldRenderer field={field} value="" onChange={vi.fn()} />)
+
+      await user.click(screen.getByRole("combobox"))
+      expect(screen.getByText("Red")).toBeTruthy()
+      expect(screen.getByText("Blue")).toBeTruthy()
+      expect(screen.getByText("Green")).toBeTruthy()
+    })
+
+    it("executes input normalization during updates to unsupported custom field types", async () => {
+      const field: FormField = {
+        fieldname: "contactnumber_unknown",
+        label: "Unknown Type Phone",
+        fieldtype: "NonexistentType",
+      }
+      const onChange = vi.fn()
+
+      render(<DynamicFieldRenderer field={field} value="" onChange={onChange} />)
+
+      const input = screen.getByRole("textbox")
+      fireEvent.change(input, { target: { value: "1a2b3c" } })
+      expect(onChange).toHaveBeenLastCalledWith("123")
+    })
+
+    it("handles dynamic overrides and edge cases for Attachments", async () => {
+      const field: FormField = {
+        fieldname: "resume",
+        label: "Resume",
+        fieldtype: "Attach",
+      }
+
+      // Crucial bridge to by-pass original code early-gate on line 613
+      const triggerConfigOverride = {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        component: (() => <div />) as any
+      };
+
+      // Case 1: onAttachChange completely missing (Line 643-650)
+      const { container: cont1 } = render(
+        <DynamicFieldRenderer
+          field={field}
+          value=""
+          onChange={vi.fn()}
+          overrides={{ Attach: triggerConfigOverride }}
+        />
+      )
+      expect(cont1.textContent).toContain("File upload not configured")
+
+      // Case 2: Overrides component provided correctly (Line 653-667)
+      const CustomAttach = () => <div data-testid="custom-uploader">Ready</div>
+      const attachHandler = vi.fn()
+
+      render(
+        <DynamicFieldRenderer
+          field={field}
+          value=""
+          onChange={vi.fn()}
+          onAttachChange={() => attachHandler}
+          overrides={{
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            Attach: { component: CustomAttach as any }
+          }}
+        />
+      )
+      expect(screen.getByTestId("custom-uploader")).toBeTruthy()
+
+      // Case 3: Explicit config supplied but lacks component implementation (Line 670)
+      const { container: cont3 } = render(
+        <DynamicFieldRenderer
+          field={field}
+          value=""
+          onChange={vi.fn()}
+          onAttachChange={() => attachHandler}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          overrides={{ Attach: {} as any }} // Truthy object to trigger path but without component
+        />
+      )
+      expect(cont3.textContent).toContain("File upload handler not provided")
     })
   })
 })

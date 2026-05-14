@@ -26,9 +26,10 @@ export function OnboardingStepNav({ className }: OnboardingStepNavProps) {
   const steps = [
     ...tabs.map(t => ({
       key: t.tab.toLowerCase().replace(/\s+/g, '_'),
-      label: t.tab
+      label: t.tab,
+      counts: t.field_counts
     })),
-    { key: 'review', label: 'Review' }
+    { key: 'review', label: 'Review', counts: undefined }
   ]
 
   const totalSteps = steps.length
@@ -109,7 +110,12 @@ export function OnboardingStepNav({ className }: OnboardingStepNavProps) {
                 </span>
 
                 {/* Step label */}
-                <span className="truncate">{step.label}</span>
+                <span className="truncate flex-1">{step.label}</span>
+                {step.counts && (
+                  <span className="text-xs font-medium tabular-nums opacity-60">
+                    {step.counts.filled}/{step.counts.total}
+                  </span>
+                )}
               </button>
             )
           })}

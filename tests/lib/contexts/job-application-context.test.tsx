@@ -16,7 +16,7 @@ import { transformFieldsToTabs } from '@/lib/utils/transformJobFields'
 const mockUseJobApplicationForm = useJobApplicationForm as ReturnType<typeof vi.fn>
 const mockTransformFieldsToTabs = transformFieldsToTabs as ReturnType<typeof vi.fn>
 
-function defaultMockSetup(overrides: Partial<{ data: any; isLoading: boolean }> = {}) {
+function defaultMockSetup(overrides: Partial<{ data: unknown; isLoading: boolean }> = {}) {
   mockUseJobApplicationForm.mockReturnValue({
     data: null,
     isLoading: false,
@@ -203,7 +203,7 @@ describe('JobAppContext', () => {
 
   describe('useJobApp hook', () => {
     it('throws when used outside JobAppProvider', () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { })
 
       function BadComponent() {
         useJobApp()

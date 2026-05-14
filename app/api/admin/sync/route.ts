@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getUserFromRequest, isAdmin } from '@/lib/middleware/auth'
 import { z } from 'zod'
@@ -13,9 +13,13 @@ const syncRequestSchema = z.object({
   batch_size: z.number().min(1).max(100).default(10),
 })
 
-const syncStatusSchema = z.object({
-  sync_id: z.string().uuid().optional(),
-})
+
+
+interface SyncError {
+  message: string
+  timestamp: string
+  entity_id?: string
+}
 
 interface SyncJob {
   id: string
@@ -27,7 +31,7 @@ interface SyncJob {
   processed_items: number
   success_count: number
   error_count: number
-  errors: any[]
+  errors: SyncError[]
   created_by: string
 }
 

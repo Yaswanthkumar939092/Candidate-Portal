@@ -9,26 +9,18 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { FeatureFlag, FeatureFlagInsert, FeatureFlagUpdate } from '@/types/database'
 import {
   Plus,
   Search,
-  Filter,
   Settings,
   ToggleLeft,
-  ToggleRight,
-  Zap,
-  Users,
   AlertCircle,
   CheckCircle,
   Clock,
-  Tag
 } from 'lucide-react'
 
 interface User {
@@ -348,7 +340,7 @@ export default function FeatureFlagsPage() {
                         <Label htmlFor="value_type">Value Type</Label>
                         <Select
                           value={newFlagData.value_type}
-                          onValueChange={(value) => setNewFlagData({ ...newFlagData, value_type: value as any })}
+                          onValueChange={(value) => setNewFlagData({ ...newFlagData, value_type: value as FeatureFlag['value_type'] })}
                         >
                           <SelectTrigger>
                             <SelectValue />
@@ -460,7 +452,7 @@ export default function FeatureFlagsPage() {
                   </div>
                   <div className="min-w-[150px]">
                     <Label htmlFor="status">Status</Label>
-                    <Select value={filterStatus} onValueChange={(value: any) => setFilterStatus(value)}>
+                    <Select value={filterStatus} onValueChange={(value: 'all' | 'enabled' | 'disabled') => setFilterStatus(value)}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
