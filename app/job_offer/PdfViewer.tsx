@@ -22,7 +22,7 @@ export default function PdfViewer({ pdfUrl }: PdfViewerProps) {
       onLoadSuccess={({ numPages }) => setNumPages(numPages)}
       loading={
         <div className="flex flex-col items-center gap-3 py-10">
-          <Loader2 className="h-6 w-6 animate-spin text-[#1993e5]" />
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
           <p className="text-sm text-[#64748b]">Loading Document...</p>
         </div>
       }
