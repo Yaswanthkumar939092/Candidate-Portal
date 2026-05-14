@@ -89,8 +89,12 @@ describe("JobOpening Services", () => {
   describe("jobApplicationService", () => {
     it("getJobApplicationForm returns data or fallback", async () => {
       (FrappeAPI.get as any).mockResolvedValue({ fields: [1] });
-      const result = await jobApplicationService.getJobApplicationForm();
+      const result = await jobApplicationService.getJobApplicationForm("job1", "test");
       expect(result.fields).toEqual([1]);
+      expect(FrappeAPI.get).toHaveBeenCalledWith(expect.any(String), {
+        job_opening: "job1",
+        form_name: "test"
+      });
 
       (FrappeAPI.get as any).mockResolvedValue(null);
       const result2 = await jobApplicationService.getJobApplicationForm();

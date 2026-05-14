@@ -91,10 +91,15 @@ export const draftJobApplicantService = {
 
 export const jobApplicationService = {
   // ✅ Fetch dynamic job application fields
-  getJobApplicationForm: async () => {
+  getJobApplicationForm: async (job_opening?: string, form_name?: string) => {
     try {
+      const params: Record<string, string> = {};
+      if (job_opening) params.job_opening = job_opening;
+      if (form_name) params.form_name = form_name;
+
       const res = await FrappeAPI.get(
-        "recruitment.api.candidate_portal.get_all_job_applicant_fields"
+        "recruitment.api.candidate_portal.get_all_job_applicant_fields",
+        params
       );
       return res ?? { fields: [] };
     } catch (error) {

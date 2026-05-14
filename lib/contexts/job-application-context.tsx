@@ -19,15 +19,13 @@ const JobAppContext = createContext<JobAppContextType | undefined>(undefined);
 export function JobAppProvider({
   children,
   job_opening,
-  form_name,
+  form_name
 }: {
   children: React.ReactNode;
   job_opening?: string;
   form_name?: string;
 }) {
-  const [stepData, setStepDataState] = useState<
-    Record<string, Record<string, unknown>>
-  >({});
+  const [stepData, setStepDataState] = useState<Record<string, Record<string, unknown>>>({});
 
   const { data, isLoading } = useJobApplicationForm(job_opening, form_name);
 
