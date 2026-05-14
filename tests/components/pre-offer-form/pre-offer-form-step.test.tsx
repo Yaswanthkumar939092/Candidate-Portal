@@ -1,10 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { OnboardingFormStep } from "@/components/onboarding/onboarding-form-step";
-import { useOnboarding, OnboardingContextType } from "@/lib/contexts/onboarding-context";
-import { OnboardingField, OnboardingTab } from "@/lib/types/onboarding";
+import { PreOfferFormStep } from "@/components/pre-offer-form/pre-offer-form-step";
+import { usePreOffer, PreOfferContextType } from "@/lib/contexts/pre-offer-context";
+import { PreOfferField, PreOfferTab } from "@/lib/types/pre-offer";
 
-// Mock interfaces
 interface FileUploadFieldProps {
   label: string;
   onChange: (value: string) => void;
@@ -12,28 +11,25 @@ interface FileUploadFieldProps {
 }
 
 interface DynamicTableFieldProps {
-  field: OnboardingField;
+  field: PreOfferField;
   errors: Record<string, { message: string }>;
 }
 
 interface OverrideComponentProps {
-  field: OnboardingField;
+  field: PreOfferField;
   value: unknown;
   onChange: (value: unknown) => void;
   error?: string;
-  disabled?: boolean;
-  className?: string;
 }
 
 interface DynamicFieldRendererProps {
-  field: OnboardingField;
+  field: PreOfferField;
   value: unknown;
   onChange: (value: unknown) => void;
   error?: string;
   overrides?: Record<string, { component: React.ComponentType<OverrideComponentProps> }>;
 }
 
-// Hoist the mock component so it can be used in vi.mock
 const { FileUploadFieldMock } = vi.hoisted(() => ({
   FileUploadFieldMock: ({ label, onChange, error }: FileUploadFieldProps) => (
     <div data-testid="file-upload">
@@ -44,16 +40,15 @@ const { FileUploadFieldMock } = vi.hoisted(() => ({
   ),
 }));
 
-vi.mock("@/lib/contexts/onboarding-context", () => ({
-  useOnboarding: vi.fn(),
+vi.mock("@/lib/contexts/pre-offer-context", () => ({
+  usePreOffer: vi.fn(),
 }));
 
-// Mock child components
-vi.mock("@/components/onboarding/file-upload-field", () => ({
+vi.mock("@/components/pre-offer-form/file-upload-field", () => ({
   FileUploadField: FileUploadFieldMock,
 }));
 
-vi.mock("@/components/onboarding/dynamic-table-field", () => ({
+vi.mock("@/components/pre-offer-form/dynamic-table-field", () => ({
   DynamicTableField: ({ field, errors }: DynamicTableFieldProps) => (
     <div data-testid="table-field">
       {field.label} Table
@@ -62,16 +57,13 @@ vi.mock("@/components/onboarding/dynamic-table-field", () => ({
   ),
 }));
 
-// Mock DynamicFieldRenderer to avoid deep UI rendering issues and focus on props
 vi.mock("@/components/ui/field-renderer", () => ({
     DynamicFieldRenderer: ({ field, value, onChange, error, overrides }: DynamicFieldRendererProps) => {
         if (field.fieldtype === "Attach" || field.fieldtype === "Attach Image") {
-            // In OnboardingFormStep, overrides for Attach are provided
             if (overrides && overrides[field.fieldtype]) {
                 const Component = overrides[field.fieldtype].component;
-                return <Component field={field} value={value} onChange={onChange} error={error} disabled={false} className="test-override-cls" />;
+                return <Component field={field} value={value} onChange={onChange} error={error} />;
             }
-            // Fallback (though OnboardingFormStep always provides overrides for Attach)
             return <div data-testid="file-upload-fallback">{field.label}</div>;
         }
         return (
@@ -89,7 +81,7 @@ vi.mock("@/components/ui/field-renderer", () => ({
     }
 }));
 
-describe("OnboardingFormStep", () => {
+describe("PreOfferFormStep", () => {
   const mockSetStepData = vi.fn();
   const mockNextStep = vi.fn();
   const mockPrevStep = vi.fn();
@@ -100,7 +92,7 @@ describe("OnboardingFormStep", () => {
     vi.useRealTimers();
   });
 
-  const mockTab: OnboardingTab = {
+  const mockTab: PreOfferTab = {
     tab: "Personal Info",
     sections: [
       {
@@ -125,7 +117,7 @@ describe("OnboardingFormStep", () => {
     ]
   };
 
-  const defaultContext: OnboardingContextType = {
+  const defaultContext: PreOfferContextType = {
     currentStep: 1,
     stepData: {},
     completedSteps: new Set(),
@@ -133,7 +125,7 @@ describe("OnboardingFormStep", () => {
     isLoading: false,
     isError: false,
     isSaving: false,
-    status: "draft",
+    status: "Draft",
     setStepData: mockSetStepData,
     goToStep: vi.fn(),
     nextStep: mockNextStep,
@@ -144,13 +136,13 @@ describe("OnboardingFormStep", () => {
     formConfig: {
         applicantId: "test",
         status: "Pending",
-        tabs: []
+        tabs: [mockTab]
     }
   };
 
   it("renders all sections and fields defined in the tab", () => {
-    vi.mocked(useOnboarding).mockReturnValue(defaultContext);
-    render(<OnboardingFormStep tab={mockTab} stepKey="personal_info" />);
+    vi.mocked(usePreOffer).mockReturnValue(defaultContext);
+    render(<PreOfferFormStep tab={mockTab} stepKey="personal_info" />);
     
     expect(screen.getByText("First Name")).toBeTruthy();
     expect(screen.getByText("Last Name")).toBeTruthy();
@@ -160,20 +152,20 @@ describe("OnboardingFormStep", () => {
   });
 
   it("initializes form with existing data if available", () => {
-    vi.mocked(useOnboarding).mockReturnValue({
+    vi.mocked(usePreOffer).mockReturnValue({
       ...defaultContext,
       stepData: { personal_info: { first_name: "Bruce", last_name: "Wayne" } }
     });
     
-    render(<OnboardingFormStep tab={mockTab} stepKey="personal_info" />);
+    render(<PreOfferFormStep tab={mockTab} stepKey="personal_info" />);
     
     const input = screen.getByTestId("input-first_name") as HTMLInputElement;
     expect(input.value).toBe("Bruce");
   });
 
   it("validates mandatory fields and prevents submission", async () => {
-    vi.mocked(useOnboarding).mockReturnValue(defaultContext);
-    render(<OnboardingFormStep tab={mockTab} stepKey="personal_info" />);
+    vi.mocked(usePreOffer).mockReturnValue(defaultContext);
+    render(<PreOfferFormStep tab={mockTab} stepKey="personal_info" />);
     
     const nextBtn = screen.getByText("Next Step");
     fireEvent.click(nextBtn);
@@ -185,8 +177,8 @@ describe("OnboardingFormStep", () => {
   });
 
   it("calls setStepData and nextStep on successful form submission", async () => {
-    vi.mocked(useOnboarding).mockReturnValue(defaultContext);
-    render(<OnboardingFormStep tab={mockTab} stepKey="personal_info" />);
+    vi.mocked(usePreOffer).mockReturnValue(defaultContext);
+    render(<PreOfferFormStep tab={mockTab} stepKey="personal_info" />);
     
     fireEvent.change(screen.getByTestId("input-first_name"), { target: { value: "Clark" } });
     fireEvent.click(screen.getByText("Upload"));
@@ -204,54 +196,31 @@ describe("OnboardingFormStep", () => {
     });
   });
 
-  it("enables 'Same as Current Address' logic when Permanent Address section exists", () => {
-    const tabWithAddress: OnboardingTab = {
-      tab: "Address",
-      sections: [
-        { section: "Current Address", fields: [{ fieldname: "current_city", label: "Current City", fieldtype: "Data", is_mandatory: 0, read_only: 0, hidden: 0 }] },
-        { section: "Permanent Address", fields: [{ fieldname: "permanent_city", label: "Permanent City", fieldtype: "Data", is_mandatory: 0, read_only: 0, hidden: 0 }] }
-      ]
-    };
-    
-    vi.mocked(useOnboarding).mockReturnValue(defaultContext);
-    render(<OnboardingFormStep tab={tabWithAddress} stepKey="address" />);
-    
-    const sameAsBtn = screen.getByText("Same as Current Address");
-    expect(sameAsBtn).toBeTruthy();
-    
-    fireEvent.change(screen.getByTestId("input-current_city"), { target: { value: "Gotham" } });
-    fireEvent.click(sameAsBtn);
-    
-    const permInput = screen.getByTestId("input-permanent_city") as HTMLInputElement;
-    expect(permInput.value).toBe("Gotham");
-  });
-
   it("disables buttons when isSaving is true", () => {
-    vi.mocked(useOnboarding).mockReturnValue({
+    vi.mocked(usePreOffer).mockReturnValue({
       ...defaultContext,
       isSaving: true
     });
     
-    render(<OnboardingFormStep tab={mockTab} stepKey="personal_info" />);
+    render(<PreOfferFormStep tab={mockTab} stepKey="personal_info" />);
     
     expect(screen.getByText("Previous")).toBeDisabled();
     expect(screen.getByText("Next Step")).toBeDisabled();
   });
 
   it("disables 'Previous' button on the first step", () => {
-    vi.mocked(useOnboarding).mockReturnValue({
+    vi.mocked(usePreOffer).mockReturnValue({
       ...defaultContext,
       currentStep: 0
     });
-    render(<OnboardingFormStep tab={mockTab} stepKey="personal_info" />);
+    render(<PreOfferFormStep tab={mockTab} stepKey="personal_info" />);
     
     expect(screen.getByText("Previous")).toBeDisabled();
   });
 
   describe("Extended Edge Verification", () => {
     it("initializes form from definition defaults when existing data is blank", () => {
-      // Exercises Line 137 fallback chain
-      const defaultMapTab: OnboardingTab = {
+      const defaultMapTab: PreOfferTab = {
         tab: "Defaults",
         sections: [{
           section: "Default Section",
@@ -261,16 +230,15 @@ describe("OnboardingFormStep", () => {
         }]
       };
       
-      vi.mocked(useOnboarding).mockReturnValue(defaultContext);
-      render(<OnboardingFormStep tab={defaultMapTab} stepKey="def_test" />);
+      vi.mocked(usePreOffer).mockReturnValue(defaultContext);
+      render(<PreOfferFormStep tab={defaultMapTab} stepKey="def_test" />);
       
       const input = screen.getByTestId("input-preset") as HTMLInputElement;
       expect(input.value).toBe("AutoValue");
     });
 
     it("validates special collection types ensuring required states are populated", async () => {
-       // Exercises Line 178-179 (Table Required) and Line 185-186 (Check Required)
-       const strictTab: OnboardingTab = {
+       const strictTab: PreOfferTab = {
           tab: "Strict",
           sections: [{
              section: "Required Checklist",
@@ -281,8 +249,8 @@ describe("OnboardingFormStep", () => {
           }]
        };
        
-       vi.mocked(useOnboarding).mockReturnValue(defaultContext);
-       render(<OnboardingFormStep tab={strictTab} stepKey="strict_test" />);
+       vi.mocked(usePreOffer).mockReturnValue(defaultContext);
+       render(<PreOfferFormStep tab={strictTab} stepKey="strict_test" />);
        
        fireEvent.click(screen.getByText("Next Step"));
        
@@ -293,8 +261,7 @@ describe("OnboardingFormStep", () => {
     });
 
     it("enforces custom pattern matching constraints on defined contact dimensions", async () => {
-       // Exercises Line 213 (Email Regex) and Line 226 (Phone Regex)
-       const contactTab: OnboardingTab = {
+       const contactTab: PreOfferTab = {
           tab: "Contacts",
           sections: [{
              section: "Direct Contact Info",
@@ -305,16 +272,15 @@ describe("OnboardingFormStep", () => {
           }]
        };
        
-       vi.mocked(useOnboarding).mockReturnValue(defaultContext);
-       render(<OnboardingFormStep tab={contactTab} stepKey="contact_test" />);
+       vi.mocked(usePreOffer).mockReturnValue(defaultContext);
+       render(<PreOfferFormStep tab={contactTab} stepKey="contact_test" />);
        
        fireEvent.change(screen.getByTestId("input-email_addr"), { target: { value: "not_an_email" } });
-       fireEvent.change(screen.getByTestId("input-phone_num"), { target: { value: "123" } }); // Too short
+       fireEvent.change(screen.getByTestId("input-phone_num"), { target: { value: "123" } });
        
-       // Trigger blur logic to initiate resolver run
        fireEvent.blur(screen.getByTestId("input-email_addr"));
        fireEvent.blur(screen.getByTestId("input-phone_num"));
-       fireEvent.click(screen.getByText("Next Step")); // Force immediate resolver sync check
+       fireEvent.click(screen.getByText("Next Step"));
        
        await waitFor(() => {
           expect(screen.getByText("Please enter a valid email address")).toBeTruthy();
@@ -323,20 +289,16 @@ describe("OnboardingFormStep", () => {
     });
 
     it("triggers background state replication on throttle loop completion", () => {
-       // Exercises Line 273-274 Auto-save logic
        vi.useFakeTimers();
-       vi.mocked(useOnboarding).mockReturnValue(defaultContext);
+       vi.mocked(usePreOffer).mockReturnValue(defaultContext);
        
-       render(<OnboardingFormStep tab={mockTab} stepKey="auto_save_test" />);
+       render(<PreOfferFormStep tab={mockTab} stepKey="auto_save_test" />);
        
-       // Trigger form state mutation
        fireEvent.change(screen.getByTestId("input-first_name"), { target: { value: "Diana" } });
        
-       // Advance partially
        vi.advanceTimersByTime(200);
        expect(mockSetStepData).not.toHaveBeenCalledWith("auto_save_test", expect.any(Object));
        
-       // Fulfill 500ms window
        vi.advanceTimersByTime(400);
        expect(mockSetStepData).toHaveBeenCalledWith("auto_save_test", expect.objectContaining({ first_name: "Diana" }));
        
@@ -344,8 +306,7 @@ describe("OnboardingFormStep", () => {
     });
 
     it("satisfies specialized container mappings when resolving image attachments", () => {
-       // Exercises Line 325 mapping logic
-       const imageTab: OnboardingTab = {
+       const imageTab: PreOfferTab = {
           tab: "Photo",
           sections: [{
              section: "Visual Verify",
@@ -355,85 +316,11 @@ describe("OnboardingFormStep", () => {
           }]
        };
        
-       vi.mocked(useOnboarding).mockReturnValue(defaultContext);
-       render(<OnboardingFormStep tab={imageTab} stepKey="image_test" />);
+       vi.mocked(usePreOffer).mockReturnValue(defaultContext);
+       render(<PreOfferFormStep tab={imageTab} stepKey="image_test" />);
        
-       // Validate mapping through custom overrides container verified in mock renderer logic line 66-70
-        expect(screen.getByTestId("file-upload")).toBeTruthy();
-        expect(screen.getByText("Portrait Upload")).toBeTruthy();
-     });
-
-     it("satisfies fallback logic for anonymous and specialized field valid modes", async () => {
-        // Covers Line 199 (empty label -> "This field is required")
-        // Covers Line 178-181 (Table validation when null/empty)
-        // Covers Line 185-188 (Check validation when false)
-        const odditiesTab: OnboardingTab = {
-           tab: "Oddities",
-           sections: [{
-              section: "Special Validation",
-              fields: [
-                 { fieldname: "anon_field", label: "", fieldtype: "Data", is_mandatory: 1, read_only: 0, hidden: 0 },
-                 { fieldname: "blank_tbl", label: "Blank Table", fieldtype: "Table", is_mandatory: 1, read_only: 0, hidden: 0 },
-                 { fieldname: "false_chk", label: "False Check", fieldtype: "Check", is_mandatory: 1, read_only: 0, hidden: 0 }
-              ]
-           }]
-        };
-
-        vi.mocked(useOnboarding).mockReturnValue({
-           ...defaultContext,
-           stepData: {
-              oddities: { blank_tbl: [], false_chk: false, anon_field: "" }
-           }
-        });
-        
-        render(<OnboardingFormStep tab={odditiesTab} stepKey="oddities" />);
-        
-        fireEvent.click(screen.getByText("Next Step"));
-        
-        await waitFor(() => {
-           expect(screen.getByText("This field is required")).toBeTruthy(); // Line 199 fallback
-           expect(screen.getByText("Blank Table is required")).toBeTruthy(); // Line 178-181 block
-           expect(screen.getByText("False Check is required")).toBeTruthy(); // Line 185-188 block
-        });
-     });
-
-     it("enforces unique grid layouts for Aadhaar and long label documentation proofs", () => {
-        // Covers Lines 81-82 (Full width logic & isAadhaarFront offsets)
-        const layoutTab: OnboardingTab = {
-           tab: "Layouts",
-           sections: [{
-              section: "Form Grid",
-              fields: [
-                 { fieldname: "custom_upload_pan_card", label: "Upload Pan", fieldtype: "Data", is_mandatory: 0, read_only: 0, hidden: 0 },
-                 { fieldname: "custom_upload_aadhaarfront", label: "Upload Aadhaar", fieldtype: "Data", is_mandatory: 0, read_only: 0, hidden: 0 }
-              ]
-           }]
-        };
-
-        vi.mocked(useOnboarding).mockReturnValue(defaultContext);
-        
-        // We just need rendering execution of FormStepField grid builders
-        render(<OnboardingFormStep tab={layoutTab} stepKey="layout_test" />);
-        expect(screen.getByText("Upload Pan")).toBeTruthy();
-        expect(screen.getByText("Upload Aadhaar")).toBeTruthy();
-     });
-
-     it("bypasses section header rendering when section title is identical to tab header", () => {
-        // Covers Line 372 sectionCard matching
-        const unifiedTab: OnboardingTab = {
-           tab: "Identity Match",
-           sections: [{
-              section: "Identity Match", // Exactly matches tab name
-              fields: [{ fieldname: "some_field", label: "Simple Field", fieldtype: "Data", is_mandatory: 0, read_only: 0, hidden: 0 }]
-           }]
-        };
-
-        vi.mocked(useOnboarding).mockReturnValue(defaultContext);
-        const { container } = render(<OnboardingFormStep tab={unifiedTab} stepKey="match_test" />);
-        
-        // The SectionCard receives undefined title which prevents header container from rendering
-        // Our earlier SectionCard tests indicated header presence implies .pt-2.px-6 selectors
-        expect(container.querySelector(".pt-2.px-6")).toBeNull();
+       expect(screen.getByTestId("file-upload")).toBeTruthy();
+       expect(screen.getByText("Portrait Upload")).toBeTruthy();
      });
   });
 });

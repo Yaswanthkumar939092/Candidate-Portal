@@ -15,7 +15,7 @@ const PdfViewer = dynamic(() => import("./PdfViewer"), {
   ssr: false,
   loading: () => (
     <div className="flex flex-col items-center gap-3 py-10">
-      <Loader2 className="h-6 w-6 animate-spin text-[#1993e5]" />
+      <Loader2 className="h-6 w-6 animate-spin text-primary" />
       <p className="text-sm text-[#64748b]">Loading Document Viewer...</p>
     </div>
   ),
@@ -29,7 +29,7 @@ export default function JobOfferPage() {
       fallback={
         <div className="font-sans text-[#334155] bg-[#f8fafc] min-h-screen flex items-center justify-center">
           <div className="flex flex-col items-center gap-3">
-            <Loader2 className="h-8 w-8 animate-spin text-[#1993e5]" />
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <p className="text-sm text-[#64748b]">Loading offer...</p>
           </div>
         </div>
@@ -141,7 +141,7 @@ function JobOfferContent() {
     return (
       <div className="font-sans text-[#334155] bg-[#f8fafc] min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-[#1993e5]" />
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <p className="text-sm text-[#64748b]">Loading offer...</p>
         </div>
       </div>
@@ -174,7 +174,7 @@ function JobOfferContent() {
     return (
       <div className="font-sans text-[#334155] bg-[#f8fafc] min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-[#1993e5]" />
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <p className="text-sm text-[#64748b]">Fetching offer details...</p>
         </div>
       </div>
@@ -230,7 +230,7 @@ function JobOfferContent() {
                   {isPdfLoading ? (
                     <div className="bg-white border border-[#e2e8f0] rounded-xl p-8 shadow-[0_1px_3px_rgba(0,0,0,0.04)] flex items-center justify-center min-h-[600px]">
                       <div className="flex flex-col items-center gap-3">
-                        <Loader2 className="h-6 w-6 animate-spin text-[#1993e5]" />
+                        <Loader2 className="h-6 w-6 animate-spin text-primary" />
                         <p className="text-sm text-[#64748b]">Loading offer letter...</p>
                       </div>
                     </div>
@@ -474,7 +474,7 @@ function JobOfferContent() {
           <div className="flex flex-col items-center gap-3">
             <Button
               onClick={() => router.push("/dashboard")}
-              className="px-6 py-2.5 bg-[#1993e5] text-white rounded-lg font-semibold hover:bg-[#157ec4] transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 h-11"
+              className="px-6 py-2.5 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90 transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 h-11"
             >
               Go to Dashboard
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>

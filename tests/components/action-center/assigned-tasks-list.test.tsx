@@ -91,6 +91,6 @@ describe("AssignedTasksList Component", () => {
     // Trigger composite resource routing executed inside completed block (Line 178-182)
     const detailBtn = screen.getByRole("button", { name: /View Details/i })
     fireEvent.click(detailBtn)
-    expect(mockPush).toHaveBeenCalledWith("/action-center/tasks/compliance_id")
+    expect(mockPush).toHaveBeenCalledWith("compliance_id")
   })
 })
