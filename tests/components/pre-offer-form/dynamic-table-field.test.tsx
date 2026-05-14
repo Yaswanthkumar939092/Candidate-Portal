@@ -1,11 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { DynamicTableField } from "@/components/onboarding/dynamic-table-field";
+import { DynamicTableField } from "@/components/pre-offer-form/dynamic-table-field";
 import { useForm, FormProvider, UseFormReturn, FieldValues, FieldErrors } from "react-hook-form";
-import { OnboardingField } from "@/lib/types/onboarding";
+import { PreOfferField } from "@/lib/types/pre-offer";
 
 interface DynamicFieldRendererProps {
-  field: OnboardingField;
+  field: PreOfferField;
   value: unknown;
   onChange: (value: unknown) => void;
   error?: string;
@@ -16,7 +16,6 @@ interface WrapperProps {
   defaultValues?: FieldValues;
 }
 
-// Mocking DynamicFieldRenderer since it's used inside
 vi.mock("@/components/ui/field-renderer", () => ({
   DynamicFieldRenderer: ({ field, value, onChange, error }: DynamicFieldRendererProps) => (
     <div data-testid={`field-${field.fieldname}`}>
@@ -41,7 +40,7 @@ const Wrapper = ({ children, defaultValues = {} }: WrapperProps) => {
 };
 
 describe("DynamicTableField", () => {
-  const mockTableField: OnboardingField = {
+  const mockTableField: PreOfferField = {
     fieldname: "education",
     label: "Education",
     is_mandatory: 1,
