@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 // Standard API response interface
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean
   data?: T
   message?: string
@@ -285,7 +285,7 @@ export const fileUploadResponse = (
 
 // Export response
 export const exportResponse = (
-  data: any,
+  data: unknown,
   filename: string,
   format: 'json' | 'csv' = 'json'
 ): NextResponse => {

@@ -213,7 +213,10 @@ class EmailService {
    * Send bulk emails with rate limiting
    */
   async sendBulkEmails(
-    emails: Array<{ to: string; data: any; template: 'job_alert' | 'newsletter' }>,
+    emails: Array<
+      | { template: 'job_alert'; to: string; data: JobAlertEmailData }
+      | { template: 'newsletter'; to: string; data: Record<string, unknown> }
+    >,
     delayMs: number = 100
   ): Promise<{ sent: number; failed: number }> {
     let sent = 0

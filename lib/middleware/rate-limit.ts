@@ -144,7 +144,7 @@ export class RateLimiter {
     // Call onLimitReached callback if limit is exceeded
     if (!result.allowed && this.config.onLimitReached) {
       try {
-        await (this.config.onLimitReached as any)(request, result)
+        await (this.config.onLimitReached as (req: NextRequest, res: RateLimitResult) => Promise<void> | void)(request, result)
       } catch (error) {
         console.error('Rate limit onLimitReached callback error:', error)
       }
@@ -155,7 +155,7 @@ export class RateLimiter {
 
   private generateKey(request: NextRequest): string {
     if (this.config.keyGenerator) {
-      return (this.config.keyGenerator as any)(request) as string
+      return (this.config.keyGenerator as (req: NextRequest) => string)(request)
     }
 
     // Default key generation based on IP address

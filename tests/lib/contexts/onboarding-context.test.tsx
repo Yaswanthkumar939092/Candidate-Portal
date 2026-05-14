@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor, act } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 vi.mock('next/navigation', () => ({
@@ -34,6 +34,7 @@ import { useOnboardingSubmit } from '@/lib/hooks/useOnboardingMutation'
 import { useOnboardingForm } from '@/lib/hooks/useOnboardingForm'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { OnboardingForm } from '@/types/onboarding'
 
 const mockUseRouter = useRouter as ReturnType<typeof vi.fn>
 const mockUseSearchParams = useSearchParams as ReturnType<typeof vi.fn>
@@ -47,6 +48,7 @@ const mockMutateAsync = vi.fn()
 const mockInvalidateQueries = vi.fn()
 
 const sampleFormConfig = {
+  applicantId: "test-applicant",
   status: 'Pending',
   tabs: [
     {
@@ -71,9 +73,9 @@ const sampleFormConfig = {
       ],
     },
   ],
-}
+} as unknown as OnboardingForm
 
-function setupMocks(formConfigOverride?: any) {
+function setupMocks(formConfigOverride?: Partial<OnboardingForm>) {
   mockUseRouter.mockReturnValue({ push: mockPush })
   mockUseSearchParams.mockReturnValue({ get: vi.fn().mockReturnValue(null) })
   mockUseAuth.mockReturnValue({ user: { email: 'test@example.com', user_metadata: {} } })
@@ -381,7 +383,7 @@ describe('OnboardingContext', () => {
         <div>
           <span data-testid="saving">{String(isSaving)}</span>
           <span data-testid="status">{status}</span>
-          <button onClick={submitAll}>Submit</button>
+          <button onClick={() => submitAll()}>Submit</button>
         </div>
       )
     }

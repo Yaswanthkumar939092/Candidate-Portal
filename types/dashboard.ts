@@ -1,4 +1,4 @@
-export interface DashboardWorkLocationDetails {
+export type DashboardWorkLocationDetails = {
   name: string;
   branch: string;
   custom_location_code: string;
@@ -15,9 +15,9 @@ export interface DashboardWorkLocationDetails {
   custom_telephone_no: string | null;
   custom_google_map_link: string | null;
   custom_location_url: string | null;
-}
+};
 
-export interface DashboardKeyContact {
+export type DashboardKeyContact = {
   name: string;
   employee: string;
   role: string;
@@ -25,9 +25,15 @@ export interface DashboardKeyContact {
   phone_number: string;
   idx: number;
   employee_name: string;
-}
+};
 
-export interface DashboardData {
+export type DashboardFormCompletion = {
+  total_fields: number;
+  filled_fields: number;
+  percentage: number;
+};
+
+export type DashboardData = {
   name: string;
   date_of_joining: string;
   designation: string;
@@ -35,7 +41,10 @@ export interface DashboardData {
   work_location: string;
   work_location_details: DashboardWorkLocationDetails;
   key_contacts: DashboardKeyContact[];
-}
+  onboarding_stage?: string;
+  form_completion?: DashboardFormCompletion;
+  onboarding_status?: boolean;
+};
 
 export interface DashboardApiResponse {
   success: boolean;

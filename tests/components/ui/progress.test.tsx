@@ -1,3 +1,4 @@
+import React from "react"
 import { describe, it, expect } from "vitest"
 import { render, screen } from "@testing-library/react"
 import { Progress } from "@/components/ui/progress"
@@ -35,7 +36,7 @@ describe("Progress Component", () => {
       const { container } = render(<Progress value={0} />)
       const indicator = container.querySelector('[role="progressbar"] > div')
       const style = indicator?.getAttribute("style")
-      expect(style?.includes("translateX(-100%)")|| style?.includes("translateX(0)")).toBeTruthy()
+      expect(style?.includes("translateX(-100%)") || style?.includes("translateX(0)")).toBeTruthy()
     })
 
     it("handles 100 value", () => {
@@ -188,9 +189,9 @@ describe("Progress Component", () => {
 
   describe("ForwardRef", () => {
     it("forwards ref correctly", () => {
-      const ref = { current: null }
+      const ref = React.createRef<HTMLDivElement>()
       const { container } = render(
-        <Progress value={50} ref={ref as any} />
+        <Progress value={50} ref={ref} />
       )
 
       const progressRoot = container.querySelector('[role="progressbar"]')
@@ -199,11 +200,11 @@ describe("Progress Component", () => {
 
     it("allows accessing DOM properties via ref", () => {
       const TestComponent = () => {
-        const ref = { current: null }
+        const ref = React.createRef<HTMLDivElement>()
         return (
           <Progress
             value={50}
-            ref={ref as any}
+            ref={ref}
             data-testid="progress"
           />
         )
@@ -265,7 +266,7 @@ describe("Progress Component", () => {
     })
 
     it("handles null value", () => {
-      const { container } = render(<Progress value={null as any} />)
+      const { container } = render(<Progress value={null as unknown as number} />)
       const progressRoot = container.querySelector('[role="progressbar"]')
       expect(progressRoot).toBeTruthy()
     })

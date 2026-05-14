@@ -8,8 +8,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, CheckCircle, AlertTriangle, Eye, EyeOff } from 'lucide-react'
 
+interface FrappeConfigData {
+  frappe?: {
+    url: string
+    api_key: string
+    api_secret: string
+  }
+}
+
 interface FrappeConfigProps {
-  onNext: (data: any) => void
+  onNext: (data?: FrappeConfigData) => void
   initialData?: {
     url?: string
     api_key?: string

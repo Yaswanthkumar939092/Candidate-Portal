@@ -182,12 +182,12 @@ export function handleApiError(error: unknown): NextResponse {
 export const createErrorResponse = (
   message: string,
   status: number = 500,
-  details?: any
+  details?: unknown
 ): NextResponse => {
   return NextResponse.json(
     {
       error: message,
-      ...(details && { details }),
+      ...(details ? { details } : {}),
       timestamp: new Date().toISOString()
     },
     { status }
@@ -196,7 +196,7 @@ export const createErrorResponse = (
 
 // Success response utility
 export const createSuccessResponse = (
-  data: any,
+  data: Record<string, unknown>,
   message?: string,
   status: number = 200
 ): NextResponse => {
@@ -211,7 +211,7 @@ export const createSuccessResponse = (
 }
 
 // Async error handler wrapper
-export function asyncHandler<T extends any[]>(
+export function asyncHandler<T extends unknown[]>(
   fn: (...args: T) => Promise<NextResponse>
 ) {
   return async (...args: T): Promise<NextResponse> => {

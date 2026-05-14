@@ -130,7 +130,7 @@ export const isMultipartFormData = (request: NextRequest): boolean => {
 /**
  * Parse JSON body safely
  */
-export const parseJSONBody = async (request: NextRequest): Promise<any> => {
+export const parseJSONBody = async (request: NextRequest): Promise<unknown> => {
   try {
     const text = await request.text()
     return text ? JSON.parse(text) : {}
@@ -143,7 +143,7 @@ export const parseJSONBody = async (request: NextRequest): Promise<any> => {
  * Validate required fields in request body
  */
 export const validateRequiredFields = (
-  body: Record<string, any>,
+  body: Record<string, unknown>,
   requiredFields: string[]
 ): string[] => {
   const missingFields: string[] = []
@@ -167,8 +167,8 @@ export const sanitizeString = (input: string): string => {
 /**
  * Clean object by removing null, undefined, and empty string values
  */
-export const cleanObject = (obj: Record<string, any>): Record<string, any> => {
-  const cleaned: Record<string, any> = {}
+export const cleanObject = (obj: Record<string, unknown>): Record<string, unknown> => {
+  const cleaned: Record<string, unknown> = {}
 
   for (const [key, value] of Object.entries(obj)) {
     if (value !== null && value !== undefined && value !== '') {
@@ -183,10 +183,10 @@ export const cleanObject = (obj: Record<string, any>): Record<string, any> => {
  * Build database query filters
  */
 export const buildQueryFilters = (
-  filters: Record<string, any>,
+  filters: Record<string, unknown>,
   fieldMappings: Record<string, string> = {}
-): Array<{ field: string; operator: string; value: any }> => {
-  const queryFilters: Array<{ field: string; operator: string; value: any }> = []
+): Array<{ field: string; operator: string; value: unknown }> => {
+  const queryFilters: Array<{ field: string; operator: string; value: unknown }> = []
 
   for (const [key, value] of Object.entries(filters)) {
     if (value === null || value === undefined) continue
@@ -235,7 +235,7 @@ export const buildQueryFilters = (
 export const generateCacheKey = (
   prefix: string,
   request: NextRequest,
-  additionalParams: Record<string, any> = {}
+  additionalParams: Record<string, unknown> = {}
 ): string => {
   const { searchParams, pathname } = new URL(request.url)
   const params = { ...Object.fromEntries(searchParams), ...additionalParams }
@@ -306,8 +306,8 @@ export const createAuditLogData = (
   action: string,
   resourceType: string,
   resourceId?: string,
-  oldValues?: any,
-  newValues?: any
+  oldValues?: unknown,
+  newValues?: unknown
 ) => {
   return {
     user_id: userId,

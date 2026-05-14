@@ -1,3 +1,4 @@
+import React from "react"
 import { describe, it, expect } from "vitest"
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
@@ -389,8 +390,8 @@ describe("Slider Component", () => {
 
   describe("ForwardRef", () => {
     it("forwards ref to root element", () => {
-      const ref = { current: null }
-      render(<Slider ref={ref as any} data-testid="slider" />)
+      const ref = React.createRef<HTMLSpanElement>()
+      render(<Slider ref={ref} data-testid="slider" />)
 
       const slider = screen.getByTestId("slider")
       expect(slider).toBeTruthy()
