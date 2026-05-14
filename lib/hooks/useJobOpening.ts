@@ -67,7 +67,7 @@ export const useDeleteDraftJobApplicant = () => {
 
 export function useJobApplicationForm() {
   return useQuery({
-    queryKey: ["job-application-form"],
+    queryKey: ["job-application-form", job_opening, form_name],
     queryFn: async () => {
       const data = await jobApplicationService.getJobApplicationForm();
       return data ?? { fields: [] };
