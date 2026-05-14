@@ -116,4 +116,56 @@ describe("OnboardingStepNav", () => {
     expect(backLink).toBeTruthy();
     expect(backLink.closest('a')).toHaveAttribute('href', '/dashboard');
   });
+
+  describe("Specific Missed Line Coverage Expansion", () => {
+    it("falls back safely to empty step set when formConfig tabs are completely omitted", () => {
+      // Covers Line 25-36 (formConfig?.tabs fallback, and zero progress divisor logic)
+      vi.mocked(useOnboarding).mockReturnValue({
+        ...defaultProps,
+        formConfig: undefined
+      });
+      const { container } = render(<OnboardingStepNav />);
+      
+      // Review will still be generated as the solitary step (line 32)
+      expect(screen.getByText("Review")).toBeTruthy();
+      const progressBar = container.querySelector(".bg-primary-foreground.transition-all");
+      expect(progressBar).toHaveStyle("width: 0%"); // 0 completed / 1 step = 0%
+    });
+
+    it("applies specific style indicators for steps that are past but not formally completed", () => {
+       // Covers Line 86 style branch: isPast && !isCompleted && !isCurrent
+       vi.mocked(useOnboarding).mockReturnValue({
+         ...defaultProps,
+         currentStep: 1,
+         completedSteps: new Set() // Zero steps explicitly marked as completed
+       });
+       
+       render(<OnboardingStepNav />);
+       
+       const firstStepButton = screen.getByText("Personal Information").closest("button")!;
+       // Line 86 injects "text-muted-foreground hover:bg-muted"
+       expect(firstStepButton).toHaveClass("text-muted-foreground");
+    });
+
+    it("displays granular field completion metrics when step count metadata exists", () => {
+       // Covers Line 114: step.counts rendering
+       vi.mocked(useOnboarding).mockReturnValue({
+          ...defaultProps,
+          formConfig: {
+             applicantId: "v2-id",
+             status: "Pending",
+             tabs: [
+                { 
+                  tab: "Counted Set", 
+                  sections: [], 
+                  field_counts: { filled: 4, total: 10, approved: 0, rejected: 0, pending: 0 } 
+                }
+             ]
+          }
+       });
+       
+       render(<OnboardingStepNav />);
+       expect(screen.getByText("4/10")).toBeTruthy();
+    });
+  });
 });

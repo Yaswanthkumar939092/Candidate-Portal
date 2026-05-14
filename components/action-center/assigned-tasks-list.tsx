@@ -124,7 +124,7 @@ export function AssignedTasksList({
                   const statusConfig = STATUS_STYLES[task.status] ?? STATUS_STYLES.pending
                   const StatusIcon = task.icon ? (ICON_MAP[task.icon] || statusConfig.icon) : statusConfig.icon
                   const bgClass = task.iconColor || statusConfig.iconBgColor
-                  
+
 
                   return (
                     <Card key={task.id} className="flex flex-col rounded-2xl border border-slate-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950 transition-shadow hover:shadow-md p-0 gap-0 py-0 w-full md:max-w-[570px]">
@@ -137,18 +137,18 @@ export function AssignedTasksList({
                             <div className="flex flex-col pt-0.5 min-w-0">
                               <h4 className="font-bold text-base text-slate-900 dark:text-gray-100 leading-tight ">{task.title}</h4>
                               <span className="text-xs text-[#667085] mt-1.5 font-medium dark:text-gray-400 leading-none ">{task?.description || "No description available"}</span>
-          
+
                               {task.attachment && (<span className="text-xs text-[#667085] mt-1.5 font-medium dark:text-gray-400 leading-none truncate">
-                               Document:<button
-                               onClick={() => {
-                               setPdfUrl(`${task?.attachment}`)
-                               setIsOpen(true)
-                                }}
-                            className="text-blue-600 underline hover:text-blue-800 transition-colors"
-                            >
-                            View
-                            </button>
-                            </span>)}
+                                Document:<button
+                                  onClick={() => {
+                                    setPdfUrl(`${task?.attachment}`)
+                                    setIsOpen(true)
+                                  }}
+                                  className="text-blue-600 underline hover:text-blue-800 transition-colors"
+                                >
+                                  View
+                                </button>
+                              </span>)}
                               <div className="mt-3.5 flex items-center gap-1.5 text-xs font-medium text-[#475467] whitespace-nowrap dark:text-gray-400 overflow-hidden text-ellipsis">
                                 <Clock className="h-3.5 w-3.5 shrink-0" />
                                 <span className="">{task.dueDate ? `Due by ${task.dueDate}` : task.completedDate ? `Completed on ${task.completedDate}` : "No due date"}</span>
@@ -165,26 +165,23 @@ export function AssignedTasksList({
 
                       <CardFooter className="px-5 pb-5 pt-0 justify-end">
                         {(task.status === "action_required" || task.status === "pending") ? (
-                          <button 
-                          onClick={() => {
-                            if (task.redirectUrl) {
-                              router.push(`${task.redirectUrl}`)
-                            }
-                          }}
-                          className="inline-flex items-center gap-1.5 text-[14px] font-bold text-[#2E90FA] hover:text-[#2E90FA]/80 transition-colors">
+                          <button
+                            onClick={() => {
+                              if (task.redirectUrl) {
+                                router.push(`${task.redirectUrl}`)
+                              }
+                            }}
+                            className="inline-flex items-center gap-1.5 text-[14px] font-bold text-[#2E90FA] hover:text-[#2E90FA]/80 transition-colors">
                             Complete now <ArrowRight className="h-3.5 w-3.5 mt-[1px]" />
                           </button>
                         ) : (
                           <button
-                          onClick={() => {
-                            if (task.redirectUrl) {
-                              const targetUrl = task.redirectUrl.startsWith('/')
-                                ? task.redirectUrl
-                                : `/action-center/tasks/${task.redirectUrl}`;
-                              router.push(targetUrl);
-                            }
-                          }}
-                           className="inline-flex items-center gap-1.5 text-[14px] font-bold text-[#2E90FA] hover:text-[#2E90FA]/80 transition-colors">
+                            onClick={() => {
+                              if (task.redirectUrl) {
+                                router.push(`${task.redirectUrl}`)
+                              }
+                            }}
+                            className="inline-flex items-center gap-1.5 text-[14px] font-bold text-[#2E90FA] hover:text-[#2E90FA]/80 transition-colors">
                             View Details <ArrowRight className="h-3.5 w-3.5 mt-[1px]" />
                           </button>
                         )}
@@ -197,28 +194,28 @@ export function AssignedTasksList({
           </Card>
         )
       })}
-{isOpen && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-    <div className="bg-white rounded-lg w-[80%] h-[80%] p-8 relative">
-      
-      <button
-        onClick={() => setIsOpen(false)}
-        className="absolute top-1 right-3 text-gray-500"
-      >
-        ✕
-      </button>
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg w-[80%] h-[80%] p-8 relative">
 
-      {pdfUrl ? (
-        <iframe
-         src={`${BASE_URL}${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0`}
-         className="w-full h-full bg-white"
-         />
-      ):(
-        <p className="text-center text-gray-500 mt-10">No document available</p>
+            <button
+              onClick={() => setIsOpen(false)}
+              className="absolute top-1 right-3 text-gray-500"
+            >
+              ✕
+            </button>
+
+            {pdfUrl ? (
+              <iframe
+                src={`${BASE_URL}${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0`}
+                className="w-full h-full bg-white"
+              />
+            ) : (
+              <p className="text-center text-gray-500 mt-10">No document available</p>
+            )}
+          </div>
+        </div>
       )}
-    </div>
-  </div>
-)}
     </div>
   )
 }
