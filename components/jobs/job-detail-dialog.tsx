@@ -10,14 +10,14 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
-import { useRouter } from "next/navigation"; 
+import { useRouter } from "next/navigation";
 
 interface JobDetailDialogProps {
   job: {
+    upper_range: string | null;
+    lower_range: string | null;
     custom_qualifications: string[];
     id: string;
     title: string;
@@ -38,9 +38,6 @@ interface JobDetailDialogProps {
 }
 
 /**
- * Full dialog showing job details with a "Why you're a match" section,
- * job description, requirements list, and Cancel/Apply action buttons.
- *
  * @param job - The job object with detail fields
  * @param open - Whether the dialog is open
  * @param onOpenChange - Callback to toggle dialog
@@ -53,7 +50,6 @@ export function JobDetailDialog({
 }: JobDetailDialogProps) {
   if (!job) return null;
   const router = useRouter();
-
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -71,32 +67,14 @@ export function JobDetailDialog({
             </span>
             <span className="inline-flex items-center gap-1">
               <Clock className="h-3 w-3" />
-              {job.experience}
+              {job.type}
             </span>
             <span className="inline-flex items-center gap-1">
               <IndianRupee className="h-3 w-3" />
-              {job.salary}
+              {job.lower_range || 0} - {job.upper_range} LPA
             </span>
           </DialogDescription>
         </DialogHeader>
-
-        {/* Why you're a match */}
-        <div className="rounded-lg bg-red-50 p-4 dark:bg-red-900/10">
-          <div className="flex items-center justify-between">
-            <h4 className="text-sm font-semibold text-foreground">
-              Why you&apos;re a match
-            </h4>
-            <span className="text-sm font-bold text-primary">
-              {job.matchPercentage}%
-            </span>
-          </div>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Your resume matches key requirements for this role in{" "}
-            <span className="font-medium">Figma</span>,{" "}
-            <span className="font-medium">Product Strategy</span>, and{" "}
-            <span className="font-medium">UX/UI</span>.
-          </p>
-        </div>
 
         <Separator />
 
@@ -106,9 +84,9 @@ export function JobDetailDialog({
             Job Description
           </h4>
           <div
-            className="list-disc space-y-1 pl-5 text-sm text-muted-foreground"
-            dangerouslySetInnerHTML={{ __html: job.description || "" }}
-          />
+  className="prose prose-sm max-w-none text-muted-foreground [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-0.5"
+  dangerouslySetInnerHTML={{ __html: job.description || "" }}
+/>
         </div>
 
         <DialogFooter>
@@ -116,16 +94,15 @@ export function JobDetailDialog({
             Cancel
           </Button>
           <Button
-  onClick={() => {
-    onOpenChange(false);
-    router.push(`/open-jobs/${job.id}/apply-job`);
-  }}
->
-  Apply
-</Button>
+            onClick={() => {
+              onOpenChange(false);
+              router.push(`/open-jobs/${job.id}/apply-job`);
+            }}
+          >
+            Apply
+          </Button>
         </DialogFooter>
       </DialogContent>
-      
     </Dialog>
   );
 }
