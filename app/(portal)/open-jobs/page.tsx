@@ -163,7 +163,8 @@ export default function OpenJobsPage() {
       location: job.location || job.custom_location || "Not specified",
       type: job.employment_type || "full-time",
       experience: job.custom_work_experience,
-      salary: job.custom_salary || "Not disclosed",
+      lower_range: job.lower_range,
+      upper_range: job.upper_range,
       description: job.description,
       status: job.status,
     }))
@@ -346,7 +347,19 @@ export default function OpenJobsPage() {
       <JobDetailDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        job={selectedJob}
+        job={
+          selectedJob
+            ? {
+                ...selectedJob,
+                upper_range: selectedJob.upper_range || null,
+                lower_range: selectedJob.lower_range || null,
+                custom_qualifications: selectedJob.custom_qualifications || [],
+                salary: `${selectedJob.lower_range || 0} - ${selectedJob.upper_range || 0}`,
+                skills: selectedJob.skills || [],
+                matchPercentage: selectedJob.matchPercentage || 0,
+              }
+            : null
+        }
         onApply={setApplyFormOpen}
       />
     </div>

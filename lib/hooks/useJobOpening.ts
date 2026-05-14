@@ -65,11 +65,11 @@ export const useDeleteDraftJobApplicant = () => {
   });
 };
 
-export function useJobApplicationForm() {
+export function useJobApplicationForm(job_opening?: string, form_name?: string) {
   return useQuery({
     queryKey: ["job-application-form", job_opening, form_name],
     queryFn: async () => {
-      const data = await jobApplicationService.getJobApplicationForm();
+      const data = await jobApplicationService.getJobApplicationForm(job_opening, form_name);
       return data ?? { fields: [] };
     },
   });

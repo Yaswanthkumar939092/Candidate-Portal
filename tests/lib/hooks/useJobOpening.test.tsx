@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { 
@@ -95,10 +95,11 @@ describe("useJobOpening Hooks", () => {
     const mockForm = { fields: [{ label: "Name" }] };
     (jobApplicationService.getJobApplicationForm as any).mockResolvedValue(mockForm);
 
-    const { result } = renderHook(() => useJobApplicationForm(), { wrapper });
+    const { result } = renderHook(() => useJobApplicationForm("job1", "test"), { wrapper });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual(mockForm);
+    expect(jobApplicationService.getJobApplicationForm).toHaveBeenCalledWith("job1", "test");
   });
 
   describe("Mutation Callbacks", () => {
