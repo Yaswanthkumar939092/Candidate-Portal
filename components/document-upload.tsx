@@ -250,7 +250,7 @@ export function DocumentUpload({
         className={cn(
           "border-2 border-dashed transition-colors cursor-pointer",
           isDragOver
-            ? "border-[#1993e5] bg-blue-50"
+            ? "border-primary bg-primary/5"
             : "border-gray-300 hover:border-gray-400"
         )}
         onDrop={handleDrop}
@@ -304,7 +304,7 @@ export function DocumentUpload({
                       <div className="flex items-center space-x-2">
                         <div className="flex-1 bg-gray-200 rounded-full h-1.5">
                           <div
-                            className="bg-[#1993e5] h-1.5 rounded-full transition-all"
+                            className="bg-primary h-1.5 rounded-full transition-all"
                             style={{ width: `${file.uploadProgress || 0}%` }}
                           />
                         </div>
@@ -324,7 +324,7 @@ export function DocumentUpload({
 
                 <div className="flex items-center space-x-2">
                   {file.status === "uploading" && (
-                    <Loader2 className="w-4 h-4 text-[#1993e5] animate-spin" />
+                    <Loader2 className="w-4 h-4 text-primary animate-spin" />
                   )}
 
                   {file.status === "success" && (
