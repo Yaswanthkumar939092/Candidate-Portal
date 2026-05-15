@@ -6,8 +6,10 @@ const { mockGetCurrentUser } = vi.hoisted(() => ({
   mockGetCurrentUser: vi.fn(),
 }));
 
-vi.mock("@/lib/supabase", () => ({
-  getCurrentUser: mockGetCurrentUser,
+vi.mock("@/lib/auth", () => ({
+  auth: {
+    getCurrentUser: mockGetCurrentUser,
+  },
 }));
 
 describe("useCurrentUser", () => {
