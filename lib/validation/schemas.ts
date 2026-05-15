@@ -103,30 +103,6 @@ export const updateJobSchema = jobBaseSchema.partial().extend({
   path: ['salary_min']
 })
 
-export const updateJobSchema = z.object({
-  title: z.string().min(1, 'Job title is required').max(255, 'Title too long').optional(),
-  company: z.string().min(1, 'Company name is required').max(255, 'Company name too long').optional(),
-  company_logo: z.string().url('Invalid logo URL').optional(),
-  description: z.string().min(10, 'Description must be at least 10 characters').optional(),
-  requirements: z.array(z.string()).optional(),
-  benefits: z.array(z.string()).optional(),
-  salary_min: z.number().min(0, 'Minimum salary must be positive').optional(),
-  salary_max: z.number().min(0, 'Maximum salary must be positive').optional(),
-  location: z.string().min(1, 'Location is required').optional(),
-  job_type: z.enum(['full-time', 'part-time', 'contract', 'freelance', 'internship']).optional(),
-  experience_level: z.enum(['entry', 'junior', 'mid', 'senior', 'lead']).optional(),
-  skills_required: z.array(z.string()).optional(),
-  application_deadline: z.string().datetime().optional(),
-  is_active: z.boolean().optional(),
-}).refine((data) => {
-  if (data.salary_min && data.salary_max) {
-    return data.salary_min <= data.salary_max
-  }
-  return true
-}, {
-  message: 'Minimum salary cannot be greater than maximum salary',
-  path: ['salary_min']
-})
 
 // Application schemas
 export const applicationsQuerySchema = z.object({
