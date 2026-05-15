@@ -180,8 +180,8 @@ export function AssignedTasksList({
                             if (task.redirectUrl) {
                               const targetUrl = task.redirectUrl.startsWith('/')
                                 ? task.redirectUrl
-                                : `${task.redirectUrl}`;
-                              window.location.href = targetUrl;
+                                : `/action-center/tasks/${task.redirectUrl}`;
+                              router.push(targetUrl);
                             }
                           }}
                            className="inline-flex items-center gap-1.5 text-[14px] font-bold text-[#2E90FA] hover:text-[#2E90FA]/80 transition-colors">

@@ -24,13 +24,14 @@ vi.mock("sonner", () => ({
 }));
 
 const mockGet = vi.fn();
+const mockPush = vi.fn();
 
 vi.mock("next/navigation", () => ({
   useSearchParams: () => ({
     get: mockGet,
   }),
   useRouter: () => ({
-    push: vi.fn(),
+    push: mockPush,
   }),
 }));
 
@@ -58,16 +59,6 @@ vi.mock("@/lib/hooks/useCompanyLogo", () => ({
   useCompanyLogo: (...args: unknown[]) => mockUseCompanyLogo(...args),
 }));
 
-const mockGet = vi.fn();
-const mockPush = vi.fn();
-vi.mock("next/navigation", () => ({
-  useSearchParams: () => ({
-    get: mockGet,
-  }),
-  useRouter: () => ({
-    push: mockPush,
-  }),
-}));
 
 // Mock window.scrollTo and window.location.reload
 window.scrollTo = vi.fn();

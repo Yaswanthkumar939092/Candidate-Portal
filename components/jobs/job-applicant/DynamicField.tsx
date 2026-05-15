@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import { useWatch } from "react-hook-form";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -67,6 +68,59 @@ type OverrideComponentProps = {
   error?: string;
   disabled?: boolean;
   className?: string;
+};
+
+// ─── Internal Wrappers ────────────────────────────────────────────────────────
+
+const FieldWrapper = ({
+  field,
+  control,
+  handleChange,
+  error,
+  handleFileUpload,
+  fieldOverrides,
+}: any) => {
+  const value = useWatch({
+    control,
+    name: field.fieldname,
+  });
+
+  return (
+    <DynamicFieldRenderer
+      field={field}
+      value={value}
+      onChange={handleChange}
+      error={error}
+      disabled={!!field.read_only}
+      onAttachChange={handleFileUpload}
+      overrides={fieldOverrides}
+    />
+  );
+};
+
+const TableFieldWrapper = ({
+  field,
+  control,
+  handleChange,
+  error,
+  handleFileUpload,
+}: any) => {
+  const value = useWatch({
+    control,
+    name: field.fieldname,
+  });
+
+  return (
+    <div className="md:col-span-full">
+      <JobApplicationTableField
+        field={field}
+        value={value}
+        onChange={handleChange}
+        onAttachChange={handleFileUpload}
+      />
+      {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
+    </div>
+  );
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -327,37 +381,32 @@ export function JobApplicationStep({
       clearFieldError(field.fieldname);
     };
 
+    const error =
+      (errors[field.fieldname]?.message as string) ||
+      fieldErrors[field.fieldname];
+
     if (field.fieldtype === "Table") {
       return (
-        <div key={field.fieldname} className="md:col-span-full">
-          <JobApplicationTableField
-            field={field}
-            value={watch(field.fieldname)}
-            onChange={handleChange}
-            onAttachChange={handleFileUpload}
-          />
-          {fieldErrors[field.fieldname] && (
-            <p className="mt-1 text-xs text-destructive">
-              {fieldErrors[field.fieldname]}
-            </p>
-          )}
-        </div>
+        <TableFieldWrapper
+          key={field.fieldname}
+          field={field}
+          control={methods.control}
+          handleChange={handleChange}
+          error={error}
+          handleFileUpload={handleFileUpload}
+        />
       );
     }
 
     return (
-      <DynamicFieldRenderer
+      <FieldWrapper
         key={field.fieldname}
         field={field}
-        value={watch(field.fieldname)}
-        onChange={handleChange}
-        error={
-          (errors[field.fieldname]?.message as string) ||
-          fieldErrors[field.fieldname]
-        }
-        disabled={!!field.read_only}
-        onAttachChange={handleFileUpload}
-        overrides={fieldOverrides}
+        control={methods.control}
+        handleChange={handleChange}
+        error={error}
+        handleFileUpload={handleFileUpload}
+        fieldOverrides={fieldOverrides}
       />
     );
   };
