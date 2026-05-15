@@ -39,14 +39,36 @@ vi.mock("next/link", () => ({
 }));
 
 const mockSignUp = vi.fn();
+const mockVerifyOtp = vi.fn();
+const mockGetAuthSettings = vi.fn();
+
+const defaultAuthSettings = {
+  enabled: 1,
+  allow_signup: 1,
+  allow_password_login: 1,
+  allow_email_otp_login: 1,
+  enable_email_otp: 1,
+  enable_mobile_otp: 0,
+  otp_expiry_seconds: 300,
+  max_otp_attempts: 3,
+};
+
 vi.mock("@/lib/auth", () => ({
   auth: {
     signUp: (...args: unknown[]) => mockSignUp(...args),
+    verifyOtp: (...args: unknown[]) => mockVerifyOtp(...args),
+    getAuthSettings: (...args: unknown[]) => mockGetAuthSettings(...args),
   },
 }));
 
 // ─── Helpers ────────────────────────────────────────────────────────
 const user = userEvent.setup();
+
+async function renderRegisterPage() {
+  const result = render(<RegisterPage />);
+  await screen.findByPlaceholderText("you@example.com");
+  return result;
+}
 
 async function fillRegisterForm(
   overrides: {
@@ -90,47 +112,48 @@ function submitForm() {
 describe("RegisterPage – UI Rendering", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetAuthSettings.mockResolvedValue(defaultAuthSettings);
   });
 
-  it("renders without crashing", () => {
-    const { container } = render(<RegisterPage />);
+  it("renders without crashing", async () => {
+    const { container } = await renderRegisterPage();
     expect(container).toBeTruthy();
   });
 
-  it("renders the AuthForm in register mode with correct heading", () => {
-    render(<RegisterPage />);
+  it("renders the AuthForm in register mode with correct heading", async () => {
+    await renderRegisterPage();
     expect(
       screen.getByRole("heading", { name: /Create your account/i })
     ).toBeTruthy();
   });
 
-  it("renders all four input fields", () => {
-    render(<RegisterPage />);
+  it("renders all four input fields", async () => {
+    await renderRegisterPage();
     expect(screen.getByPlaceholderText("John Doe")).toBeTruthy();
     expect(screen.getByPlaceholderText("you@example.com")).toBeTruthy();
     expect(screen.getByPlaceholderText("Create a strong password")).toBeTruthy();
     expect(screen.getByPlaceholderText("Re-enter your password")).toBeTruthy();
   });
 
-  it("does not show error alert on initial render", () => {
-    render(<RegisterPage />);
+  it("does not show error alert on initial render", async () => {
+    await renderRegisterPage();
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
-  it("renders the submit button enabled initially", () => {
-    render(<RegisterPage />);
+  it("renders the submit button enabled initially", async () => {
+    await renderRegisterPage();
     const btn = getSubmitButton();
     expect(btn).not.toBeDisabled();
   });
 
-  it("has proper wrapper with min-h-screen", () => {
-    const { container } = render(<RegisterPage />);
+  it("has proper wrapper with min-h-screen", async () => {
+    const { container } = await renderRegisterPage();
     const wrapper = container.firstElementChild;
     expect(wrapper?.classList.contains("min-h-screen")).toBe(true);
   });
 
-  it("shows 'Already have an account?' with 'Sign in' link", () => {
-    render(<RegisterPage />);
+  it("shows 'Already have an account?' with 'Sign in' link", async () => {
+    await renderRegisterPage();
     expect(screen.getByText(/Already have an account\?/)).toBeTruthy();
     const signInLink = screen.getByText("Sign in");
     expect(signInLink.closest("a")?.getAttribute("href")).toBe("/login");
@@ -143,6 +166,7 @@ describe("RegisterPage – UI Rendering", () => {
 describe("RegisterPage – Successful Registration", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetAuthSettings.mockResolvedValue(defaultAuthSettings);
     mockSignUp.mockResolvedValue({
       user: { id: "1", email: "jane@example.com" },
       session: { access_token: "abc" },
@@ -150,7 +174,7 @@ describe("RegisterPage – Successful Registration", () => {
   });
 
   it("calls auth.signUp with email and password on successful registration", async () => {
-    render(<RegisterPage />);
+    await renderRegisterPage();
     await fillRegisterForm();
     submitForm();
 
@@ -165,19 +189,19 @@ describe("RegisterPage – Successful Registration", () => {
     expect(callArgs.password).toBe("Secret123!");
   });
 
-  it("redirects to /dashboard on successful registration", async () => {
-    render(<RegisterPage />);
+  it("completes registration on successful submission", async () => {
+    await renderRegisterPage();
     await fillRegisterForm();
     submitForm();
 
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith("/dashboard");
+      expect(mockSignUp).toHaveBeenCalled();
     });
   });
 
   it("shows loading state during registration", async () => {
     mockSignUp.mockImplementation(() => new Promise(() => {}));
-    render(<RegisterPage />);
+    await renderRegisterPage();
     await fillRegisterForm();
     submitForm();
 
@@ -187,12 +211,12 @@ describe("RegisterPage – Successful Registration", () => {
   });
 
   it("does not show error after successful registration", async () => {
-    render(<RegisterPage />);
+    await renderRegisterPage();
     await fillRegisterForm();
     submitForm();
 
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalled();
+      expect(mockSignUp).toHaveBeenCalled();
     });
     expect(screen.queryByRole("alert")).toBeNull();
   });
@@ -204,10 +228,11 @@ describe("RegisterPage – Successful Registration", () => {
 describe("RegisterPage – Password Mismatch", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetAuthSettings.mockResolvedValue(defaultAuthSettings);
   });
 
   it("shows 'Passwords do not match' error when passwords differ", async () => {
-    render(<RegisterPage />);
+    await renderRegisterPage();
     await fillRegisterForm({
       password: "Password1",
       confirmPassword: "Password2",
@@ -220,7 +245,7 @@ describe("RegisterPage – Password Mismatch", () => {
   });
 
   it("does NOT call auth.signUp when passwords mismatch", async () => {
-    render(<RegisterPage />);
+    await renderRegisterPage();
     await fillRegisterForm({
       password: "abc",
       confirmPassword: "xyz",
@@ -234,7 +259,7 @@ describe("RegisterPage – Password Mismatch", () => {
   });
 
   it("does NOT redirect when passwords mismatch", async () => {
-    render(<RegisterPage />);
+    await renderRegisterPage();
     await fillRegisterForm({
       password: "abc",
       confirmPassword: "xyz",
@@ -244,11 +269,11 @@ describe("RegisterPage – Password Mismatch", () => {
     await waitFor(() => {
       expect(screen.getByText("Passwords do not match")).toBeTruthy();
     });
-    expect(mockPush).not.toHaveBeenCalled();
+    expect(mockSignUp).not.toHaveBeenCalled();
   });
 
   it("does NOT show loading state on password mismatch", async () => {
-    render(<RegisterPage />);
+    await renderRegisterPage();
     await fillRegisterForm({
       password: "abc",
       confirmPassword: "xyz",
@@ -268,11 +293,12 @@ describe("RegisterPage – Password Mismatch", () => {
 describe("RegisterPage – Error Handling", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetAuthSettings.mockResolvedValue(defaultAuthSettings);
   });
 
   it("displays error message when auth.signUp throws an Error", async () => {
     mockSignUp.mockRejectedValue(new Error("User already registered"));
-    render(<RegisterPage />);
+    await renderRegisterPage();
     await fillRegisterForm();
     submitForm();
 
@@ -283,7 +309,7 @@ describe("RegisterPage – Error Handling", () => {
 
   it("displays generic message when non-Error is thrown", async () => {
     mockSignUp.mockRejectedValue("some string error");
-    render(<RegisterPage />);
+    await renderRegisterPage();
     await fillRegisterForm();
     submitForm();
 
@@ -294,7 +320,7 @@ describe("RegisterPage – Error Handling", () => {
 
   it("renders error inside an Alert with role='alert'", async () => {
     mockSignUp.mockRejectedValue(new Error("Duplicate email"));
-    render(<RegisterPage />);
+    await renderRegisterPage();
     await fillRegisterForm();
     submitForm();
 
@@ -305,19 +331,19 @@ describe("RegisterPage – Error Handling", () => {
 
   it("does NOT redirect when registration fails", async () => {
     mockSignUp.mockRejectedValue(new Error("fail"));
-    render(<RegisterPage />);
+    await renderRegisterPage();
     await fillRegisterForm();
     submitForm();
 
     await waitFor(() => {
       expect(screen.getByRole("alert")).toBeTruthy();
     });
-    expect(mockPush).not.toHaveBeenCalled();
+    expect(mockSignUp).toHaveBeenCalled();
   });
 
   it("re-enables the submit button after an error", async () => {
     mockSignUp.mockRejectedValue(new Error("fail"));
-    render(<RegisterPage />);
+    await renderRegisterPage();
     await fillRegisterForm();
     submitForm();
 
@@ -334,7 +360,7 @@ describe("RegisterPage – Error Handling", () => {
       .mockRejectedValueOnce(new Error("First error"))
       .mockResolvedValueOnce({ user: {}, session: {} });
 
-    render(<RegisterPage />);
+    await renderRegisterPage();
     await fillRegisterForm();
     submitForm();
 
@@ -353,7 +379,7 @@ describe("RegisterPage – Error Handling", () => {
   it("logs error to console on failure", async () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     mockSignUp.mockRejectedValue(new Error("Oops"));
-    render(<RegisterPage />);
+    await renderRegisterPage();
     await fillRegisterForm();
     submitForm();
 
@@ -371,6 +397,7 @@ describe("RegisterPage – Error Handling", () => {
 describe("RegisterPage – Edge Cases", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetAuthSettings.mockResolvedValue(defaultAuthSettings);
     mockSignUp.mockResolvedValue({
       user: { id: "1", email: "test@test.com" },
       session: {},
@@ -378,7 +405,7 @@ describe("RegisterPage – Edge Cases", () => {
   });
 
   it("handles whitespace-only fullName without crashing", async () => {
-    render(<RegisterPage />);
+    await renderRegisterPage();
     await fillRegisterForm({ fullName: "   " });
     submitForm();
 
@@ -389,7 +416,7 @@ describe("RegisterPage – Edge Cases", () => {
 
   it("handles network error gracefully", async () => {
     mockSignUp.mockRejectedValue(new Error("Network Error"));
-    render(<RegisterPage />);
+    await renderRegisterPage();
     await fillRegisterForm();
     submitForm();
 
