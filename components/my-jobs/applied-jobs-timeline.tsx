@@ -105,10 +105,11 @@ const FLAG_STATUS_MAP: Record<string, ApplicationStage> = {
  * Uses the last flag where flag === true.
  */
 function mapFlagsToStage(flags: ApiFlag[]): ApplicationStage {
-  const activeFlags = flags.filter((f) => f.flag)
+  if (!flags || !Array.isArray(flags)) return "pending"
+  const activeFlags = flags.filter((f) => f?.flag)
   if (!activeFlags.length) return "pending"
   const last = activeFlags[activeFlags.length - 1]
-  return FLAG_STATUS_MAP[last.status] ?? "pending"
+  return FLAG_STATUS_MAP[last?.status] ?? "pending"
 }
 
 function ApplicationStageBadge({

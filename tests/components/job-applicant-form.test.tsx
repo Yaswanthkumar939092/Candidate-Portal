@@ -7,6 +7,16 @@ import * as jobAppContext from "@/lib/contexts/job-application-context"
 
 vi.mock("@/lib/contexts/job-application-context")
 
+const mockUseAuth = vi.fn()
+vi.mock("@/lib/contexts/auth-context", () => ({
+  useAuth: () => mockUseAuth(),
+}))
+
+const mockUseGetDraftJobApplicant = vi.fn()
+vi.mock("@/lib/hooks/useJobOpening", () => ({
+  useGetDraftJobApplicant: (...args: any[]) => mockUseGetDraftJobApplicant(...args),
+}))
+
 vi.mock("lucide-react", async () => {
   const actual = await vi.importActual("lucide-react")
   return {
@@ -112,11 +122,14 @@ describe("JobApplicationPage", () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    mockUseAuth.mockReturnValue({ user: { email: "test@example.com" } })
+    mockUseGetDraftJobApplicant.mockReturnValue({ data: null, isLoading: false })
       ; (jobAppContext.useJobApp as unknown as { mockReturnValue: (val: unknown) => void }).mockReturnValue({
         tabs: mockTabs,
         isLoading: false,
         stepData: {},
         setStepData: vi.fn(),
+        initializeAllStepsFromDraft: vi.fn(),
       })
   })
 
