@@ -4,7 +4,7 @@ import { transformFieldsToTabs } from "@/lib/utils/transformJobFields";
 describe("transformJobFields", () => {
   it("returns empty array for empty input", () => {
     expect(transformFieldsToTabs([])).toEqual([]);
-    expect(transformFieldsToTabs(null as any)).toEqual([]);
+    expect(transformFieldsToTabs(null as unknown as Parameters<typeof transformFieldsToTabs>[0])).toEqual([]);
   });
 
   it("groups fields by tab and section", () => {

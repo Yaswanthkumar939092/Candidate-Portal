@@ -1,9 +1,8 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { z } from "zod";
 import { 
   AppError, 
   ValidationError, 
-  NotFoundError, 
   handleApiError, 
   createErrorResponse,
   createSuccessResponse,
@@ -90,7 +89,6 @@ describe("Error Utils", () => {
     });
 
     it("identifies error types correctly", () => {
-      const { z } = require("zod");
       const zodErr = new z.ZodError([]);
       
       const valErr = new ValidationError(zodErr);

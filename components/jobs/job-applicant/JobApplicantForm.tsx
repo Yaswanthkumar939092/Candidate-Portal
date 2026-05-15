@@ -17,7 +17,7 @@ interface JobApplicationPageProps {
 export default function JobApplicationPage({
   jobID,
 }: JobApplicationPageProps) {
-  const { tabs, isLoading, stepData, initializeAllStepsFromDraft } = useJobApp();
+  const { tabs, isLoading, initializeAllStepsFromDraft } = useJobApp();
   const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(

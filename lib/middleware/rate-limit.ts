@@ -357,7 +357,7 @@ export function createAPIKeyRateLimit(apiKey: string) {
     windowMs: 15 * 60 * 1000, // 15 minutes
     maxRequests: 1000, // 1000 requests per window for API key
     message: 'API key rate limit exceeded',
-    keyGenerator: (request: NextRequest) => `api-key:${apiKey}`,
+    keyGenerator: (_request: NextRequest) => `api-key:${apiKey}`,
   })
 }
 
