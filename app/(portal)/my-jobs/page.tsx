@@ -271,7 +271,10 @@ export default function MyJobsPage() {
                       Discard Draft
                     </button>
                     <Button size="sm" className="gap-1" asChild>
-                      <Link href={`/open-jobs/${draft.job_opening}/apply-job`}>
+                      <Link
+                        href={`/open-jobs/${draft.job_opening}/apply-job`}
+                        onClick={() => sessionStorage.setItem(`resume_reload_pending_${draft.job_opening}`, "true")}
+                      >
                         Resume Application
                         <ChevronRight className="h-4 w-4" />
                       </Link>
