@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getCurrentUser } from "../supabase";
+import { auth } from "../auth";
 
 export const useCurrentUser = () => {
   const [userEmail, setUserEmail] = useState<string | null>(null);
@@ -8,7 +8,7 @@ export const useCurrentUser = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const user = await getCurrentUser();
+        const user = await auth.getCurrentUser();
         // Fallback to deepakrajput0006@gmail.com if not logged in
         setUserEmail(user?.email || "deepakrajput0006@gmail.com");
       } catch (error) {
