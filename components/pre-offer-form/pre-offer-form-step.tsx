@@ -174,18 +174,45 @@ export function PreOfferFormStep({
             field.fieldname.toLowerCase().includes("mobile") ||
             field.fieldname.toLowerCase().includes("phone");
 
-          if (!field.hidden && (field.is_mandatory || field.reqd)) {
-            const isCheck = field.fieldtype === "Check";
-            const isTable = field.fieldtype === "Table";
+          const isTable = field.fieldtype === "Table";
 
-            if (isTable) {
-              if (!normalizedValue || !Array.isArray(normalizedValue) || normalizedValue.length === 0) {
-                errorList[field.fieldname] = {
-                  type: "required",
-                  message: `${field.label || "This field"} is required`,
-                };
-              }
-            } else if (isCheck) {
+          if (!field.hidden && isTable) {
+            const rows = Array.isArray(normalizedValue) ? (normalizedValue as Record<string, unknown>[]) : [];
+            const visibleChildFields = field.child_fields?.filter(f => !f.hidden) || [];
+            const mandatoryChildFields = visibleChildFields.filter(f => f.is_mandatory || f.reqd);
+
+            const isRowEmpty = (row: Record<string, unknown>) => {
+              return !visibleChildFields.some(cf => {
+                const val = row[cf.fieldname];
+                return val !== undefined && val !== null && String(val).trim() !== "";
+              });
+            };
+
+            const isRowValid = (row: Record<string, unknown>) => {
+              return mandatoryChildFields.every(cf => {
+                const val = row[cf.fieldname];
+                return val !== undefined && val !== null && String(val).trim() !== "";
+              });
+            };
+
+            const nonEmptyRows = rows.filter(row => !isRowEmpty(row));
+            const isMandatoryTable = !!(field.is_mandatory || field.reqd);
+
+            if (isMandatoryTable && nonEmptyRows.length === 0) {
+              errorList[field.fieldname] = {
+                type: "required",
+                message: `${field.label || "This field"} is required`,
+              };
+            } else if (nonEmptyRows.length > 0 && !nonEmptyRows.every(isRowValid)) {
+              errorList[field.fieldname] = {
+                type: "required",
+                message: `Please complete all required fields in ${field.label}`,
+              };
+            }
+          } else if (!field.hidden && (field.is_mandatory || field.reqd)) {
+            const isCheck = field.fieldtype === "Check";
+
+            if (isCheck) {
               if (!Boolean(normalizedValue)) {
                 errorList[field.fieldname] = {
                   type: "required",

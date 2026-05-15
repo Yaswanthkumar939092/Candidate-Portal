@@ -108,6 +108,13 @@ describe("FileUploadField", () => {
     // Hard to verify input click since it's hidden, but we check common disabled indicators
   });
 
+  it("hides remove button when disabled", () => {
+    render(<FileUploadField label="Resume" value="/path/to/my_resume.pdf" disabled={true} onChange={mockOnChange} />);
+    expect(screen.getByText("my_resume.pdf")).toBeTruthy();
+    expect(screen.queryByLabelText("Remove Resume")).toBeNull();
+  });
+
+
   describe("Expanded Lifecycle & Visual States", () => {
     it("safely invokes internal file selector on wrapper interaction", () => {
        // Line 72: inputRef.current?.click()
@@ -182,6 +189,8 @@ describe("FileUploadField", () => {
        // Implicitly verifies execution loop continued without triggering generic bubble up crashes
        expect(rejectTrigger).toBeTruthy();
     });
+  });
+
   describe("Specific Missed Line Coverage Expansion", () => {
     it("handles filename fallback gracefully when value contains no path separators", () => {
       // Line 67: value.split("/").pop() || value
@@ -251,6 +260,5 @@ describe("FileUploadField", () => {
        rerender(<FileUploadField label="Valid Item" value="doc.pdf" isRejected={true} />);
        expect(screen.getByText("doc.pdf").parentElement).toHaveClass("border-destructive");
   });
-});
 });
 });
