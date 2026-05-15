@@ -28,6 +28,17 @@ vi.mock("next/link", () => ({
   ),
 }));
 
+vi.mock("@/lib/hooks/useCandidateBranding", () => ({
+  useCandidateBranding: () => ({
+    data: {
+      title_prefix: "Physics Wallah",
+      app_logo: "/brand.png",
+    },
+    isLoading: false,
+  }),
+}));
+
+
 // ─── Helpers ────────────────────────────────────────────────────────
 const user = userEvent.setup();
 
@@ -135,7 +146,7 @@ describe("AuthForm – Login UI", () => {
 
   it("renders the brand logo on desktop pane", () => {
     render(<AuthForm {...defaultLoginProps} />);
-    const logo = screen.getByAltText("PW Logo");
+    const logo = screen.getByAltText("Logo");
     expect(logo).toBeTruthy();
   });
 

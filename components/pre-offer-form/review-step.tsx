@@ -75,11 +75,13 @@ export function ReviewStep() {
 
   const tabs = formConfig?.tabs || []
 
-  const incompleteSteps = tabs.filter((tab, idx) => {
-    const rawKey = tab.tab || `Step ${idx + 1}`
-    const key = rawKey.toLowerCase().replace(/\s+/g, '_')
-    return !completedSteps.has(key)
-  })
+  const incompleteSteps = tabs
+    .map((tab, idx) => ({ tab, originalIdx: idx }))
+    .filter(({ tab, originalIdx }) => {
+      const rawKey = tab.tab || `Step ${originalIdx + 1}`
+      const key = rawKey.toLowerCase().replace(/\s+/g, '_')
+      return !completedSteps.has(key)
+    })
 
   const sections: ReviewSection[] = tabs.map((tab, idx) => {
     const rawKey = tab.tab || `Step ${idx + 1}`
@@ -126,17 +128,17 @@ export function ReviewStep() {
                 Please complete all steps before submitting.
               </p>
               <div className="mt-1 flex flex-wrap gap-1">
-                {incompleteSteps.map((tab, idx) => {
-                  const rawKey = tab.tab || `Step ${idx + 1}`
+                {incompleteSteps.map(({ tab, originalIdx }) => {
+                  const rawKey = tab.tab || `Step ${originalIdx + 1}`
                   const key = rawKey.toLowerCase().replace(/\s+/g, '_')
                   return (
                     <button
                       key={key}
                       type="button"
-                      onClick={() => goToStep(idx)}
+                      onClick={() => goToStep(originalIdx)}
                       className="text-xs text-primary underline hover:no-underline mr-2"
                     >
-                      {tab.tab || `Step ${idx + 1}`}
+                      {tab.tab || `Step ${originalIdx + 1}`}
                     </button>
                   )
                 })}

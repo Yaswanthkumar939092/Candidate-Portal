@@ -16,7 +16,6 @@ import { OnboardingForm } from "@/lib/types/onboarding";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
-const STORAGE_KEY = "onboarding_draft";
 const DEBOUNCE_MS = 500;
 
 /**
@@ -124,19 +123,24 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     if (initialLoadDone.current) return;
 
     const loadData = () => {
+      const storageKey = userEmail ? `onboarding_draft:${userEmail}` : "onboarding_draft";
       try {
-        // First check localStorage for any unsaved changes
-        const localData = localStorage.getItem(STORAGE_KEY);
+        const localData = localStorage.getItem(storageKey);
         let localParsed: {
           stepData?: Record<string, Record<string, unknown>>;
           currentStep?: number;
           completedSteps?: string[];
+          applicantId?: string;
         } | null = null;
         if (localData) {
           try {
             localParsed = JSON.parse(localData);
+            if (localParsed && localParsed.applicantId && localParsed.applicantId !== formConfig.applicantId) {
+              localParsed = null;
+              localStorage.removeItem(storageKey);
+            }
           } catch {
-            localStorage.removeItem(STORAGE_KEY);
+            localStorage.removeItem(storageKey);
           }
         }
 
@@ -229,13 +233,15 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     }
 
     debounceTimerRef.current = setTimeout(() => {
+      const storageKey = userEmail ? `onboarding_draft:${userEmail}` : "onboarding_draft";
       try {
         const toSave = {
           stepData,
           completedSteps: Array.from(completedSteps),
           currentStep,
+          applicantId: formConfig?.applicantId,
         };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+        localStorage.setItem(storageKey, JSON.stringify(toSave));
       } catch (error) {
         console.error("Error saving to localStorage:", error);
       }
@@ -353,7 +359,8 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
       );
       if (!specificField || !hasOtherRejectedFields) {
         setStatus("submitted");
-        localStorage.removeItem(STORAGE_KEY);
+        const storageKey = userEmail ? `onboarding_draft:${userEmail}` : "onboarding_draft";
+        localStorage.removeItem(storageKey);
       }
 
       toast.success(
