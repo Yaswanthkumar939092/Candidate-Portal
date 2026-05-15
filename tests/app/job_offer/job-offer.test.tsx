@@ -23,6 +23,18 @@ vi.mock("sonner", () => ({
   },
 }));
 
+const mockGet = vi.fn();
+const mockPush = vi.fn();
+
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => ({
+    get: mockGet,
+  }),
+  useRouter: () => ({
+    push: mockPush,
+  }),
+}));
+
 const mockUseJobOfferSummary = vi.fn();
 const mockUseJobOfferPdf = vi.fn();
 const mockUseUpdateJobOfferStatus = vi.fn();
@@ -47,16 +59,6 @@ vi.mock("@/lib/hooks/useCompanyLogo", () => ({
   useCompanyLogo: (...args: unknown[]) => mockUseCompanyLogo(...args),
 }));
 
-const mockGet = vi.fn();
-const mockPush = vi.fn();
-vi.mock("next/navigation", () => ({
-  useSearchParams: () => ({
-    get: mockGet,
-  }),
-  useRouter: () => ({
-    push: mockPush,
-  }),
-}));
 
 // Mock window.scrollTo and window.location.reload
 window.scrollTo = vi.fn();
@@ -68,17 +70,17 @@ Object.defineProperty(window, 'location', {
 });
 
 describe("JobOfferPage", () => {
-  const DEFAULT_EMAIL = "test@example.com";
+  const DEFAULT_EMAIL = "deepakrajput0006@gmail.com";
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     // Default mocks for loading state
     mockUseCurrentUser.mockReturnValue({ userEmail: DEFAULT_EMAIL, isLoading: false });
     mockUseJobOfferStatus.mockReturnValue({ data: { status: "Awaiting Response" }, isLoading: false });
-    mockUseJobOfferSummary.mockReturnValue({ 
-      data: { applicant_name: "Test User", designation: "Software Engineer", duration_display: "6 Months", stipend_display: "$5000" }, 
-      isLoading: false 
+    mockUseJobOfferSummary.mockReturnValue({
+      data: { applicant_name: "Test User", designation: "Software Engineer", duration_display: "6 Months", stipend_display: "$5000" },
+      isLoading: false
     });
     mockUseJobOfferPdf.mockReturnValue({ pdfUrl: "http://test.com/pdf", isLoading: false });
     mockUseUpdateJobOfferStatus.mockReturnValue({ mutateAsync: vi.fn() });
@@ -125,7 +127,7 @@ describe("JobOfferPage", () => {
     mockUseUpdateJobOfferStatus.mockReturnValue({ mutateAsync });
 
     render(<JobOfferPage />);
-    
+
     const acceptBtn = screen.getByRole("button", { name: /Accept Offer/i });
     expect(acceptBtn).toBeDisabled();
 
@@ -244,10 +246,10 @@ describe("JobOfferPage", () => {
 
   it("renders processed state if offer was already accepted", () => {
     mockUseJobOfferStatus.mockReturnValue({ data: { status: "Accepted" }, isLoading: false });
-    mockUseJobOfferSummary.mockReturnValue({ data: null, isLoading: false }); 
-    
+    mockUseJobOfferSummary.mockReturnValue({ data: null, isLoading: false });
+
     render(<JobOfferPage />);
-    
+
     expect(screen.getByText(/You have already accepted or rejected the Offer Letter/)).toBeTruthy();
     
     const dashboardBtn = screen.getByRole("button", { name: /Go to Dashboard/i });
@@ -257,17 +259,17 @@ describe("JobOfferPage", () => {
 
   it("renders expired state if offer has expired", () => {
     mockUseJobOfferStatus.mockReturnValue({ data: { status: "Expired" }, isLoading: false });
-    
+
     render(<JobOfferPage />);
-    
+
     expect(screen.getByText("Your Offer Letter Has Expired")).toBeTruthy();
   });
 
   it("renders error state if status fetch fails and allows retry", () => {
     mockUseJobOfferStatus.mockReturnValue({ isError: true, error: new Error("Fetch failed"), isLoading: false });
-    
+
     render(<JobOfferPage />);
-    
+
     expect(screen.getByText("Oops! Something went wrong")).toBeTruthy();
     expect(screen.getByText("Fetch failed")).toBeTruthy();
 

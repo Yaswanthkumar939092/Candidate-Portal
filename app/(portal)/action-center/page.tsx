@@ -114,9 +114,14 @@ function mapApiItemsToRequests(items: any[]): Request[] {
   return items.map((item, index) => {
     const status = mapApiStatusToRequestStatus(item.status)
 
-    // Title
+    // Derive a human-readable title from the name field (strip the ID prefix)
+    const rawName: string = item.name ?? ""
+    const titleFromName = rawName.includes(" - ")
+      ? rawName.split(" - ").slice(1).join(" - ").trim()
+      : rawName
+
     const title =
-      item.name ||
+      titleFromName ||
       item.description?.split("\n")[0] ||
       "Request"
 

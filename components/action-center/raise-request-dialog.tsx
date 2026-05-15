@@ -118,7 +118,7 @@ export function RaiseRequestDialog({
         if (!val) resetForm()
       }}
     >
-      <DialogContent className="sm:max-w-120 p-6 rounded-xl border border-slate-200 shadow-xl overflow-y-auto max-h-[90vh]">
+      <DialogContent className="sm:max-w-[480px] w-[calc(100%-2rem)] p-6 rounded-xl border border-slate-200 shadow-xl overflow-y-auto max-h-[90vh]">
         <DialogHeader className="mb-2">
           <DialogTitle className="text-[18px] font-bold text-slate-900 dark:text-gray-100 font-sans">Raise a Request</DialogTitle>
           <DialogDescription className="text-[14px] font-normal text-[#475467] dark:text-slate-400 mt-1.5 leading-snug">
@@ -206,24 +206,31 @@ export function RaiseRequestDialog({
 
   {/* ✅ Fix: attachments string hai to map hatao */}
   {attachment && (
-    <div className="space-y-1 mt-3">
-      <div className="flex items-center justify-between rounded-md bg-slate-50 border border-slate-200 px-3 py-2 text-sm">
-        <span className="truncate text-slate-700 font-medium">
-          {fileName}
-        </span>
-        <button
-          className="shrink-0 text-slate-400 hover:text-red-500 font-medium text-xs ml-4"
-          onClick={(e) => {
-            e.stopPropagation()
-            setAttachment("")
-            setFileName("")
-          }}
-        >
-          Remove
-        </button>
-      </div>
+  <div className="mt-3">
+    <div
+      style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "8px", alignItems: "center" }}
+      className="rounded-md bg-slate-50 border border-slate-200 px-3 py-2 text-sm w-full"
+    >
+      <span
+        className="text-slate-700 font-medium text-xs truncate block min-w-0"
+        title={fileName}
+      >
+        {fileName}
+      </span>
+
+      <button
+        className="text-slate-400 hover:text-red-500 font-medium text-xs whitespace-nowrap flex-shrink-0"
+        onClick={(e) => {
+          e.stopPropagation()
+          setAttachment("")
+          setFileName("")
+        }}
+      >
+        Remove
+      </button>
     </div>
-  )}
+  </div>
+)}
 </div>
 
           {error && <p className="text-[13px] text-red-500 font-medium">{error}</p>}
