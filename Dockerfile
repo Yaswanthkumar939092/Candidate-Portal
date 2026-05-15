@@ -7,15 +7,15 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 FROM base AS deps
 
-COPY package.json package-lock.json ./
-RUN npm install --no-audit --no-fund \
+COPY package.json yarn.lock ./
+RUN yarn install --frozen-lockfile \
   && arch="$(node -p 'process.arch')" \
   && if [ "$arch" = "arm64" ]; then \
-    npm install --no-save --no-audit --no-fund \
+    yarn add --dev \
       lightningcss-linux-arm64-gnu@1.32.0 \
       @tailwindcss/oxide-linux-arm64-gnu@4.2.2; \
   elif [ "$arch" = "x64" ]; then \
-    npm install --no-save --no-audit --no-fund \
+    yarn add --dev \
       lightningcss-linux-x64-gnu@1.32.0 \
       @tailwindcss/oxide-linux-x64-gnu@4.2.2; \
   fi
@@ -39,7 +39,7 @@ ENV NEXT_PUBLIC_FRAPPE_URL=$NEXT_PUBLIC_FRAPPE_URL
 ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID
 ENV NEXT_PUBLIC_LINKEDIN_CLIENT_ID=$NEXT_PUBLIC_LINKEDIN_CLIENT_ID
 
-RUN npm run build
+RUN yarn run build
 
 FROM node:22-bookworm-slim AS runner
 
