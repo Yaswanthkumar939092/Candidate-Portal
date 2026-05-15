@@ -44,7 +44,7 @@ export function ViewApplicationModal({
       .replace(/\b\w/g, (l) => l.toUpperCase())
   }
 
-  const renderValue = (value: any) => {
+  const renderValue = (value: unknown) => {
     if (value === null || value === undefined) return "—"
     if (typeof value === "boolean") return value ? "Yes" : "No"
     if (Array.isArray(value)) {
