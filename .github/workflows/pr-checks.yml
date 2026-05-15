@@ -64,7 +64,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Block vulnerable dependency changes
-        continue-on-error: true
         uses: actions/dependency-review-action@v4
         with:
           fail-on-severity: high
@@ -105,7 +104,6 @@ jobs:
   codeql:
     name: CodeQL Analysis
     runs-on: ubuntu-latest
-    continue-on-error: true
 
     steps:
       - name: Checkout
@@ -118,6 +116,16 @@ jobs:
 
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@v4
+        with:
+          upload: never
+
+      - name: Upload CodeQL SARIF report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-sarif
+          path: ../results
+          if-no-files-found: ignore
 
   docker:
     name: Docker Build and Scan
