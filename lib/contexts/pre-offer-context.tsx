@@ -173,7 +173,7 @@ export function PreOfferProvider({ children, userEmail }: PreOfferProviderProps)
 
         setStatus(formConfig.status || "Sent");
 
-        if (formConfig.status === "Submitted") {
+        if (formConfig.status === "Submitted" || formConfig.status === "Filled") {
           const allStepKeys = formConfig.tabs.map((t, index) => {
             const rawKey = t.tab || `Step ${index + 1}`;
             return rawKey.toLowerCase().replace(/\s+/g, "_");
@@ -191,7 +191,7 @@ export function PreOfferProvider({ children, userEmail }: PreOfferProviderProps)
     };
 
     loadData();
-  }, [formConfig, isFormConfigLoading, isFormConfigError]);
+  }, [formConfig, isFormConfigLoading, isFormConfigError, userEmail]);
 
   // Sync step from URL search params
   useEffect(() => {
@@ -233,7 +233,7 @@ export function PreOfferProvider({ children, userEmail }: PreOfferProviderProps)
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [stepData, completedSteps, currentStep, isDirty, isLoading]);
+  }, [stepData, completedSteps, currentStep, isDirty, isLoading, userEmail, formConfig?.applicantId]);
 
   const setStepData = useCallback(
     (stepKey: string, data: Record<string, unknown>) => {

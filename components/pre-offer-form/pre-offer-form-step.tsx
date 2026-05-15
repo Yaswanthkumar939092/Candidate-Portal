@@ -12,7 +12,7 @@ import {
   useWatch,
   Controller,
 } from "react-hook-form";
-import { ChevronLeft, ChevronRight, CheckCircle, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { usePreOffer } from "@/lib/contexts/pre-offer-context";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -118,18 +118,15 @@ export function PreOfferFormStep({
     markStepComplete,
     isSaving,
     currentStep,
-    formConfig,
-    submitAll,
     status,
   } = usePreOffer();
+
+  const isReadOnly = status === "Submitted" || status === "Filled";
 
   const existingData = useMemo(
     () => (stepData[stepKey] ?? {}) as Record<string, unknown>,
     [stepData, stepKey],
   );
-
-  const tabsCount = formConfig?.tabs?.length || 1;
-  const isLastStep = currentStep === tabsCount - 1;
 
   // Initialize values
   const defaultValues = useMemo(() => {
@@ -331,7 +328,7 @@ export function PreOfferFormStep({
             required={!!(field.is_mandatory || field.reqd)}
             value={value as string}
             onChange={(val) => onChange(val || "")}
-            disabled={disabled || !!field.read_only || status === "Submitted"}
+            disabled={disabled || !!field.read_only || isReadOnly}
             error={error}
             className={className}
             isRejected={field.approval_status === "Rejected"}
@@ -355,7 +352,7 @@ export function PreOfferFormStep({
             required={!!(field.is_mandatory || field.reqd)}
             value={value as string}
             onChange={(val) => onChange(val || "")}
-            disabled={disabled || !!field.read_only || status === "Submitted"}
+            disabled={disabled || !!field.read_only || isReadOnly}
             error={error}
             className={className}
             isRejected={field.approval_status === "Rejected"}
@@ -366,7 +363,7 @@ export function PreOfferFormStep({
         ),
       },
     }),
-    [handleFileUpload, status],
+    [isReadOnly],
   );
 
   return (
@@ -392,7 +389,7 @@ export function PreOfferFormStep({
                     errors={errors as FieldErrors<FieldValues>}
                     onAttachChange={handleFileUpload}
                     overrides={fieldOverrides}
-                    isSubmitted={status === "Submitted"}
+                    isSubmitted={isReadOnly}
                   />
                 ) : (
                   <FormStepField
@@ -404,7 +401,7 @@ export function PreOfferFormStep({
                     error={errors[field.fieldname]?.message as string}
                     handleFileUpload={handleFileUpload}
                     overrides={fieldOverrides}
-                    isSubmitted={status === "Submitted"}
+                    isSubmitted={isReadOnly}
                   />
                 ),
               )}
@@ -413,7 +410,7 @@ export function PreOfferFormStep({
         </React.Fragment>
       ))}
 
-      {status !== "Submitted" && (
+      {!isReadOnly && (
         <>
           <Separator />
           <div className="flex items-center justify-between pt-2">
