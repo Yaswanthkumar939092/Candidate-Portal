@@ -144,4 +144,79 @@ describe('MatchingService', () => {
       expect(result.missing).toEqual([])
     })
   })
+
+  // ---------- computeKeywordMatch ----------
+  describe('computeKeywordMatch', () => {
+    it('computes match score and upserts result', async () => {
+      const { supabaseAdmin } = await import('@/lib/supabase-admin')
+      
+      const mockResume = { name: 'Resume', description: 'React Dev', type: 'resume' }
+      const mockProfile = { id: 'u1', skills: ['React'], bio: 'Bio' }
+      const mockJob = { id: 'j1', title: 'React Job', description: 'React', skills_required: ['React'], requirements: [] }
+
+      const mockUpsert = vi.fn().mockResolvedValue({ error: null })
+      const mockSingleProfile = vi.fn().mockResolvedValue({ data: mockProfile, error: null })
+      const mockSingleJob = vi.fn().mockResolvedValue({ data: mockJob, error: null })
+
+      ;(supabaseAdmin.from as any).mockImplementation((table: string) => {
+        if (table === 'user_documents') {
+          return { select: () => ({ eq: () => ({ eq: () => ({ order: () => ({ limit: () => Promise.resolve({ data: [mockResume] }) }) }) }) }) }
+        }
+        if (table === 'profiles') {
+          return { select: () => ({ eq: () => ({ single: mockSingleProfile }) }) }
+        }
+        if (table === 'jobs') {
+          return { select: () => ({ eq: () => ({ single: mockSingleJob }) }) }
+        }
+        if (table === 'job_match_results') {
+          return { upsert: mockUpsert }
+        }
+      })
+
+      const result = await service.computeKeywordMatch('u1', 'j1')
+      expect(result.match_score).toBeGreaterThan(0)
+      expect(mockUpsert).toHaveBeenCalled()
+    })
+  })
+
+  // ---------- computeBulkMatches ----------
+  describe('computeBulkMatches', () => {
+    it('computes matches for all active jobs', async () => {
+      const { supabaseAdmin } = await import('@/lib/supabase-admin')
+      const mockJobs = [{ id: 'j1' }, { id: 'j2' }]
+      
+      ;(supabaseAdmin.from as any).mockImplementation((table: string) => {
+        if (table === 'jobs') {
+          return { select: () => ({ eq: () => ({ is: () => Promise.resolve({ data: mockJobs, error: null }) }) }) }
+        }
+      })
+
+      vi.spyOn(service, 'computeKeywordMatch').mockResolvedValue({
+        match_score: 80,
+        matched_skills: ['a'],
+        missing_skills: ['b'],
+        analysis: {}
+      })
+
+      const result = await service.computeBulkMatches('u1')
+      expect(result).toHaveLength(2)
+      expect(result[0].match_score).toBe(80)
+    })
+  })
+
+  // ---------- getCachedMatch ----------
+  describe('getCachedMatch', () => {
+    it('returns cached match if valid', async () => {
+      const { supabaseAdmin } = await import('@/lib/supabase-admin')
+      const mockData = { match_score: 90, matched_skills: ['js'], missing_skills: [], analysis: {} }
+      
+      const mockSingle = vi.fn().mockResolvedValue({ data: mockData, error: null })
+      ;(supabaseAdmin.from as any).mockReturnValue({
+        select: () => ({ eq: () => ({ eq: () => ({ eq: () => ({ gte: () => ({ order: () => ({ limit: () => ({ single: mockSingle }) }) }) }) }) }) })
+      })
+
+      const result = await service.getCachedMatch('u1', 'j1', 'keyword')
+      expect(result?.match_score).toBe(90)
+    })
+  })
 })

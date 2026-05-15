@@ -85,7 +85,7 @@ export const noContentResponse = (
         timestamp: new Date().toISOString()
       }
     },
-    { status: 204 }
+    { status: 200 }
   )
 }
 

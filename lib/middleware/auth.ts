@@ -69,7 +69,7 @@ export function withRoles(requiredRoles: string[]) {
     // Get user profile to check role
     const { data: profile, error } = await supabaseAdmin
       .from('profiles')
-      .select('id')
+      .select('id, role')
       .eq('id', request.user.id)
       .single()
 
@@ -82,7 +82,7 @@ export function withRoles(requiredRoles: string[]) {
 
     // For now, we'll use a simplified role check
     // In a real implementation, you'd have a role field in the profile
-    const isAdmin = !!profile // Simplified: any user with a profile can be admin for demo
+    const isAdmin = profile.role ? profile.role === 'admin' : !!profile
 
     if (requiredRoles.includes('admin') && !isAdmin) {
       return NextResponse.json(
@@ -214,8 +214,9 @@ export function withRateLimit(
 
     const response = await handler(request)
 
-    // Add rate limit headers
-    const remaining = Math.max(0, maxRequests - (current?.count || 0))
+    // Get updated rate limit data for headers
+    const updated = rateLimitStore.get(key)
+    const remaining = Math.max(0, maxRequests - (updated?.count || 0))
     response.headers.set('X-RateLimit-Limit', maxRequests.toString())
     response.headers.set('X-RateLimit-Remaining', remaining.toString())
     response.headers.set('X-RateLimit-Reset', Math.ceil((current?.resetTime || now + windowMs) / 1000).toString())

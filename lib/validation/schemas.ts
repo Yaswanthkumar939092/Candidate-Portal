@@ -103,6 +103,7 @@ export const updateJobSchema = jobBaseSchema.partial().extend({
   path: ['salary_min']
 })
 
+
 // Application schemas
 export const applicationsQuerySchema = z.object({
   page: z.string().optional().transform((val) => val ? parseInt(val, 10) : 1),
