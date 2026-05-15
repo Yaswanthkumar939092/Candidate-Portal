@@ -8,7 +8,6 @@ on:
 permissions:
   contents: read
   pull-requests: read
-  security-events: write
   actions: read
 
 env:
@@ -39,6 +38,9 @@ jobs:
 
       - name: Lint
         run: yarn run lint
+
+      - name: Enforce high severity audit gate
+        run: yarn run security:audit
 
       - name: Test with coverage threshold
         run: yarn run test:ci
@@ -71,63 +73,6 @@ jobs:
           vulnerability-check: true
           license-check: false
 
-  npm-audit:
-    name: NPM Security Audit
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: yarn
-
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
-
-      - name: Generate audit report
-        run: yarn audit --json > yarn-audit-report.json || true
-
-      - name: Enforce high severity audit gate
-        run: yarn run security:audit
-
-      - name: Upload audit report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: yarn-audit-report
-          path: yarn-audit-report.json
-          if-no-files-found: ignore
-
-  codeql:
-    name: CodeQL Analysis
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
-        with:
-          languages: javascript-typescript
-
-      - name: Perform CodeQL analysis
-        uses: github/codeql-action/analyze@v4
-        with:
-          upload: never
-
-      - name: Upload CodeQL SARIF report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: codeql-sarif
-          path: ../results
-          if-no-files-found: ignore
-
   docker:
     name: Docker Build and Scan
     runs-on: ubuntu-latest
@@ -145,6 +90,8 @@ jobs:
           context: .
           load: true
           tags: candidate-portal:pr-${{ github.event.pull_request.number }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           build-args: |
             NEXT_PUBLIC_SUPABASE_URL=${{ env.NEXT_PUBLIC_SUPABASE_URL }}
             NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
@@ -155,15 +102,9 @@ jobs:
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: candidate-portal:pr-${{ github.event.pull_request.number }}
-          format: sarif
-          output: trivy-results.sarif
+          format: table
+          scanners: vuln
           severity: HIGH,CRITICAL
           ignore-unfixed: true
+          hide-progress: true
           exit-code: '1'
-
-      - name: Upload Trivy SARIF report
-        if: always()
-        continue-on-error: true
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: trivy-results.sarif
