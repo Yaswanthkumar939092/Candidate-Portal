@@ -4,7 +4,6 @@ import {
   hasPermission, 
   hasAnyPermission,
   hasAllPermissions,
-  isAdmin,
   hasRole,
   hasAnyRole,
   canAccessResource,
@@ -13,7 +12,10 @@ import {
   filterDataByPermissions,
   getAllowedActions,
   updateUserRole,
-  validateRoleAssignment
+  validateRoleAssignment,
+  UserContext,
+  Role,
+  Permission
 } from "@/lib/utils/permissions";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
@@ -39,7 +41,7 @@ describe("Permission Utils", () => {
     it("returns context with permissions based on role", async () => {
       const mockProfile = { id: "u1", email: "test@test.com", role: "candidate" };
       const mockSingle = vi.fn().mockResolvedValue({ data: mockProfile, error: null });
-      ;(supabaseAdmin.from as any).mockReturnValue({ select: () => ({ eq: () => ({ single: mockSingle }) }) });
+      ;vi.mocked(supabaseAdmin.from).mockReturnValue({ select: () => ({ eq: () => ({ single: mockSingle }) }) });
 
       const context = await getUserContext("u1");
       expect(context?.role).toBe("candidate");
@@ -49,7 +51,7 @@ describe("Permission Utils", () => {
 
     it("returns null on error", async () => {
       const mockSingle = vi.fn().mockResolvedValue({ data: null, error: { message: "error" } });
-      ;(supabaseAdmin.from as any).mockReturnValue({ select: () => ({ eq: () => ({ single: mockSingle }) }) });
+      ;vi.mocked(supabaseAdmin.from).mockReturnValue({ select: () => ({ eq: () => ({ single: mockSingle }) }) });
 
       const context = await getUserContext("u1");
       expect(context).toBeNull();
@@ -57,49 +59,49 @@ describe("Permission Utils", () => {
   });
 
   describe("hasPermission", () => {
-    const candidateContext = {
+    const candidateContext: UserContext = {
       id: "u1",
       email: "u1@test.com",
-      role: "candidate" as const,
-      permissions: ["jobs.read", "profile.update"] as any[]
+      role: "candidate",
+      permissions: ["jobs.read", "profile.update"] as Permission[]
     };
 
     it("returns true if user has permission", () => {
-      const result = hasPermission(candidateContext as any, "jobs.read");
+      const result = hasPermission(candidateContext, "jobs.read");
       expect(result.allowed).toBe(true);
     });
 
     it("returns false if user lacks permission", () => {
-      const result = hasPermission(candidateContext as any, "users.delete" as any);
+      const result = hasPermission(candidateContext, "users.delete" as Permission);
       expect(result.allowed).toBe(false);
       expect(result.reason).toContain("User does not have permission");
     });
 
     it("enforces ownership for candidates", () => {
-      const result = hasPermission(candidateContext as any, "profile.update", { resourceOwnerId: "other" });
+      const result = hasPermission(candidateContext, "profile.update", { resourceOwnerId: "other" });
       expect(result.allowed).toBe(false);
       expect(result.reason).toContain("Candidates can only access their own resources");
     });
   });
 
   describe("hasAnyPermission", () => {
-    const ctx = { permissions: ["p1"] } as any;
+    const ctx: UserContext = { id: "u1", email: "e", role: "candidate", permissions: ["jobs.read" as Permission] };
     it("returns true if any permission matches", () => {
-      expect(hasAnyPermission(ctx, ["p1", "p2"]).allowed).toBe(true);
-      expect(hasAnyPermission(ctx, ["p2", "p3"]).allowed).toBe(false);
+      expect(hasAnyPermission(ctx, ["jobs.read" as Permission, "jobs.create" as Permission]).allowed).toBe(true);
+      expect(hasAnyPermission(ctx, ["jobs.create" as Permission, "jobs.delete" as Permission]).allowed).toBe(false);
     });
   });
 
   describe("hasAllPermissions", () => {
-    const ctx = { permissions: ["p1", "p2"] } as any;
+    const ctx: UserContext = { id: "u1", email: "e", role: "candidate", permissions: ["jobs.read" as Permission, "jobs.create" as Permission] };
     it("returns true if all permissions match", () => {
-      expect(hasAllPermissions(ctx, ["p1", "p2"]).allowed).toBe(true);
-      expect(hasAllPermissions(ctx, ["p1", "p3"]).allowed).toBe(false);
+      expect(hasAllPermissions(ctx, ["jobs.read" as Permission, "jobs.create" as Permission]).allowed).toBe(true);
+      expect(hasAllPermissions(ctx, ["jobs.read" as Permission, "jobs.delete" as Permission]).allowed).toBe(false);
     });
   });
 
   describe("hasRole and hasAnyRole", () => {
-    const ctx = { role: "admin" } as any;
+    const ctx = { id: "u1", email: "e", role: "admin" as Role, permissions: [] as Permission[] } as UserContext;
     it("checks roles correctly", () => {
       expect(hasRole(ctx, "admin")).toBe(true);
       expect(hasRole(ctx, "candidate")).toBe(false);
@@ -113,7 +115,7 @@ describe("Permission Utils", () => {
       const mockSingle = vi.fn()
         .mockResolvedValueOnce({ data: { id: "u1", role: "candidate", permissions: ["applications.read"] } }) // getUserContext
         .mockResolvedValueOnce({ data: { candidate_id: "u1", jobs: { company_id: "c1" } } }); // application
-      ;(supabaseAdmin.from as any).mockReturnValue({
+      ;vi.mocked(supabaseAdmin.from).mockReturnValue({
         select: () => ({ eq: () => ({ single: mockSingle }) }),
       });
 
@@ -125,7 +127,7 @@ describe("Permission Utils", () => {
       const mockSingle = vi.fn()
         .mockResolvedValueOnce({ data: { id: "u1", role: "admin", permissions: ["jobs.read"] } })
         .mockResolvedValueOnce({ data: { id: "j1" } });
-      ;(supabaseAdmin.from as any).mockReturnValue({ select: () => ({ eq: () => ({ single: mockSingle }) }) });
+      ;vi.mocked(supabaseAdmin.from).mockReturnValue({ select: () => ({ eq: () => ({ single: mockSingle }) }) });
       const jobResult = await canAccessResource("u1", "job", "j1", "read");
       expect(jobResult.allowed).toBe(true);
 
@@ -138,7 +140,7 @@ describe("Permission Utils", () => {
 
     it("returns false on error", async () => {
       const mockSingle = vi.fn().mockRejectedValue(new Error("DB Error"));
-      ;(supabaseAdmin.from as any).mockReturnValue({ select: () => ({ eq: () => ({ single: mockSingle }) }) });
+      ;vi.mocked(supabaseAdmin.from).mockReturnValue({ select: () => ({ eq: () => ({ single: mockSingle }) }) });
       const result = await canAccessResource("u1", "job", "j1", "read");
       expect(result.allowed).toBe(false);
     });
@@ -147,25 +149,26 @@ describe("Permission Utils", () => {
   describe("requirePermissions and requireRoles", () => {
     it("requirePermissions works", async () => {
       const middleware = requirePermissions(["jobs.read"]);
-      const ctx = { permissions: ["jobs.read"], role: "candidate" } as any;
+      const ctx: UserContext = { id: "u1", email: "e", role: "candidate", permissions: ["jobs.read" as Permission] };
       const res = await middleware(ctx);
       expect(res.allowed).toBe(true);
       
-      const resFail = await middleware({ permissions: [], role: "candidate" } as any);
+      const resFail = await middleware({ ...ctx, permissions: [] });
       expect(resFail.allowed).toBe(false);
     });
 
     it("requireRoles works", () => {
       const middleware = requireRoles(["admin", "recruiter"]);
-      expect(middleware({ role: "admin" } as any).allowed).toBe(true);
-      expect(middleware({ role: "candidate" } as any).allowed).toBe(false);
+      const baseCtx: UserContext = { id: "u1", email: "e", role: "admin", permissions: [] };
+      expect(middleware({ ...baseCtx, role: "admin" }).allowed).toBe(true);
+      expect(middleware({ ...baseCtx, role: "candidate" }).allowed).toBe(false);
     });
   });
 
   describe("filterDataByPermissions", () => {
     it("filters data based on permissions", async () => {
       const mockSingle = vi.fn().mockResolvedValue({ data: { id: "u1", role: "candidate", permissions: ["jobs.read"] } });
-      ;(supabaseAdmin.from as any).mockReturnValue({ select: () => ({ eq: () => ({ single: mockSingle }) }) });
+      ;vi.mocked(supabaseAdmin.from).mockReturnValue({ select: () => ({ eq: () => ({ single: mockSingle }) }) });
 
       const data = [{ id: "p1" }, { id: "p2" }];
       // u1 can read jobs
@@ -178,7 +181,7 @@ describe("Permission Utils", () => {
   describe("getAllowedActions", () => {
     it("returns map of allowed actions", async () => {
       const mockSingle = vi.fn().mockResolvedValue({ data: { id: "u1", role: "admin" } });
-      ;(supabaseAdmin.from as any).mockReturnValue({ select: () => ({ eq: () => ({ single: mockSingle }) }) });
+      ;vi.mocked(supabaseAdmin.from).mockReturnValue({ select: () => ({ eq: () => ({ single: mockSingle }) }) });
 
       const actions = await getAllowedActions("u1", "job", "u1");
       expect(actions.canRead).toBe(true);
@@ -191,7 +194,7 @@ describe("Permission Utils", () => {
     it("updates role successfully", async () => {
       const mockSingle = vi.fn().mockResolvedValue({ data: { id: "admin1", role: "admin", permissions: ["users.update"] } });
       const mockUpdate = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) });
-      ;(supabaseAdmin.from as any).mockReturnValue({ 
+      ;vi.mocked(supabaseAdmin.from).mockReturnValue({ 
         select: () => ({ eq: () => ({ single: mockSingle }) }),
         update: mockUpdate
       });
@@ -202,7 +205,7 @@ describe("Permission Utils", () => {
 
     it("fails if non-admin", async () => {
       const mockSingle = vi.fn().mockResolvedValue({ data: { id: "user1", role: "candidate", permissions: [] } });
-      ;(supabaseAdmin.from as any).mockReturnValue({ select: () => ({ eq: () => ({ single: mockSingle }) }) });
+      ;vi.mocked(supabaseAdmin.from).mockReturnValue({ select: () => ({ eq: () => ({ single: mockSingle }) }) });
 
       const res = await updateUserRole("user1", "target1", "candidate");
       expect(res.success).toBe(false);
