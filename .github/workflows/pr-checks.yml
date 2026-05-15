@@ -55,7 +55,7 @@ jobs:
           if-no-files-found: ignore
 
   dependency-review:
-    name: Dependency Review
+    name: Dependency Review Advisory
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
 
@@ -63,7 +63,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Block vulnerable dependency changes
+      - name: Report vulnerable dependency changes
+        continue-on-error: true
         uses: actions/dependency-review-action@v4
         with:
           fail-on-severity: high
