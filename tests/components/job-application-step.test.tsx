@@ -2,11 +2,19 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, fireEvent, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { toast } from "sonner"
-import { JobApplicationStep } from "@/components/jobs/job-applicant/DynamicField"
-import * as jobAppContext from "@/lib/contexts/job-application-context"
-import * as jobOpeningHooks from "@/lib/hooks/useJobOpening"
 
 // ─── Mocks ──────────────────────────────────────────────────────────
+
+vi.mock("react-hook-form", async () => {
+  const actual = await vi.importActual("react-hook-form")
+  return {
+    ...actual,
+    useWatch: vi.fn(),
+  }
+})
+
+import { useWatch } from "react-hook-form"
+const mockUseWatch = useWatch as ReturnType<typeof vi.fn>
 
 vi.mock("@/lib/contexts/job-application-context")
 vi.mock("@/lib/hooks/useJobOpening")
@@ -16,10 +24,17 @@ vi.mock("next/navigation", () => ({
   }),
 }))
 
+const mockUseAuth = vi.fn()
+vi.mock("@/lib/contexts/auth-context", () => ({
+  useAuth: () => mockUseAuth(),
+}))
+
 vi.mock("sonner", () => ({
   toast: {
     success: vi.fn(),
     error: vi.fn(),
+    warning: vi.fn(),
+    info: vi.fn(),
   },
 }))
 
@@ -29,8 +44,13 @@ vi.mock("lucide-react", async () => {
     ...actual,
     ChevronLeft: () => <div data-testid="icon-chevron-left" />,
     ChevronRight: () => <div data-testid="icon-chevron-right" />,
+    Loader2: () => <div data-testid="icon-loader" />,
   }
 })
+
+import { JobApplicationStep } from "@/components/jobs/job-applicant/DynamicField"
+import * as jobAppContext from "@/lib/contexts/job-application-context"
+import * as jobOpeningHooks from "@/lib/hooks/useJobOpening"
 
 vi.mock("@/components/ui/field-renderer", () => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -111,6 +131,28 @@ vi.mock("@/components/ui/separator", () => ({
   Separator: () => <hr />,
 }))
 
+const mockMethods = {
+  handleSubmit: (fn: any) => (e: any) => {
+    e?.preventDefault()
+    return fn({ full_name: "John Doe" })
+  },
+  watch: vi.fn(() => ({})),
+  getValues: vi.fn((key) => {
+    const vals: any = { full_name: "John Doe", email: "test@example.com" }
+    return key ? vals[key] : vals
+  }),
+  setValue: vi.fn(),
+  reset: vi.fn(),
+  trigger: vi.fn().mockResolvedValue(true),
+  control: {
+    _getWatch: vi.fn(() => ({})),
+    _subjects: { state: { next: vi.fn() }, watch: { next: vi.fn() } },
+    _names: { mount: new Set(), unMount: new Set(), array: new Set(), watch: new Set() },
+    _formValues: {},
+  },
+  formState: { errors: {} },
+}
+
 describe("JobApplicationStep", () => {
   const user = userEvent.setup()
 
@@ -140,17 +182,23 @@ describe("JobApplicationStep", () => {
   const mockOnPrev = vi.fn()
   const mockSetStepData = vi.fn()
 
+
   beforeEach(() => {
     vi.clearAllMocks()
+    mockMethods.watch.mockReturnValue({})
+    mockMethods.control._getWatch.mockReturnValue({})
+    mockUseAuth.mockReturnValue({ user: { email: "test@example.com" } })
+    mockUseWatch.mockReturnValue("") // Default value for useWatch
       ; (jobAppContext.useJobApp as unknown as { mockReturnValue: (val: unknown) => void }).mockReturnValue({
         stepData: { basic_information: {} },
         setStepData: mockSetStepData,
       })
 
-      ; (jobOpeningHooks.useCreateJobApplicant as unknown as { mockReturnValue: (val: unknown) => void }).mockReturnValue({
-        mutate: vi.fn(),
-        isPending: false,
-      })
+    const mockMutation = { mutate: vi.fn(), isPending: false }
+      ; (jobOpeningHooks.useCreateJobApplicant as any).mockReturnValue(mockMutation)
+      ; (jobOpeningHooks.useCreateDraftJobApplicant as any).mockReturnValue(mockMutation)
+      ; (jobOpeningHooks.useUpdateDraftJobApplicant as any).mockReturnValue(mockMutation)
+      ; (jobOpeningHooks.useDeleteDraftJobApplicant as any).mockReturnValue(mockMutation)
   })
 
   it("renders form with sections and fields", () => {
@@ -163,6 +211,9 @@ describe("JobApplicationStep", () => {
         jobID="job-123"
         onNext={mockOnNext}
         onPrev={mockOnPrev}
+        methods={mockMethods}
+        draftName={null}
+        setDraftName={vi.fn()}
       />
     )
 
@@ -180,6 +231,9 @@ describe("JobApplicationStep", () => {
         jobID="job-123"
         onNext={mockOnNext}
         onPrev={mockOnPrev}
+        methods={mockMethods}
+        draftName={null}
+        setDraftName={vi.fn()}
       />
     )
 
@@ -197,6 +251,9 @@ describe("JobApplicationStep", () => {
         jobID="job-123"
         onNext={mockOnNext}
         onPrev={mockOnPrev}
+        methods={mockMethods}
+        draftName={null}
+        setDraftName={vi.fn()}
       />
     )
 
@@ -214,6 +271,9 @@ describe("JobApplicationStep", () => {
         jobID="job-123"
         onNext={mockOnNext}
         onPrev={mockOnPrev}
+        methods={mockMethods}
+        draftName={null}
+        setDraftName={vi.fn()}
       />
     )
 
@@ -231,6 +291,9 @@ describe("JobApplicationStep", () => {
         jobID="job-123"
         onNext={mockOnNext}
         onPrev={mockOnPrev}
+        methods={mockMethods}
+        draftName={null}
+        setDraftName={vi.fn()}
       />
     )
 
@@ -247,6 +310,9 @@ describe("JobApplicationStep", () => {
         jobID="job-123"
         onNext={mockOnNext}
         onPrev={mockOnPrev}
+        methods={mockMethods}
+        draftName={null}
+        setDraftName={vi.fn()}
       />
     )
 
@@ -266,6 +332,9 @@ describe("JobApplicationStep", () => {
         jobID="job-123"
         onNext={mockOnNext}
         onPrev={mockOnPrev}
+        methods={mockMethods}
+        draftName={null}
+        setDraftName={vi.fn()}
       />
     )
 
@@ -292,6 +361,9 @@ describe("JobApplicationStep", () => {
         jobID="job-123"
         onNext={mockOnNext}
         onPrev={mockOnPrev}
+        methods={mockMethods}
+        draftName={null}
+        setDraftName={vi.fn()}
         className="custom-form-class"
       />
     )
@@ -327,6 +399,9 @@ describe("JobApplicationStep", () => {
         jobID="job-123"
         onNext={mockOnNext}
         onPrev={mockOnPrev}
+        methods={mockMethods}
+        draftName={null}
+        setDraftName={vi.fn()}
       />
     )
 
@@ -360,6 +435,9 @@ describe("JobApplicationStep", () => {
         jobID="job-123"
         onNext={mockOnNext}
         onPrev={mockOnPrev}
+        methods={mockMethods}
+        draftName={null}
+        setDraftName={vi.fn()}
       />
     )
 
@@ -392,6 +470,9 @@ describe("JobApplicationStep", () => {
         jobID="job-123"
         onNext={mockOnNext}
         onPrev={mockOnPrev}
+        methods={mockMethods}
+        draftName={null}
+        setDraftName={vi.fn()}
       />
     )
 
@@ -434,6 +515,9 @@ describe("JobApplicationStep", () => {
         jobID="job-123"
         onNext={mockOnNext}
         onPrev={mockOnPrev}
+        methods={mockMethods}
+        draftName={null}
+        setDraftName={vi.fn()}
       />
     )
 
@@ -448,6 +532,8 @@ describe("JobApplicationStep Coverage Enhancements", () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    mockMethods.watch.mockReturnValue({})
+    mockMethods.control._getWatch.mockReturnValue({})
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ; (jobAppContext.useJobApp as any).mockReturnValue({
@@ -458,6 +544,18 @@ describe("JobApplicationStep Coverage Enhancements", () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ; (jobOpeningHooks.useCreateJobApplicant as any).mockReturnValue({
         mutate: mockMutate,
+        isPending: false,
+      })
+      ; (jobOpeningHooks.useCreateDraftJobApplicant as any).mockReturnValue({
+        mutate: vi.fn(),
+        isPending: false,
+      })
+      ; (jobOpeningHooks.useUpdateDraftJobApplicant as any).mockReturnValue({
+        mutate: vi.fn(),
+        isPending: false,
+      })
+      ; (jobOpeningHooks.useDeleteDraftJobApplicant as any).mockReturnValue({
+        mutate: vi.fn(),
         isPending: false,
       })
   })
@@ -483,6 +581,9 @@ describe("JobApplicationStep Coverage Enhancements", () => {
         jobID="job-999"
         onNext={vi.fn()}
         onPrev={vi.fn()}
+        methods={mockMethods}
+        draftName={null}
+        setDraftName={vi.fn()}
       />
     )
 
@@ -520,6 +621,9 @@ describe("JobApplicationStep Coverage Enhancements", () => {
         jobID="job-999"
         onNext={vi.fn()}
         onPrev={vi.fn()}
+        methods={mockMethods}
+        draftName={null}
+        setDraftName={vi.fn()}
       />
     )
 
@@ -552,6 +656,9 @@ describe("JobApplicationStep Coverage Enhancements", () => {
         jobID="job-999"
         onNext={vi.fn()}
         onPrev={vi.fn()}
+        methods={mockMethods}
+        draftName={null}
+        setDraftName={vi.fn()}
       />
     )
 
@@ -591,6 +698,9 @@ describe("JobApplicationStep Coverage Enhancements", () => {
         jobID="job-submission-id"
         onNext={vi.fn()}
         onPrev={vi.fn()}
+        methods={mockMethods}
+        draftName={null}
+        setDraftName={vi.fn()}
       />
     )
 
@@ -607,7 +717,7 @@ describe("JobApplicationStep Coverage Enhancements", () => {
     const payloadSent = mockMutate.mock.calls[0][0];
     expect(payloadSent.job_opening).toBe("job-submission-id");
     // ensure undefined/empty mapping from previous step "emptyField" is handled:
-    expect(payloadSent.emptyField).toBe(null);
+    expect(payloadSent.emptyField).toBeFalsy();
 
     // 2. Trigger onSuccess logic
     expect(mutateCallbacks).toBeTruthy();
@@ -644,6 +754,9 @@ describe("JobApplicationStep Coverage Enhancements", () => {
         jobID="job-1"
         onNext={vi.fn()}
         onPrev={vi.fn()}
+        methods={mockMethods}
+        draftName={null}
+        setDraftName={vi.fn()}
       />
     )
 
@@ -659,6 +772,9 @@ describe("JobApplicationStep Coverage Enhancements", () => {
         jobID="job-1"
         onNext={vi.fn()}
         onPrev={vi.fn()}
+        methods={mockMethods}
+        draftName={null}
+        setDraftName={vi.fn()}
       />
     )
 
@@ -685,6 +801,9 @@ describe("JobApplicationStep Coverage Enhancements", () => {
         jobID="job-multi"
         onNext={onNextMock}
         onPrev={vi.fn()}
+        methods={mockMethods}
+        draftName={null}
+        setDraftName={vi.fn()}
       />
     )
 

@@ -101,6 +101,15 @@ describe('JobAppContext', () => {
       expect(mockTransformFieldsToTabs).toHaveBeenCalledWith(fields)
     })
 
+    it('passes job_opening and form_name to useJobApplicationForm', () => {
+      render(
+        <JobAppProvider job_opening="job123" form_name="custom_form">
+          <div>Child</div>
+        </JobAppProvider>
+      )
+      expect(mockUseJobApplicationForm).toHaveBeenCalledWith("job123", "custom_form")
+    })
+
     it('provides tabs from transformFieldsToTabs result', () => {
       const tabs = [
         { tab: 'Personal', sections: [] },

@@ -136,11 +136,11 @@ export function MyRequestsList({
                             <StatusIcon className="size-6" strokeWidth={2.5} />
                           </div>
                           <div className="flex flex-col pt-0.5 min-w-0">
-                            <h4 className="font-bold text-base text-slate-900 dark:text-gray-100 leading-tight truncate">{req.title}</h4>
-                            <span className="text-xs text-[#667085] mt-1.5 font-medium dark:text-gray-400 leading-none truncate">
+                            <h4 className="font-bold text-base text-slate-900 dark:text-gray-100 leading-tight ">{req.title}</h4>
+                            <span className="text-xs text-[#667085] mt-1.5 font-medium dark:text-gray-400 leading-none ">
                               Request Type: {req.requestType || "General"}
                             </span>
-                            <span className="text-xs text-[#667085] mt-1.5 font-medium dark:text-gray-400 leading-none truncate">
+                            <span className="text-xs text-[#667085] mt-1.5 font-medium dark:text-gray-400 leading-none ">
                             Description: {req.description || "No description provided"}
                             </span>
                             <div>

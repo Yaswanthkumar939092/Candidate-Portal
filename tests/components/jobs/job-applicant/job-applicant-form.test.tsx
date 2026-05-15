@@ -1,3 +1,4 @@
+import { useEffect } from "react"
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
@@ -5,6 +6,16 @@ import JobApplicationPage from "@/components/jobs/job-applicant/JobApplicantForm
 
 vi.mock("@/lib/contexts/job-application-context", () => ({
   useJobApp: vi.fn(),
+}))
+
+const mockUseAuth = vi.fn()
+vi.mock("@/lib/contexts/auth-context", () => ({
+  useAuth: () => mockUseAuth(),
+}))
+
+const mockUseGetDraftJobApplicant = vi.fn()
+vi.mock("@/lib/hooks/useJobOpening", () => ({
+  useGetDraftJobApplicant: (...args: any[]) => mockUseGetDraftJobApplicant(...args),
 }))
 
 vi.mock("@/components/jobs/job-applicant/job-applicationstep-nav", () => ({
@@ -19,14 +30,28 @@ vi.mock("@/components/jobs/job-applicant/job-applicationstep-nav", () => ({
 }))
 
 vi.mock("@/components/jobs/job-applicant/DynamicField", () => ({
-  JobApplicationStep: ({ tab, currentStep, totalSteps, onNext, onPrev }: { tab: { tab: string }; currentStep: number; totalSteps: number; onNext: () => void; onPrev: () => void }) => (
-    <div data-testid="job-application-step">
-      <h2>{tab.tab}</h2>
-      <span data-testid="step-info">{currentStep + 1}/{totalSteps}</span>
-      <button onClick={onNext} data-testid="next-btn">Next</button>
-      <button onClick={onPrev} data-testid="prev-btn">Prev</button>
-    </div>
-  ),
+  JobApplicationStep: ({ tab, methods, onNext, onPrev, currentStep, totalSteps }: any) => {
+    useEffect(() => {
+      if (tab.skipAutoFill) return;
+      // Auto-fill fields to pass validation in tests
+      tab.sections.forEach((s: any) => {
+        s.fields.forEach((f: any) => {
+          if (f.reqd || f.is_mandatory) {
+            methods.setValue(f.fieldname, "Filled Value");
+          }
+        })
+      })
+    }, [tab, methods])
+
+    return (
+      <div data-testid="job-application-step">
+        <h2>{tab.tab}</h2>
+        <span data-testid="step-info">{currentStep + 1}/{totalSteps}</span>
+        <button onClick={onNext} data-testid="next-btn">Next</button>
+        <button onClick={onPrev} data-testid="prev-btn">Prev</button>
+      </div>
+    )
+  },
 }))
 
 vi.mock("sonner", () => ({
@@ -34,6 +59,7 @@ vi.mock("sonner", () => ({
     warning: vi.fn(),
     success: vi.fn(),
     error: vi.fn(),
+    info: vi.fn(),
   },
 }))
 
@@ -71,11 +97,21 @@ describe("JobApplicantForm", () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    mockUseAuth.mockReturnValue({ user: { email: "test@example.com" } })
+    mockUseGetDraftJobApplicant.mockReturnValue({
+      success: true,
+      data: {
+        name: "John Doe",
+        form_data: JSON.stringify({ name: "John Doe", email: "john@example.com" }),
+      },
+      isLoading: false,
+    })
   })
 
   describe("Loading State", () => {
     it("renders loading spinner when isLoading is true", () => {
       mockUseJobApp.mockReturnValue({
+        initializeAllStepsFromDraft: vi.fn(),
         tabs: mockTabs,
         isLoading: true,
         stepData: {},
@@ -89,6 +125,7 @@ describe("JobApplicantForm", () => {
   describe("Empty State", () => {
     it("renders null when no tabs", () => {
       mockUseJobApp.mockReturnValue({
+        initializeAllStepsFromDraft: vi.fn(),
         tabs: [],
         isLoading: false,
         stepData: {},
@@ -102,6 +139,7 @@ describe("JobApplicantForm", () => {
   describe("Form Rendering", () => {
     beforeEach(() => {
       mockUseJobApp.mockReturnValue({
+        initializeAllStepsFromDraft: vi.fn(),
         tabs: mockTabs,
         isLoading: false,
         stepData: {
@@ -136,6 +174,7 @@ describe("JobApplicantForm", () => {
   describe("Step Navigation", () => {
     beforeEach(() => {
       mockUseJobApp.mockReturnValue({
+        initializeAllStepsFromDraft: vi.fn(),
         tabs: mockTabs,
         isLoading: false,
         stepData: {
@@ -159,6 +198,7 @@ describe("JobApplicantForm", () => {
 
     it("navigates to previous step when handlePrev is called", async () => {
       mockUseJobApp.mockReturnValue({
+        initializeAllStepsFromDraft: vi.fn(),
         tabs: mockTabs,
         isLoading: false,
         stepData: {
@@ -170,6 +210,7 @@ describe("JobApplicantForm", () => {
       render(<JobApplicationPage jobID="job-123" />)
 
       mockUseJobApp.mockReturnValue({
+        initializeAllStepsFromDraft: vi.fn(),
         tabs: mockTabs,
         isLoading: false,
         stepData: {
@@ -202,8 +243,18 @@ describe("JobApplicantForm", () => {
 
   describe("Field Validation", () => {
     it("shows warning when required fields are missing on step change", async () => {
+      mockUseGetDraftJobApplicant.mockReturnValue({
+        success: true,
+        data: {
+          name: "John Doe",
+          form_data: JSON.stringify({ name: "", email: "" }), // Empty data
+        },
+        isLoading: false,
+      })
+
       mockUseJobApp.mockReturnValue({
-        tabs: mockTabs,
+        initializeAllStepsFromDraft: vi.fn(),
+        tabs: mockTabs.map(t => ({ ...t, skipAutoFill: true })),
         isLoading: false,
         stepData: {
           personal_info: { name: "" },
@@ -213,6 +264,11 @@ describe("JobApplicantForm", () => {
 
       render(<JobApplicationPage jobID="job-123" />)
 
+      await waitFor(() => {
+        const goToStep1Btn = screen.getByText("Go to Step 1")
+        expect(goToStep1Btn).toBeTruthy()
+      })
+      
       const goToStep1Btn = screen.getByText("Go to Step 1")
       await user.click(goToStep1Btn)
 
@@ -225,6 +281,7 @@ describe("JobApplicantForm", () => {
 
     it("allows step change when all required fields are filled", async () => {
       mockUseJobApp.mockReturnValue({
+        initializeAllStepsFromDraft: vi.fn(),
         tabs: mockTabs,
         isLoading: false,
         stepData: {
@@ -235,6 +292,11 @@ describe("JobApplicantForm", () => {
 
       render(<JobApplicationPage jobID="job-123" />)
 
+      await waitFor(() => {
+        const goToStep1Btn = screen.getByText("Go to Step 1")
+        expect(goToStep1Btn).toBeTruthy()
+      })
+      
       const goToStep1Btn = screen.getByText("Go to Step 1")
       await user.click(goToStep1Btn)
 
@@ -247,6 +309,7 @@ describe("JobApplicantForm", () => {
   describe("Completed Steps Tracking", () => {
     beforeEach(() => {
       mockUseJobApp.mockReturnValue({
+        initializeAllStepsFromDraft: vi.fn(),
         tabs: mockTabs,
         isLoading: false,
         stepData: {
@@ -259,6 +322,11 @@ describe("JobApplicantForm", () => {
     it("marks step as complete when navigating away", async () => {
       render(<JobApplicationPage jobID="job-123" />)
 
+      await waitFor(() => {
+        const goToStep1Btn = screen.getByText("Go to Step 1")
+        expect(goToStep1Btn).toBeTruthy()
+      })
+      
       const goToStep1Btn = screen.getByText("Go to Step 1")
       await user.click(goToStep1Btn)
 

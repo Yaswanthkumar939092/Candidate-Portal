@@ -9,6 +9,9 @@ import { useJobOpening } from "@/lib/hooks/useJobOpening"
 
 // ---------------- TYPES ----------------
 export interface MatchedJob {
+  upper_range: null
+  lower_range: null
+  custom_qualifications: never[]
   id: string
   title: string
   company: string

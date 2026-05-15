@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useEffect, useMemo } from "react";
-import { useForm } from "react-hook-form";
+import React, { useEffect, useMemo, useState } from "react";
+import { useWatch } from "react-hook-form";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -10,11 +11,16 @@ import { SectionCard } from "@/components/onboarding/section-card";
 import { DynamicFieldRenderer } from "@/components/ui/field-renderer";
 import { cn } from "@/lib/utils";
 import { useJobApp } from "@/lib/contexts/job-application-context";
-import { useCreateJobApplicant } from "@/lib/hooks/useJobOpening";
+import {
+  useCreateDraftJobApplicant,
+  useUpdateDraftJobApplicant,
+  useCreateJobApplicant,
+  useDeleteDraftJobApplicant,
+} from "@/lib/hooks/useJobOpening";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { JobApplicationTableField } from "./ChildTable";
-
+import { useAuth } from "@/lib/contexts/auth-context";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -49,6 +55,9 @@ interface JobApplicationStepProps {
   jobID: string;
   onNext: () => void;
   onPrev: () => void;
+  methods: any;
+  draftName: string | null;
+  setDraftName: (name: string | null) => void;
   className?: string;
 }
 
@@ -61,6 +70,59 @@ type OverrideComponentProps = {
   className?: string;
 };
 
+// ─── Internal Wrappers ────────────────────────────────────────────────────────
+
+const FieldWrapper = ({
+  field,
+  control,
+  handleChange,
+  error,
+  handleFileUpload,
+  fieldOverrides,
+}: any) => {
+  const value = useWatch({
+    control,
+    name: field.fieldname,
+  });
+
+  return (
+    <DynamicFieldRenderer
+      field={field}
+      value={value}
+      onChange={handleChange}
+      error={error}
+      disabled={!!field.read_only}
+      onAttachChange={handleFileUpload}
+      overrides={fieldOverrides}
+    />
+  );
+};
+
+const TableFieldWrapper = ({
+  field,
+  control,
+  handleChange,
+  error,
+  handleFileUpload,
+}: any) => {
+  const value = useWatch({
+    control,
+    name: field.fieldname,
+  });
+
+  return (
+    <div className="md:col-span-full">
+      <JobApplicationTableField
+        field={field}
+        value={value}
+        onChange={handleChange}
+        onAttachChange={handleFileUpload}
+      />
+      {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
+    </div>
+  );
+};
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function JobApplicationStep({
@@ -71,71 +133,136 @@ export function JobApplicationStep({
   jobID,
   onNext,
   onPrev,
+  methods,
+  draftName,
+  setDraftName,
   className,
 }: JobApplicationStepProps) {
-  const { stepData, setStepData } = useJobApp();
+  const { stepData, setStepData, initializeAllStepsFromDraft } = useJobApp();
   const { mutate, isPending } = useCreateJobApplicant();
+  const { mutate: draftMutate, isPending: isDraftPending } =
+    useCreateDraftJobApplicant();
+  const { mutate: draftUpdateMutate, isPending: isDraftUpdatePending } =
+    useUpdateDraftJobApplicant();
+  const { mutate: deleteDraftMutate } = useDeleteDraftJobApplicant();
   const router = useRouter();
+  const { user } = useAuth();
+  const userEmail = user?.email || user?.user_metadata?.email || "";
 
-  const isLastStep = currentStep === totalSteps - 1;
-
-  const existingData = useMemo(
-    () => (stepData[stepKey] ?? {}) as Record<string, unknown>,
-    [stepData, stepKey]
-  );
-
-  // Build default values: merge saved data + empty defaults per field type
-  const defaultValues = useMemo(() => {
-    const values: Record<string, unknown> = { ...existingData };
-    tab.sections.forEach((section) => {
-      section.fields.forEach((field) => {
-        if (values[field.fieldname] === undefined) {
-          values[field.fieldname] = field.fieldtype === "Table" ? [] : "";
-        }
-      });
-    });
-    return values;
-  }, [tab, existingData]);
-
+  // ── Use methods from props instead of local useForm ─────────────────────
   const {
     handleSubmit,
     watch,
     setValue,
     reset,
     formState: { errors },
-  } = useForm({ defaultValues });
+  } = methods;
 
-  // Re-sync form when step changes
+  // Per-field manual validation errors
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const isLastStep = currentStep === totalSteps - 1;
+
+
+  // ── All fields in this tab ────────────────────────────────────────────────
+  const allTabFields = useMemo(
+    () => tab.sections.flatMap((s) => s.fields),
+    [tab]
+  );
+
+  const allTabFieldNames = useMemo(
+    () => new Set(allTabFields.map((f) => f.fieldname)),
+    [allTabFields]
+  );
+
+  // ── Reset manual errors when step changes ───────────────────────────────
   useEffect(() => {
-    reset(defaultValues);
-  }, [defaultValues, reset]);
+    setFieldErrors({});
+  }, [currentStep]);
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
+
+
+  // ── Manual required-field validation ─────────────────────────────────────
+  const validateRequiredFields = (): boolean => {
+    const currentValues = watch();
+    const newErrors: Record<string, string> = {};
+
+    allTabFields.forEach((field) => {
+      if (field.hidden) return;
+      if (!(field.reqd || field.is_mandatory)) return;
+
+      const val = currentValues[field.fieldname];
+      const isEmpty =
+        val === undefined ||
+        val === null ||
+        val === "" ||
+        (Array.isArray(val) && val.length === 0);
+
+      if (isEmpty) {
+        newErrors[field.fieldname] = `${field.label} is required`;
+      }
+    });
+
+    setFieldErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      toast.warning("Please fill all required fields before proceeding.");
+      return false;
+    }
+
+    return true;
+  };
+
+  // ── Clear a single field error on change ─────────────────────────────────
+  const clearFieldError = (fieldname: string) => {
+    if (fieldErrors[fieldname]) {
+      setFieldErrors((prev) => {
+        const next = { ...prev };
+        delete next[fieldname];
+        return next;
+      });
+    }
+  };
 
   const handleFileUpload =
     (fieldname: string) => (url: string | null) => {
-      setValue(fieldname, url ?? "", { shouldValidate: true });
+      setValue(fieldname, url ?? "", { shouldValidate: false });
+      clearFieldError(fieldname);
     };
 
   const buildFinalPayload = (currentData: Record<string, unknown>) => {
-    const merged = { ...stepData, [stepKey]: currentData };
     const final: Record<string, unknown> = {};
 
-    Object.values(merged).forEach((step) => {
-      Object.entries(step as Record<string, unknown>).forEach(
-        ([key, value]) => {
-          final[key] = value === "" || value === undefined ? null : value;
-        }
-      );
+    Object.entries(currentData).forEach(([key, value]) => {
+      final[key] = value === "" || value === undefined ? null : value;
     });
 
-    final.job_opening = jobID;
-    return final;
+    return {
+      ...final,
+      job_opening: jobID,
+      email_id: userEmail || null,
+    };
   };
 
-  // ── Submit ────────────────────────────────────────────────────────────────
+  const buildDraftPayload = (data: Record<string, unknown>) => {
+    const formData: Record<string, unknown> = {};
 
-  const onSubmit = handleSubmit((data) => {
+    Object.entries(data).forEach(([key, value]) => {
+      formData[key] = value === "" || value === undefined ? null : value;
+    });
+
+    return {
+      job_applicant_email: userEmail,
+      status: "Pending",
+      form_data: JSON.stringify(formData),
+      job_opening: jobID,
+    };
+  };
+
+  // ── FINAL SUBMIT (untouched) ──────────────────────────────────────────────
+
+  const onSubmit = handleSubmit((data: Record<string, any>) => {
+    // Optionally update context, but the form data itself is already centralized
     setStepData(stepKey, data);
 
     if (isLastStep) {
@@ -143,6 +270,8 @@ export function JobApplicationStep({
       mutate(payload as Parameters<typeof mutate>[0], {
         onSuccess: () => {
           toast.success("Application submitted successfully!");
+          // ✅ Delete draft after successful submission
+          deleteDraftMutate({ email: userEmail, jobId: jobID });
           reset({});
           router.push(`/open-jobs/${jobID}/apply-job/thank-you`);
         },
@@ -153,8 +282,41 @@ export function JobApplicationStep({
       return;
     }
 
+    if (!validateRequiredFields()) return;
     onNext();
   });
+
+  // ── SAVE DRAFT (no validation) ────────────────────────────────────────────
+
+  const onDraftSave = () => {
+    const data = watch();
+    setStepData(stepKey, data);
+    const draftPayload = buildDraftPayload(data);
+
+    // Use prop value directly
+    const currentDraftName = draftName;
+
+    if (currentDraftName) {
+      // UPDATE existing draft
+      draftUpdateMutate(
+        { name: currentDraftName, payload: draftPayload },
+        {
+          onSuccess: () => toast.success("Draft updated successfully!"),
+          onError: () => toast.error("Draft update failed."),
+        }
+      );
+    } else {
+      // CREATE new draft
+      draftMutate(draftPayload as any, {
+        onSuccess: (responseData) => {
+          const newName = responseData?.name ?? responseData?.data?.name ?? null;
+          setDraftName(newName);
+          toast.success("Draft saved successfully!");
+        },
+        onError: () => toast.error("Draft save failed."),
+      });
+    }
+  };
 
   // ── Field overrides ───────────────────────────────────────────────────────
 
@@ -209,38 +371,42 @@ export function JobApplicationStep({
     },
   };
 
-  // ── Render field ──────────────────────────────────────────────────────────
+  // ── Render individual field ───────────────────────────────────────────────
 
   const renderField = (field: JobField) => {
     if (field.hidden) return null;
 
+    const handleChange = (val: unknown) => {
+      setValue(field.fieldname, val, { shouldValidate: false });
+      clearFieldError(field.fieldname);
+    };
+
+    const error =
+      (errors[field.fieldname]?.message as string) ||
+      fieldErrors[field.fieldname];
+
     if (field.fieldtype === "Table") {
       return (
-        <div key={field.fieldname} className="md:col-span-full">
-          <JobApplicationTableField
-            field={field}
-            value={watch(field.fieldname)}
-            onChange={(val) =>
-              setValue(field.fieldname, val, { shouldValidate: true })
-            }
-            onAttachChange={handleFileUpload}
-          />
-        </div>
+        <TableFieldWrapper
+          key={field.fieldname}
+          field={field}
+          control={methods.control}
+          handleChange={handleChange}
+          error={error}
+          handleFileUpload={handleFileUpload}
+        />
       );
     }
 
     return (
-      <DynamicFieldRenderer
+      <FieldWrapper
         key={field.fieldname}
         field={field}
-        value={watch(field.fieldname)}
-        onChange={(val) =>
-          setValue(field.fieldname, val, { shouldValidate: true })
-        }
-        error={errors[field.fieldname]?.message as string}
-        disabled={!!field.read_only}
-        onAttachChange={handleFileUpload}
-        overrides={fieldOverrides}
+        control={methods.control}
+        handleChange={handleChange}
+        error={error}
+        handleFileUpload={handleFileUpload}
+        fieldOverrides={fieldOverrides}
       />
     );
   };
@@ -268,23 +434,38 @@ export function JobApplicationStep({
         </React.Fragment>
       ))}
 
-      {/* Navigation */}
       <Separator />
       <div className="flex items-center justify-between pt-2">
         <Button
           type="button"
           variant="outline"
           onClick={onPrev}
-          disabled={currentStep === 0 || isPending}
+          disabled={
+            currentStep === 0 ||
+            isPending ||
+            isDraftPending ||
+            isDraftUpdatePending
+          }
         >
           <ChevronLeft className="mr-1 h-4 w-4" />
           Previous
         </Button>
 
-        <Button type="submit" disabled={isPending}>
-          {isLastStep ? "Submit Application" : "Next Step"}
-          {!isLastStep && <ChevronRight className="ml-1 h-4 w-4" />}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={onDraftSave}
+            disabled={isDraftPending || isDraftUpdatePending}
+          >
+            Save Draft
+          </Button>
+
+          <Button type="submit" disabled={isPending}>
+            {isLastStep ? "Submit Application" : "Next Step"}
+            {!isLastStep && <ChevronRight className="ml-1 h-4 w-4" />}
+          </Button>
+        </div>
       </div>
     </form>
   );
