@@ -1,0 +1,2132 @@
+
+> candidate-portal@0.1.0 test:coverage
+> vitest run --coverage
+
+
+ RUN  v4.1.5 /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal
+      Coverage enabled with v8
+
+stderr | tests/components/ui/sheet.test.tsx > Sheet Components > Sheet > manages open/close state
+`DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+stderr | tests/components/ui/sheet.test.tsx > Sheet Components > Sheet > accepts open prop for controlled state
+`DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+stderr | tests/components/ui/sheet.test.tsx > Sheet Components > Sheet > accepts onOpenChange callback
+`DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+stderr | tests/components/ui/sheet.test.tsx > Sheet Components > SheetTrigger > opens sheet on click
+`DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+stderr | tests/components/ui/sheet.test.tsx > Sheet Components > SheetContent > renders sheet content when open
+`DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+stderr | tests/components/ui/sheet.test.tsx > Sheet Components > SheetContent > renders as dialog element
+`DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+stderr | tests/components/ui/sheet.test.tsx > Sheet Components > SheetContent > supports different side positions
+`DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+stderr | tests/components/ui/sheet.test.tsx > Sheet Components > SheetContent > supports different side positions
+`DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+stderr | tests/components/ui/sheet.test.tsx > Sheet Components > SheetContent > supports different side positions
+`DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+stderr | tests/components/ui/sheet.test.tsx > Sheet Components > SheetContent > supports different side positions
+`DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+stderr | tests/components/ui/sheet.test.tsx > Sheet Components > SheetContent > includes a close button inside the dialog
+`DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+stderr | tests/components/ui/sheet.test.tsx > Sheet Components > SheetContent > closes when the built-in close button is clicked
+`DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+stderr | tests/components/ui/sheet.test.tsx > Sheet Components > SheetContent > applies custom className
+`DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+stderr | tests/components/ui/sheet.test.tsx > Sheet Components > SheetContent > renders children correctly
+`DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+stderr | tests/components/ui/sheet.test.tsx > Sheet Components > SheetClose > renders as button element
+`DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+stderr | tests/components/ui/sheet.test.tsx > Sheet Components > SheetClose > closes sheet when clicked
+`DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+stderr | tests/components/frappe-config.test.tsx > FrappeConfig > simulates successful connection and enables direct submit navigation
+An update to FrappeConfig inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to FrappeConfig inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/components/ui/sheet.test.tsx > Sheet Components > SheetClose > accepts asChild prop
+`DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+stderr | tests/components/ui/sheet.test.tsx > Sheet Components > SheetHeader > renders header container
+`DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+stderr | tests/components/ui/sheet.test.tsx > Sheet Components > SheetHeader > has correct flex styling
+`DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+stderr | tests/components/ui/sheet.test.tsx > Sheet Components > SheetHeader > applies custom className
+`DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+stderr | tests/components/ui/sheet.test.tsx > Sheet Components > SheetFooter > renders footer container
+`DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+stderr | tests/components/ui/sheet.test.tsx > Sheet Components > SheetFooter > has correct flex styling for buttons
+`DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+stderr | tests/app/(auth)/login/page.test.tsx > LoginPage – Error Handling > displays error message when auth.signIn throws an Error
+Login error: Error: Invalid login credentials
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/(auth)/login/page.test.tsx:169:34
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+stderr | tests/components/ui/sheet.test.tsx > Sheet Components > SheetFooter > applies custom className
+`DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+stderr | tests/components/ui/sheet.test.tsx > Sheet Components > SheetTitle > renders as heading element
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+stderr | tests/components/ui/sheet.test.tsx > Sheet Components > SheetTitle > has correct styling
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+stderr | tests/components/ui/sheet.test.tsx > Sheet Components > SheetTitle > applies custom className
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+stderr | tests/components/ui/sheet.test.tsx > Sheet Components > SheetDescription > renders description text
+`DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+
+stderr | tests/app/(auth)/login/page.test.tsx > LoginPage – Error Handling > displays generic message when non-Error is thrown
+Login error: some string error
+
+stderr | tests/components/ui/sheet.test.tsx > Sheet Components > SheetDescription > has correct styling
+`DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+
+stderr | tests/components/ui/sheet.test.tsx > Sheet Components > SheetDescription > applies custom className
+`DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+
+stderr | tests/app/(auth)/login/page.test.tsx > LoginPage – Error Handling > renders error inside an Alert component with role='alert'
+Login error: Error: Bad creds
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/(auth)/login/page.test.tsx:195:34
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+stderr | tests/components/ui/sheet.test.tsx > Sheet Components > Sheet Integration - Complete Example > renders sheet with form content
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+stderr | tests/components/ui/sheet.test.tsx > Sheet Components > Accessibility > supports keyboard navigation
+`DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+stderr | tests/components/ui/sheet.test.tsx > Sheet Components > Accessibility > closes on Escape key
+`DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+stderr | tests/components/ui/sheet.test.tsx > Sheet Components > Animation > has animation classes for slide animation
+`DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+ ✓ tests/components/ui/dropdown-menu.test.tsx (27 tests) 3868ms
+       ✓ opens and closes menu on trigger click  750ms
+       ✓ renders menu content  332ms
+ ✓ tests/components/ui/sheet.test.tsx (35 tests) 3932ms
+       ✓ manages open/close state  736ms
+       ✓ supports different side positions  515ms
+stderr | tests/app/(auth)/login/page.test.tsx > LoginPage – Error Handling > does NOT redirect when login fails
+Login error: Error: fail
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/(auth)/login/page.test.tsx:208:34
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+stderr | tests/app/(auth)/login/page.test.tsx > LoginPage – Error Handling > re-enables the submit button after an error
+Login error: Error: fail
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/(auth)/login/page.test.tsx:222:34
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+stderr | tests/app/(auth)/login/page.test.tsx > LoginPage – Error Handling > clears previous error when attempting another login
+Login error: Error: First error
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/(auth)/login/page.test.tsx:239:30
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+ ✓ tests/components/auth-form.test.tsx (61 tests) 4971ms
+     ✓ shows submit button with text 'Sign in to your account'  437ms
+     ✓ calls onSubmit with email and password on form submission  485ms
+     ✓ calls onSubmit with all register fields  466ms
+     ✓ handles rapid typing in email field without errors  349ms
+stderr | tests/app/(auth)/login/page.test.tsx > LoginPage – Edge Cases > handles network error gracefully
+Login error: Error: Network Error
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/(auth)/login/page.test.tsx:271:34
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+stderr | tests/components/frappe-config.test.tsx > FrappeConfig > handles mock connection failure scenarios correctly
+An update to FrappeConfig inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to FrappeConfig inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ tests/app/(auth)/login/page.test.tsx (18 tests) 5384ms
+     ✓ renders the sign-in button enabled initially  598ms
+     ✓ calls auth.signIn with the entered credentials  689ms
+     ✓ redirects to /dashboard on successful login  487ms
+     ✓ shows loading state ('Please wait...') during sign-in  310ms
+     ✓ does not show error after successful login  371ms
+     ✓ displays error message when auth.signIn throws an Error  389ms
+     ✓ does NOT redirect when login fails  333ms
+     ✓ re-enables the submit button after an error  360ms
+     ✓ clears previous error when attempting another login  382ms
+stderr | tests/components/portal-navigation.test.tsx > PortalNavigation > renders navigation header
+Received `true` for a non-boolean attribute `priority`.
+
+If you want to write it to the DOM, pass a string instead: priority="true" or priority={value.toString()}.
+
+stderr | tests/app/(auth)/register/page.test.tsx > RegisterPage – Error Handling > displays error message when auth.signUp throws an Error
+Registration error: Error: User already registered
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/(auth)/register/page.test.tsx:274:34
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+stderr | tests/app/(auth)/register/page.test.tsx > RegisterPage – Error Handling > displays generic message when non-Error is thrown
+Registration error: some string error
+
+ ✓ tests/app/(portal)/action-center/page.test.tsx (64 tests) 6064ms
+     ✓ renders the 'Action Center' heading  352ms
+     ✓ shows error 'Request type is required' when submitting without type  621ms
+     ✓ shows error 'Description is required' when submitting without description  525ms
+     ✓ closes dialog and logs data on successful submit  1149ms
+     ✓ resets form fields when dialog is closed via Cancel  710ms
+stderr | tests/app/(auth)/register/page.test.tsx > RegisterPage – Error Handling > renders error inside an Alert with role='alert'
+Registration error: Error: Duplicate email
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/(auth)/register/page.test.tsx:296:34
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+stderr | tests/components/frappe-config.test.tsx > FrappeConfig > auto-triggers connection verification when submitting without testing
+An update to FrappeConfig inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to FrappeConfig inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ tests/components/ui/popover.test.tsx (25 tests) 2570ms
+ ✓ tests/components/frappe-config.test.tsx (8 tests) 8372ms
+     ✓ triggers skip action by invoking onNext with undefined  368ms
+     ✓ simulates successful connection and enables direct submit navigation  2548ms
+     ✓ handles mock connection failure scenarios correctly  2523ms
+     ✓ auto-triggers connection verification when submitting without testing  2553ms
+stderr | tests/app/(auth)/register/page.test.tsx > RegisterPage – Error Handling > does NOT redirect when registration fails
+Registration error: Error: fail
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/(auth)/register/page.test.tsx:307:34
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+stderr | tests/components/portal-navigation.test.tsx > PortalNavigation > renders navigation icons in mobile menu
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+ ✓ tests/components/portal-navigation.test.tsx (26 tests) 3315ms
+     ✓ renders theme toggle button in dropdown  333ms
+     ✓ calls toggleTheme when theme button clicked  368ms
+     ✓ calls signOut when Sign Out clicked  340ms
+stderr | tests/components/ui/field-renderer.test.tsx > DynamicFieldRenderer > Additional Coverage Extensions > extracts name from Object types in Link and Select values, and inserts missing default values dynamically
+An update to component inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to component inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to component inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to component inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/app/(auth)/register/page.test.tsx > RegisterPage – Error Handling > re-enables the submit button after an error
+Registration error: Error: fail
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/(auth)/register/page.test.tsx:319:34
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+ ✓ tests/components/admin-navigation.test.tsx (9 tests) 2432ms
+     ✓ highlights the active navigation item  377ms
+     ✓ handles sign out correctly  758ms
+     ✓ navigates to quick action links  613ms
+ ✓ tests/components/ui/field-renderer.test.tsx (49 tests) 2757ms
+ ✓ tests/app/admin/onboarding-management/page.test.tsx (10 tests) 1305ms
+     ✓ handles approve workflow  440ms
+stderr | tests/components/ui/tooltip.test.tsx > Tooltip Components > TooltipTrigger > renders custom trigger content
+In HTML, <button> cannot be a descendant of <button>.
+This will cause a hydration error.
+
+  ...
+    <TooltipProviderProvider scope={undefined} isOpenDelayedRef={{current:true}} delayDuration={0} onOpen={function} ...>
+      <Tooltip data-slot="tooltip">
+        <Popper __scopePopper={{Popper:[...]}}>
+          <PopperProvider scope={{Popper:[...]}} anchor={null} onAnchorChange={function bound dispatchSetState}>
+            <TooltipProvider scope={undefined} contentId="radix-«r5»" open={false} stateAttribute="closed" trigger={null} ...>
+              <TooltipTrigger>
+                <TooltipTrigger data-slot="tooltip-tr...">
+                  <PopperAnchor asChild={true} __scopePopper={{Popper:[...]}}>
+                    <Primitive.div asChild={true} ref={function}>
+                      <Primitive.div.Slot ref={function}>
+                        <Primitive.div.SlotClone ref={function}>
+                          <Primitive.button aria-describedby={undefined} data-state="closed" data-slot="tooltip-tr..." ...>
+>                           <button
+>                             aria-describedby={undefined}
+>                             data-state="closed"
+>                             data-slot="tooltip-trigger"
+>                             onPointerMove={function handleEvent}
+>                             onPointerLeave={function handleEvent}
+>                             onPointerDown={function handleEvent}
+>                             onFocus={function handleEvent}
+>                             onBlur={function handleEvent}
+>                             onClick={function handleEvent}
+>                             ref={function}
+>                           >
+>                             <button>
+              ...
+
+<button> cannot contain a nested <button>.
+See this log for the ancestor stack trace.
+
+stderr | tests/app/(auth)/register/page.test.tsx > RegisterPage – Error Handling > clears previous error when attempting another registration
+Registration error: Error: First error
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/(auth)/register/page.test.tsx:334:30
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+ ✓ tests/components/ui/tooltip.test.tsx (17 tests) 1455ms
+       ✓ shows content on hover  451ms
+stderr | tests/components/document-manager.test.tsx > DocumentManager > renders document manager title and list
+In HTML, <div> cannot be a child of <select>.
+This will cause a hydration error.
+
+  <DocumentManager documents={[...]} onUpload={function Mock} onDelete={function Mock} onUpdate={function Mock} ...>
+    <div className="space-y-6">
+      <div className="flex flex-...">
+        <div>
+        <Dialog open={false} onOpenChange={function bound dispatchSetState}>
+          <div>
+            <DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <div>
+                <DialogHeader>
+                <div className="space-y-4">
+                  <div className="grid grid-...">
+                    <div>
+                      <Label>
+                      <Select value="" onValueChange={function bound dispatchSetState}>
+>                       <select data-testid="select-mock" value="" onChange={function onChange}>
+                          <SelectTrigger className="mt-1">
+                            <SelectValue placeholder="Select cat...">
+>                             <div>
+                          ...
+                    ...
+                  ...
+      ...
+
+<select> cannot contain a nested <div>.
+See this log for the ancestor stack trace.
+
+ ✓ tests/components/onboarding/steps/review-step.test.tsx (11 tests) 2057ms
+     ✓ renders incomplete steps warning and disables submit  511ms
+     ✓ renders step tabs and allows expanding sections to see summary data  373ms
+stderr | tests/app/(auth)/register/page.test.tsx > RegisterPage – Edge Cases > handles network error gracefully
+Registration error: Error: Network Error
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/(auth)/register/page.test.tsx:391:34
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+ ✓ tests/app/(auth)/register/page.test.tsx (24 tests) 12116ms
+     ✓ renders the AuthForm in register mode with correct heading  760ms
+     ✓ calls auth.signUp with email and password on successful registration  874ms
+     ✓ redirects to /dashboard on successful registration  537ms
+     ✓ shows loading state during registration  469ms
+     ✓ does not show error after successful registration  518ms
+     ✓ shows 'Passwords do not match' error when passwords differ  486ms
+     ✓ does NOT call auth.signUp when passwords mismatch  495ms
+     ✓ does NOT redirect when passwords mismatch  505ms
+     ✓ does NOT show loading state on password mismatch  465ms
+     ✓ displays error message when auth.signUp throws an Error  686ms
+     ✓ displays generic message when non-Error is thrown  616ms
+     ✓ renders error inside an Alert with role='alert'  684ms
+     ✓ does NOT redirect when registration fails  786ms
+     ✓ re-enables the submit button after an error  873ms
+     ✓ clears previous error when attempting another registration  830ms
+     ✓ logs error to console on failure  710ms
+     ✓ handles whitespace-only fullName without crashing  606ms
+     ✓ handles network error gracefully  667ms
+stderr | tests/components/ui/tabs.test.tsx > Tabs Components > Keyboard Navigation > can navigate tabs with arrow keys
+An update to ForwardRef inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ tests/components/job-sync-status.test.tsx (3 tests) 1425ms
+     ✓ captures dynamic 'syncing' status configuration immediately upon execution  686ms
+     ✓ successfully reaches 'catch' block failure logic via controlled promise rejection  479ms
+stderr | tests/components/ui/tabs.test.tsx > Tabs Components > Keyboard Navigation > wraps focus on ArrowLeft from first tab
+An update to ForwardRef inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ tests/components/oauth-config.test.tsx (8 tests) 1814ms
+     ✓ renders defaults and initializes appropriately  388ms
+     ✓ permits flawless bypass if all providers are deactivated  338ms
+ ✓ tests/components/ui/tabs.test.tsx (29 tests) 1998ms
+stdout | tests/components/document-manager.test.tsx > DocumentManager > properly demonstrates functionality inside example showcasing wrapper
+Previewing document: 1
+
+ ✓ tests/components/document-manager.test.tsx (11 tests) 1845ms
+     ✓ filters documents by search query  567ms
+     ✓ shows empty state when no documents match filters  301ms
+stderr | tests/app/job_offer/job-offer.test.tsx > JobOfferPage > renders main offer state with offer details
+Received `true` for a non-boolean attribute `priority`.
+
+If you want to write it to the DOM, pass a string instead: priority="true" or priority={value.toString()}.
+Received `true` for a non-boolean attribute `unoptimized`.
+
+If you want to write it to the DOM, pass a string instead: unoptimized="true" or unoptimized={value.toString()}.
+
+stderr | tests/app/admin/feature-flags/page.test.tsx > FeatureFlagsPage > loads and displays feature flags for admin user
+In HTML, <span> cannot be a child of <select>.
+This will cause a hydration error.
+
+  <FeatureFlagsPage>
+    <div className="min-h-scre...">
+      <div className="flex">
+        <AdminNavigation>
+        <div className="flex-1 ml-64">
+          <div className="p-8">
+            <div>
+            <div>
+            <Card className="mb-6">
+              <section>
+                <CardHeader>
+                <CardContent>
+                  <article>
+                    <div className="flex flex-...">
+                      <div>
+                      <div className="min-w-[150px]">
+                        <Label>
+                        <Select value="all" onValueChange={function onValueChange}>
+>                         <select data-testid="mock-select" value="all" onChange={function onChange}>
+                            <SelectTrigger>
+                              <SelectValue>
+>                               <span>
+                            ...
+                      ...
+            ...
+
+<select> cannot contain a nested <span>.
+See this log for the ancestor stack trace.
+
+ ✓ tests/components/user-management-table.test.tsx (6 tests) 1394ms
+     ✓ triggers role change action  639ms
+     ✓ triggers activate/deactivate actions  525ms
+ ✓ tests/components/ui/form.test.tsx (41 tests) 1314ms
+       ✓ supports form submission  392ms
+stderr | tests/components/file-uploading.test.tsx > AttachField > updates display when file is selected multiple times
+Error: Upload failed
+    at Object.<anonymous> (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/components/file-uploading.test.tsx:250:25)
+    at Object.Mock [as mutate] (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/spy/dist/index.js:332:34)
+    at handleFileUpload (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/components/shared/fileuploading.tsx:23:20)
+    at onChange (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/components/shared/fileuploading.tsx:55:13)
+    at executeDispatch (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/react-dom/cjs/react-dom-client.development.js:16368:9)
+    at runWithFiberInDEV (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+    at processDispatchQueue (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/react-dom/cjs/react-dom-client.development.js:16418:19)
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/react-dom/cjs/react-dom-client.development.js:17016:9
+    at batchedUpdates$1 (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/react-dom/cjs/react-dom-client.development.js:3262:40)
+    at dispatchEventForPluginEventSystem (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/react-dom/cjs/react-dom-client.development.js:16572:7)
+
+ ✓ tests/components/file-uploading.test.tsx (20 tests) 852ms
+     ✓ calls onChange with null when file is cleared  313ms
+stderr | tests/components/document-upload.test.tsx > DocumentUpload > successfully finalizes upload simulations and invokes final dispatch callback
+An update to DocumentUpload inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/components/document-upload.test.tsx > DocumentUpload > successfully finalizes upload simulations and invokes final dispatch callback
+An update to DocumentUpload inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/components/document-upload.test.tsx > DocumentUpload > successfully finalizes upload simulations and invokes final dispatch callback
+An update to DocumentUpload inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/components/document-upload.test.tsx > DocumentUpload > successfully finalizes upload simulations and invokes final dispatch callback
+An update to DocumentUpload inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/components/document-upload.test.tsx > DocumentUpload > successfully finalizes upload simulations and invokes final dispatch callback
+An update to DocumentUpload inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/components/document-upload.test.tsx > DocumentUpload > successfully finalizes upload simulations and invokes final dispatch callback
+An update to DocumentUpload inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentUpload inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/app/admin/feature-flags/page.test.tsx > FeatureFlagsPage > handles update and delete errors
+Error updating feature flag: Error: Failed to update feature flag
+    at handleUpdateFlag (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/app/admin/feature-flags/page.tsx:217:15)
+
+stderr | tests/app/admin/feature-flags/page.test.tsx > FeatureFlagsPage > handles update and delete errors
+Error deleting feature flag: Error: Failed to delete feature flag
+    at handleDeleteFlag (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/app/admin/feature-flags/page.tsx:243:15)
+
+stdout | tests/components/smart-career-match.test.tsx > SmartCareerMatch > shows analyzing state after clicking analyze
+✅ Clean Resume Text: react javascript typescript nodejs skills
+✅ Candidate Skills: [ 'react', 'javascript', 'typescript', 'node' ]
+JOB: React Developer { jobSkills: [ 'react', 'javascript', 'typescript' ], match: 100 }
+JOB: Node.js Backend Engineer { jobSkills: [ 'javascript', 'node', 'express', 'api' ], match: 50 }
+
+ ✓ tests/components/document-upload.test.tsx (12 tests) 868ms
+     ✓ handles file selection via input  378ms
+ ✓ tests/app/admin/feature-flags/page.test.tsx (13 tests) 1270ms
+     ✓ handles creation with all fields, validation, and cancel (line 179-180, 199-200, 333, 382)  598ms
+stdout | tests/components/smart-career-match.test.tsx > SmartCareerMatch > calls onAnalysisComplete with matched jobs
+✅ Clean Resume Text: react javascript typescript nodejs skills
+✅ Candidate Skills: [ 'react', 'javascript', 'typescript', 'node' ]
+JOB: React Developer { jobSkills: [ 'react', 'javascript', 'typescript' ], match: 100 }
+JOB: Node.js Backend Engineer { jobSkills: [ 'javascript', 'node', 'express', 'api' ], match: 50 }
+
+ ✓ tests/app/job_offer/job-offer.test.tsx (11 tests) 1444ms
+     ✓ checks terms and conditions and allows accepting offer  504ms
+     ✓ updates rejection comments, allows cancelling, and dismisses the missing-reason popup  310ms
+stdout | tests/components/smart-career-match.test.tsx > SmartCareerMatch > calls fetch with correct endpoint
+✅ Clean Resume Text: react javascript typescript nodejs skills
+✅ Candidate Skills: [ 'react', 'javascript', 'typescript', 'node' ]
+JOB: React Developer { jobSkills: [ 'react', 'javascript', 'typescript' ], match: 100 }
+JOB: Node.js Backend Engineer { jobSkills: [ 'javascript', 'node', 'express', 'api' ], match: 50 }
+
+ ✓ tests/components/smart-career-match.test.tsx (9 tests) 1004ms
+ ✓ tests/components/job-application-step.test.tsx (18 tests) 1333ms
+     ✓ calls onPrev when Previous button is clicked  457ms
+     ✓ calls onNext when Next button is clicked with valid data  614ms
+ ✓ tests/components/ui/switch.test.tsx (27 tests) 1803ms
+       ✓ renders switch element  369ms
+ ✓ tests/components/feature-toggle.test.tsx (10 tests) 2220ms
+     ✓ calls onUpdate when switch is toggled  419ms
+     ✓ opens edit dialog when clicking edit button  655ms
+     ✓ completes detailed lifecycle edit procedures and handles inputs verification  702ms
+ ✓ tests/lib/contexts/onboarding-context.test.tsx (27 tests) 1458ms
+       ✓ goToStep navigates to specified step  458ms
+ ✓ tests/components/ui/select.test.tsx (3 tests) 894ms
+     ✓ renders select trigger initially  386ms
+     ✓ renders SelectGroup, SelectLabel, and SelectSeparator when open  344ms
+ ✓ tests/components/action-center/assigned-tasks-list.test.tsx (5 tests) 1054ms
+     ✓ triggers complex inline attachment container lifecycle spanning modal ignition through termination (Lines 144-145, 202)  782ms
+ ✓ tests/components/vertical-tabs.test.tsx (6 tests) 575ms
+     ✓ pauses auto-play on mouse enter and resumes on mouse leave  343ms
+stderr | tests/app/admin/sso-providers/page.test.tsx > SSOProvidersPage > handles JSON parse error in config (line 123)
+In HTML, <span> cannot be a child of <select>.
+This will cause a hydration error.
+
+  <SSOProvidersPage>
+    <div className="min-h-scre...">
+      <div className="flex">
+        <AdminNavigation>
+        <div className="flex-1 ml-64">
+          <div className="p-8">
+            <div className="flex items...">
+              <div>
+              <Dialog open={true} onOpenChange={function bound dispatchSetState}>
+                <div data-testid="dialog-root">
+                  <DialogTrigger>
+                  <DialogContent className="sm:max-w-[...">
+                    <main data-testid="dialog-con...">
+                      <DialogHeader>
+                      <div className="space-y-4 ...">
+                        <div className="grid grid-...">
+                          <div className="space-y-2">
+                            <Label>
+                            <Select value="frappe_sso" onValueChange={function onValueChange}>
+>                             <select value="frappe_sso" onChange={function onChange} data-testid="mock-select">
+                                <SelectTrigger>
+                                  <SelectValue>
+>                                   <span>
+                                ...
+                          ...
+                        ...
+                      ...
+            ...
+
+<select> cannot contain a nested <span>.
+See this log for the ancestor stack trace.
+
+ ✓ tests/app/admin/sso-providers/page.test.tsx (7 tests) 763ms
+     ✓ handles deletion (line 175-189)  407ms
+ ✓ tests/lib/contexts/theme-context.test.tsx (16 tests) 690ms
+stderr | tests/components/job-application-table-field.test.tsx > JobApplicationTableField > Extended Coverage: Handlers & Remote Feeds > resolves runtime dependency map via fallback endpoint when child definitions are absent
+An update to JobApplicationTableField inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ tests/components/job-application-table-field.test.tsx (17 tests) 1051ms
+     ✓ adds a new row when Add button is clicked  314ms
+ ✓ tests/components/job-application-step-nav.test.tsx (17 tests) 838ms
+ ✓ tests/components/job-match-card.test.tsx (15 tests) 392ms
+stderr | tests/components/job-detail-dialog.test.tsx > JobDetailDialog > renders dialog when open is true
+In HTML, <div> cannot be a descendant of <p>.
+This will cause a hydration error.
+
+  ...
+    <FocusScope asChild={true} loop={true} trapped={true} onMountAutoFocus={undefined} ...>
+      <Primitive.div tabIndex={-1} asChild={true} ref={function} onKeyDown={function}>
+        <Primitive.div.Slot tabIndex={-1} onKeyDown={function} ref={function}>
+          <Primitive.div.SlotClone tabIndex={-1} onKeyDown={function} ref={function}>
+            <DismissableLayer role="dialog" id="radix-«r0»" aria-describedby="radix-«r2»" aria-labelledby="radix-«r1»" ...>
+              <Primitive.div role="dialog" id="radix-«r0»" aria-describedby="radix-«r2»" aria-labelledby="radix-«r1»" ...>
+                <div role="dialog" id="radix-«r0»" aria-describedby="radix-«r2»" aria-labelledby="radix-«r1»" ...>
+                  <DialogHeader>
+                    <div data-slot="dialog-header" className="flex flex-...">
+                      <DialogTitle>
+                      <DialogDescription className="flex flex-...">
+                        <DialogDescription data-slot="dialog-des..." className="flex flex-...">
+                          <Primitive.p id="radix-«r2»" data-slot="dialog-des..." className="flex flex-..." ref={null}>
+>                           <p
+>                             id="radix-«r2»"
+>                             data-slot="dialog-description"
+>                             className="flex flex-wrap items-center gap-2 pt-1 text-xs text-muted-foreground"
+>                             ref={null}
+>                           >
+                              <span className="inline-fle...">
+                                <Building2 className="h-3 w-3">
+>                                 <div data-testid="icon-building">
+                                ...
+                              ...
+                  ...
+                  ...
+    ...
+
+<p> cannot contain a nested <div>.
+See this log for the ancestor stack trace.
+
+ ✓ tests/components/job-detail-dialog.test.tsx (6 tests) 1302ms
+     ✓ renders dialog when open is true  375ms
+     ✓ calls onOpenChange when Cancel button is clicked  397ms
+ ✓ tests/components/jobs/job-applicant/job-applicant-form.test.tsx (18 tests) 1347ms
+       ✓ prevents navigation beyond last step  475ms
+ ✓ tests/components/ui/slider.test.tsx (53 tests) 617ms
+stderr | tests/app/admin/dashboard/page.test.tsx > AdminDashboard > shows the loading state while the admin check is in flight
+An update to AdminDashboard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/app/admin/dashboard/page.test.tsx > AdminDashboard > shows the loading state while the admin check is in flight
+An update to AdminDashboard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to AdminDashboard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/app/admin/dashboard/page.test.tsx > AdminDashboard > shows the loading state while the admin check is in flight
+An update to AdminDashboard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ tests/components/profile/page.test.tsx (12 tests) 1193ms
+     ✓ renders the 'My Profile' heading  459ms
+stderr | tests/components/oauth-buttons.test.tsx > OAuthButtons > displays error message if auth fails
+OAuth google error: Error: OAuth failed
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/components/oauth-buttons.test.tsx:85:106
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+ ✓ tests/app/(portal)/dashboard/page.test.tsx (9 tests) 591ms
+stderr | tests/components/oauth-buttons.test.tsx > OAuthButtons > displays error message if auth fails with a non-error object
+OAuth google error: Critical system crash
+
+ ✓ tests/components/oauth-buttons.test.tsx (10 tests) 769ms
+ ✓ tests/app/admin/dashboard/page.test.tsx (6 tests) 776ms
+     ✓ renders dashboard stats, recent activity, analytics, and admin actions  686ms
+stderr | tests/components/onboarding/onboarding-form-step.test.tsx > OnboardingFormStep > enables 'Same as Current Address' logic when Permanent Address section exists
+An update to Controller inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to OnboardingFormStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to OnboardingFormStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/app/admin/users/page.test.tsx > AdminUsersPage > renders loading state initially
+An update to AdminUsersPage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/app/admin/users/page.test.tsx > AdminUsersPage > loads and displays user stats and table
+Error loading users: TypeError: query.order is not a function
+    at loadUsers (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/app/admin/users/page.tsx:155:43)
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/app/admin/users/page.tsx:70:5
+    at Object.react-stack-bottom-frame (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/react-dom/cjs/react-dom-client.development.js:23949:20)
+    at runWithFiberInDEV (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+    at commitHookEffectListMount (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/react-dom/cjs/react-dom-client.development.js:11905:29)
+    at commitHookPassiveMountEffects (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/react-dom/cjs/react-dom-client.development.js:12028:11)
+    at commitPassiveMountOnFiber (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/react-dom/cjs/react-dom-client.development.js:13841:13)
+    at recursivelyTraversePassiveMountEffects (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/react-dom/cjs/react-dom-client.development.js:13815:11)
+    at commitPassiveMountOnFiber (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/react-dom/cjs/react-dom-client.development.js:13853:11)
+    at flushPassiveEffects (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/react-dom/cjs/react-dom-client.development.js:15737:9)
+
+stderr | tests/app/admin/users/page.test.tsx > AdminUsersPage > loads and displays user stats and table
+In HTML, <span> cannot be a child of <select>.
+This will cause a hydration error.
+
+  <AdminUsersPage>
+    <div className="min-h-scre...">
+      <div className="flex">
+        <AdminNavigation>
+        <div className="flex-1 ml-64">
+          <div className="p-8">
+            <div>
+            <div>
+            <Card className="mb-8">
+              <section className="mb-8">
+                <CardHeader>
+                <CardContent>
+                  <div className={undefined}>
+                    <div className="flex flex-...">
+                      <div>
+                      <Select value="all" onValueChange={function onValueChange}>
+>                       <select value="all" onChange={function onChange} data-testid="mock-select">
+                          <SelectTrigger className="w-full md:...">
+                            <SelectValue placeholder="All Roles">
+>                             <span>
+                          ...
+                      ...
+            ...
+
+<select> cannot contain a nested <span>.
+See this log for the ancestor stack trace.
+
+ ✓ tests/components/onboarding/onboarding-form-step.test.tsx (12 tests) 394ms
+ ✓ tests/components/onboarding/dynamic-table-field.test.tsx (4 tests) 475ms
+stdout | tests/app/admin/users/page.test.tsx > AdminUsersPage > handles user export (line 171-193)
+Exporting users... all
+
+stderr | tests/app/admin/users/page.test.tsx > AdminUsersPage > redirects if not admin
+Error loading users: TypeError: query.order is not a function
+    at loadUsers (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/app/admin/users/page.tsx:155:43)
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/app/admin/users/page.tsx:70:5
+    at Object.react-stack-bottom-frame (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/react-dom/cjs/react-dom-client.development.js:23949:20)
+    at runWithFiberInDEV (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+    at commitHookEffectListMount (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/react-dom/cjs/react-dom-client.development.js:11905:29)
+    at commitHookPassiveMountEffects (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/react-dom/cjs/react-dom-client.development.js:12028:11)
+    at commitPassiveMountOnFiber (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/react-dom/cjs/react-dom-client.development.js:13841:13)
+    at recursivelyTraversePassiveMountEffects (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/react-dom/cjs/react-dom-client.development.js:13815:11)
+    at commitPassiveMountOnFiber (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/react-dom/cjs/react-dom-client.development.js:13853:11)
+    at flushPassiveEffects (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/react-dom/cjs/react-dom-client.development.js:15737:9)
+
+Not implemented: navigation to another Document
+ ✓ tests/app/admin/users/page.test.tsx (6 tests) 528ms
+     ✓ handles user export (line 171-193)  347ms
+ ✓ tests/lib/contexts/job-application-context.test.tsx (14 tests) 633ms
+       ✓ updates stepData for a given step key  321ms
+stderr | tests/app/admin/frappe-environments/page.test.tsx > FrappeEnvironmentsPage > handles environment creation workflows
+In HTML, <span> cannot be a child of <select>.
+This will cause a hydration error.
+
+  <FrappeEnvironmentsPage>
+    <div className="min-h-scre...">
+      <div className="flex">
+        <AdminNavigation>
+        <div className="flex-1 ml-64">
+          <div className="p-8">
+            <div className="flex items...">
+              <div>
+              <Dialog open={true} onOpenChange={function bound dispatchSetState}>
+                <div data-testid="dialog">
+                  <DialogTrigger>
+                  <DialogContent className="sm:max-w-[...">
+                    <main>
+                      <DialogHeader>
+                      <div className="space-y-4 ...">
+                        <div className="grid grid-...">
+                          <div className="space-y-2">
+                            <Label>
+                            <Select value="DEV" onValueChange={function onValueChange}>
+>                             <select value="DEV" onChange={function onChange} data-testid="mock-select">
+                                <SelectTrigger>
+                                  <SelectValue>
+>                                   <span>
+                                ...
+                          ...
+                        ...
+                      ...
+            ...
+
+<select> cannot contain a nested <span>.
+See this log for the ancestor stack trace.
+
+ ✓ tests/components/dashboard/key-contacts.test.tsx (4 tests) 746ms
+     ✓ renders action buttons when email or phone is provided  601ms
+ ✓ tests/app/admin/frappe-environments/page.test.tsx (9 tests) 659ms
+     ✓ handles environment creation workflows  353ms
+stderr | tests/components/action-center/raise-request-dialog.test.tsx > RaiseRequestDialog – UI (open) > renders dialog title
+In HTML, <div> cannot be a child of <select>.
+This will cause a hydration error.
+
+  <QueryClientProvider client={{}}>
+    <RaiseRequestDialog open={true} onOpenChange={function Mock} onSubmit={function Mock}>
+      <Dialog open={true} onOpenChange={function onOpenChange}>
+        <div data-testid="dialog-wra...">
+          <div data-testid="dialog">
+            <DialogContent className="sm:max-w-[...">
+              <div data-testid="dialog-con...">
+                <DialogHeader>
+                <div className="space-y-5.5">
+                  <div className="space-y-2">
+                    <Label>
+                    <Select value="" onValueChange={function bound dispatchSetState}>
+>                     <select data-testid="select-mock" value="" onChange={function onChange}>
+                        <SelectTrigger id="req-type" className="w-full tex...">
+>                         <div data-testid="select-trigger">
+                        ...
+                  ...
+            ...
+
+<select> cannot contain a nested <div>.
+See this log for the ancestor stack trace.
+
+ ✓ tests/app/(portal)/onboarding/onboarding.test.tsx (5 tests) 479ms
+     ✓ renders error state when isError is true  345ms
+stderr | tests/components/action-center/raise-request-dialog.test.tsx > RaiseRequestDialog – Targeted Lines & Flows > manages precise hook dispatch handlers for positive and terminal file uploads
+An update to RaiseRequestDialog inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/components/action-center/raise-request-dialog.test.tsx > RaiseRequestDialog – Targeted Lines & Flows > manages precise hook dispatch handlers for positive and terminal file uploads
+Error: Network Blip
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/components/action-center/raise-request-dialog.test.tsx:439:27
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+An update to RaiseRequestDialog inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stdout | tests/lib/hooks/useJobOpening.test.tsx > useJobOpening Hooks > useCreateJobApplicant calls service on mutate
+✅ Job Applicant Created: { id: '1' }
+
+ ✓ tests/components/action-center/raise-request-dialog.test.tsx (27 tests) 450ms
+stdout | tests/components/my-jobs/applied-jobs-timeline.test.tsx > AppliedJobsTimeline > Single Application > renders application card
+Rendering application: {
+  designation: 'Senior Frontend Developer',
+  company: 'Tech Corp',
+  location: 'San Francisco, CA',
+  experience_range: '5+ years',
+  employment_type: 'Full-time'
+} Senior Frontend Developer
+
+stdout | tests/components/my-jobs/applied-jobs-timeline.test.tsx > AppliedJobsTimeline > Single Application > displays job title
+Rendering application: {
+  designation: 'Senior Frontend Developer',
+  company: 'Tech Corp',
+  location: 'San Francisco, CA',
+  experience_range: '5+ years',
+  employment_type: 'Full-time'
+} Senior Frontend Developer
+
+ ✓ tests/components/job-applicant-form.test.tsx (11 tests) 514ms
+stdout | tests/components/my-jobs/applied-jobs-timeline.test.tsx > AppliedJobsTimeline > Single Application > displays company name
+Rendering application: {
+  designation: 'Senior Frontend Developer',
+  company: 'Tech Corp',
+  location: 'San Francisco, CA',
+  experience_range: '5+ years',
+  employment_type: 'Full-time'
+} Senior Frontend Developer
+
+ ✓ tests/lib/hooks/useJobOpening.test.tsx (9 tests) 687ms
+stdout | tests/components/my-jobs/applied-jobs-timeline.test.tsx > AppliedJobsTimeline > Single Application > displays location
+Rendering application: {
+  designation: 'Senior Frontend Developer',
+  company: 'Tech Corp',
+  location: 'San Francisco, CA',
+  experience_range: '5+ years',
+  employment_type: 'Full-time'
+} Senior Frontend Developer
+
+stdout | tests/components/action-center/Useactioncenter.test.tsx > useCandidateRaiseRequest > creates request
+✅ Job Applicant Created: { name: 'REQ-1' }
+
+stdout | tests/components/my-jobs/applied-jobs-timeline.test.tsx > AppliedJobsTimeline > Single Application > displays experience level
+Rendering application: {
+  designation: 'Senior Frontend Developer',
+  company: 'Tech Corp',
+  location: 'San Francisco, CA',
+  experience_range: '5+ years',
+  employment_type: 'Full-time'
+} Senior Frontend Developer
+
+stdout | tests/components/my-jobs/applied-jobs-timeline.test.tsx > AppliedJobsTimeline > Single Application > displays job type
+Rendering application: {
+  designation: 'Senior Frontend Developer',
+  company: 'Tech Corp',
+  location: 'San Francisco, CA',
+  experience_range: '5+ years',
+  employment_type: 'Full-time'
+} Senior Frontend Developer
+
+stdout | tests/components/my-jobs/applied-jobs-timeline.test.tsx > AppliedJobsTimeline > Single Application > renders View Application button
+Rendering application: {
+  designation: 'Senior Frontend Developer',
+  company: 'Tech Corp',
+  location: 'San Francisco, CA',
+  experience_range: '5+ years',
+  employment_type: 'Full-time'
+} Senior Frontend Developer
+
+stdout | tests/components/my-jobs/applied-jobs-timeline.test.tsx > AppliedJobsTimeline > Timeline Stages > renders pipeline stages from flags
+Rendering application: {
+  designation: 'Senior Frontend Developer',
+  company: 'Tech Corp',
+  location: 'San Francisco, CA',
+  experience_range: '5+ years',
+  employment_type: 'Full-time'
+} Senior Frontend Developer
+
+stdout | tests/components/my-jobs/applied-jobs-timeline.test.tsx > AppliedJobsTimeline > Timeline Stages > displays stage dates for completed stages
+Rendering application: {
+  designation: 'Senior Frontend Developer',
+  company: 'Tech Corp',
+  location: 'San Francisco, CA',
+  experience_range: '5+ years',
+  employment_type: 'Full-time'
+} Senior Frontend Developer
+
+stdout | tests/components/my-jobs/applied-jobs-timeline.test.tsx > AppliedJobsTimeline > Timeline Stages > does not display date for future stages without date
+Rendering application: {
+  designation: 'Senior Frontend Developer',
+  company: 'Tech Corp',
+  location: 'San Francisco, CA',
+  experience_range: '5+ years',
+  employment_type: 'Full-time'
+} Senior Frontend Developer
+
+ ✓ tests/components/action-center/Useactioncenter.test.tsx (8 tests) 459ms
+stdout | tests/components/my-jobs/applied-jobs-timeline.test.tsx > AppliedJobsTimeline > Multiple Applications > renders multiple application cards
+Rendering application: {
+  designation: 'Senior Frontend Developer',
+  company: 'Tech Corp',
+  location: 'San Francisco, CA',
+  experience_range: '5+ years',
+  employment_type: 'Full-time'
+} Senior Frontend Developer
+Rendering application: {
+  designation: 'Backend Developer',
+  company: 'Tech Corp',
+  location: 'San Francisco, CA',
+  experience_range: '5+ years',
+  employment_type: 'Full-time'
+} Backend Developer
+
+stdout | tests/components/my-jobs/applied-jobs-timeline.test.tsx > AppliedJobsTimeline > Custom className > applies custom className to root container
+Rendering application: {
+  designation: 'Senior Frontend Developer',
+  company: 'Tech Corp',
+  location: 'San Francisco, CA',
+  experience_range: '5+ years',
+  employment_type: 'Full-time'
+} Senior Frontend Developer
+
+stdout | tests/components/my-jobs/applied-jobs-timeline.test.tsx > AppliedJobsTimeline > Special Cases > handles very long job titles
+Rendering application: {
+  designation: 'Senior Frontend Developer with Full Stack Capabilities and Cloud Architecture Expertise',
+  company: 'Tech Corp',
+  location: 'San Francisco, CA',
+  experience_range: '5+ years',
+  employment_type: 'Full-time'
+} Senior Frontend Developer with Full Stack Capabilities and Cloud Architecture Expertise
+
+stdout | tests/components/my-jobs/applied-jobs-timeline.test.tsx > AppliedJobsTimeline > Special Cases > handles applications with special characters in fields
+Rendering application: {
+  designation: 'Senior Frontend Developer',
+  company: 'Tech & Solutions (USA) Inc.',
+  location: 'San Francisco, CA - Remote (50/50)',
+  experience_range: '5+ years',
+  employment_type: 'Full-time'
+} Senior Frontend Developer
+
+ ✓ tests/components/my-jobs/applied-jobs-timeline.test.tsx (15 tests) 302ms
+ ✓ tests/components/profile/profile-header.test.tsx (15 tests) 241ms
+ ✓ tests/components/action-center/my-requests-list.test.tsx (26 tests) 253ms
+ ✓ tests/components/onboarding/file-upload-field.test.tsx (11 tests) 368ms
+ ✓ tests/lib/contexts/feature-flags-context.test.tsx (26 tests) 390ms
+ ✓ tests/components/dashboard/welcome-header.test.tsx (9 tests) 490ms
+     ✓ shows time-of-day greeting when no custom greeting  308ms
+ ✓ tests/lib/hooks/useJobOffer.test.tsx (6 tests) 273ms
+ ✓ tests/components/admin-stats.test.tsx (5 tests) 255ms
+ ✓ tests/components/onboarding/onboarding-step-nav.test.tsx (6 tests) 484ms
+     ✓ calculates progress percentage correctly  389ms
+ ✓ tests/components/my-jobs/application-stage-badge.test.tsx (22 tests) 149ms
+ ✓ tests/components/ui/breadcrumb.test.tsx (36 tests) 129ms
+ ✓ tests/lib/hooks/useFileUpload.test.tsx (2 tests) 142ms
+ ✓ tests/components/ui/empty.test.tsx (34 tests) 132ms
+ ✓ tests/lib/hooks/useUser.test.tsx (3 tests) 184ms
+ ✓ tests/lib/hooks/useApplicantStatus.test.tsx (4 tests) 138ms
+stderr | tests/lib/services/file-upload.test.ts > FileUploadService > uploadFile > handles upload error
+File upload error: { message: 'Upload failed' }
+
+stdout | tests/lib/services/file-upload.test.ts > FileUploadService > cleanupOrphanedFiles > cleans up orphaned files
+Cleaned orphaned file: f2
+
+ ✓ tests/lib/services/file-upload.test.ts (15 tests) 128ms
+ ✓ tests/components/ui/table.test.tsx (40 tests) 185ms
+ ✓ tests/components/dashboard/onboarding-snapshot.test.tsx (4 tests) 122ms
+ ✓ tests/lib/hooks/useOnboardingForm.test.tsx (2 tests) 90ms
+stderr | tests/lib/utils/errors.test.ts > Error Utils > handleApiError > handles ZodError by returning 400 with details
+API Error: ZodError: [
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "name"
+    ],
+    "message": "Invalid input: expected string, received number"
+  }
+]
+    at new ZodError (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/zod/v4/core/core.js:39:39)
+    at Module.<anonymous> (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/zod/v4/core/parse.js:40:20)
+    at _.inst.safeParse (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/zod/v4/classic/schemas.js:40:46)
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/lib/utils/errors.test.ts:30:29
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+
+stderr | tests/lib/utils/errors.test.ts > Error Utils > handleApiError > handles AppError by returning its status code
+API Error: AppError: Custom error
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/lib/utils/errors.test.ts:42:21
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64 {
+  statusCode: 403,
+  isOperational: true
+}
+
+stderr | tests/lib/utils/errors.test.ts > Error Utils > handleApiError > handles Supabase 404 (PGRST116)
+API Error: { code: 'PGRST116', message: 'Not found' }
+
+ ✓ tests/lib/utils/errors.test.ts (9 tests) 75ms
+ ✓ tests/components/profile/profile-details.test.tsx (15 tests) 305ms
+ ✓ tests/components/ui/progress.test.tsx (38 tests) 163ms
+stderr | tests/app/api/users/documents.test.ts > User Documents API > GET /api/users/documents > returns error for invalid query params
+Get documents error: Error: Invalid
+    at Object.<anonymous> (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/api/users/documents.test.ts:127:15)
+    at Object.Mock [as select] (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/spy/dist/index.js:332:34)
+    at Module.GET (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/app/api/users/documents/route.ts:50:8)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/api/users/documents.test.ts:132:24
+
+stderr | tests/app/api/users/documents.test.ts > User Documents API > POST /api/users/documents > returns validation error for invalid input
+Upload document error: ZodError: [
+  {
+    "origin": "string",
+    "code": "too_small",
+    "minimum": 1,
+    "inclusive": true,
+    "path": [
+      "name"
+    ],
+    "message": "Document name is required"
+  },
+  {
+    "code": "invalid_value",
+    "values": [
+      "resume",
+      "cover_letter",
+      "portfolio",
+      "certificate",
+      "other"
+    ],
+    "path": [
+      "type"
+    ],
+    "message": "Invalid option: expected one of \"resume\"|\"cover_letter\"|\"portfolio\"|\"certificate\"|\"other\""
+  },
+  {
+    "code": "invalid_format",
+    "format": "url",
+    "path": [
+      "file_url"
+    ],
+    "message": "Invalid file URL"
+  },
+  {
+    "origin": "number",
+    "code": "too_small",
+    "minimum": 1,
+    "inclusive": true,
+    "path": [
+      "file_size"
+    ],
+    "message": "File size must be positive"
+  },
+  {
+    "origin": "string",
+    "code": "too_small",
+    "minimum": 1,
+    "inclusive": true,
+    "path": [
+      "file_type"
+    ],
+    "message": "File type is required"
+  }
+]
+    at Module.POST (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/app/api/users/documents/route.ts:120:48)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/api/users/documents.test.ts:236:24
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+stderr | tests/app/api/users/documents.test.ts > User Documents API > DELETE /api/users/documents > returns 500 on database error
+Delete document error: TypeError: __vite_ssr_import_0__.supabaseAdmin.from(...).select(...).eq(...).eq is not a function
+    at Module.DELETE (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/app/api/users/documents/route.ts:300:8)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/api/users/documents.test.ts:501:24
+
+ ✓ tests/app/api/users/documents.test.ts (20 tests) 82ms
+ ✓ tests/components/dashboard/journey-countdown.test.tsx (3 tests) 68ms
+ ✓ tests/lib/hooks/useWebsiteBranding.test.tsx (1 test) 99ms
+ ✓ tests/components/onboarding-wizard.test.tsx (2 tests) 83ms
+stderr | tests/app/api/webhooks/frappe.test.ts > Frappe Webhook API > POST /api/webhooks/frappe > input validation > returns 401 for invalid signature
+Signature verification error: RangeError: Input buffers must have the same byte length
+    at verifyWebhookSignature (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/app/api/webhooks/frappe/route.ts:83:19)
+    at Module.POST (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/app/api/webhooks/frappe/route.ts:113:24)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/api/webhooks/frappe.test.ts:153:26
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20 {
+  code: 'ERR_CRYPTO_TIMING_SAFE_EQUAL_LENGTH'
+}
+
+stdout | tests/app/api/webhooks/frappe.test.ts > Frappe Webhook API > POST /api/webhooks/frappe > job webhook > creates a new job
+Job job-123 created via webhook
+
+stdout | tests/app/api/webhooks/frappe.test.ts > Frappe Webhook API > POST /api/webhooks/frappe > job webhook > updates existing job
+Job job-123 updated via webhook
+
+stdout | tests/app/api/webhooks/frappe.test.ts > Frappe Webhook API > POST /api/webhooks/frappe > job webhook > deletes job (soft delete)
+Job job-123 deleted via webhook
+
+stderr | tests/app/api/webhooks/frappe.test.ts > Frappe Webhook API > POST /api/webhooks/frappe > job webhook > returns 400 for invalid job payload
+Job webhook validation error: [
+  {
+    code: 'invalid_value',
+    values: [ 'full-time', 'part-time', 'contract', 'freelance', 'internship' ],
+    path: [ 'data', 'job_type' ],
+    message: 'Invalid option: expected one of "full-time"|"part-time"|"contract"|"freelance"|"internship"'
+  }
+]
+
+stdout | tests/app/api/webhooks/frappe.test.ts > Frappe Webhook API > POST /api/webhooks/frappe > application webhook > creates a new application
+Application app-123 created via webhook
+
+stdout | tests/app/api/webhooks/frappe.test.ts > Frappe Webhook API > POST /api/webhooks/frappe > application webhook > updates existing application
+Application app-123 updated via webhook
+
+stderr | tests/app/api/webhooks/frappe.test.ts > Frappe Webhook API > POST /api/webhooks/frappe > application webhook > returns 404 when candidate not found
+Candidate with email candidate@example.com not found
+
+stderr | tests/app/api/webhooks/frappe.test.ts > Frappe Webhook API > POST /api/webhooks/frappe > application webhook > returns 404 when job not found
+Job with Frappe ID job-123 not found
+
+stdout | tests/app/api/webhooks/frappe.test.ts > Frappe Webhook API > POST /api/webhooks/frappe > application webhook > deletes application
+Application app-123 deleted via webhook
+
+stdout | tests/app/api/webhooks/frappe.test.ts > Frappe Webhook API > POST /api/webhooks/frappe > company webhook > creates a new company
+Company company-123 created via webhook
+
+stdout | tests/app/api/webhooks/frappe.test.ts > Frappe Webhook API > POST /api/webhooks/frappe > company webhook > updates existing company
+Company company-123 updated via webhook
+
+stdout | tests/app/api/webhooks/frappe.test.ts > Frappe Webhook API > POST /api/webhooks/frappe > company webhook > deletes company (soft delete)
+Company company-123 deleted via webhook
+
+stderr | tests/app/api/webhooks/frappe.test.ts > Frappe Webhook API > POST /api/webhooks/frappe > error handling > returns 500 for unexpected errors
+Upsert job error: Error: Database connection error
+    at Object.<anonymous> (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/api/webhooks/frappe.test.ts:836:17)
+    at Object.Mock (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/spy/dist/index.js:332:34)
+    at upsertJob (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/app/api/webhooks/frappe/route.ts:235:8)
+    at handleJobWebhook (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/app/api/webhooks/frappe/route.ts:145:22)
+    at Module.POST (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/app/api/webhooks/frappe/route.ts:122:22)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/api/webhooks/frappe.test.ts:839:26
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+stderr | tests/app/api/webhooks/frappe.test.ts > Frappe Webhook API > POST /api/webhooks/frappe > error handling > returns 500 for unexpected errors
+Webhook handler error: Error: Database connection error
+    at Object.<anonymous> (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/api/webhooks/frappe.test.ts:836:17)
+    at Object.Mock (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/spy/dist/index.js:332:34)
+    at upsertJob (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/app/api/webhooks/frappe/route.ts:235:8)
+    at handleJobWebhook (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/app/api/webhooks/frappe/route.ts:145:22)
+    at Module.POST (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/app/api/webhooks/frappe/route.ts:122:22)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/api/webhooks/frappe.test.ts:839:26
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+ ✓ tests/app/api/webhooks/frappe.test.ts (21 tests) 67ms
+ ✓ tests/lib/hooks/useCompanyLogo.test.tsx (2 tests) 83ms
+ ✓ tests/components/shared/circular-progress.test.tsx (10 tests) 73ms
+ ✓ tests/components/action-center/Task-status-badge.test.tsx (16 tests) 164ms
+ ✓ tests/components/onboarding/section-card.test.tsx (4 tests) 102ms
+ ✓ tests/lib/hooks/useDashboard.test.tsx (2 tests) 129ms
+ ✓ tests/lib/hooks/useCandidateFeatureFlags.test.tsx (1 test) 86ms
+stderr | tests/app/api/admin/frappe-environments/route.test.ts > Admin Frappe Environments API > GET > returns environments
+Frappe environments GET error: TypeError: __vite_ssr_import_0__.supabaseAdmin.from(...).select(...).order is not a function
+    at FrappeEnvironmentManager.listEnvironments (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/lib/services/frappe-env.ts:422:8)
+    at Module.GET (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/app/api/admin/frappe-environments/route.ts:41:49)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/api/admin/frappe-environments/route.test.ts:52:24
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+ ✓ tests/app/api/admin/frappe-environments/route.test.ts (3 tests) 21ms
+stderr | tests/lib/middleware/rate-limit.test.ts > Rate Limit Middleware > withRateLimit > continues if middleware throws error
+Rate limit middleware error: Error: fail
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/lib/middleware/rate-limit.test.ts:104:63
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+ ✓ tests/lib/middleware/rate-limit.test.ts (13 tests) 54ms
+ ✓ tests/components/dashboard/info-card.test.tsx (3 tests) 73ms
+ ✓ tests/lib/auth.test.ts (41 tests) 17ms
+stderr | tests/app/api/admin/applications.test.ts > Admin Applications API > PATCH /api/admin/applications > returns validation error for invalid status
+Batch update applications error: ZodError: [
+  {
+    "code": "invalid_value",
+    "values": [
+      "pending",
+      "reviewing",
+      "interviewing",
+      "offered",
+      "rejected",
+      "withdrawn"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid option: expected one of \"pending\"|\"reviewing\"|\"interviewing\"|\"offered\"|\"rejected\"|\"withdrawn\""
+  }
+]
+    at Module.PATCH (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/app/api/admin/applications/route.ts:253:45)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/api/admin/applications.test.ts:279:24
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+stderr | tests/app/api/admin/applications.test.ts > Admin Applications API > PATCH /api/admin/applications > returns validation error for empty application_ids
+Batch update applications error: ZodError: [
+  {
+    "origin": "array",
+    "code": "too_small",
+    "minimum": 1,
+    "inclusive": true,
+    "path": [
+      "application_ids"
+    ],
+    "message": "At least one application ID is required"
+  }
+]
+    at Module.PATCH (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/app/api/admin/applications/route.ts:253:45)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/api/admin/applications.test.ts:295:24
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+stderr | tests/app/api/admin/applications.test.ts > Admin Applications API > PATCH /api/admin/applications > returns validation error for invalid UUID
+Batch update applications error: ZodError: [
+  {
+    "origin": "string",
+    "code": "invalid_format",
+    "format": "uuid",
+    "pattern": "/^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$/",
+    "path": [
+      "application_ids",
+      0
+    ],
+    "message": "Invalid UUID"
+  }
+]
+    at Module.PATCH (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/app/api/admin/applications/route.ts:253:45)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/api/admin/applications.test.ts:311:24
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+stderr | tests/app/api/admin/applications.test.ts > Admin Applications API > PATCH /api/admin/applications > validates notes length
+Batch update applications error: ZodError: [
+  {
+    "origin": "string",
+    "code": "too_big",
+    "maximum": 1000,
+    "inclusive": true,
+    "path": [
+      "notes"
+    ],
+    "message": "Notes too long"
+  }
+]
+    at Module.PATCH (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/app/api/admin/applications/route.ts:253:45)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/api/admin/applications.test.ts:352:24
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+stderr | tests/app/api/admin/applications.test.ts > Admin Applications API > PATCH /api/admin/applications > validates rejection reason length
+Batch update applications error: ZodError: [
+  {
+    "origin": "string",
+    "code": "too_big",
+    "maximum": 500,
+    "inclusive": true,
+    "path": [
+      "rejection_reason"
+    ],
+    "message": "Rejection reason too long"
+  }
+]
+    at Module.PATCH (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/app/api/admin/applications/route.ts:253:45)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/api/admin/applications.test.ts:372:24
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+ ✓ tests/app/api/admin/applications.test.ts (16 tests) 32ms
+ ✓ tests/app/api/admin/sync/jobs.test.ts (11 tests) 34ms
+stderr | tests/lib/feature-flags.test.ts > getAllFeatureFlags > returns empty array on error
+Error fetching feature flags: { message: 'DB error' }
+
+stderr | tests/lib/feature-flags.test.ts > getAllFeatureFlags > returns empty array on exception
+Error in getAllFeatureFlags: Error: Unexpected
+    at Object.<anonymous> (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/lib/feature-flags.test.ts:74:53)
+    at Object.Mock (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/spy/dist/index.js:332:34)
+    at Module.getAllFeatureFlags (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/lib/feature-flags.ts:67:8)
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/lib/feature-flags.test.ts:75:26
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+
+stderr | tests/lib/feature-flags.test.ts > getFeatureFlagsForUser > returns DEFAULT_FLAGS on database error
+Error fetching feature flags: { message: 'error' }
+
+stderr | tests/lib/feature-flags.test.ts > getFeatureFlagsForUser > uses DEFAULT_FLAGS on exception
+Error in getFeatureFlagsForUser: Error: Network
+    at Object.<anonymous> (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/lib/feature-flags.test.ts:114:53)
+    at Object.Mock (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/spy/dist/index.js:332:34)
+    at Module.getFeatureFlagsForUser (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/lib/feature-flags.ts:94:8)
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/lib/feature-flags.test.ts:115:26
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+
+stderr | tests/lib/feature-flags.test.ts > isFeatureEnabled > returns DEFAULT_FLAGS value on error
+Error in getFeatureFlagsForUser: Error: err
+    at Object.<anonymous> (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/lib/feature-flags.test.ts:201:53)
+    at Object.Mock (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/spy/dist/index.js:332:34)
+    at getFeatureFlagsForUser (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/lib/feature-flags.ts:94:8)
+    at Module.isFeatureEnabled (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/lib/feature-flags.ts:151:25)
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/lib/feature-flags.test.ts:202:26
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+
+stderr | tests/lib/feature-flags.test.ts > getFeatureFlagValue > returns flag value
+Error fetching feature flags: { message: 'error' }
+
+stderr | tests/lib/feature-flags.test.ts > getFeatureFlagValue > returns defaultValue when flag not found and defaultValue provided
+Error in getFeatureFlagsForUser: Error: err
+    at Object.<anonymous> (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/lib/feature-flags.test.ts:222:53)
+    at Object.Mock (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/spy/dist/index.js:332:34)
+    at getFeatureFlagsForUser (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/lib/feature-flags.ts:94:8)
+    at Module.getFeatureFlagValue (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/lib/feature-flags.ts:166:25)
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/lib/feature-flags.test.ts:223:26
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+
+stderr | tests/lib/feature-flags.test.ts > updateFeatureFlag > returns null on error
+Error updating feature flag: { message: 'error' }
+
+stderr | tests/lib/feature-flags.test.ts > createUserOverride > returns null on error
+Error creating user override: { message: 'error' }
+
+stderr | tests/lib/feature-flags.test.ts > removeUserOverride > returns false on error
+Error removing user override: { message: 'error' }
+
+ ✓ tests/lib/feature-flags.test.ts (22 tests) 21ms
+stderr | tests/app/api/applications/[id]/route.test.ts > Application API > GET /api/applications/[id] > returns 404 when application not found
+Get application error: TypeError: __vite_ssr_import_1__.supabaseAdmin.from(...).select(...).eq(...).eq is not a function
+    at Module.GET (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/app/api/applications/[id]/route.ts:78:8)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/api/applications/[id]/route.test.ts:79:24
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+stderr | tests/app/api/applications/[id]/route.test.ts > Application API > PUT /api/applications/[id] > returns validation error for invalid status
+Update application error: ZodError: [
+  {
+    "code": "invalid_value",
+    "values": [
+      "pending",
+      "reviewing",
+      "interviewing",
+      "offered",
+      "rejected",
+      "withdrawn"
+    ],
+    "path": [
+      "status"
+    ],
+    "message": "Invalid option: expected one of \"pending\"|\"reviewing\"|\"interviewing\"|\"offered\"|\"rejected\"|\"withdrawn\""
+  }
+]
+    at Module.PUT (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/app/api/applications/[id]/route.ts:126:51)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/api/applications/[id]/route.test.ts:114:24
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+ ✓ tests/app/api/applications/[id]/route.test.ts (7 tests) 26ms
+stderr | tests/app/api/admin/sync.test.ts > Admin Sync API > POST /api/admin/sync > returns validation error for invalid entity_type
+Start sync error: ZodError: [
+  {
+    "code": "invalid_value",
+    "values": [
+      "jobs",
+      "applications",
+      "all"
+    ],
+    "path": [
+      "entity_type"
+    ],
+    "message": "Invalid option: expected one of \"jobs\"|\"applications\"|\"all\""
+  }
+]
+    at Module.POST (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/app/api/admin/sync/route.ts:58:45)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/api/admin/sync.test.ts:74:24
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+stdout | tests/app/api/admin/sync.test.ts > Admin Sync API > POST /api/admin/sync > returns 409 when sync job is already running
+Starting job sync... { entity_type: 'jobs', force: true, batch_size: 10 }
+
+stdout | tests/app/api/admin/sync.test.ts > Admin Sync API > POST /api/admin/sync > starts sync job successfully with force flag
+Starting job sync... { entity_type: 'jobs', force: true, batch_size: 10 }
+
+stdout | tests/app/api/admin/sync.test.ts > Admin Sync API > POST /api/admin/sync > starts sync job for all entities successfully
+Starting job sync... { entity_type: 'all', force: false, batch_size: 50 }
+
+stdout | tests/app/api/admin/sync.test.ts > Admin Sync API > GET /api/admin/sync > returns sync job with progress percentage
+Starting job sync... { entity_type: 'jobs', force: true, batch_size: 10 }
+
+stdout | tests/app/api/admin/sync.test.ts > Admin Sync API > GET /api/admin/sync > returns sync job with progress percentage
+Starting job sync... { entity_type: 'jobs', force: true, batch_size: 10 }
+
+stdout | tests/app/api/admin/sync.test.ts > Admin Sync API > DELETE /api/admin/sync > cancels running sync job successfully
+Starting job sync... { entity_type: 'jobs', force: true, batch_size: 10 }
+
+stdout | tests/app/api/admin/sync.test.ts > Admin Sync API > DELETE /api/admin/sync > cancels running sync job successfully
+Starting job sync... { entity_type: 'jobs', force: true, batch_size: 10 }
+
+stdout | tests/app/api/admin/sync.test.ts > Admin Sync API > DELETE /api/admin/sync > cancels running sync job successfully
+Sync job 52a8de14-5038-4ff4-a221-7ce23d66f2f0 cancelled by user user-123
+
+ ✓ tests/app/api/admin/sync.test.ts (16 tests) 61ms
+stderr | tests/app/job_offer/pdf-viewer.test.tsx > PdfViewer > renders correctly and shows pages after loading
+Cannot update a component (`PdfViewer`) while rendering a different component (`Document`). To locate the bad setState() call inside `Document`, follow the stack trace as described in https://react.dev/link/setstate-in-render
+
+ ✓ tests/app/job_offer/pdf-viewer.test.tsx (1 test) 34ms
+ ✓ tests/lib/services/frappe-env.test.ts (27 tests) 20ms
+ ✓ tests/app/api/applications/[id]/status/route.test.ts (17 tests) 22ms
+ ✓ tests/lib/validation/schemas.test.ts (30 tests) 18ms
+ ✓ tests/app/api/admin/company-domains/[id]/route.test.ts (8 tests) 18ms
+ ✓ tests/app/api/admin/sso-providers/[id]/route.test.ts (4 tests) 13ms
+stderr | tests/lib/utils/permissions.test.ts > Permission Utils > getUserContext > returns null on error
+Failed to get user profile: { message: 'error' }
+
+stderr | tests/lib/utils/permissions.test.ts > Permission Utils > canAccessResource > returns false on error
+Error getting user context: Error: DB Error
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/lib/utils/permissions.test.ts:140:52
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+stdout | tests/lib/utils/permissions.test.ts > Permission Utils > updateUserRole > updates role successfully
+User target1 role updated to candidate by admin admin1
+
+ ✓ tests/lib/utils/permissions.test.ts (18 tests) 19ms
+stderr | tests/app/api/admin/frappe-environments/[id]/activate/route.test.ts > Admin Frappe Environment Activate API > activates environment
+Frappe environment activate error: TypeError: __vite_ssr_import_0__.supabaseAdmin.from(...).select(...).eq is not a function
+    at Module.POST (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/app/api/admin/frappe-environments/[id]/activate/route.ts:35:8)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/api/admin/frappe-environments/[id]/activate/route.test.ts:51:22
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+ ✓ tests/app/api/admin/frappe-environments/[id]/activate/route.test.ts (2 tests) 13ms
+ ✓ tests/lib/middleware/auth.test.ts (19 tests) 16ms
+ ✓ tests/lib/services/jobOffer.test.ts (7 tests) 11ms
+stderr | tests/app/api/admin/frappe-environments/[id]/route.test.ts > Admin Frappe Environment [id] API > GET > returns environment
+Frappe environment GET error: TypeError: __vite_ssr_import_1__.supabaseAdmin.from(...).select(...).eq is not a function
+    at Module.GET (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/app/api/admin/frappe-environments/[id]/route.ts:49:8)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/api/admin/frappe-environments/[id]/route.test.ts:54:24
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+stderr | tests/app/api/admin/frappe-environments/[id]/route.test.ts > Admin Frappe Environment [id] API > PUT > updates environment
+Frappe environment PUT error: TypeError: __vite_ssr_import_1__.supabaseAdmin.from(...).update(...).eq is not a function
+    at Module.PUT (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/app/api/admin/frappe-environments/[id]/route.ts:104:8)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/api/admin/frappe-environments/[id]/route.test.ts:67:24
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+stderr | tests/app/api/admin/frappe-environments/[id]/route.test.ts > Admin Frappe Environment [id] API > DELETE > deletes environment
+Frappe environment DELETE error: TypeError: __vite_ssr_import_1__.supabaseAdmin.from(...).select is not a function
+    at Module.DELETE (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/app/api/admin/frappe-environments/[id]/route.ts:147:8)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/api/admin/frappe-environments/[id]/route.test.ts:80:24
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+ ✓ tests/app/api/admin/frappe-environments/[id]/route.test.ts (4 tests) 70ms
+ ✓ tests/lib/utils/transformJobFields.test.ts (3 tests) 8ms
+ ✓ tests/app/api/admin/company-domains/route.test.ts (7 tests) 21ms
+ ✓ tests/lib/frappe-api.test.ts (24 tests) 39ms
+stdout | tests/lib/services/email.test.ts > EmailService > sendEmail sends mail with correct options
+Email sent successfully: 123
+
+stdout | tests/lib/services/email.test.ts > EmailService > sendApplicationStatusUpdate uses correct template
+Email sent successfully: 123
+
+stdout | tests/lib/services/email.test.ts > EmailService > sendWelcomeEmail uses correct template
+Email sent successfully: 123
+
+stdout | tests/lib/services/email.test.ts > EmailService > sendJobAlert uses correct template
+Email sent successfully: 123
+
+stdout | tests/lib/services/email.test.ts > EmailService > sendPasswordReset uses correct template
+Email sent successfully: 123
+
+stdout | tests/lib/services/email.test.ts > EmailService > sendBulkEmails works correctly
+Email sent successfully: 123
+
+ ✓ tests/lib/services/email.test.ts (9 tests) 14ms
+ ✓ tests/lib/hooks/useOnboardingMutation.test.tsx (1 test) 28ms
+stderr | tests/app/api/admin/frappe-environments/[id]/test-connection/route.test.ts > Admin Frappe Environment Test Connection API > tests connection successfully
+Frappe environment test-connection error: TypeError: Cannot read properties of undefined (reading 'select')
+    at FrappeEnvironmentManager.testConnection (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/lib/services/frappe-env.ts:345:35)
+    at Module.POST (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/app/api/admin/frappe-environments/[id]/test-connection/route.ts:29:43)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/api/admin/frappe-environments/[id]/test-connection/route.test.ts:47:22
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+ ✓ tests/app/api/admin/frappe-environments/[id]/test-connection/route.test.ts (2 tests) 14ms
+ ✓ tests/lib/services/matching.test.ts (17 tests) 18ms
+ ✓ tests/lib/services/sync.test.ts (6 tests) 11ms
+stderr | tests/app/api/admin/onboarding/[userId]/create-employee/route.test.ts > Admin Onboarding Create Employee API > creates employee successfully
+POST /api/admin/onboarding/[userId]/create-employee error: Error: Onboarding not approved
+    at OnboardingService.createFrappeEmployee (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/lib/services/onboarding.ts:122:13)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at Module.POST (/Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/app/api/admin/onboarding/[userId]/create-employee/route.ts:30:20)
+    at /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/tests/app/api/admin/onboarding/[userId]/create-employee/route.test.ts:56:22
+    at file:///Users/anilrajput/containers/homefirst-Customs/Candidate-Portal/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+ ✓ tests/app/api/admin/onboarding/[userId]/create-employee/route.test.ts (2 tests) 14ms
+ ✓ tests/lib/utils/api.test.ts (16 tests) 21ms
+ ✓ tests/app/api/admin/feature-flags/route.test.ts (5 tests) 10ms
+ ✓ tests/lib/utils/response.test.ts (10 tests) 26ms
+ ✓ tests/lib/services/jobOpeningService.test.ts (7 tests) 10ms
+ ✓ tests/lib/services/employee-detection.test.ts (9 tests) 17ms
+ ✓ tests/lib/services/onboarding.test.ts (11 tests) 11ms
+ ✓ tests/app/api/admin/onboarding/[userId]/route.test.ts (4 tests) 18ms
+ ✓ tests/app/api/admin/dashboard/route.test.ts (3 tests) 53ms
+ ✓ tests/lib/services/sso.test.ts (5 tests) 7ms
+ ✓ tests/app/api/admin/jobs/[id]/visibility/route.test.ts (2 tests) 8ms
+ ✓ tests/lib/services/candidate-onboarding.test.ts (6 tests) 14ms
+stdout | tests/lib/services/uploadProofFile.test.ts > profileService > uploadFile calls FrappeAPI.uploadFile correctly
+Uploading file: File {}
+
+stdout | tests/lib/services/uploadProofFile.test.ts > profileService > handles upload errors
+Uploading file: File {}
+
+ ✓ tests/lib/services/uploadProofFile.test.ts (2 tests) 19ms
+ ✓ tests/lib/services/applicantStatusService.test.ts (2 tests) 6ms
+ ✓ tests/app/api/admin/feature-flags/[id]/route.test.ts (4 tests) 11ms
+ ✓ tests/lib/services/dashboard.test.ts (3 tests) 9ms
+ ✓ tests/lib/services/action-center.test.ts (3 tests) 13ms
+ ✓ tests/lib/services/feature-flags.test.ts (1 test) 4ms
+ ✓ tests/lib/services/website-branding.test.ts (1 test) 4ms
+ ✓ tests/lib/validation/onboarding-schemas.test.ts (3 tests) 3ms
+ ✓ tests/components/job-application/job-application.test.ts (1 test) 2ms
+
+ Test Files  137 passed (137)
+      Tests  1801 passed (1801)
+   Start at  13:06:40
+   Duration  44.67s (transform 5.49s, setup 13.39s, import 37.93s, tests 108.58s, environment 105.92s)
+
+ % Coverage report from v8
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------|---------|----------|---------|---------|-------------------
+All files          |   91.07 |    81.83 |   90.01 |   92.76 |                   
+ components        |   91.85 |    86.38 |   88.44 |   93.44 |                   
+  ...avigation.tsx |   87.09 |      100 |   78.57 |   87.09 | 128,259-268       
+  admin-stats.tsx  |   86.66 |       70 |     100 |   92.85 | 77,90             
+  auth-form.tsx    |     100 |      100 |     100 |     100 |                   
+  ...t-manager.tsx |   87.12 |     74.6 |   78.37 |   90.42 | ...91,595,599,603 
+  ...nt-upload.tsx |   96.15 |    84.74 |   93.54 |   96.87 | 170-172           
+  ...re-toggle.tsx |   94.73 |    77.08 |   93.75 |   94.73 | 67,244            
+  ...pe-config.tsx |      95 |    97.01 |     100 |   94.73 | 63,90,116         
+  ...nc-status.tsx |   84.74 |       75 |      80 |   88.88 | 52,91-100,123,164 
+  ...h-buttons.tsx |     100 |      100 |     100 |     100 |                   
+  oauth-config.tsx |   96.07 |    95.06 |   88.88 |   95.83 | 186,291           
+  ...ng-wizard.tsx |     100 |      100 |     100 |     100 |                   
+  ...ent-table.tsx |   86.36 |    83.33 |   83.33 |   86.36 | 57,160,166        
+  ...ical-tabs.tsx |    92.5 |       70 |   88.23 |   94.28 | 72-81             
+ .../action-center |   94.26 |       80 |   86.66 |   93.91 |                   
+  ...asks-list.tsx |     100 |    81.25 |     100 |     100 | ...25,170-181,211 
+  ...ests-list.tsx |   81.25 |    78.57 |    62.5 |   79.31 | 89,150-205        
+  ...st-dialog.tsx |   98.03 |    83.33 |   91.66 |      98 | 185               
+  ...tus-badge.tsx |     100 |       50 |     100 |     100 | 40                
+ ...ents/dashboard |   88.67 |    80.19 |     100 |   97.77 |                   
+  info-card.tsx    |     100 |      100 |     100 |     100 |                   
+  ...countdown.tsx |     100 |      100 |     100 |     100 |                   
+  key-contacts.tsx |      75 |    65.51 |     100 |     100 | 23-26,53-67,82,98 
+  ...-snapshot.tsx |     100 |    86.66 |     100 |     100 | 30-34,61,71,90    
+  ...me-header.tsx |      80 |    66.66 |     100 |   91.66 | 22                
+ components/jobs   |    93.9 |    69.56 |   95.45 |    96.1 |                   
+  ...il-dialog.tsx |     100 |    66.66 |     100 |     100 | 74-88             
+  ...atch-card.tsx |     100 |      100 |     100 |     100 |                   
+  ...eer-match.tsx |   92.53 |     62.5 |   93.33 |   95.23 | 134-135,214       
+ .../job-applicant |   83.48 |    71.59 |   83.33 |   84.46 |                   
+  ChildTable.tsx   |   92.85 |    75.67 |    91.3 |   94.73 | 155-159           
+  DynamicField.tsx |   79.62 |    69.01 |   75.75 |   79.41 | ...48-254,292-316 
+  ...icantForm.tsx |   80.32 |    52.63 |   83.33 |   83.33 | ...4-47,52-58,113 
+  ...nstep-nav.tsx |     100 |    96.66 |     100 |     100 | 37                
+ ...onents/my-jobs |   45.28 |    47.76 |      35 |   48.93 |                   
+  ...age-badge.tsx |     100 |      100 |     100 |     100 |                   
+  ...-timeline.tsx |   83.33 |       75 |      75 |   90.47 | 288-301           
+  ...ion-modal.tsx |       0 |        0 |       0 |       0 | 1-110             
+ ...nts/onboarding |   98.11 |    86.32 |   97.87 |   99.35 |                   
+  ...ble-field.tsx |   93.33 |       80 |    87.5 |   93.33 | 53                
+  ...oad-field.tsx |   95.91 |    82.45 |     100 |     100 | ...21,177-179,246 
+  ...form-step.tsx |     100 |    89.21 |     100 |     100 | ...99,287-304,372 
+  ...-step-nav.tsx |     100 |    86.11 |     100 |     100 | 25-36,86,114      
+  section-card.tsx |     100 |      100 |     100 |     100 |                   
+ ...boarding/steps |   95.94 |    81.48 |     100 |     100 |                   
+  review-step.tsx  |   95.94 |    81.48 |     100 |     100 | ...33,260-321,343 
+ components/portal |   97.05 |    83.33 |     100 |   97.05 |                   
+  ...avigation.tsx |   97.05 |    83.33 |     100 |   97.05 | 142               
+ ...onents/profile |   76.66 |    83.01 |    90.9 |   80.76 |                   
+  ...e-details.tsx |   66.66 |       75 |   85.71 |   72.22 | 67-75             
+  ...le-header.tsx |     100 |      100 |     100 |     100 |                   
+ components/shared |   85.18 |    86.66 |   88.88 |   84.61 |                   
+  ...-progress.tsx |   91.66 |      100 |      75 |    90.9 | 42                
+  ...upload-ui.tsx |       0 |        0 |       0 |       0 |                   
+  ...uploading.tsx |      80 |    84.61 |     100 |      80 | 16-18             
+ components/ui     |   97.53 |    87.76 |   97.24 |    98.1 |                   
+  alert.tsx        |      90 |      100 |   66.66 |      90 | 39                
+  avatar.tsx       |     100 |      100 |     100 |     100 |                   
+  badge.tsx        |     100 |    66.66 |     100 |     100 | 35                
+  breadcrumb.tsx   |     100 |      100 |     100 |     100 |                   
+  button.tsx       |     100 |      100 |     100 |     100 |                   
+  card.tsx         |   85.71 |      100 |   85.71 |   85.71 | 52                
+  checkbox.tsx     |     100 |      100 |     100 |     100 |                   
+  dialog.tsx       |    90.9 |      100 |      90 |    90.9 | 30                
+  ...down-menu.tsx |   93.75 |      100 |   93.33 |   93.75 | 18                
+  empty.tsx        |     100 |      100 |     100 |     100 |                   
+  ...-renderer.tsx |   96.94 |    87.71 |     100 |   98.38 | 140,377           
+  form.tsx         |     100 |       60 |     100 |     100 | 115-140           
+  input.tsx        |     100 |      100 |     100 |     100 |                   
+  label.tsx        |     100 |      100 |     100 |     100 |                   
+  popover.tsx      |     100 |      100 |     100 |     100 |                   
+  progress.tsx     |     100 |      100 |     100 |     100 |                   
+  select.tsx       |     100 |      100 |     100 |     100 |                   
+  separator.tsx    |     100 |      100 |     100 |     100 |                   
+  sheet.tsx        |     100 |      100 |     100 |     100 |                   
+  skeleton.tsx     |     100 |      100 |     100 |     100 |                   
+  slider.tsx       |     100 |      100 |     100 |     100 |                   
+  switch.tsx       |     100 |      100 |     100 |     100 |                   
+  table.tsx        |     100 |      100 |     100 |     100 |                   
+  tabs.tsx         |     100 |      100 |     100 |     100 |                   
+  textarea.tsx     |     100 |      100 |     100 |     100 |                   
+  tooltip.tsx      |     100 |      100 |     100 |     100 |                   
+-------------------|---------|----------|---------|---------|-------------------
