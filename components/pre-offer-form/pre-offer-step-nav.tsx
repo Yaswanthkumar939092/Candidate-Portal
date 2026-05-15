@@ -59,7 +59,7 @@ export function PreOfferStepNav({ className }: PreOfferStepNavProps) {
       <div className="flex-1 overflow-y-auto px-3 py-4">
         <div className="flex flex-col gap-0.5">
           {steps.map((step, index) => {
-            const isSubmitted = status === 'Submitted'
+            const isSubmitted = status === 'Submitted' || status === 'Filled'
             const isCompleted = isSubmitted || completedSteps.has(step.key)
             const isCurrent = index === currentStep
             const isPast = index < currentStep

@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import {
   ChevronLeft,
   ChevronRight,
@@ -42,6 +41,8 @@ export function ReviewStep() {
     status,
     formConfig,
   } = usePreOffer()
+
+  const isReadOnly = status === "Submitted" || status === "Filled"
 
   const router = useRouter()
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -223,13 +224,15 @@ export function ReviewStep() {
                         </div>
                       ))}
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => goToStep(section.stepIndex)}
-                      className="mt-4 text-xs text-primary underline hover:no-underline font-medium"
-                    >
-                      Edit this section
-                    </button>
+                    {!isReadOnly && (
+                      <button
+                        type="button"
+                        onClick={() => goToStep(section.stepIndex)}
+                        className="mt-4 text-xs text-primary underline hover:no-underline font-medium"
+                      >
+                        Edit this section
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -262,7 +265,7 @@ export function ReviewStep() {
                   { shouldValidate: true }
                 )
               }
-              disabled={status === "Submitted" || isSaving}
+              disabled={isReadOnly || isSaving}
             />
             <Label
               htmlFor="declaration_accepted"
@@ -283,7 +286,7 @@ export function ReviewStep() {
             </div>
           )}
 
-          {status !== "Submitted" && (
+          {!isReadOnly && (
             <>
               <Separator />
               <div className="flex items-center justify-between pt-2">
