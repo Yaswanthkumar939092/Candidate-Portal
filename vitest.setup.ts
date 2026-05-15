@@ -2,7 +2,7 @@ import '@testing-library/jest-dom/vitest'
 
 // Polyfill ResizeObserver for Radix UI components
 class ResizeObserverMock {
-  constructor(callback: ResizeObserverCallback) {}
+  constructor(_callback: ResizeObserverCallback) {}
   observe() {}
   unobserve() {}
   disconnect() {}
@@ -14,7 +14,7 @@ class IntersectionObserverMock {
   readonly root = null
   readonly rootMargin = ''
   readonly thresholds: ReadonlyArray<number> = []
-  constructor(callback: IntersectionObserverCallback, options?: IntersectionObserverInit) {}
+  constructor(_callback: IntersectionObserverCallback, _options?: IntersectionObserverInit) {}
   observe() {}
   unobserve() {}
   disconnect() {}
@@ -46,3 +46,7 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: () => false,
   }),
 })
+// Mock Supabase environment variables
+process.env.NEXT_PUBLIC_SUPABASE_URL = 'http://localhost:54321'
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'dummy-key'
+process.env.NEXT_PUBLIC_FRAPPE_URL = 'http://localhost:8000'

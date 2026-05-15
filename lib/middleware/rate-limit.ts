@@ -254,8 +254,16 @@ export function withRateLimit(
       // Execute the handler
       const response = await handler(request)
 
-      // Add rate limit headers to successful responses
-      if (response.status < 400 || !options.skipSuccessfulRequests) {
+      // Add rate limit headers based on options
+      let shouldSetHeaders = true
+      if (response.status < 400 && options.skipSuccessfulRequests) {
+        shouldSetHeaders = false
+      }
+      if (response.status >= 400 && options.skipFailedRequests) {
+        shouldSetHeaders = false
+      }
+
+      if (shouldSetHeaders) {
         response.headers.set('X-RateLimit-Limit', rateLimiter['config'].maxRequests.toString())
         response.headers.set('X-RateLimit-Remaining', result.remaining.toString())
         response.headers.set('X-RateLimit-Reset', Math.ceil(result.resetTime / 1000).toString())
@@ -349,7 +357,7 @@ export function createAPIKeyRateLimit(apiKey: string) {
     windowMs: 15 * 60 * 1000, // 15 minutes
     maxRequests: 1000, // 1000 requests per window for API key
     message: 'API key rate limit exceeded',
-    keyGenerator: (request: NextRequest) => `api-key:${apiKey}`,
+    keyGenerator: (_request: NextRequest) => `api-key:${apiKey}`,
   })
 }
 

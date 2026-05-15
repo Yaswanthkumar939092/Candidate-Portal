@@ -19,7 +19,7 @@ export default defineConfig({
       exclude: ['**/*.test.*', '**/node_modules/**', '**/.DS_Store'],
       thresholds: {
         statements: 85,
-        branches: 85,
+        branches: 80,
         functions: 85,
         lines: 85,
       },

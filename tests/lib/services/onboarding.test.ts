@@ -160,4 +160,72 @@ describe('OnboardingService', () => {
       await expect(service.submitForReview('user1')).resolves.toBeUndefined()
     })
   })
+
+  // ---------- saveStep ----------
+  describe('saveStep', () => {
+    it('upserts data correctly', async () => {
+      const mockSingle = vi.fn().mockResolvedValue({ data: { id: 1 }, error: null })
+      const mockUpsert = vi.fn().mockReturnValue({ select: () => ({ single: mockSingle }) })
+      ;(supabaseAdmin.from as any).mockReturnValue({ upsert: mockUpsert })
+
+      const result = await service.saveStep('u1', 'personal_info', { name: 'John' })
+      expect(result).toEqual({ id: 1 })
+      expect(mockUpsert).toHaveBeenCalledWith(
+        expect.objectContaining({ user_id: 'u1', personal_info: { name: 'John' } }),
+        { onConflict: 'user_id' }
+      )
+    })
+  })
+
+  // ---------- approve/reject ----------
+  describe('approve/reject', () => {
+    it('approveOnboarding updates status to approved', async () => {
+      const mockUpdate = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
+      ;(supabaseAdmin.from as any).mockReturnValue({ update: mockUpdate })
+
+      await service.approveOnboarding('u1', 'admin1')
+      expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ status: 'approved', approved_by: 'admin1' }))
+    })
+
+    it('rejectOnboarding updates status to draft', async () => {
+      const mockUpdate = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
+      ;(supabaseAdmin.from as any).mockReturnValue({ update: mockUpdate })
+
+      await service.rejectOnboarding('u1')
+      expect(mockUpdate).toHaveBeenCalledWith({ status: 'draft' })
+    })
+  })
+
+  // ---------- createFrappeEmployee ----------
+  describe('createFrappeEmployee', () => {
+    it('creates user and employee in Frappe', async () => {
+      const { frappeEnvManager } = await import('@/lib/services/frappe-env')
+      const mockOnboarding = { status: 'approved', personal_info: { first_name: 'John' } }
+      const mockProfile = { email: 'john@test.com' }
+      const mockClient = { 
+        createUser: vi.fn().mockResolvedValue({ data: { name: 'user1' } }),
+        createEmployee: vi.fn().mockResolvedValue({ data: { name: 'emp1' } })
+      }
+
+      vi.spyOn(service, 'getOnboardingData').mockResolvedValue(mockOnboarding as any)
+      vi.spyOn(frappeEnvManager, 'getClient').mockResolvedValue(mockClient as any)
+
+      const mockSingle = vi.fn().mockResolvedValue({ data: mockProfile, error: null })
+      const mockUpdate = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
+      ;(supabaseAdmin.from as any).mockImplementation((table: string) => {
+        if (table === 'profiles') return { select: () => ({ eq: () => ({ single: mockSingle }) }), update: mockUpdate }
+        if (table === 'onboarding_data') return { update: mockUpdate }
+      })
+
+      const result = await service.createFrappeEmployee('u1', 'admin1')
+      expect(result).toEqual({ frappe_user_id: 'user1', frappe_employee_id: 'emp1' })
+      expect(mockClient.createUser).toHaveBeenCalled()
+      expect(mockClient.createEmployee).toHaveBeenCalled()
+    })
+
+    it('throws if onboarding not approved', async () => {
+      vi.spyOn(service, 'getOnboardingData').mockResolvedValue({ status: 'draft' } as any)
+      await expect(service.createFrappeEmployee('u1', 'admin1')).rejects.toThrow('Onboarding not approved')
+    })
+  })
 })
