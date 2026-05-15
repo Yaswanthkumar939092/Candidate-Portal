@@ -1,7 +1,7 @@
 "use client"
 
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react"
-import { auth, profileFromFrappeUser, type FrappeAuthUser } from "@/lib/auth"
+import { auth, getProfile, profileFromFrappeUser, type FrappeAuthUser } from "@/lib/auth"
 import type { Profile } from "@/types/database"
 
 export interface AuthContextType {
@@ -30,7 +30,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const session = await auth.getSession()
     const currentUser = session?.user || null
     setUser(currentUser)
-    setProfile(currentUser ? profileFromFrappeUser(currentUser) : null)
+    setProfile(currentUser ? await hydrateProfile(currentUser) : null)
   }, [])
 
   const refreshProfile = useCallback(async () => {
@@ -46,7 +46,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (!isMounted) return
         const currentUser = session?.user || null
         setUser(currentUser)
-        setProfile(currentUser ? profileFromFrappeUser(currentUser) : null)
+        setProfile(currentUser ? await hydrateProfile(currentUser) : null)
       } catch (err) {
         console.error("Unexpected error initializing auth:", err)
         if (!isMounted) return
@@ -70,6 +70,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
       {children}
     </AuthContext.Provider>
   )
+}
+
+async function hydrateProfile(user: FrappeAuthUser): Promise<Profile> {
+  try {
+    const profile = await getProfile(user.id)
+    if (profile) return profile
+
+    if (user.email && user.email !== user.id) {
+      const emailProfile = await getProfile(user.email)
+      if (emailProfile) return emailProfile
+    }
+  } catch (error) {
+    console.error("Unexpected error hydrating profile:", error)
+  }
+
+  return profileFromFrappeUser(user)
 }
 
 export function useAuth(): AuthContextType {
