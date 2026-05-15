@@ -10,7 +10,7 @@
     "test": "vitest",
     "test:ci": "vitest run --coverage",
     "test:coverage": "vitest run --coverage",
-    "security:audit": "npm audit --audit-level=high"
+    "security:audit": "yarn audit --level high"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
