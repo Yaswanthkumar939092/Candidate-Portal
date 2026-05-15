@@ -104,6 +104,13 @@ describe("FileUploadField", () => {
     fireEvent.click(uploadArea);
   });
 
+  it("hides remove button when disabled", () => {
+    render(<FileUploadField label="Resume" value="/path/to/my_resume.pdf" disabled={true} onChange={mockOnChange} />);
+    expect(screen.getByText("my_resume.pdf")).toBeTruthy();
+    expect(screen.queryByLabelText("Remove Resume")).toBeNull();
+  });
+
+
   describe("Expanded Lifecycle & Visual States", () => {
     it("safely invokes internal file selector on wrapper interaction", () => {
        render(<FileUploadField label="Asset" />);

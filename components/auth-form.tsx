@@ -9,6 +9,8 @@ import { Eye, EyeOff, CheckCircle2, ArrowRight } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 import Image from "next/image";
 import Link from "next/link";
+import { useCandidateBranding } from "@/lib/hooks/useCandidateBranding";
+
 
 export interface AuthFormData {
   email: string;
@@ -26,6 +28,7 @@ interface AuthFormProps {
 }
 
 export function AuthForm({ type, onSubmit, isLoading = false }: AuthFormProps) {
+  const { data: branding } = useCandidateBranding();
   const [formData, setFormData] = useState<AuthFormData>({
     email: "",
     password: "",
@@ -62,9 +65,15 @@ export function AuthForm({ type, onSubmit, isLoading = false }: AuthFormProps) {
         <div className="absolute top-[60%] left-[50%] translate-x-[-50%] translate-y-[-50%] size-72 bg-[#12B76A] blur-[5rem] rounded-full opacity-10"></div>
         <div className="flex items-center gap-3 text-white absolute top-12 left-12">
           <div className="w-20 h-20 bg-none rounded-full flex items-center justify-center overflow-hidden">
-            <Image src="/brand.png" alt="PW Logo" width={100} height={100} className="object-cover" />
+            <Image 
+              src={branding?.app_logo ? (branding.app_logo.startsWith("http") ? branding.app_logo : `${process.env.NEXT_PUBLIC_FRAPPE_URL}${branding.app_logo}`) : "/brand.png"} 
+              alt="Logo" 
+              width={100} 
+              height={100} 
+              className="object-cover" 
+            />
           </div>
-          <span className="text-[26px] font-[800] tracking-tight">Physics Wallah</span>
+          <span className="text-[26px] font-[800] tracking-tight">{branding?.title_prefix || "Physics Wallah"}</span>
         </div>
 
         <div className="flex-1 flex flex-col justify-center px-12 mt-12 mb-12">
@@ -129,7 +138,7 @@ export function AuthForm({ type, onSubmit, isLoading = false }: AuthFormProps) {
         </div>
 
         <div className="absolute bottom-12 left-12 lg:left-16 text-sm text-[#94A3B8]">
-          © 2026 Physics Wallah. All rights reserved.
+          © {new Date().getFullYear()} {branding?.title_prefix || "Physics Wallah"}. All rights reserved.
         </div>
       </div>
 

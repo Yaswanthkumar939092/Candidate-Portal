@@ -95,10 +95,12 @@ export function ReviewStep() {
 
   const tabs = formConfig?.tabs || []
 
-  const incompleteSteps = tabs.filter((tab) => {
-    const key = tab.tab.toLowerCase().replace(/\s+/g, '_')
-    return !completedSteps.has(key)
-  })
+  const incompleteSteps = tabs
+    .map((tab, idx) => ({ tab, originalIdx: idx }))
+    .filter(({ tab }) => {
+      const key = tab.tab.toLowerCase().replace(/\s+/g, '_')
+      return !completedSteps.has(key)
+    })
 
   // Success state
   if (status === 'submitted') {
@@ -112,8 +114,8 @@ export function ReviewStep() {
           Your onboarding information has been submitted successfully. Our HR team will review your
           details and get back to you shortly.
         </p>
-        <Button 
-          className="mt-8" 
+        <Button
+          className="mt-8"
           onClick={() => router.push('/dashboard')}
         >
           Go to Dashboard
@@ -170,13 +172,12 @@ export function ReviewStep() {
                 Please complete all steps before submitting.
               </p>
               <div className="mt-1 flex flex-wrap gap-1">
-                {incompleteSteps.map((tab) => {
+                {incompleteSteps.map(({ tab, originalIdx }) => {
                   const key = tab.tab.toLowerCase().replace(/\s+/g, '_')
-                  const idx = tabs.findIndex((t) => t.tab === tab.tab)
                   return (
                     <button
                       key={key}
-                      onClick={() => goToStep(idx)}
+                      onClick={() => goToStep(originalIdx)}
                       className="text-xs text-primary underline hover:no-underline"
                     >
                       {tab.tab}

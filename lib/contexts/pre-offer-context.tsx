@@ -14,7 +14,6 @@ import { PreOfferForm } from "@/lib/types/pre-offer";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
-const STORAGE_KEY = "pre_offer_draft";
 const DEBOUNCE_MS = 500;
 
 export interface PreOfferContextType {
@@ -105,19 +104,25 @@ export function PreOfferProvider({ children, userEmail }: PreOfferProviderProps)
     if (initialLoadDone.current) return;
 
     const loadData = () => {
+      const storageKey = userEmail ? `pre_offer_draft:${userEmail}` : "pre_offer_draft";
       try {
-        const localData = localStorage.getItem(STORAGE_KEY);
+        const localData = localStorage.getItem(storageKey);
         let localParsed: {
           stepData?: Record<string, Record<string, unknown>>;
           currentStep?: number;
           completedSteps?: string[];
+          applicantId?: string;
         } | null = null;
         
         if (localData) {
           try {
             localParsed = JSON.parse(localData);
+            if (localParsed && localParsed.applicantId && localParsed.applicantId !== formConfig.applicantId) {
+              localParsed = null;
+              localStorage.removeItem(storageKey);
+            }
           } catch {
-            localStorage.removeItem(STORAGE_KEY);
+            localStorage.removeItem(storageKey);
           }
         }
 
@@ -209,13 +214,15 @@ export function PreOfferProvider({ children, userEmail }: PreOfferProviderProps)
     }
 
     debounceTimerRef.current = setTimeout(() => {
+      const storageKey = userEmail ? `pre_offer_draft:${userEmail}` : "pre_offer_draft";
       try {
         const toSave = {
           stepData,
           completedSteps: Array.from(completedSteps),
           currentStep,
+          applicantId: formConfig?.applicantId,
         };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+        localStorage.setItem(storageKey, JSON.stringify(toSave));
       } catch (error) {
         console.error("Error saving to localStorage:", error);
       }
@@ -287,7 +294,8 @@ export function PreOfferProvider({ children, userEmail }: PreOfferProviderProps)
       });
 
       setStatus("Submitted");
-      localStorage.removeItem(STORAGE_KEY);
+      const storageKey = userEmail ? `pre_offer_draft:${userEmail}` : "pre_offer_draft";
+      localStorage.removeItem(storageKey);
 
       toast.success("Pre-offer form submitted successfully!");
 

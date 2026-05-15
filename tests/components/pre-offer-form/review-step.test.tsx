@@ -81,6 +81,36 @@ describe("ReviewStep", () => {
     expect(mockGoToStep).toHaveBeenCalledWith(0);
   });
 
+  it("navigates to correct original step index for incomplete later tabs", () => {
+    const multiStepContext = getMockContext({
+      completedSteps: new Set(["personal_info"]),
+      formConfig: {
+        tabs: [
+          {
+            tab: "Personal Info",
+            sections: [{ section: "S1", fields: [] }],
+          },
+          {
+            tab: "Employment History",
+            sections: [{ section: "S2", fields: [] }],
+          },
+        ],
+      },
+    });
+
+    vi.mocked(usePreOffer).mockReturnValue(multiStepContext);
+    render(<ReviewStep />);
+
+    // Tab index 0 ("Personal Info") is complete.
+    // Tab index 1 ("Employment History") is incomplete.
+    const buttons = screen.getAllByRole("button", { name: "Employment History" });
+    const warningBtn = buttons.find(b => b.className.includes("underline"));
+    fireEvent.click(warningBtn!);
+
+    expect(mockGoToStep).toHaveBeenCalledWith(1);
+  });
+
+
   it("renders step tabs and allows expanding sections to see summary data", () => {
     vi.mocked(usePreOffer).mockReturnValue(getMockContext());
     render(<ReviewStep />);
