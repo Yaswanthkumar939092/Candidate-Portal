@@ -4,18 +4,13 @@ import { useEffect, useState } from "react";
 import { AuthForm, AuthFormData } from "@/components/auth-form";
 import { auth, type FrappeAuthSettings } from "@/lib/auth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { AlertTriangle, MailCheck } from "lucide-react";
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const [isOtpLoading, setIsOtpLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [otpEmail, setOtpEmail] = useState("");
+  const [pendingOtpEmail, setPendingOtpEmail] = useState<string | null>(null);
   const [otp, setOtp] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
   const [settings, setSettings] = useState<FrappeAuthSettings | null>(null);
   const [isSettingsLoading, setIsSettingsLoading] = useState(true);
 
@@ -49,6 +44,16 @@ export default function LoginPage() {
         password: formData.password,
       });
 
+      if (settings?.allow_email_otp_login === 1 && settings.enable_email_otp === 1) {
+        await auth.requestOtp({
+          identifier: formData.email,
+          purpose: "Login",
+          identifierType: "Email",
+        });
+        setPendingOtpEmail(formData.email);
+        return;
+      }
+
       redirectToDashboard();
     } catch (error) {
       console.error("Login error:", error);
@@ -58,43 +63,33 @@ export default function LoginPage() {
     }
   };
 
-  const handleRequestOtp = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setIsOtpLoading(true);
-    setError(null);
-    try {
-      await auth.requestOtp({
-        identifier: otpEmail,
-        purpose: "Login",
-        identifierType: "Email",
-      });
-      setOtpSent(true);
-    } catch (error) {
-      console.error("OTP request error:", error);
-      setError(error instanceof Error ? error.message : "Failed to send OTP");
-    } finally {
-      setIsOtpLoading(false);
-    }
-  };
+  const handleVerifyLoginOtp = async () => {
+    if (!pendingOtpEmail) return;
 
-  const handleVerifyOtp = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setIsOtpLoading(true);
+    setIsLoading(true);
     setError(null);
+
     try {
       await auth.verifyOtp({
-        identifier: otpEmail,
+        identifier: pendingOtpEmail,
         otp,
         purpose: "Login",
         identifierType: "Email",
       });
+
       redirectToDashboard();
     } catch (error) {
       console.error("OTP login error:", error);
       setError(error instanceof Error ? error.message : "Failed to verify OTP");
     } finally {
-      setIsOtpLoading(false);
+      setIsLoading(false);
     }
+  };
+
+  const resetLoginStep = () => {
+    setPendingOtpEmail(null);
+    setOtp("");
+    setError(null);
   };
 
   return (
@@ -120,52 +115,18 @@ export default function LoginPage() {
           {settings.allow_password_login === 1 && (
             <AuthForm
               type="login"
-              onSubmit={handleLogin}
+              onSubmit={pendingOtpEmail ? handleVerifyLoginOtp : handleLogin}
               isLoading={isLoading}
+              loginStep={pendingOtpEmail ? "otp" : "credentials"}
+              otpEmail={pendingOtpEmail || undefined}
+              otpValue={otp}
+              onOtpChange={setOtp}
+              onBackToCredentials={resetLoginStep}
             />
           )}
 
-          {settings.allow_email_otp_login === 1 && settings.enable_email_otp === 1 && (
-            <form
-              onSubmit={otpSent ? handleVerifyOtp : handleRequestOtp}
-              className="mt-6 w-full max-w-md space-y-4 rounded-lg border bg-card p-5 text-card-foreground shadow-sm"
-            >
-              <div className="flex items-center gap-3">
-                <MailCheck className="h-5 w-5 text-primary" />
-                <h2 className="text-base font-semibold">Sign in with email OTP</h2>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="otp-email">Email address</Label>
-                <Input
-                  id="otp-email"
-                  type="email"
-                  value={otpEmail}
-                  onChange={(event) => setOtpEmail(event.target.value)}
-                  disabled={otpSent}
-                  required
-                />
-              </div>
-              {otpSent && (
-                <div className="space-y-2">
-                  <Label htmlFor="login-otp">Email OTP</Label>
-                  <Input
-                    id="login-otp"
-                    value={otp}
-                    onChange={(event) => setOtp(event.target.value)}
-                    inputMode="numeric"
-                    autoComplete="one-time-code"
-                    required
-                  />
-                </div>
-              )}
-              <Button type="submit" className="w-full" disabled={isOtpLoading}>
-                {isOtpLoading ? "Please wait..." : otpSent ? "Verify OTP" : "Send OTP"}
-              </Button>
-            </form>
-          )}
-
-          {settings.allow_password_login === 0 && settings.allow_email_otp_login === 0 && (
-            <AuthUnavailable title="Login unavailable" message="No candidate login method is currently enabled." />
+          {settings.allow_password_login === 0 && (
+            <AuthUnavailable title="Login unavailable" message="Password login is not enabled for candidate accounts." />
           )}
         </>
       )}
