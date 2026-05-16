@@ -199,8 +199,8 @@ export function FileUploadField({
               : isApproved
                 ? "border-success bg-success/5 hover:border-success/80"
                 : isDragOver
-                ? "border-primary bg-primary/5"
-                : "border-border bg-card hover:border-primary/50 hover:bg-muted/50",
+                  ? "border-primary bg-primary/5"
+                  : "border-border bg-card hover:border-primary/50 hover:bg-muted/50",
             (disabled || isPending) &&
             "opacity-50 cursor-not-allowed hover:border-border hover:bg-card",
           )}

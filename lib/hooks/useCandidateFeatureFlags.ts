@@ -6,7 +6,11 @@ export function useCandidateFeatureFlags() {
     queryKey: ["candidate-feature-flags"],
     queryFn: async () => {
       const response = await featureFlagsService.getFeatureFlags();
-      return response as Record<string, 1 | 0>;
+      return response as Record<string, 1 | 0 | boolean>;
     },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    retry: false,
+    refetchOnWindowFocus: false,
   });
 }

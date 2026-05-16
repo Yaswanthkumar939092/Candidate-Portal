@@ -1,5 +1,17 @@
 // src/lib/frappe-api.ts
 
+function getFrappeUrl() {
+  const configuredUrl = (process.env.NEXT_PUBLIC_FRAPPE_URL || "").replace(/\/$/, "");
+  if (
+    typeof window !== "undefined" &&
+    window.location.hostname === "localhost" &&
+    configuredUrl.startsWith("http://127.0.0.1:")
+  ) {
+    return configuredUrl.replace("http://127.0.0.1:", "http://localhost:");
+  }
+  return configuredUrl;
+}
+
 export const FrappeAPI = {
   uploadFile: async (
     file: File,
@@ -13,7 +25,7 @@ export const FrappeAPI = {
     if (docName) formData.append("docname", docName);
 
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_FRAPPE_URL}/api/method/upload_file`,
+      `${getFrappeUrl()}/api/method/upload_file`,
       {
         method: "POST",
         body: formData,
@@ -31,7 +43,7 @@ export const FrappeAPI = {
 
   get: async (method: string, params: Record<string, string> = {}) => {
     const queryString = new URLSearchParams(params).toString();
-    const url = `${process.env.NEXT_PUBLIC_FRAPPE_URL}/api/method/${method}${queryString ? `?${queryString}` : ""
+    const url = `${getFrappeUrl()}/api/method/${method}${queryString ? `?${queryString}` : ""
       }`;
 
     const res = await fetch(url, {
@@ -52,7 +64,7 @@ export const FrappeAPI = {
     // The user specifically requested unencoded brackets for the array query params
     queryString = queryString.replace(/%5B/g, '[').replace(/%5D/g, ']');
 
-    const url = `${process.env.NEXT_PUBLIC_FRAPPE_URL}/api/resource/${resource}${queryString ? `?${queryString}` : ""
+    const url = `${getFrappeUrl()}/api/resource/${resource}${queryString ? `?${queryString}` : ""
       }`;
 
     const res = await fetch(url, {
@@ -71,7 +83,7 @@ export const FrappeAPI = {
 
   getBlob: async (method: string, params: Record<string, string> = {}): Promise<Blob> => {
     const queryString = new URLSearchParams(params).toString();
-    const url = `${process.env.NEXT_PUBLIC_FRAPPE_URL}/api/method/${method}${queryString ? `?${queryString}` : ""
+    const url = `${getFrappeUrl()}/api/method/${method}${queryString ? `?${queryString}` : ""
       }`;
 
     const res = await fetch(url, {
@@ -87,7 +99,7 @@ export const FrappeAPI = {
   },
 
   post: async (method: string, body: Record<string, unknown>) => {
-    const url = `${process.env.NEXT_PUBLIC_FRAPPE_URL}/api/method/${method}`;
+    const url = `${getFrappeUrl()}/api/method/${method}`;
 
     const res = await fetch(url, {
       method: "POST",
@@ -130,7 +142,7 @@ export const FrappeAPI = {
       limit = 20,
     } = options || {};
 
-    let url = `${process.env.NEXT_PUBLIC_FRAPPE_URL}/api/resource/${doctype}`;
+    let url = `${getFrappeUrl()}/api/resource/${doctype}`;
 
     // 👉 GET (List or Single)
     if (method === "GET") {

@@ -87,7 +87,7 @@ export function ReviewStep() {
   const sections: ReviewSection[] = tabs.map((tab, idx) => {
     const rawKey = tab.tab || `Step ${idx + 1}`
     const key = rawKey.toLowerCase().replace(/\s+/g, '_')
-    
+
     return {
       key,
       label: tab.tab || `Details Step ${idx + 1}`,
