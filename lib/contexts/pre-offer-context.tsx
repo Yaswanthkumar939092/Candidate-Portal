@@ -9,19 +9,14 @@ import React, {
   useRef,
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useAuth } from "@/lib/contexts/auth-context";
-import { useOnboardingSubmit } from "@/lib/hooks/useOnboardingMutation";
-import { useOnboardingForm } from "@/lib/hooks/useOnboardingForm";
-import { OnboardingForm } from "@/lib/types/onboarding";
+import { usePreOfferSubmit, usePreOfferForm } from "@/lib/hooks/usePreOfferForm";
+import { PreOfferForm } from "@/lib/types/pre-offer";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
 const DEBOUNCE_MS = 500;
 
-/**
- * Shape of the onboarding context value.
- */
-export interface OnboardingContextType {
+export interface PreOfferContextType {
   /** Current step index */
   currentStep: number;
   /** Data for each step, keyed by step key */
@@ -36,8 +31,8 @@ export interface OnboardingContextType {
   isError: boolean;
   /** Whether a save operation is in progress */
   isSaving: boolean;
-  /** Overall onboarding status */
-  status: "draft" | "submitted" | "approved" | "pushed_to_frappe";
+  /** Overall pre-offer status */
+  status: string;
   /** Update data for a specific step */
   setStepData: (stepKey: string, data: Record<string, unknown>) => void;
   /** Navigate to a specific step */
@@ -48,38 +43,28 @@ export interface OnboardingContextType {
   prevStep: () => void;
   /** Mark a step as completed */
   markStepComplete: (stepKey: string) => void;
-
-  /** Submit all onboarding data */
-  submitAll: (specificField?: string) => Promise<void>;
+  /** Submit all pre-offer data */
+  submitAll: () => Promise<void>;
   /** Dynamic form configuration */
-  formConfig?: OnboardingForm;
+  formConfig?: PreOfferForm;
   /** Helper to get current value of a field across all steps */
   getFieldValue: (
     fieldname: string,
   ) => string | number | boolean | null | undefined | unknown;
 }
 
-const OnboardingContext = createContext<OnboardingContextType | undefined>(
+const PreOfferContext = createContext<PreOfferContextType | undefined>(
   undefined,
 );
 
-interface OnboardingProviderProps {
+interface PreOfferProviderProps {
   children: React.ReactNode;
+  userEmail: string;
 }
 
-/**
- * Provides onboarding wizard state management.
- *
- * Features:
- * - Loads existing data from the API on mount.
- * - Persists draft data to localStorage with debouncing.
- * - Syncs the current step with the URL search params (?step=N).
- * - Provides save-draft and submit-all operations via API routes.
- */
-export function OnboardingProvider({ children }: OnboardingProviderProps) {
+export function PreOfferProvider({ children, userEmail }: PreOfferProviderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const [currentStep, setCurrentStep] = useState(0);
@@ -89,17 +74,15 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
   const [isDirty, setIsDirty] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [status, setStatus] = useState<
-    "draft" | "submitted" | "approved" | "pushed_to_frappe"
-  >("draft");
+  const [status, setStatus] = useState<string>("Sent");
 
-  const userEmail = user?.email || user?.user_metadata?.email || "";
   const {
     data: formConfig,
     isLoading: isFormConfigLoading,
     isError: isFormConfigError,
-  } = useOnboardingForm(userEmail);
-  const submitMutation = useOnboardingSubmit();
+  } = usePreOfferForm(userEmail);
+
+  const submitMutation = usePreOfferSubmit();
 
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initialLoadDone = useRef(false);
@@ -108,10 +91,8 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
 
   // Load data from formConfig on mount or when formConfig changes
   useEffect(() => {
-    // If formConfig is loading, keep in loading state
     if (isFormConfigLoading) return;
 
-    // If there's an error or no formConfig, we still need to stop the loading state
     if (isFormConfigError || !formConfig) {
       if (!initialLoadDone.current) {
         setIsLoading(false);
@@ -123,7 +104,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     if (initialLoadDone.current) return;
 
     const loadData = () => {
-      const storageKey = userEmail ? `onboarding_draft:${userEmail}` : "onboarding_draft";
+      const storageKey = userEmail ? `pre_offer_draft:${userEmail}` : "pre_offer_draft";
       try {
         const localData = localStorage.getItem(storageKey);
         let localParsed: {
@@ -132,6 +113,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
           completedSteps?: string[];
           applicantId?: string;
         } | null = null;
+
         if (localData) {
           try {
             localParsed = JSON.parse(localData);
@@ -146,10 +128,12 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
 
         const loadedStepData: Record<string, Record<string, unknown>> = {};
 
-        // Initialize from formConfig tabs
-        formConfig.tabs.forEach((tab) => {
-          const key = tab.tab.toLowerCase().replace(/\s+/g, "_");
+        formConfig.tabs.forEach((tab, index) => {
+          // If tab title is empty, derive key based on index or 'general'
+          const rawKey = tab.tab || `Step ${index + 1}`;
+          const key = rawKey.toLowerCase().replace(/\s+/g, "_");
           loadedStepData[key] = {};
+
           tab.sections.forEach((section) => {
             section.fields.forEach((field) => {
               const fieldValue =
@@ -166,7 +150,6 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
           });
         });
 
-        // Merge local data on top, but prefer API values if local is empty
         if (localParsed?.stepData) {
           const localStepData = localParsed.stepData;
           Object.keys(localStepData).forEach((key) => {
@@ -174,7 +157,6 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
               Object.keys(localStepData[key]).forEach((fieldName) => {
                 const localVal = localStepData[key][fieldName];
                 const loadedVal = loadedStepData[key][fieldName];
-                // Overwrite with local data if it's truthy, or if both are falsy
                 if (localVal || (!loadedVal && localVal !== undefined)) {
                   loadedStepData[key][fieldName] = localVal;
                 }
@@ -189,20 +171,19 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
           setCurrentStep(localParsed.currentStep);
         }
 
-        const isPending = formConfig.status === "Pending";
-        setStatus(isPending ? "draft" : "submitted");
+        setStatus(formConfig.status || "Sent");
 
-        if (!isPending) {
-          // If submitted, mark all steps as completed
-          const allStepKeys = formConfig.tabs.map((t) =>
-            t.tab.toLowerCase().replace(/\s+/g, "_")
-          );
+        if (formConfig.status === "Submitted" || formConfig.status === "Filled") {
+          const allStepKeys = formConfig.tabs.map((t, index) => {
+            const rawKey = t.tab || `Step ${index + 1}`;
+            return rawKey.toLowerCase().replace(/\s+/g, "_");
+          });
           setCompletedSteps(new Set(allStepKeys));
         } else if (localParsed?.completedSteps) {
           setCompletedSteps(new Set(localParsed.completedSteps));
         }
       } catch (error) {
-        console.error("Error initializing onboarding data:", error);
+        console.error("Error initializing pre-offer data:", error);
       } finally {
         setIsLoading(false);
         initialLoadDone.current = true;
@@ -210,9 +191,9 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     };
 
     loadData();
-  }, [formConfig, isFormConfigLoading, isFormConfigError]);
+  }, [formConfig, isFormConfigLoading, isFormConfigError, userEmail]);
 
-  // Sync step from URL search params on mount
+  // Sync step from URL search params
   useEffect(() => {
     if (!totalSteps) return;
     const stepParam = searchParams.get("step");
@@ -224,7 +205,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     }
   }, [searchParams, totalSteps]);
 
-  // Auto-save to localStorage on change (debounced)
+  // Auto-save
   useEffect(() => {
     if (!isDirty || isLoading) return;
 
@@ -233,7 +214,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     }
 
     debounceTimerRef.current = setTimeout(() => {
-      const storageKey = userEmail ? `onboarding_draft:${userEmail}` : "onboarding_draft";
+      const storageKey = userEmail ? `pre_offer_draft:${userEmail}` : "pre_offer_draft";
       try {
         const toSave = {
           stepData,
@@ -252,9 +233,8 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [stepData, completedSteps, currentStep, isDirty, isLoading]);
+  }, [stepData, completedSteps, currentStep, isDirty, isLoading, userEmail, formConfig?.applicantId]);
 
-  // Update data for a specific step
   const setStepData = useCallback(
     (stepKey: string, data: Record<string, unknown>) => {
       setStepDataState((prev) => ({
@@ -266,7 +246,6 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     [],
   );
 
-  // Mark a step as completed
   const markStepComplete = useCallback((stepKey: string) => {
     setCompletedSteps((prev) => {
       const next = new Set(prev);
@@ -275,110 +254,61 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     });
   }, []);
 
-  // Navigate to a specific step and update URL
   const goToStep = useCallback(
     (step: number) => {
       if (totalSteps && step >= 0 && step < totalSteps) {
         setCurrentStep(step);
-        router.push(`/onboarding?step=${step}`, { scroll: false });
+        const search = new URLSearchParams(window.location.search);
+        search.set("step", step.toString());
+        router.push(`/pre_offer_form?${search.toString()}`, { scroll: false });
       }
     },
     [router, totalSteps],
   );
 
-  // Navigate to the next step
   const nextStep = useCallback(() => {
     if (totalSteps && currentStep < totalSteps - 1) {
       const nextIdx = currentStep + 1;
       setCurrentStep(nextIdx);
-      router.push(`/onboarding?step=${nextIdx}`, { scroll: false });
+      const search = new URLSearchParams(window.location.search);
+      search.set("step", nextIdx.toString());
+      router.push(`/pre_offer_form?${search.toString()}`, { scroll: false });
     }
   }, [currentStep, router, totalSteps]);
 
-  // Navigate to the previous step
   const prevStep = useCallback(() => {
     if (currentStep > 0) {
       const prevIdx = currentStep - 1;
       setCurrentStep(prevIdx);
-      router.push(`/onboarding?step=${prevIdx}`, { scroll: false });
+      const search = new URLSearchParams(window.location.search);
+      search.set("step", prevIdx.toString());
+      router.push(`/pre_offer_form?${search.toString()}`, { scroll: false });
     }
   }, [currentStep, router]);
 
-  const submitAll = useCallback(async (specificField?: string) => {
+  const submitAll = useCallback(async () => {
     try {
-      // Get correct user email
-      const email =
-        user?.email || user?.user_metadata?.email || "unknown@example.com";
-
-      // Find all rejected fields from formConfig
-      const rejectedFields = new Set<string>();
-      if (formConfig?.tabs) {
-        formConfig.tabs.forEach((tab) => {
-          tab.sections.forEach((section) => {
-            section.fields.forEach((field) => {
-              if (field.approval_status === "Rejected") {
-                rejectedFields.add(field.fieldname);
-              }
-            });
-          });
-        });
-      }
-
-      // Prepare filtered stepData
-      const filteredStepData: Record<string, Record<string, unknown>> = {};
-      for (const [stepKey, fields] of Object.entries(stepData)) {
-        const filteredFields: Record<string, unknown> = {};
-        let hasFields = false;
-        for (const [fieldname, val] of Object.entries(fields)) {
-          if (specificField) {
-            // If a specific field is resubmitted, ONLY send that specific field!
-            if (fieldname === specificField) {
-              filteredFields[fieldname] = val;
-              hasFields = true;
-            }
-          } else {
-            // General submission (Review page / Full submit): send all fields unconditionally!
-            filteredFields[fieldname] = val;
-            hasFields = true;
-          }
-        }
-        if (hasFields) {
-          filteredStepData[stepKey] = filteredFields;
-        }
-      }
-
       await submitMutation.mutateAsync({
-        stepData: filteredStepData,
-        userEmail: email,
+        stepData,
+        userEmail,
       });
 
-      // Only set status to "submitted" if there are no other rejected fields left, 
-      // or if we are doing a general full submit (no specificField)
-      const hasOtherRejectedFields = Array.from(rejectedFields).some(
-        (f) => f !== specificField
-      );
-      if (!specificField || !hasOtherRejectedFields) {
-        setStatus("submitted");
-        const storageKey = userEmail ? `onboarding_draft:${userEmail}` : "onboarding_draft";
-        localStorage.removeItem(storageKey);
-      }
+      setStatus("Submitted");
+      const storageKey = userEmail ? `pre_offer_draft:${userEmail}` : "pre_offer_draft";
+      localStorage.removeItem(storageKey);
 
-      toast.success(
-        specificField
-          ? "Field resubmitted successfully!"
-          : "Onboarding submitted successfully!"
-      );
+      toast.success("Pre-offer form submitted successfully!");
 
-      // Invalidate the onboarding form query to fetch the latest status
+      // Refresh cache
       void queryClient.invalidateQueries({
-        queryKey: ["onboarding-form", { userEmail: email }]
+        queryKey: ["pre-offer-form", { userEmail }]
       });
     } catch (error) {
-      console.error("Error submitting onboarding:", error);
-      toast.error("Failed to submit onboarding. Please try again.");
+      console.error("Error submitting pre-offer form:", error);
+      toast.error("Failed to submit pre-offer form. Please try again.");
       throw error;
     }
-  }, [stepData, user, submitMutation, formConfig, queryClient]);
+  }, [stepData, userEmail, submitMutation, queryClient]);
 
   const getFieldValue = useCallback(
     (fieldname: string) => {
@@ -392,7 +322,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     [stepData],
   );
 
-  const contextValue: OnboardingContextType = {
+  const contextValue: PreOfferContextType = {
     currentStep,
     stepData,
     completedSteps,
@@ -406,35 +336,22 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     nextStep,
     prevStep,
     markStepComplete,
-
     submitAll,
     formConfig,
     getFieldValue,
   };
 
   return (
-    <OnboardingContext.Provider value={contextValue}>
+    <PreOfferContext.Provider value={contextValue}>
       {children}
-    </OnboardingContext.Provider>
+    </PreOfferContext.Provider>
   );
 }
 
-/**
- * Hook to safely consume the OnboardingContext, returning undefined if used outside of an `<OnboardingProvider>`.
- */
-export function useOptionalOnboarding(): OnboardingContextType | undefined {
-  return useContext(OnboardingContext);
-}
-
-/**
- * Hook to consume the OnboardingContext.
- *
- * @throws Error if used outside of an `<OnboardingProvider>`.
- */
-export function useOnboarding(): OnboardingContextType {
-  const context = useOptionalOnboarding();
+export function usePreOffer(): PreOfferContextType {
+  const context = useContext(PreOfferContext);
   if (context === undefined) {
-    throw new Error("useOnboarding must be used within an OnboardingProvider");
+    throw new Error("usePreOffer must be used within a PreOfferProvider");
   }
   return context;
 }

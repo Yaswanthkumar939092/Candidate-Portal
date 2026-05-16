@@ -63,6 +63,14 @@ vi.mock("@/lib/auth", () => ({
   },
 }));
 
+vi.mock("@/lib/hooks/useCandidateBranding", () => ({
+  useCandidateBranding: () => ({
+    data: null,
+    isLoading: false,
+    isError: false,
+  }),
+}));
+
 // ─── Helpers ────────────────────────────────────────────────────────
 const user = userEvent.setup();
 

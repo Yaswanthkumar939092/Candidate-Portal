@@ -12,26 +12,27 @@ import {
   useWatch,
   Controller,
 } from "react-hook-form";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useOnboarding } from "@/lib/contexts/onboarding-context";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { usePreOffer } from "@/lib/contexts/pre-offer-context";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { FileUploadField } from "@/components/onboarding/file-upload-field";
+import { FileUploadField } from "@/components/pre-offer-form/file-upload-field";
 import { cn } from "@/lib/utils";
-import { OnboardingTab, OnboardingField } from "@/lib/types/onboarding";
-import { SectionCard } from "@/components/onboarding/section-card";
+import { PreOfferTab, PreOfferField } from "@/lib/types/pre-offer";
+import { SectionCard } from "@/components/pre-offer-form/section-card";
 import { DynamicFieldRenderer } from "@/components/ui/field-renderer";
-import { DynamicTableField } from "@/components/onboarding/dynamic-table-field";
-interface OnboardingFormStepProps {
-  tab: OnboardingTab;
+import { DynamicTableField } from "@/components/pre-offer-form/dynamic-table-field";
+
+interface PreOfferFormStepProps {
+  tab: PreOfferTab;
   stepKey: string;
   className?: string;
 }
 
-type OnboardingFormValues = Record<string, unknown>;
+type PreOfferFormValues = Record<string, unknown>;
 
 type OverrideComponentProps = {
-  field: OnboardingField;
+  field: PreOfferField;
   value: unknown;
   onChange: (value: unknown) => void;
   onBlur?: () => void;
@@ -41,10 +42,10 @@ type OverrideComponentProps = {
 };
 
 interface FormStepFieldProps {
-  field: OnboardingField;
-  control: Control<OnboardingFormValues>;
-  setValue: UseFormSetValue<OnboardingFormValues>;
-  trigger: UseFormTrigger<OnboardingFormValues>;
+  field: PreOfferField;
+  control: Control<PreOfferFormValues>;
+  setValue: UseFormSetValue<PreOfferFormValues>;
+  trigger: UseFormTrigger<PreOfferFormValues>;
   error?: string;
   handleFileUpload: (fieldname: string) => (url: string | null) => void;
   overrides: {
@@ -55,32 +56,32 @@ interface FormStepFieldProps {
       component: (props: OverrideComponentProps) => React.JSX.Element;
     };
   };
+  isSubmitted?: boolean;
 }
 
 const FormStepField = React.memo(function FormStepField({
   field,
   control,
-  // setValue,
-  // trigger,
   error,
   handleFileUpload,
   overrides,
+  isSubmitted,
 }: FormStepFieldProps) {
-  // Determine grid classes
   const isFullWidthByLabel =
     field.label.toLowerCase().includes("address proof") ||
     field.fieldname.toLowerCase().includes("custom_upload_pan_card") ||
-    field.fieldname
-      .toLowerCase()
-      .includes("custom_upload_cancelled_cheque_passbook_statement") ||
-    field.fieldname.toLowerCase().includes("address_proof");
-
-  const isAadhaarFront = field.fieldname === "custom_upload_aadhaarfront";
+    field.fieldname.toLowerCase().includes("custom_upload_cancelled_cheque") ||
+    field.fieldname.toLowerCase().includes("resume_attachment") ||
+    field.fieldname.toLowerCase().includes("linkedin_url");
 
   const fieldClassName = cn(
     isFullWidthByLabel && "md:col-span-full",
-    isAadhaarFront && "md:col-start-1",
   );
+
+  const finalField = useMemo(() => ({
+    ...field,
+    read_only: isSubmitted ? 1 : field.read_only
+  }), [field, isSubmitted]);
 
   return (
     <Controller
@@ -88,12 +89,10 @@ const FormStepField = React.memo(function FormStepField({
       control={control}
       render={({ field: rhfField }) => (
         <DynamicFieldRenderer
-          field={field}
+          field={finalField}
           value={rhfField.value}
           onChange={(val) => {
             rhfField.onChange(val);
-            // Optionally trigger validation immediately
-            // void trigger(field.fieldname);
           }}
           onBlur={rhfField.onBlur}
           error={error}
@@ -106,11 +105,11 @@ const FormStepField = React.memo(function FormStepField({
   );
 });
 
-export function OnboardingFormStep({
+export function PreOfferFormStep({
   tab,
   stepKey,
   className,
-}: OnboardingFormStepProps) {
+}: PreOfferFormStepProps) {
   const {
     stepData,
     setStepData,
@@ -119,13 +118,17 @@ export function OnboardingFormStep({
     markStepComplete,
     isSaving,
     currentStep,
-  } = useOnboarding();
+    status,
+  } = usePreOffer();
+
+  const isReadOnly = status === "Submitted" || status === "Filled";
+
   const existingData = useMemo(
     () => (stepData[stepKey] ?? {}) as Record<string, unknown>,
     [stepData, stepKey],
   );
 
-  // Initialize default values from formConfig and existingData
+  // Initialize values
   const defaultValues = useMemo(() => {
     const values: Record<string, unknown> = { ...existingData };
     tab.sections.forEach((section) => {
@@ -146,11 +149,12 @@ export function OnboardingFormStep({
     return values;
   }, [tab, existingData]);
 
-  const validationResolver = useCallback<Resolver<OnboardingFormValues>>(
+  const validationResolver = useCallback<Resolver<PreOfferFormValues>>(
     (values) => {
-      const errorList: FieldErrors<OnboardingFormValues> = {};
+      const errorList: FieldErrors<PreOfferFormValues> = {};
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       const phoneRegex = /^\d{10}$/;
+
       tab.sections.forEach((section) => {
         section.fields.forEach((field) => {
           const fieldValue = values[field.fieldname];
@@ -163,12 +167,9 @@ export function OnboardingFormStep({
           const isPhoneField =
             field.label.toLowerCase().includes("mobile") ||
             field.label.toLowerCase().includes("contact number") ||
-            field.label.toLowerCase().includes("contact no") ||
             field.label.toLowerCase().includes("phone") ||
             field.fieldname.toLowerCase().includes("mobile") ||
-            field.fieldname.toLowerCase().includes("phone") ||
-            field.fieldname.toLowerCase().includes("contact_no") ||
-            field.fieldname.toLowerCase().includes("contactnumber");
+            field.fieldname.toLowerCase().includes("phone");
 
           const isTable = field.fieldtype === "Table";
 
@@ -279,22 +280,17 @@ export function OnboardingFormStep({
     trigger,
     control,
     formState: { errors },
-    // reset,
     getValues,
-  } = useForm<OnboardingFormValues>({
+  } = useForm<PreOfferFormValues>({
     defaultValues,
     resolver: validationResolver,
     mode: "onBlur",
     reValidateMode: "onBlur",
   });
 
-  // defaultValues is passed directly to useForm, so it is initialized on mount.
-  // We do NOT call reset(defaultValues) here because it causes an infinite loop 
-  // with the auto-save mechanism below.
-
   const currentFormValues = useWatch({ control });
 
-  // Auto-save form values to context to prevent data loss on navigation
+  // Auto-save
   useEffect(() => {
     const timer = setTimeout(() => {
       const values = getValues();
@@ -303,7 +299,7 @@ export function OnboardingFormStep({
     return () => clearTimeout(timer);
   }, [currentFormValues, getValues, setStepData, stepKey]);
 
-  const onNext = handleSubmit(async (data) => {
+  const onSubmit = handleSubmit(async (data) => {
     setStepData(stepKey, data);
     markStepComplete(stepKey);
     nextStep();
@@ -322,6 +318,7 @@ export function OnboardingFormStep({
         component: ({
           field,
           value,
+          onChange,
           error,
           disabled,
           className,
@@ -330,11 +327,11 @@ export function OnboardingFormStep({
             label={field.label}
             required={!!(field.is_mandatory || field.reqd)}
             value={value as string}
-            onChange={handleFileUpload(field.fieldname)}
-            disabled={disabled || !!field.read_only}
+            onChange={(val) => onChange(val || "")}
+            disabled={disabled || !!field.read_only || isReadOnly}
             error={error}
             className={className}
-            isRejected={!field.read_only && field.approval_status === "Rejected"}
+            isRejected={field.approval_status === "Rejected"}
             hrComment={field.hr_comment}
             isApproved={field.approval_status === "Approved"}
             fieldname={field.fieldname}
@@ -345,6 +342,7 @@ export function OnboardingFormStep({
         component: ({
           field,
           value,
+          onChange,
           error,
           disabled,
           className,
@@ -353,11 +351,11 @@ export function OnboardingFormStep({
             label={field.label}
             required={!!(field.is_mandatory || field.reqd)}
             value={value as string}
-            onChange={handleFileUpload(field.fieldname)}
-            disabled={disabled || !!field.read_only}
+            onChange={(val) => onChange(val || "")}
+            disabled={disabled || !!field.read_only || isReadOnly}
             error={error}
             className={className}
-            isRejected={!field.read_only && field.approval_status === "Rejected"}
+            isRejected={field.approval_status === "Rejected"}
             hrComment={field.hr_comment}
             isApproved={field.approval_status === "Approved"}
             fieldname={field.fieldname}
@@ -365,45 +363,20 @@ export function OnboardingFormStep({
         ),
       },
     }),
-    [handleFileUpload],
+    [isReadOnly],
   );
 
   return (
-    <form onSubmit={onNext} className={cn("space-y-8", className)}>
+    <form onSubmit={onSubmit} className={cn("space-y-8", className)}>
       {tab.sections.map((section, idx) => (
         <React.Fragment key={idx}>
-          {section.section.toLowerCase().includes("permanent address") && (
-            <div className="flex justify-start mb-2 px-2">
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={() => {
-                  const values = getValues();
-                  Object.keys(values).forEach((key) => {
-                    if (key.toLowerCase().includes("current")) {
-                      const permKey = key.replace(/current/i, "permanent");
-                      setValue(permKey, values[key], {
-                        shouldValidate: true,
-                        shouldDirty: true,
-                      });
-                    }
-                  });
-                }}
-              >
-                Same as Current Address
-              </Button>
-            </div>
-          )}
           <SectionCard
             title={section.section === tab.tab ? undefined : section.section}
           >
             <div
               className={cn(
-                "grid grid-cols-1 gap-x-4 gap-y-5",
-                section.section === "Basic Details"
-                  ? "md:grid-cols-3"
-                  : "md:grid-cols-2",
+                "grid grid-cols-1 gap-x-4 gap-y-5 md:grid-cols-2",
+                section.section === "Basic Details" && "md:grid-cols-3"
               )}
             >
               {section.fields.map((field) =>
@@ -416,6 +389,7 @@ export function OnboardingFormStep({
                     errors={errors as FieldErrors<FieldValues>}
                     onAttachChange={handleFileUpload}
                     overrides={fieldOverrides}
+                    isSubmitted={isReadOnly}
                   />
                 ) : (
                   <FormStepField
@@ -427,6 +401,7 @@ export function OnboardingFormStep({
                     error={errors[field.fieldname]?.message as string}
                     handleFileUpload={handleFileUpload}
                     overrides={fieldOverrides}
+                    isSubmitted={isReadOnly}
                   />
                 ),
               )}
@@ -435,23 +410,31 @@ export function OnboardingFormStep({
         </React.Fragment>
       ))}
 
-      {/* Navigation */}
-      <Separator />
-      <div className="flex items-center justify-between pt-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={prevStep}
-          disabled={currentStep === 0 || isSaving}
-        >
-          <ChevronLeft className="mr-1 h-4 w-4" />
-          Previous
-        </Button>
-        <Button type="submit" disabled={isSaving}>
-          Next Step
-          <ChevronRight className="ml-1 h-4 w-4" />
-        </Button>
-      </div>
+      {!isReadOnly && (
+        <>
+          <Separator />
+          <div className="flex items-center justify-between pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={prevStep}
+              disabled={currentStep === 0 || isSaving}
+            >
+              <ChevronLeft className="mr-1 h-4 w-4" />
+              Previous
+            </Button>
+
+            <Button
+              type="submit"
+              disabled={isSaving}
+            >
+              {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Next Step
+              <ChevronRight className="ml-1 h-4 w-4" />
+            </Button>
+          </div>
+        </>
+      )}
     </form>
   );
 }
