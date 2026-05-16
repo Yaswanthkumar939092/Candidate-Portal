@@ -8,17 +8,8 @@ ENV NEXT_TELEMETRY_DISABLED=1
 FROM base AS deps
 
 COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile \
-  && arch="$(node -p 'process.arch')" \
-  && if [ "$arch" = "arm64" ]; then \
-    yarn add --dev \
-      lightningcss-linux-arm64-gnu@1.32.0 \
-      @tailwindcss/oxide-linux-arm64-gnu@4.2.2; \
-  elif [ "$arch" = "x64" ]; then \
-    yarn add --dev \
-      lightningcss-linux-x64-gnu@1.32.0 \
-      @tailwindcss/oxide-linux-x64-gnu@4.2.2; \
-  fi
+RUN --mount=type=cache,target=/usr/local/share/.cache/yarn/v6 \
+  yarn install --frozen-lockfile --non-interactive
 
 FROM base AS builder
 
@@ -31,6 +22,7 @@ ARG NEXT_PUBLIC_SITE_URL
 ARG NEXT_PUBLIC_FRAPPE_URL
 ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID
 ARG NEXT_PUBLIC_LINKEDIN_CLIENT_ID
+ARG FRAPPE_BASE_URL
 
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -39,7 +31,9 @@ ENV NEXT_PUBLIC_FRAPPE_URL=$NEXT_PUBLIC_FRAPPE_URL
 ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID
 ENV NEXT_PUBLIC_LINKEDIN_CLIENT_ID=$NEXT_PUBLIC_LINKEDIN_CLIENT_ID
 
-RUN yarn run build
+RUN SUPABASE_SERVICE_ROLE_KEY=build-placeholder \
+  FRAPPE_BASE_URL=${FRAPPE_BASE_URL:-http://localhost:8000} \
+  yarn run build
 
 FROM node:22-bookworm-slim AS runner
 

@@ -26,6 +26,12 @@ const frappeUser = {
   },
 }
 
+const supabaseUser = {
+  ...frappeUser,
+  id: "550e8400-e29b-41d4-a716-446655440000",
+  name: "550e8400-e29b-41d4-a716-446655440000",
+}
+
 function AuthStateProbe() {
   const { isLoading, isOnboardingComplete, profile } = useAuth()
   return (
@@ -48,10 +54,11 @@ describe("AuthProvider", () => {
     })
   })
 
-  it("hydrates the stored candidate profile before computing onboarding completion", async () => {
+  it("hydrates the stored candidate profile for UUID users before computing onboarding completion", async () => {
+    mockGetSession.mockResolvedValue({ user: supabaseUser })
     mockGetProfile.mockResolvedValue({
-      id: frappeUser.id,
-      email: frappeUser.email,
+      id: supabaseUser.id,
+      email: supabaseUser.email,
       lifecycle_stage: "onboarded",
     })
 
@@ -63,12 +70,13 @@ describe("AuthProvider", () => {
 
     await waitFor(() => expect(screen.getByTestId("loading").textContent).toBe("false"))
 
-    expect(mockGetProfile).toHaveBeenCalledWith(frappeUser.id)
+    expect(mockGetProfile).toHaveBeenCalledWith(supabaseUser.id)
     expect(screen.getByTestId("stage").textContent).toBe("onboarded")
     expect(screen.getByTestId("complete").textContent).toBe("true")
   })
 
-  it("falls back to the Frappe session profile when no stored profile exists", async () => {
+  it("falls back to the Frappe session profile when no stored UUID profile exists", async () => {
+    mockGetSession.mockResolvedValue({ user: supabaseUser })
     mockGetProfile.mockResolvedValue(null)
 
     render(
@@ -79,8 +87,22 @@ describe("AuthProvider", () => {
 
     await waitFor(() => expect(screen.getByTestId("loading").textContent).toBe("false"))
 
-    expect(mockProfileFromFrappeUser).toHaveBeenCalledWith(frappeUser)
+    expect(mockProfileFromFrappeUser).toHaveBeenCalledWith(supabaseUser)
     expect(screen.getByTestId("stage").textContent).toBe("candidate")
     expect(screen.getByTestId("complete").textContent).toBe("false")
+  })
+
+  it("does not query Supabase profiles with Frappe email identifiers", async () => {
+    render(
+      <AuthProvider>
+        <AuthStateProbe />
+      </AuthProvider>,
+    )
+
+    await waitFor(() => expect(screen.getByTestId("loading").textContent).toBe("false"))
+
+    expect(mockGetProfile).not.toHaveBeenCalled()
+    expect(mockProfileFromFrappeUser).toHaveBeenCalledWith(frappeUser)
+    expect(screen.getByTestId("stage").textContent).toBe("candidate")
   })
 })
