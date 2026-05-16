@@ -4,6 +4,7 @@ import { Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Loader2, ClipboardX, ArrowLeft, CheckCircle2 } from 'lucide-react'
 import { PreOfferProvider, usePreOffer } from '@/lib/contexts/pre-offer-context'
+import { useAuth } from '@/lib/contexts/auth-context'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { PreOfferStepNav } from '@/components/pre-offer-form/pre-offer-step-nav'
@@ -175,8 +176,17 @@ function PreOfferContent() {
 }
 
 function PreOfferPageWrapper() {
-  const searchParams = useSearchParams()
-  const applicantEmail = searchParams.get('appl')
+  const { user, isLoading } = useAuth()
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  const applicantEmail = user?.email
 
   if (!applicantEmail) {
     return (
@@ -187,9 +197,9 @@ function PreOfferPageWrapper() {
               <ClipboardX className="h-10 w-10 text-slate-400" />
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Missing Candidate Context</h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Authentication Required</h1>
           <p className="mt-3 text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-            This page requires a valid applicant parameter to initialize safely.
+            You must be signed in to view your pre-offer form.
           </p>
           <div className="mt-6">
             <Link href="/action-center">
@@ -202,7 +212,7 @@ function PreOfferPageWrapper() {
   }
 
   return (
-    <PreOfferProvider userEmail={decodeURIComponent(applicantEmail)}>
+    <PreOfferProvider userEmail={applicantEmail}>
       <PreOfferContent />
     </PreOfferProvider>
   )

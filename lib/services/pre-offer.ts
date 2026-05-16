@@ -1,25 +1,20 @@
 import { PreOfferForm, PreOfferFormMessage } from "../types/pre-offer";
-import { FrappeAPI } from "../frappe-api";
-
-const API_METHODS = {
-  GET_PRE_OFFER_FORM:
-    "recruitment.api.candidate_portal.get_pre_offer_form",
-  SUBMIT_PRE_OFFER:
-    "recruitment.api.candidate_portal.save_pre_offer_form_data",
-};
 
 export const preOfferService = {
   getPreOfferForm: async (userEmail: string): Promise<PreOfferForm> => {
     if (!userEmail) throw new Error("User email is required");
 
-    const res = await FrappeAPI.get(API_METHODS.GET_PRE_OFFER_FORM, {
-      job_applicant_id: userEmail,
-    });
+    const res = await fetch("/api/pre-offer");
 
-    // Handling response wrappers if applicable
-    const message = res?.message || res;
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || "Failed to fetch pre-offer form");
+    }
 
-    if (!message || (message.status !== "success" && res.status !== "success")) {
+    const data = await res.json();
+    const message = data?.message || data;
+
+    if (!message || (message.status !== "success" && data.status !== "success")) {
       throw new Error("Failed to fetch pre-offer form");
     }
 
@@ -32,19 +27,24 @@ export const preOfferService = {
   ): Promise<{ success: boolean; message: string }> => {
     if (!userEmail) throw new Error("User email is required");
 
-    const payload = mapPreOfferDataToFrappe(stepData, userEmail);
+    const res = await fetch("/api/pre-offer", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ stepData }),
+    });
 
-    const res = await FrappeAPI.post(API_METHODS.SUBMIT_PRE_OFFER, payload);
+    const data = await res.json();
+    const message = data?.message || data;
 
-    const message = res?.message || res;
-
-    if (!message || (message.status !== "success" && res.status !== "success")) {
-      throw new Error(message?.message || res?.message || "Submission failed");
+    if (!res.ok || !message || (message.status !== "success" && data.status !== "success")) {
+      throw new Error(message?.message || data?.message || data?.error || "Submission failed");
     }
 
     return {
       success: true,
-      message: message.message || res.message || "Form submitted successfully!",
+      message: message.message || data.message || "Form submitted successfully!",
     };
   },
 };
@@ -57,35 +57,5 @@ export function transformPreOfferForm(
     applicantId: data.job_applicant,
     status: data.pre_offer_form_status,
     tabs: data.tabs,
-  };
-}
-
-const getToday = () => new Date().toISOString().split("T")[0];
-
-// Mapping of frontend data to Frappe's expected format for submission
-function mapPreOfferDataToFrappe(
-  formData: Record<string, Record<string, unknown>>,
-  userEmail: string,
-) {
-  if (!userEmail) throw new Error("User email is required");
-
-  const mappedData: Record<string, unknown> = {
-    pre_offer_form_status: "Submitted",
-    custom_email: userEmail,
-    submission_date: getToday(),
-  };
-
-  for (const stepValues of Object.values(formData)) {
-    for (const [key, val] of Object.entries(stepValues)) {
-      // Skip undefined values (important)
-      if (val === undefined) continue;
-
-      mappedData[key] = val;
-    }
-  }
-
-  return {
-    job_applicant_id: userEmail,
-    data: mappedData,
   };
 }
