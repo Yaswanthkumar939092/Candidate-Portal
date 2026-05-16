@@ -108,6 +108,26 @@ describe("LoginPage – UI Rendering", () => {
     expect(btn).not.toBeDisabled();
   });
 
+  it("does not render a separate email OTP login form", async () => {
+    await renderLoginPage();
+    expect(screen.queryByText("Sign in with email OTP")).toBeNull();
+    expect(screen.queryByRole("button", { name: /Send OTP/i })).toBeNull();
+  });
+
+  it("keeps login unavailable when password login is disabled", async () => {
+    mockGetAuthSettings.mockResolvedValue({
+      ...defaultAuthSettings,
+      allow_password_login: 0,
+      allow_email_otp_login: 1,
+      enable_email_otp: 1,
+    });
+
+    await render(<LoginPage />);
+
+    expect(await screen.findByText("Password login is not enabled for candidate accounts.")).toBeTruthy();
+    expect(screen.queryByText("Sign in with email OTP")).toBeNull();
+  });
+
   it("has a wrapper div with correct background styling class", async () => {
     const { container } = await renderLoginPage();
     const wrapper = container.firstElementChild;
@@ -126,9 +146,14 @@ describe("LoginPage – Successful Login", () => {
       user: { id: "1", email: "test@test.com" },
       session: { access_token: "abc" },
     });
+    mockRequestOtp.mockResolvedValue({ status: "success" });
+    mockVerifyOtp.mockResolvedValue({
+      user: { id: "1", email: "test@test.com" },
+      session: { access_token: "abc" },
+    });
   });
 
-  it("calls auth.signIn with the entered credentials", async () => {
+  it("validates credentials and sends login OTP with the entered email", async () => {
     await renderLoginPage();
 
     await user.type(screen.getByPlaceholderText("you@example.com"), "test@test.com");
@@ -141,9 +166,57 @@ describe("LoginPage – Successful Login", () => {
         password: "password123",
       });
     });
+
+    expect(mockRequestOtp).toHaveBeenCalledWith({
+      identifier: "test@test.com",
+      purpose: "Login",
+      identifierType: "Email",
+    });
   });
 
-  it("completes login on successful credentials", async () => {
+  it("changes the main login form to OTP entry after credentials pass", async () => {
+    await renderLoginPage();
+
+    await user.type(screen.getByPlaceholderText("you@example.com"), "test@test.com");
+    await user.type(screen.getByPlaceholderText("Enter your password"), "password123");
+    await user.click(screen.getByRole("button", { name: /Sign in to your account/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Check your email")).toBeTruthy();
+    });
+    expect(screen.getByText("Enter the OTP sent to test@test.com")).toBeTruthy();
+    expect(screen.getByPlaceholderText("Enter OTP")).toBeTruthy();
+    expect(screen.queryByPlaceholderText("Enter your password")).toBeNull();
+  });
+
+  it("verifies the OTP from the second login step", async () => {
+    await renderLoginPage();
+
+    await user.type(screen.getByPlaceholderText("you@example.com"), "test@test.com");
+    await user.type(screen.getByPlaceholderText("Enter your password"), "password123");
+    await user.click(screen.getByRole("button", { name: /Sign in to your account/i }));
+    await screen.findByPlaceholderText("Enter OTP");
+
+    await user.type(screen.getByPlaceholderText("Enter OTP"), "123456");
+    await user.click(screen.getByRole("button", { name: /Verify and continue/i }));
+
+    await waitFor(() => {
+      expect(mockVerifyOtp).toHaveBeenCalledWith({
+        identifier: "test@test.com",
+        otp: "123456",
+        purpose: "Login",
+        identifierType: "Email",
+      });
+    });
+  });
+
+  it("redirects immediately when email OTP login is disabled", async () => {
+    mockGetAuthSettings.mockResolvedValue({
+      ...defaultAuthSettings,
+      allow_email_otp_login: 0,
+      enable_email_otp: 0,
+    });
+
     await renderLoginPage();
 
     await user.type(screen.getByPlaceholderText("you@example.com"), "test@test.com");
@@ -153,6 +226,7 @@ describe("LoginPage – Successful Login", () => {
     await waitFor(() => {
       expect(mockSignIn).toHaveBeenCalled();
     });
+    expect(mockRequestOtp).not.toHaveBeenCalled();
   });
 
   it("shows loading state ('Please wait...') during sign-in", async () => {
