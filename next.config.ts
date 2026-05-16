@@ -52,8 +52,16 @@ const nextConfig: NextConfig = {
     remotePatterns: getRemoteImagePatterns(),
     domains: ['upload.wikimedia.org'],
   },
-  webpack: (config) => {
+  webpack: (config, { dev }) => {
     config.resolve.alias.canvas = false;
+
+    if (dev) {
+      config.watchOptions = {
+        ...config.watchOptions,
+        ignored: "**/.playwright-mcp/**",
+      };
+    }
+
     return config;
   },
 };

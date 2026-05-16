@@ -2,15 +2,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 
-// Supabase must be mocked with a factory — the module throws at import if env vars are missing
-vi.mock("@/lib/supabase", () => ({
-  supabase: {
-    auth: {
-      signOut: vi.fn().mockResolvedValue({}),
-      getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
-      onAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),
-    },
-    from: vi.fn(),
+const mockSignOut = vi.fn()
+
+vi.mock("@/lib/auth", () => ({
+  auth: {
+    signOut: (...args: unknown[]) => mockSignOut(...args),
   },
 }))
 
@@ -53,7 +49,6 @@ import * as authContext from "@/lib/contexts/auth-context"
 import * as featureFlagsContext from "@/lib/contexts/feature-flags"
 import * as themeContext from "@/lib/contexts/theme-context"
 import * as websiteBrandingHook from "@/lib/hooks/useWebsiteBranding"
-import { supabase } from "@/lib/supabase"
 
 const mockUser = {
   id: "user-123",
@@ -109,9 +104,7 @@ describe("PortalNavigation", () => {
       data: mockBranding,
     } as ReturnType<typeof websiteBrandingHook.useWebsiteBranding>)
 
-    vi.mocked(supabase.auth.signOut).mockResolvedValue(
-      {} as Awaited<ReturnType<typeof supabase.auth.signOut>>
-    )
+    mockSignOut.mockResolvedValue(undefined)
   })
 
   it("renders navigation header", () => {
@@ -270,7 +263,7 @@ describe("PortalNavigation", () => {
     if (trigger) {
       await user.click(trigger)
       await user.click(screen.getByText("Sign Out"))
-      expect(supabase.auth.signOut).toHaveBeenCalled()
+      expect(mockSignOut).toHaveBeenCalled()
     }
   })
 
