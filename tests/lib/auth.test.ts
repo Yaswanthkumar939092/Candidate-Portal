@@ -107,15 +107,16 @@ describe("Frappe candidate auth", () => {
     expect(result.user?.user_metadata.full_name).toBe("Candidate One")
   })
 
-  it("logs in with password through Frappe", async () => {
+  it("verifies the password through Frappe before issuing an OTP session", async () => {
     fetchMock.mockResolvedValueOnce(frappePayload({
-      status: "success",
+      status: "password_verified",
       user: { name: "candidate@example.com", email: "candidate@example.com" },
     }))
 
     const result = await auth.signIn({ email: "candidate@example.com", password: "Candidate@12345" })
 
     expect(result.user?.id).toBe("candidate@example.com")
+    expect(result.session).toBeNull()
     expect(fetchMock).toHaveBeenCalledWith(
       "http://localhost:8005/api/method/recruitment.api.candidate_auth.login",
       expect.objectContaining({ credentials: "include" }),
