@@ -154,7 +154,7 @@ export function PreOfferFormStep({
       const errorList: FieldErrors<PreOfferFormValues> = {};
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       const phoneRegex = /^\d{10}$/;
-      
+
       tab.sections.forEach((section) => {
         section.fields.forEach((field) => {
           const fieldValue = values[field.fieldname];
@@ -423,9 +423,9 @@ export function PreOfferFormStep({
               <ChevronLeft className="mr-1 h-4 w-4" />
               Previous
             </Button>
-            
-            <Button 
-              type="submit" 
+
+            <Button
+              type="submit"
               disabled={isSaving}
             >
               {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

@@ -189,6 +189,74 @@ describe("FileUploadField", () => {
        // Implicitly verifies execution loop continued without triggering generic bubble up crashes
        expect(rejectTrigger).toBeTruthy();
     });
+  describe("Specific Missed Line Coverage Expansion", () => {
+    it("handles filename fallback gracefully when value contains no path separators", () => {
+      // Line 67: value.split("/").pop() || value
+      render(<FileUploadField label="Simple Asset" value="flat_file_name.jpg" />);
+      expect(screen.getByText("flat_file_name.jpg")).toBeTruthy();
+    });
+
+    it("aborts file set logic when a null file propagates to trigger context", async () => {
+       // Line 77: if (!file) return;
+       render(<FileUploadField label="Asset" onChange={mockOnChange} />);
+       
+       const input = screen.getByLabelText("Asset", { selector: 'input[type="file"]' }) as HTMLInputElement;
+       
+       // Simulate file change without actual files list
+       fireEvent.change(input, { target: { files: [] } });
+       
+       await waitFor(() => {
+         expect(mockUploadFile).not.toHaveBeenCalled();
+       });
+    });
+
+    it("blocks drag drops when control flow transitions to pending uploading state", () => {
+       // Line 118: if (disabled || isPending) return
+       vi.mocked(useFileUpload).mockReturnValue({
+         mutateAsync: mockUploadFile,
+         isPending: true,
+       } as unknown as ReturnType<typeof useFileUpload>);
+       
+       render(<FileUploadField label="Lock Test" onChange={mockOnChange} />);
+       const zone = screen.getByText("Click to upload or drag and drop").parentElement!;
+       
+       const file = new File(["locked"], "lock.pdf", { type: "application/pdf" });
+       fireEvent.drop(zone, {
+         dataTransfer: {
+           files: [file]
+         }
+       });
+       
+       expect(mockUploadFile).not.toHaveBeenCalled();
+    });
+
+    it("ignores drops containing null or invalid dynamic data transfers", () => {
+       // Line 121: if (file) branch
+       render(<FileUploadField label="Null Drop" onChange={mockOnChange} />);
+       const zone = screen.getByText("Click to upload or drag and drop").parentElement!;
+       
+       fireEvent.drop(zone, {
+         dataTransfer: {
+           files: []
+         }
+       });
+       
+       expect(mockUploadFile).not.toHaveBeenCalled();
+    });
+
+    it("renders error messages and labels in distinct failure modes", () => {
+       // Line 246: {error && ...}
+       render(<FileUploadField label="Error Block" error="Critical format exception" />);
+       expect(screen.getByText("Critical format exception")).toBeTruthy();
+    });
+
+    it("correctly renders color schemes for approved/rejected states in filename lists", () => {
+       // Line 177-179: isRejected / isApproved styles inside value list
+       const { rerender } = render(<FileUploadField label="Valid Item" value="doc.pdf" isApproved={true} />);
+       expect(screen.getByText("doc.pdf").parentElement).toHaveClass("border-success");
+
+       rerender(<FileUploadField label="Valid Item" value="doc.pdf" isRejected={true} />);
+       expect(screen.getByText("doc.pdf").parentElement).toHaveClass("border-destructive");
   });
 
   describe("Specific Missed Line Coverage Expansion", () => {
@@ -260,5 +328,7 @@ describe("FileUploadField", () => {
        rerender(<FileUploadField label="Valid Item" value="doc.pdf" isRejected={true} />);
        expect(screen.getByText("doc.pdf").parentElement).toHaveClass("border-destructive");
   });
+});
+});
 });
 });

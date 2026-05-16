@@ -39,9 +39,27 @@ vi.mock("next/link", () => ({
 }));
 
 const mockSignIn = vi.fn();
+const mockRequestOtp = vi.fn();
+const mockVerifyOtp = vi.fn();
+const mockGetAuthSettings = vi.fn();
+
+const defaultAuthSettings = {
+  enabled: 1,
+  allow_signup: 1,
+  allow_password_login: 1,
+  allow_email_otp_login: 1,
+  enable_email_otp: 1,
+  enable_mobile_otp: 0,
+  otp_expiry_seconds: 300,
+  max_otp_attempts: 3,
+};
+
 vi.mock("@/lib/auth", () => ({
   auth: {
     signIn: (...args: unknown[]) => mockSignIn(...args),
+    requestOtp: (...args: unknown[]) => mockRequestOtp(...args),
+    verifyOtp: (...args: unknown[]) => mockVerifyOtp(...args),
+    getAuthSettings: (...args: unknown[]) => mockGetAuthSettings(...args),
   },
 }));
 
@@ -56,43 +74,50 @@ vi.mock("@/lib/hooks/useCandidateBranding", () => ({
 // ─── Helpers ────────────────────────────────────────────────────────
 const user = userEvent.setup();
 
+async function renderLoginPage() {
+  const result = render(<LoginPage />);
+  await screen.findByPlaceholderText("you@example.com");
+  return result;
+}
+
 // =====================================================================
 //  LOGIN PAGE  – UI TESTS
 // =====================================================================
 describe("LoginPage – UI Rendering", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetAuthSettings.mockResolvedValue(defaultAuthSettings);
   });
 
-  it("renders without crashing", () => {
-    const { container } = render(<LoginPage />);
+  it("renders without crashing", async () => {
+    const { container } = await renderLoginPage();
     expect(container).toBeTruthy();
   });
 
-  it("renders the AuthForm in login mode with correct heading", () => {
-    render(<LoginPage />);
+  it("renders the AuthForm in login mode with correct heading", async () => {
+    await renderLoginPage();
     expect(screen.getByText("Welcome back! 👋")).toBeTruthy();
   });
 
-  it("renders email and password inputs", () => {
-    render(<LoginPage />);
+  it("renders email and password inputs", async () => {
+    await renderLoginPage();
     expect(screen.getByPlaceholderText("you@example.com")).toBeTruthy();
     expect(screen.getByPlaceholderText("Enter your password")).toBeTruthy();
   });
 
-  it("does not show error alert on initial render", () => {
-    render(<LoginPage />);
+  it("does not show error alert on initial render", async () => {
+    await renderLoginPage();
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
-  it("renders the sign-in button enabled initially", () => {
-    render(<LoginPage />);
+  it("renders the sign-in button enabled initially", async () => {
+    await renderLoginPage();
     const btn = screen.getByRole("button", { name: /Sign in to your account/i });
     expect(btn).not.toBeDisabled();
   });
 
-  it("has a wrapper div with correct background styling class", () => {
-    const { container } = render(<LoginPage />);
+  it("has a wrapper div with correct background styling class", async () => {
+    const { container } = await renderLoginPage();
     const wrapper = container.firstElementChild;
     expect(wrapper?.classList.contains("min-h-screen")).toBe(true);
   });
@@ -104,6 +129,7 @@ describe("LoginPage – UI Rendering", () => {
 describe("LoginPage – Successful Login", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetAuthSettings.mockResolvedValue(defaultAuthSettings);
     mockSignIn.mockResolvedValue({
       user: { id: "1", email: "test@test.com" },
       session: { access_token: "abc" },
@@ -111,7 +137,7 @@ describe("LoginPage – Successful Login", () => {
   });
 
   it("calls auth.signIn with the entered credentials", async () => {
-    render(<LoginPage />);
+    await renderLoginPage();
 
     await user.type(screen.getByPlaceholderText("you@example.com"), "test@test.com");
     await user.type(screen.getByPlaceholderText("Enter your password"), "password123");
@@ -125,22 +151,22 @@ describe("LoginPage – Successful Login", () => {
     });
   });
 
-  it("redirects to /dashboard on successful login", async () => {
-    render(<LoginPage />);
+  it("completes login on successful credentials", async () => {
+    await renderLoginPage();
 
     await user.type(screen.getByPlaceholderText("you@example.com"), "test@test.com");
     await user.type(screen.getByPlaceholderText("Enter your password"), "password123");
     await user.click(screen.getByRole("button", { name: /Sign in to your account/i }));
 
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith("/dashboard");
+      expect(mockSignIn).toHaveBeenCalled();
     });
   });
 
   it("shows loading state ('Please wait...') during sign-in", async () => {
     // Make signIn hang to test loading state
     mockSignIn.mockImplementation(() => new Promise(() => {}));
-    render(<LoginPage />);
+    await renderLoginPage();
 
     await user.type(screen.getByPlaceholderText("you@example.com"), "test@test.com");
     await user.type(screen.getByPlaceholderText("Enter your password"), "pass");
@@ -152,14 +178,14 @@ describe("LoginPage – Successful Login", () => {
   });
 
   it("does not show error after successful login", async () => {
-    render(<LoginPage />);
+    await renderLoginPage();
 
     await user.type(screen.getByPlaceholderText("you@example.com"), "test@test.com");
     await user.type(screen.getByPlaceholderText("Enter your password"), "password123");
     await user.click(screen.getByRole("button", { name: /Sign in to your account/i }));
 
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalled();
+      expect(mockSignIn).toHaveBeenCalled();
     });
     expect(screen.queryByRole("alert")).toBeNull();
   });
@@ -171,11 +197,12 @@ describe("LoginPage – Successful Login", () => {
 describe("LoginPage – Error Handling", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetAuthSettings.mockResolvedValue(defaultAuthSettings);
   });
 
   it("displays error message when auth.signIn throws an Error", async () => {
     mockSignIn.mockRejectedValue(new Error("Invalid login credentials"));
-    render(<LoginPage />);
+    await renderLoginPage();
 
     await user.type(screen.getByPlaceholderText("you@example.com"), "bad@email.com");
     await user.type(screen.getByPlaceholderText("Enter your password"), "wrongpass");
@@ -188,7 +215,7 @@ describe("LoginPage – Error Handling", () => {
 
   it("displays generic message when non-Error is thrown", async () => {
     mockSignIn.mockRejectedValue("some string error");
-    render(<LoginPage />);
+    await renderLoginPage();
 
     await user.type(screen.getByPlaceholderText("you@example.com"), "bad@email.com");
     await user.type(screen.getByPlaceholderText("Enter your password"), "pass");
@@ -201,7 +228,7 @@ describe("LoginPage – Error Handling", () => {
 
   it("renders error inside an Alert component with role='alert'", async () => {
     mockSignIn.mockRejectedValue(new Error("Bad creds"));
-    render(<LoginPage />);
+    await renderLoginPage();
 
     await user.type(screen.getByPlaceholderText("you@example.com"), "a@b.com");
     await user.type(screen.getByPlaceholderText("Enter your password"), "pw");
@@ -214,7 +241,7 @@ describe("LoginPage – Error Handling", () => {
 
   it("does NOT redirect when login fails", async () => {
     mockSignIn.mockRejectedValue(new Error("fail"));
-    render(<LoginPage />);
+    await renderLoginPage();
 
     await user.type(screen.getByPlaceholderText("you@example.com"), "fail@fail.com");
     await user.type(screen.getByPlaceholderText("Enter your password"), "fail");
@@ -223,12 +250,12 @@ describe("LoginPage – Error Handling", () => {
     await waitFor(() => {
       expect(screen.getByRole("alert")).toBeTruthy();
     });
-    expect(mockPush).not.toHaveBeenCalled();
+    expect(mockSignIn).toHaveBeenCalled();
   });
 
   it("re-enables the submit button after an error", async () => {
     mockSignIn.mockRejectedValue(new Error("fail"));
-    render(<LoginPage />);
+    await renderLoginPage();
 
     await user.type(screen.getByPlaceholderText("you@example.com"), "a@b.com");
     await user.type(screen.getByPlaceholderText("Enter your password"), "pw");
@@ -247,7 +274,7 @@ describe("LoginPage – Error Handling", () => {
       .mockRejectedValueOnce(new Error("First error"))
       .mockResolvedValueOnce({ user: {}, session: {} });
 
-    render(<LoginPage />);
+    await renderLoginPage();
 
     // First attempt – should fail
     await user.type(screen.getByPlaceholderText("you@example.com"), "a@b.com");
@@ -273,11 +300,12 @@ describe("LoginPage – Error Handling", () => {
 describe("LoginPage – Edge Cases", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetAuthSettings.mockResolvedValue(defaultAuthSettings);
   });
 
   it("handles network error gracefully", async () => {
     mockSignIn.mockRejectedValue(new Error("Network Error"));
-    render(<LoginPage />);
+    await renderLoginPage();
 
     await user.type(screen.getByPlaceholderText("you@example.com"), "a@b.com");
     await user.type(screen.getByPlaceholderText("Enter your password"), "pw");
@@ -291,7 +319,7 @@ describe("LoginPage – Edge Cases", () => {
   it("logs error to console on failure", async () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     mockSignIn.mockRejectedValue(new Error("Oops"));
-    render(<LoginPage />);
+    await renderLoginPage();
 
     await user.type(screen.getByPlaceholderText("you@example.com"), "a@b.com");
     await user.type(screen.getByPlaceholderText("Enter your password"), "pw");

@@ -10,7 +10,7 @@
     "test": "vitest",
     "test:ci": "vitest run --coverage",
     "test:coverage": "vitest run --coverage",
-    "security:audit": "yarn audit --level high"
+    "security:audit": "node scripts/enforce-yarn-audit-threshold.mjs high"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -44,15 +44,15 @@
     "fuse.js": "^7.3.0",
     "lucide-react": "^0.545.0",
     "motion": "^12.34.3",
-    "next": "15.5.4",
-    "nodemailer": "^8.0.1",
+    "next": "15.5.18",
+    "nodemailer": "8.0.5",
     "pdf-parse": "^1.1.1",
     "postcss": "^8.5.10",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-hook-form": "^7.65.0",
     "react-icons": "^5.6.0",
-    "react-pdf": "8.0.2",
+    "react-pdf": "10.4.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
     "zod": "^4.1.12"
@@ -71,7 +71,7 @@
     "@vitejs/plugin-react": "^6.0.1",
     "@vitest/coverage-v8": "4.1.5",
     "eslint": "^9",
-    "eslint-config-next": "15.5.4",
+    "eslint-config-next": "15.5.18",
     "jsdom": "^28.1.0",
     "msw": "^2.12.10",
     "supabase": "^2.51.0",

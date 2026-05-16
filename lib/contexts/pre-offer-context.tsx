@@ -81,7 +81,7 @@ export function PreOfferProvider({ children, userEmail }: PreOfferProviderProps)
     isLoading: isFormConfigLoading,
     isError: isFormConfigError,
   } = usePreOfferForm(userEmail);
-  
+
   const submitMutation = usePreOfferSubmit();
 
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -113,7 +113,7 @@ export function PreOfferProvider({ children, userEmail }: PreOfferProviderProps)
           completedSteps?: string[];
           applicantId?: string;
         } | null = null;
-        
+
         if (localData) {
           try {
             localParsed = JSON.parse(localData);
@@ -133,7 +133,7 @@ export function PreOfferProvider({ children, userEmail }: PreOfferProviderProps)
           const rawKey = tab.tab || `Step ${index + 1}`;
           const key = rawKey.toLowerCase().replace(/\s+/g, "_");
           loadedStepData[key] = {};
-          
+
           tab.sections.forEach((section) => {
             section.fields.forEach((field) => {
               const fieldValue =
