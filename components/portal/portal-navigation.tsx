@@ -2,11 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { useFeatureFlags } from "@/lib/contexts/feature-flags";
 import { useTheme } from "@/lib/contexts/theme-context";
-import { supabase } from "@/lib/supabase";
+import { auth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { useWebsiteBranding } from "@/lib/hooks/useWebsiteBranding";
 
@@ -104,8 +104,6 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
   const { isDark, toggleTheme } = useTheme();
   const pathname = usePathname();
 
-  const router = useRouter();
-
   const filteredNavItems = navItems.filter((item) => {
     if (item.flagKey) {
       return isEnabled(item.flagKey);
@@ -136,8 +134,8 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
 
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut();
-      router.push("/");
+      await auth.signOut();
+      window.location.assign("/login");
     } catch (error) {
       console.error("Error signing out:", error);
     }

@@ -51,7 +51,7 @@ describe("FileUploadField", () => {
   it("renders filename and remove button when value is provided", () => {
     render(<FileUploadField label="Resume" value="/path/to/my_resume.pdf" onChange={mockOnChange} />);
     expect(screen.getByText("my_resume.pdf")).toBeTruthy();
-    
+
     const removeBtn = screen.getByLabelText("Remove Resume");
     fireEvent.click(removeBtn);
     expect(mockOnChange).toHaveBeenCalledWith(null);
@@ -60,12 +60,12 @@ describe("FileUploadField", () => {
   it("calls uploadFile when a file is selected via input", async () => {
     mockUploadFile.mockResolvedValue({ file_url: "/new/file.pdf" });
     render(<FileUploadField label="Resume" onChange={mockOnChange} />);
-    
+
     const input = screen.getByLabelText("Resume", { selector: 'input[type="file"]' }) as HTMLInputElement;
     const file = new File(["test content"], "test.pdf", { type: "application/pdf" });
-    
+
     fireEvent.change(input, { target: { files: [file] } });
-    
+
     await waitFor(() => {
       expect(mockUploadFile).toHaveBeenCalledWith(file);
       expect(mockOnChange).toHaveBeenCalledWith("/new/file.pdf");
@@ -75,19 +75,19 @@ describe("FileUploadField", () => {
   it("handles drag and drop correctly", async () => {
     mockUploadFile.mockResolvedValue({ file_url: "/dropped/file.pdf" });
     render(<FileUploadField label="Resume" onChange={mockOnChange} />);
-    
+
     const dropzone = screen.getByText("Click to upload or drag and drop").parentElement!;
-    
+
     fireEvent.dragOver(dropzone);
-    
+
     const file = new File(["dropped content"], "drop.pdf", { type: "application/pdf" });
-    
+
     fireEvent.drop(dropzone, {
       dataTransfer: {
         files: [file]
       }
     });
-    
+
     await waitFor(() => {
       expect(mockUploadFile).toHaveBeenCalledWith(file);
       expect(mockOnChange).toHaveBeenCalledWith("/dropped/file.pdf");
@@ -97,10 +97,10 @@ describe("FileUploadField", () => {
   it("prevents interactions when disabled", () => {
     render(<FileUploadField label="Resume" disabled={true} />);
     const uploadArea = screen.getByText("Click to upload or drag and drop").parentElement!;
-    
+
     expect(uploadArea).toHaveClass("opacity-50");
     expect(uploadArea).toHaveClass("cursor-not-allowed");
-    
+
     fireEvent.click(uploadArea);
   });
 
@@ -113,66 +113,66 @@ describe("FileUploadField", () => {
 
   describe("Expanded Lifecycle & Visual States", () => {
     it("safely invokes internal file selector on wrapper interaction", () => {
-       render(<FileUploadField label="Asset" />);
-       const clickableZone = screen.getByText("Click to upload or drag and drop").parentElement!;
-       
-       const hiddenInput = screen.getByLabelText("Asset", { selector: 'input[type="file"]' }) as HTMLInputElement;
-       const clickSpy = vi.spyOn(hiddenInput, 'click');
-       
-       fireEvent.click(clickableZone);
-       
-       expect(clickSpy).toHaveBeenCalled();
-       clickSpy.mockRestore();
+      render(<FileUploadField label="Asset" />);
+      const clickableZone = screen.getByText("Click to upload or drag and drop").parentElement!;
+
+      const hiddenInput = screen.getByLabelText("Asset", { selector: 'input[type="file"]' }) as HTMLInputElement;
+      const clickSpy = vi.spyOn(hiddenInput, 'click');
+
+      fireEvent.click(clickableZone);
+
+      expect(clickSpy).toHaveBeenCalled();
+      clickSpy.mockRestore();
     });
 
     it("gracefully manages and registers synchronous reject faults from pipeline failure", async () => {
-       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-       mockUploadFile.mockRejectedValueOnce(new Error("Internal Sinkhole"));
-       
-       render(<FileUploadField label="Fatal" onChange={mockOnChange} />);
-       
-       const input = screen.getByLabelText("Fatal", { selector: 'input[type="file"]' });
-       const file = new File(["bad data"], "fail.pdf", { type: "application/pdf" });
-       
-       fireEvent.change(input, { target: { files: [file] } });
-       
-       await waitFor(() => {
-          expect(consoleSpy).toHaveBeenCalledWith("Upload failed", expect.any(Error));
-       });
-       
-       consoleSpy.mockRestore();
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+      mockUploadFile.mockRejectedValueOnce(new Error("Internal Sinkhole"));
+
+      render(<FileUploadField label="Fatal" onChange={mockOnChange} />);
+
+      const input = screen.getByLabelText("Fatal", { selector: 'input[type="file"]' });
+      const file = new File(["bad data"], "fail.pdf", { type: "application/pdf" });
+
+      fireEvent.change(input, { target: { files: [file] } });
+
+      await waitFor(() => {
+        expect(consoleSpy).toHaveBeenCalledWith("Upload failed", expect.any(Error));
+      });
+
+      consoleSpy.mockRestore();
     });
 
     it("processes cursor exit boundaries efficiently on active drop containers", () => {
-       render(<FileUploadField label="Drop Area" />);
-       const target = screen.getByText("Click to upload or drag and drop").parentElement!;
-       
-       fireEvent.dragOver(target);
-       fireEvent.dragLeave(target);
-       
-       expect(target).toBeTruthy();
+      render(<FileUploadField label="Drop Area" />);
+      const target = screen.getByText("Click to upload or drag and drop").parentElement!;
+
+      fireEvent.dragOver(target);
+      fireEvent.dragLeave(target);
+
+      expect(target).toBeTruthy();
     });
 
     it("distinctly represents successful validation states using native decorators", () => {
-       render(<FileUploadField label="Valid Asset" isApproved={true} />);
-       
-       const approveWrap = screen.getByLabelText("Approved field");
-       expect(approveWrap).toBeTruthy();
+      render(<FileUploadField label="Valid Asset" isApproved={true} />);
+
+      const approveWrap = screen.getByLabelText("Approved field");
+      expect(approveWrap).toBeTruthy();
     });
 
     it("renders comprehensive informative feedback upon manual asset rejection", () => {
-       render(<FileUploadField label="Fix Needed" isRejected={true} hrComment="Wrong orientation" />);
-       
-       const rejectTrigger = screen.getByLabelText("Rejection reason");
-       expect(rejectTrigger).toBeTruthy();
-       
-       const stopSpy = vi.fn();
-       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-       const dummyEvent = { stopPropagation: stopSpy } as any;
-       
-       fireEvent.click(rejectTrigger, dummyEvent);
-       
-       expect(rejectTrigger).toBeTruthy();
+      render(<FileUploadField label="Fix Needed" isRejected={true} hrComment="Wrong orientation" />);
+
+      const rejectTrigger = screen.getByLabelText("Rejection reason");
+      expect(rejectTrigger).toBeTruthy();
+
+      const stopSpy = vi.fn();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const dummyEvent = { stopPropagation: stopSpy } as any;
+
+      fireEvent.click(rejectTrigger, dummyEvent);
+
+      expect(rejectTrigger).toBeTruthy();
     });
   });
 });

@@ -175,99 +175,99 @@ describe("ReviewStep", () => {
 
   describe("Extended Workflow: Automations & Dynamic Summaries", () => {
     it("accurately renders dynamic count summaries for tabular record sets", () => {
-       const tableContext = getMockContext({
-          stepData: {
-             experience: { work_history: [ { company: "A" }, { company: "B" } ] },
-             references: { reference_table: [] }
-          },
-          formConfig: {
-             tabs: [
-                {
-                   tab: "Experience",
-                   sections: [{
-                      fields: [{ fieldname: "work_history", label: "Jobs", fieldtype: "Table" }]
-                   }]
-                },
-                {
-                   tab: "References",
-                   sections: [{
-                      fields: [{ fieldname: "reference_table", label: "Vouches", fieldtype: "Table" }]
-                   }]
-                }
-             ]
-          }
-       });
-       
-       vi.mocked(usePreOffer).mockReturnValue(tableContext);
-       render(<ReviewStep />);
-       
-       expect(screen.getByText("2 Jobs Added")).toBeTruthy();
-       expect(screen.getByText("No Vouches Added")).toBeTruthy();
+      const tableContext = getMockContext({
+        stepData: {
+          experience: { work_history: [{ company: "A" }, { company: "B" }] },
+          references: { reference_table: [] }
+        },
+        formConfig: {
+          tabs: [
+            {
+              tab: "Experience",
+              sections: [{
+                fields: [{ fieldname: "work_history", label: "Jobs", fieldtype: "Table" }]
+              }]
+            },
+            {
+              tab: "References",
+              sections: [{
+                fields: [{ fieldname: "reference_table", label: "Vouches", fieldtype: "Table" }]
+              }]
+            }
+          ]
+        }
+      });
+
+      vi.mocked(usePreOffer).mockReturnValue(tableContext);
+      render(<ReviewStep />);
+
+      expect(screen.getByText("2 Jobs Added")).toBeTruthy();
+      expect(screen.getByText("No Vouches Added")).toBeTruthy();
     });
 
     it("supports robust nested decomposition of child tabular field arrays in expansion", () => {
-       const complexTableContext = getMockContext({
-          completedSteps: new Set(["grid_tab"]),
-          stepData: {
-             grid_tab: {
-                details: [
-                   { title: "Director", salary: "100k", ignoreMe: "skip" }
-                ]
-             }
-          },
-          formConfig: {
-             tabs: [{
-                tab: "Grid Tab",
-                sections: [{
-                   section: "Recursive Set",
-                   fields: [{
-                      fieldname: "details",
-                      label: "Details List",
-                      fieldtype: "Table",
-                      child_fields: [
-                         { fieldname: "title", label: "Position", hidden: 0 },
-                         { fieldname: "salary", label: "Payout", hidden: 0 },
-                         { fieldname: "missingVal", label: "Blank Field", hidden: 0 },
-                         { fieldname: "ignoreMe", label: "Ghost", hidden: 1 }
-                      ]
-                   }]
-                }]
-             }]
+      const complexTableContext = getMockContext({
+        completedSteps: new Set(["grid_tab"]),
+        stepData: {
+          grid_tab: {
+            details: [
+              { title: "Director", salary: "100k", ignoreMe: "skip" }
+            ]
           }
-       });
+        },
+        formConfig: {
+          tabs: [{
+            tab: "Grid Tab",
+            sections: [{
+              section: "Recursive Set",
+              fields: [{
+                fieldname: "details",
+                label: "Details List",
+                fieldtype: "Table",
+                child_fields: [
+                  { fieldname: "title", label: "Position", hidden: 0 },
+                  { fieldname: "salary", label: "Payout", hidden: 0 },
+                  { fieldname: "missingVal", label: "Blank Field", hidden: 0 },
+                  { fieldname: "ignoreMe", label: "Ghost", hidden: 1 }
+                ]
+              }]
+            }]
+          }]
+        }
+      });
 
-       vi.mocked(usePreOffer).mockReturnValue(complexTableContext);
-       render(<ReviewStep />);
+      vi.mocked(usePreOffer).mockReturnValue(complexTableContext);
+      render(<ReviewStep />);
 
-       fireEvent.click(screen.getByRole("button", { name: /Grid Tab/i }));
+      fireEvent.click(screen.getByRole("button", { name: /Grid Tab/i }));
 
-       expect(screen.getByText("Position:")).toBeTruthy();
-       expect(screen.getByText("Director")).toBeTruthy();
-       
-       expect(screen.queryByText("Blank Field:")).toBeNull();
-       expect(screen.queryByText("Ghost:")).toBeNull();
+      expect(screen.getByText("Position:")).toBeTruthy();
+      expect(screen.getByText("Director")).toBeTruthy();
+
+      expect(screen.queryByText("Blank Field:")).toBeNull();
+      expect(screen.queryByText("Ghost:")).toBeNull();
     });
 
     it("displays definitive void state when expansion uncovers an empty target table", () => {
-       const vacantContext = getMockContext({
-          completedSteps: new Set(["empty_container"]),
-          stepData: { empty_container: { missing_list: null } },
-          formConfig: {
-             tabs: [{
-                tab: "Empty Container",
-                sections: [{
-                   fields: [{ fieldname: "missing_list", label: "Sub List", fieldtype: "Table" }]
-                }]
-             }]
-          }
-       });
-       
-       vi.mocked(usePreOffer).mockReturnValue(vacantContext);
-       render(<ReviewStep />);
-       
-       fireEvent.click(screen.getByRole("button", { name: /Empty Container/i }));
-       
-       expect(screen.getByText("No Sub List added")).toBeTruthy();
+      const vacantContext = getMockContext({
+        completedSteps: new Set(["empty_container"]),
+        stepData: { empty_container: { missing_list: null } },
+        formConfig: {
+          tabs: [{
+            tab: "Empty Container",
+            sections: [{
+              fields: [{ fieldname: "missing_list", label: "Sub List", fieldtype: "Table" }]
+            }]
+          }]
+        }
+      });
+
+      vi.mocked(usePreOffer).mockReturnValue(vacantContext);
+      render(<ReviewStep />);
+
+      fireEvent.click(screen.getByRole("button", { name: /Empty Container/i }));
+
+      expect(screen.getByText("No Sub List added")).toBeTruthy();
     });
   });
 });

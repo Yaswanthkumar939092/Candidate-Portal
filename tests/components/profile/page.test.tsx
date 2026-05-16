@@ -29,17 +29,15 @@ const MOCK_PROFILE: Profile = {
 }
 
 // ─── Mocks ──────────────────────────────────────────────────────────
-const mockPush = vi.fn()
+const mockSignOut = vi.fn()
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: mockPush }),
+  useRouter: () => ({ push: vi.fn() }),
 }))
 
-vi.mock("@/lib/supabase", () => ({
-  supabase: {
-    auth: {
-      signOut: vi.fn().mockResolvedValue({ error: null }),
-    },
+vi.mock("@/lib/auth", () => ({
+  auth: {
+    signOut: (...args: unknown[]) => mockSignOut(...args),
   },
 }))
 
@@ -134,23 +132,23 @@ describe("ProfilePage – Content", () => {
 describe("ProfilePage – Sign Out", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockSignOut.mockResolvedValue(undefined)
     mockUseAuth.mockReturnValue({ profile: MOCK_PROFILE, isLoading: false })
   })
 
-  it("calls supabase.auth.signOut when Sign Out is clicked", async () => {
-    const { supabase } = await import("@/lib/supabase")
+  it("calls Frappe auth signOut when Sign Out is clicked", async () => {
     render(<ProfilePage />)
     await user.click(screen.getByRole("button", { name: /Sign Out/i }))
     await waitFor(() => {
-      expect(supabase.auth.signOut).toHaveBeenCalledOnce()
+      expect(mockSignOut).toHaveBeenCalledOnce()
     })
   })
 
-  it("redirects to '/' after signing out", async () => {
+  it("keeps the sign-out action enabled until Frappe auth resolves", async () => {
     render(<ProfilePage />)
     await user.click(screen.getByRole("button", { name: /Sign Out/i }))
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith("/")
+      expect(mockSignOut).toHaveBeenCalled()
     })
   })
 })

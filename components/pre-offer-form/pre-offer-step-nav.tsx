@@ -45,7 +45,7 @@ export function PreOfferStepNav({ className }: PreOfferStepNavProps) {
         <p className="mt-0.5 text-xs opacity-80">
           Provide all required credentials.
         </p>
-        
+
         <div className="mt-3">
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-primary-foreground/20">
             <div
