@@ -50,7 +50,7 @@ export function FeatureFlagProvider({ children, initialFlags = {} }: FeatureFlag
     if (!remoteFlags) return baseFlags
 
     const remoteBooleans = Object.fromEntries(
-      Object.entries(remoteFlags).map(([k, v]) => [k, v === 1])
+      Object.entries(remoteFlags).map(([k, v]) => [k, v === 1 || v === true])
     )
     return { ...baseFlags, ...remoteBooleans }
   }, [initialFlags, remoteFlags])
