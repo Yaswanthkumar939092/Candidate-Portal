@@ -73,19 +73,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
 }
 
 async function hydrateProfile(user: FrappeAuthUser): Promise<Profile> {
-  try {
-    const profile = await getProfile(user.id)
-    if (profile) return profile
-
-    if (user.email && user.email !== user.id) {
-      const emailProfile = await getProfile(user.email)
-      if (emailProfile) return emailProfile
+  if (isUuid(user.id)) {
+    try {
+      const profile = await getProfile(user.id)
+      if (profile) return profile
+    } catch (error) {
+      console.error("Unexpected error hydrating profile:", error)
     }
-  } catch (error) {
-    console.error("Unexpected error hydrating profile:", error)
   }
 
   return profileFromFrappeUser(user)
+}
+
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
 }
 
 export function useAuth(): AuthContextType {
