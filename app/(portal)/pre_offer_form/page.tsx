@@ -13,13 +13,13 @@ import { Progress } from '@/components/ui/progress'
 import { ReviewStep } from '@/components/pre-offer-form/review-step'
 
 function PreOfferContent() {
-  const { 
-    currentStep, 
-    completedSteps, 
-    isLoading, 
-    formConfig, 
-    status, 
-    isError 
+  const {
+    currentStep,
+    completedSteps,
+    isLoading,
+    formConfig,
+    status,
+    isError
   } = usePreOffer()
   const router = useRouter()
 
@@ -84,11 +84,11 @@ function PreOfferContent() {
   if (currentStep < tabs.length) {
     const currentTab = tabs[currentStep]
     stepTitle = currentTab?.tab || `Details Step ${currentStep + 1}`
-    
-    const stepKey = currentTab 
+
+    const stepKey = currentTab
       ? (currentTab.tab || `Step ${currentStep + 1}`).toLowerCase().replace(/\s+/g, '_')
       : ''
-      
+
     StepComponent = (
       <PreOfferFormStep
         key={currentStep}
@@ -128,7 +128,7 @@ function PreOfferContent() {
       {/* Main Area */}
       <main className="flex-1">
         <div className="mx-auto max-w-4xl px-4 py-8 pt-24 md:px-6 lg:pt-8">
-          
+
           {/* Success Banner */}
           {isSubmitted && (
             <div className="mb-8 flex items-start gap-4 rounded-2xl border border-green-200 bg-green-50 p-5 text-green-900 dark:border-green-900/50 dark:bg-green-950/20 dark:text-green-300 shadow-sm">
@@ -141,7 +141,7 @@ function PreOfferContent() {
                   Thank you for filling out your details. The HR team will review them shortly. Your information is now locked in read-only mode.
                 </p>
                 <div className="mt-4">
-                  <Link 
+                  <Link
                     href="/action-center"
                     className="inline-flex items-center gap-1 text-sm font-bold underline underline-offset-4 hover:opacity-80"
                   >
