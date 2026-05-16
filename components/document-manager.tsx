@@ -135,7 +135,7 @@ export function DocumentManager({
       case 'active':
         return <CheckCircle2 className="w-4 h-4 text-green-600" />;
       case 'processing':
-        return <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />;
+        return <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />;
       case 'archived':
         return <Archive className="w-4 h-4 text-gray-500" />;
       default:
@@ -321,7 +321,7 @@ export function DocumentManager({
 
         <Dialog open={showUploadModal} onOpenChange={setShowUploadModal}>
           <DialogTrigger asChild>
-            <Button className="bg-[#1993e5] hover:bg-[#1680cc]">
+            <Button>
               <Plus className="w-4 h-4 mr-2" />
               Upload Document
             </Button>
@@ -535,7 +535,6 @@ export function DocumentManager({
             {!searchQuery && selectedCategory === 'all' && selectedStatus === 'all' && (
               <Button
                 onClick={() => setShowUploadModal(true)}
-                className="bg-[#1993e5] hover:bg-[#1680cc]"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Upload Document

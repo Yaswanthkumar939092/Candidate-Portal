@@ -22,6 +22,8 @@ import {
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { useOptionalOnboarding } from "@/lib/contexts/onboarding-context";
+import { Combobox } from "@/components/ui/combobox";
+import { useDebounce } from "@/lib/hooks/useDebounce";
 
 export interface FormField {
   fieldname: string;
@@ -340,6 +342,8 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
     component: ({ field, value, onChange, error, disabled, className }) => {
       const [options, setOptions] = React.useState<string[]>([]);
       const [loading, setLoading] = React.useState(false);
+      const [search, setSearch] = React.useState("");
+      const debouncedSearch = useDebounce(search, 300);
 
       React.useEffect(() => {
         if (!field.options) return;
@@ -347,10 +351,17 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
         const fetchOptions = async () => {
           try {
             setLoading(true);
+            
+            const filters: Record<string, any> = {};
+            if (debouncedSearch) {
+              filters.name = ["like", `%${debouncedSearch}%`];
+            }
+
             const res = await FrappeAPI.getresourceDocumentData(doctype, {
               fields: ["name"],
-              page: 1, // ✅ from component
-              limit: 100000, // ✅ from component
+              filters,
+              page: 1, 
+              limit: 20, 
             });
             const data = (res?.data ?? []) as Array<{ name?: unknown }>;
             const optionsList = data
@@ -366,7 +377,7 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
         };
 
         fetchOptions();
-      }, [field.options]);
+      }, [field.options, debouncedSearch]);
 
       let displayValue = "";
       if (value) {
@@ -378,11 +389,23 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
         }
       }
 
-      const allOptions = React.useMemo(() => {
-        if (displayValue && !options.includes(displayValue)) {
-          return [displayValue, ...options];
+      const comboboxOptions = React.useMemo(() => {
+        const finalOptions: Array<{ value: string; label: string }> = [];
+        const seen = new Set<string>();
+
+        if (displayValue) {
+          finalOptions.push({ value: displayValue, label: displayValue });
+          seen.add(displayValue);
         }
-        return options;
+
+        options.forEach((opt) => {
+          if (!seen.has(opt)) {
+            finalOptions.push({ value: opt, label: opt });
+            seen.add(opt);
+          }
+        });
+
+        return finalOptions;
       }, [options, displayValue]);
 
       return (
@@ -395,27 +418,18 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
           </Label>
 
           <div className="relative">
-            <Select
-              disabled={disabled || !!field.read_only || loading}
-              value={displayValue || undefined}
+            <Combobox
+              disabled={disabled || !!field.read_only}
+              value={displayValue}
               onValueChange={(val) => onChange(val)}
-            >
-              <SelectTrigger
-                className={cn("w-full bg-muted", getValidationClass(field))}
-              >
-                <SelectValue
-                  placeholder={loading ? "Loading..." : `Select ${field.label}`}
-                />
-              </SelectTrigger>
-
-              <SelectContent>
-                {allOptions.map((opt) => (
-                  <SelectItem key={opt} value={opt}>
-                    {opt}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              options={comboboxOptions}
+              placeholder={loading ? "Loading..." : `Select ${field.label}`}
+              searchPlaceholder={`Search ${field.label}...`}
+              loading={loading}
+              searchValue={search}
+              onSearchValueChange={setSearch}
+              className={getValidationClass(field)}
+            />
             <FieldStatusTooltip field={field} rightOffset="right-8" />
           </div>
 
@@ -445,6 +459,10 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
         return options;
       }, [options, displayValue]);
 
+      const comboboxOptions = React.useMemo(() => {
+        return allOptions.map(opt => ({ value: opt, label: opt }));
+      }, [allOptions]);
+
       return (
         <div className={cn("space-y-1.5", className)}>
           <Label className="text-sm font-medium text-foreground">
@@ -454,24 +472,15 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
             )}
           </Label>
           <div className="relative">
-            <Select
+            <Combobox
               disabled={disabled || !!field.read_only}
-              value={displayValue || undefined}
+              value={displayValue}
               onValueChange={(val) => onChange(val)}
-            >
-              <SelectTrigger
-                className={cn("w-full bg-muted", getValidationClass(field))}
-              >
-                <SelectValue placeholder={`Select ${field.label}`} />
-              </SelectTrigger>
-              <SelectContent>
-                {allOptions.map((opt) => (
-                  <SelectItem key={opt} value={opt}>
-                    {opt}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              options={comboboxOptions}
+              placeholder={`Select ${field.label}`}
+              searchPlaceholder={`Search ${field.label}...`}
+              className={getValidationClass(field)}
+            />
             <FieldStatusTooltip field={field} rightOffset="right-8" />
           </div>
           {error && <p className="text-xs text-destructive">{error}</p>}

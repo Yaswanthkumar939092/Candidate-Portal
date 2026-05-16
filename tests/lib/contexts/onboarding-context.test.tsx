@@ -235,10 +235,11 @@ describe('OnboardingContext', () => {
     })
 
     it('reads step from localStorage if available', async () => {
-      localStorage.setItem('onboarding_draft', JSON.stringify({
+      localStorage.setItem('onboarding_draft:test@example.com', JSON.stringify({
         stepData: {},
         currentStep: 1,
         completedSteps: [],
+        applicantId: "test-applicant",
       }))
 
       render(<OnboardingProvider><ConsumerComponent /></OnboardingProvider>)
@@ -430,7 +431,7 @@ describe('OnboardingContext', () => {
     })
 
     it('clears localStorage after successful submit', async () => {
-      localStorage.setItem('onboarding_draft', JSON.stringify({ stepData: {}, currentStep: 0 }))
+      localStorage.setItem('onboarding_draft:test@example.com', JSON.stringify({ stepData: {}, currentStep: 0, applicantId: "test-applicant" }))
       mockMutateAsync.mockResolvedValue(undefined)
       mockInvalidateQueries.mockResolvedValue(undefined)
 
@@ -439,7 +440,7 @@ describe('OnboardingContext', () => {
 
       await user.click(screen.getByText('Submit'))
       await waitFor(() => {
-        expect(localStorage.getItem('onboarding_draft')).toBeNull()
+        expect(localStorage.getItem('onboarding_draft:test@example.com')).toBeNull()
       })
     })
   })
