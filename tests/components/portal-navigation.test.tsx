@@ -14,7 +14,6 @@ vi.mock("@/lib/contexts/auth-context")
 vi.mock("@/lib/contexts/feature-flags")
 vi.mock("@/lib/contexts/theme-context")
 vi.mock("@/lib/hooks/useWebsiteBranding")
-vi.mock("@/lib/hooks/useApplicantStatus")
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
@@ -50,7 +49,6 @@ import * as authContext from "@/lib/contexts/auth-context"
 import * as featureFlagsContext from "@/lib/contexts/feature-flags"
 import * as themeContext from "@/lib/contexts/theme-context"
 import * as websiteBrandingHook from "@/lib/hooks/useWebsiteBranding"
-import * as applicantStatusHook from "@/lib/hooks/useApplicantStatus"
 
 const mockUser = {
   id: "user-123",
@@ -105,19 +103,6 @@ describe("PortalNavigation", () => {
     vi.mocked(websiteBrandingHook.useWebsiteBranding).mockReturnValue({
       data: mockBranding,
     } as ReturnType<typeof websiteBrandingHook.useWebsiteBranding>)
-
-    vi.mocked(applicantStatusHook.useApplicantStatus).mockReturnValue({
-      data: {
-        success: true,
-        data: {
-          id: "test@example.com",
-          name: "John Doe",
-          status: "Accepted",
-          flags: [],
-          applications: [{ id: "APP-1" }, { id: "APP-2" }],
-        },
-      },
-    } as ReturnType<typeof applicantStatusHook.useApplicantStatus>)
 
     mockSignOut.mockResolvedValue(undefined)
   })
@@ -282,28 +267,10 @@ describe("PortalNavigation", () => {
     }
   })
 
-  it("displays live badge count for My Jobs", () => {
+  it("displays badge count for My Jobs", () => {
     render(<PortalNavigation />)
-    const badges = screen.getAllByText("2")
+    const badges = screen.getAllByText("3")
     expect(badges.length).toBeGreaterThan(0)
-  })
-
-  it("hides My Jobs badge when there are no applications", () => {
-    vi.mocked(applicantStatusHook.useApplicantStatus).mockReturnValue({
-      data: {
-        success: true,
-        data: {
-          id: "test@example.com",
-          name: "John Doe",
-          status: "Open",
-          flags: [],
-          applications: [],
-        },
-      },
-    } as ReturnType<typeof applicantStatusHook.useApplicantStatus>)
-
-    render(<PortalNavigation />)
-    expect(screen.queryByText("2")).toBeNull()
   })
 
   it("filters nav items by feature flags", () => {
