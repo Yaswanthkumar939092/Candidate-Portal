@@ -191,7 +191,7 @@ export const auth = {
       { email, password },
     );
     const user = mapUser(data.user);
-    return { user, session: user ? { user } : null };
+    return { ...data, user, session: data.status === "success" && user ? { user } : null };
   },
 
   requestOtp: async ({ identifier, purpose = "Login", identifierType = "Email" }: RequestOtpData) => {
