@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Eye, EyeOff, CheckCircle2, ArrowRight } from "lucide-react";
-import { FcGoogle } from "react-icons/fc";
+import { Eye, EyeOff, CheckCircle2, ArrowRight, MailCheck } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -23,9 +22,23 @@ interface AuthFormProps {
   type: "login" | "register";
   onSubmit: (data: AuthFormData) => void;
   isLoading?: boolean;
+  loginStep?: "credentials" | "otp";
+  otpEmail?: string;
+  otpValue?: string;
+  onOtpChange?: (value: string) => void;
+  onBackToCredentials?: () => void;
 }
 
-export function AuthForm({ type, onSubmit, isLoading = false }: AuthFormProps) {
+export function AuthForm({
+  type,
+  onSubmit,
+  isLoading = false,
+  loginStep = "credentials",
+  otpEmail,
+  otpValue = "",
+  onOtpChange,
+  onBackToCredentials,
+}: AuthFormProps) {
   const [formData, setFormData] = useState<AuthFormData>({
     email: "",
     password: "",
@@ -138,10 +151,12 @@ export function AuthForm({ type, onSubmit, isLoading = false }: AuthFormProps) {
         <div className="w-full max-w-[440px] space-y-8">
           <div>
             <h2 className="text-[32px] font-[700] text-[#0F172A] mb-2 tracking-tight">
-              {type === "login" ? "Welcome back! 👋" : "Create your account"}
+              {type === "login" && loginStep === "otp" ? "Check your email" : type === "login" ? "Welcome back! 👋" : "Create your account"}
             </h2>
             <p className="text-[16px] font-[400] text-[#64748B]">
-              {type === "login"
+              {type === "login" && loginStep === "otp"
+                ? `Enter the OTP sent to ${otpEmail || "your email"}`
+                : type === "login"
                 ? "Please enter your credentials to access your account"
                 : "Start your journey with us today"
               }
@@ -149,7 +164,28 @@ export function AuthForm({ type, onSubmit, isLoading = false }: AuthFormProps) {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            {type === "register" && (
+            {type === "login" && loginStep === "otp" ? (
+              <div className="space-y-5">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                  <MailCheck className="h-6 w-6 text-primary" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="login-otp" className="text-[14px] font-[500] text-[#344054]">
+                    Email OTP
+                  </Label>
+                  <Input
+                    id="login-otp"
+                    value={otpValue}
+                    onChange={(e) => onOtpChange?.(e.target.value)}
+                    className="h-11 rounded-[8px] border-[#E2E8F0] focus:border-[#0F172A] focus:ring-[#0F172A]"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    placeholder="Enter OTP"
+                    required
+                  />
+                </div>
+              </div>
+            ) : type === "register" && (
               <div className="space-y-2">
                 <Label htmlFor="fullName" className="text-[14px] font-[500] text-[#344054]">
                   Full name
@@ -173,56 +209,60 @@ export function AuthForm({ type, onSubmit, isLoading = false }: AuthFormProps) {
               </div>
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-[14px] font-[500] text-[#344054]">
-                Email address
-              </Label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
+            {loginStep === "credentials" && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-[14px] font-[500] text-[#344054]">
+                    Email address
+                  </Label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => handleInputChange("email", e.target.value)}
+                      className="h-11 pl-10 rounded-[8px] border-[#E2E8F0] focus:border-[#0F172A] focus:ring-[#0F172A]"
+                      placeholder="you@example.com"
+                      required
+                    />
+                  </div>
                 </div>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange("email", e.target.value)}
-                  className="h-11 pl-10 rounded-[8px] border-[#E2E8F0] focus:border-[#0F172A] focus:ring-[#0F172A]"
-                  placeholder="you@example.com"
-                  required
-                />
-              </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-[14px] font-[500] text-[#344054]">
-                Password
-              </Label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-[14px] font-[500] text-[#344054]">
+                    Password
+                  </Label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                    </div>
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      value={formData.password}
+                      onChange={(e) => handleInputChange("password", e.target.value)}
+                      className="h-11 pl-10 pr-10 rounded-[8px] border-[#E2E8F0] focus:border-[#0F172A] focus:ring-[#0F172A]"
+                      placeholder={type === "login" ? "Enter your password" : "Create a strong password"}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#0F172A]"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                 </div>
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={formData.password}
-                  onChange={(e) => handleInputChange("password", e.target.value)}
-                  className="h-11 pl-10 pr-10 rounded-[8px] border-[#E2E8F0] focus:border-[#0F172A] focus:ring-[#0F172A]"
-                  placeholder={type === "login" ? "Enter your password" : "Create a strong password"}
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#0F172A]"
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-            </div>
+              </>
+            )}
 
             {type === "register" && (
               <div className="space-y-2">
@@ -255,7 +295,7 @@ export function AuthForm({ type, onSubmit, isLoading = false }: AuthFormProps) {
               </div>
             )}
 
-            {type === "login" ? (
+            {type === "login" && loginStep === "credentials" ? (
               <div className="flex items-center justify-between text-sm mt-6">
                 <div className="flex items-center space-x-2">
                   <Checkbox id="remember" className="border-gray-300 text-[#0F172A] focus:ring-[#0F172A] rounded-[4px]" />
@@ -267,51 +307,48 @@ export function AuthForm({ type, onSubmit, isLoading = false }: AuthFormProps) {
                   Forgot password?
                 </Link>
               </div>
-            ) : (
+            ) : type === "register" ? (
               <div className="flex items-start space-x-2 mt-4">
                 <Checkbox id="terms" className="border-gray-300 text-[#0F172A] focus:ring-[#0F172A] rounded-[4px] mt-1" required />
                 <label htmlFor="terms" className="text-sm text-[#64748B] cursor-pointer">
                   I agree to the <Link href="#" className="font-semibold text-[#2563EB] hover:text-[#1D4ED8]">Terms and Conditions</Link> and <Link href="#" className="font-semibold text-[#2563EB] hover:text-[#1D4ED8]">Privacy Policy</Link>
                 </label>
               </div>
-            )}
+            ) : null}
 
             <Button
               type="submit"
               disabled={isLoading}
               className="w-full h-12 bg-[#0F172A] hover:bg-[#1E293B] text-white font-medium rounded-[8px] transition-colors duration-200 mt-6 flex items-center justify-center gap-2"
             >
-              {isLoading ? "Please wait..." : (type === "login" ? "Sign in to your account" : "Create your account")}
+              {isLoading ? "Please wait..." : (type === "login" && loginStep === "otp" ? "Verify and continue" : type === "login" ? "Sign in to your account" : "Create your account")}
               {!isLoading && <ArrowRight className="w-4 h-4" />}
             </Button>
+
+            {type === "login" && loginStep === "otp" && onBackToCredentials && (
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={onBackToCredentials}
+                disabled={isLoading}
+              >
+                Use a different email
+              </Button>
+            )}
           </form>
 
-          <div className="relative mt-8">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-[#E2E8F0]" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white text-[#94A3B8]">
-                or {type === "login" ? "continue" : "sign up"} with
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-6 gap-4 flex w-full">
-            <Button variant="outline" type="button" className="flex-1 h-11 border-[#E2E8F0] text-[#475569] font-medium hover:bg-gray-50 bg-white gap-2">
-              <FcGoogle className="size-5" /> Continue with Google
-            </Button>
-          </div>
-
-          <p className="text-center text-sm text-[#64748B] mt-8">
-            {type === "login" ? "Don't have an account? " : "Already have an account? "}
-            <Link
-              href={type === "login" ? "/register" : "/login"}
-              className="font-semibold text-[#2563EB] hover:text-[#1D4ED8] transition-colors"
-            >
-              {type === "login" ? "Create account" : "Sign in"}
-            </Link>
-          </p>
+          {loginStep === "credentials" && (
+            <p className="text-center text-sm text-[#64748B] mt-8">
+              {type === "login" ? "Don't have an account? " : "Already have an account? "}
+              <Link
+                href={type === "login" ? "/register" : "/login"}
+                className="font-semibold text-[#2563EB] hover:text-[#1D4ED8] transition-colors"
+              >
+                {type === "login" ? "Create account" : "Sign in"}
+              </Link>
+            </p>
+          )}
         </div>
       </div>
     </div>
