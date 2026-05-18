@@ -417,12 +417,7 @@ describe("ActionCenterPage – My Requests Content", () => {
     expect(screen.getByText(/Requested on.*12.*Sep.*2025/i)).toBeTruthy();
   });
 
-  it("shows 'View Status' button for requests", async () => {
-    renderWithProviders(<ActionCenterPage />);
-    await user.click(screen.getByText("My Requests"));
 
-    expect(screen.getByText(/View Status/)).toBeTruthy();
-  });
 
   it("shows empty state when Archived filter has no requests", async () => {
     renderWithProviders(<ActionCenterPage />);

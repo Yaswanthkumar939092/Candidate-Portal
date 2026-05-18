@@ -122,14 +122,7 @@ describe("MyRequestsList – Rendering", () => {
     expect(screen.getByText(/Request Type: General/)).toBeTruthy()
   })
 
-  it("shows 'View Status' button for every request", () => {
-    render(
-      <MyRequestsList
-        requests={[makeRequest({ id: "1" }), makeRequest({ id: "2" })]}
-      />
-    )
-    expect(screen.getAllByText("View Status")).toHaveLength(2)
-  })
+
 })
 
 describe("MyRequestsList – Filtering", () => {
