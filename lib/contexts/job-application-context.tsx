@@ -12,6 +12,7 @@ interface JobAppContextType {
   tabs: any[];
   allFields: any[]; // ✅ expose karo
   isLoading: boolean;
+  draftName: string | null; // ✅ Expose draftName
 }
 
 const JobAppContext = createContext<JobAppContextType | undefined>(undefined);
@@ -38,6 +39,11 @@ export function JobAppProvider({
   const tabs = useMemo(() => {
     return transformFieldsToTabs(allFields);
   }, [allFields]);
+
+  // ✅ Expose draftName if returned by the layout/fields API
+  const draftName = useMemo(() => {
+    return data?.draft_name || data?.name || null;
+  }, [data]);
 
   const setStepData = useCallback((step: string, data: Record<string, unknown>) => {
     setStepDataState((prev) => ({
@@ -80,6 +86,7 @@ export function JobAppProvider({
         tabs,
         allFields,
         isLoading,
+        draftName,
       }}
     >
       {children}
