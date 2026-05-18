@@ -165,7 +165,7 @@ describe("JobMatchCard", () => {
 
     expect(screen.getByTestId("icon-building")).toBeTruthy()
     expect(screen.getByTestId("icon-location")).toBeTruthy()
-    expect(screen.getByTestId("icon-clock")).toBeTruthy()
+    expect(screen.getByTestId("icon-briefcase")).toBeTruthy()
     expect(screen.getByTestId("icon-rupee")).toBeTruthy()
   })
 

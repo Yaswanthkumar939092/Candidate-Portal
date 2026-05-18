@@ -80,7 +80,7 @@ export function MyRequestsList({
   const [isOpen, setIsOpen] = useState(false)
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
   const BASE_URL = process.env.NEXT_PUBLIC_FRAPPE_URL
- 
+
   const filteredRequests =
     filter && filter !== "all"
       ? requests.filter((req) => {
@@ -141,20 +141,20 @@ export function MyRequestsList({
                               Request Type: {req.requestType || "General"}
                             </span>
                             <span className="text-xs text-[#667085] mt-1.5 font-medium dark:text-gray-400 leading-none ">
-                            Description: {req.description || "No description provided"}
+                              Description: {req.description || "No description provided"}
                             </span>
                             <div>
-                            {req.attachment && (<span className="text-xs text-[#667085] mt-1.5 font-medium dark:text-gray-400 leading-none truncate">
-                            Document:                             <button
-                            onClick={() => {
-                            setPdfUrl(`${req.attachment}`)// base url lagana padega
-                            setIsOpen(true)
-                            }}
-                            className="text-blue-600 underline hover:text-blue-800 transition-colors"
-                            >
-                            View
-                            </button>
-                            </span>)}
+                              {req.attachment && (<span className="text-xs text-[#667085] mt-1.5 font-medium dark:text-gray-400 leading-none truncate">
+                                Document:                             <button
+                                  onClick={() => {
+                                    setPdfUrl(`${req.attachment}`)// base url lagana padega
+                                    setIsOpen(true)
+                                  }}
+                                  className="text-blue-600 underline hover:text-blue-800 transition-colors"
+                                >
+                                  View
+                                </button>
+                              </span>)}
 
                             </div>
 
@@ -177,19 +177,6 @@ export function MyRequestsList({
                     </CardContent>
 
                     <div className="mx-5 my-4.5 h-px bg-slate-100 dark:bg-slate-800" />
-
-                    <CardFooter className="px-5 pb-5 pt-0 justify-end">
-                      <button
-                      onClick={() => {
-                              if (req.redirectUrl) {
-                                router.push(`/action-center/tasks/${req.redirectUrl}`)
-                              }
-                            }}
-                      className="inline-flex items-center gap-1.5 text-[14px] font-bold text-[#2E90FA] hover:text-[#2E90FA]/80 transition-colors">
-                        View Status <ArrowRight className="h-3.5 w-3.5 mt-px" />
-                      </button>
-
-                    </CardFooter>
                   </Card>
                 )
               })}
@@ -197,28 +184,28 @@ export function MyRequestsList({
           </CardContent>
         </Card>
       ))}
-{isOpen && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-    <div className="bg-white rounded-lg w-[80%] h-[80%] p-8 relative">
-      
-      <button
-        onClick={() => setIsOpen(false)}
-        className="absolute top-1 right-3 text-gray-500"
-      >
-        ✕
-      </button>
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg w-[80%] h-[80%] p-8 relative">
 
-      {pdfUrl ? (
-        <iframe
-         src={`${BASE_URL}${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0`}
-         className="w-full h-full bg-white"
-         />
-      ):(
-        <p className="text-center text-gray-500 mt-10">No document available</p>
+            <button
+              onClick={() => setIsOpen(false)}
+              className="absolute top-1 right-3 text-gray-500"
+            >
+              ✕
+            </button>
+
+            {pdfUrl ? (
+              <iframe
+                src={`${BASE_URL}${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0`}
+                className="w-full h-full bg-white"
+              />
+            ) : (
+              <p className="text-center text-gray-500 mt-10">No document available</p>
+            )}
+          </div>
+        </div>
       )}
-    </div>
-  </div>
-)}
     </div>
   )
 }
