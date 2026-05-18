@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 // lib/utils/transformJobFields.ts
 
 export function transformFieldsToTabs(fields: any[]) {

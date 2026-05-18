@@ -64,7 +64,7 @@ describe("SmartCareerMatch", () => {
             text: "react javascript typescript nodejs skills",
           }),
       })
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
     ) as any
   })
 

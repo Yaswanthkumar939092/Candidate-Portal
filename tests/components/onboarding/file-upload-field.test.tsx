@@ -180,7 +180,7 @@ describe("FileUploadField", () => {
 
       // Verify the click isolation (Line 144 stopPropagation)
       const stopSpy = vi.fn();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const dummyEvent = { stopPropagation: stopSpy } as any;
 
       // Direct trigger implementation simulation
