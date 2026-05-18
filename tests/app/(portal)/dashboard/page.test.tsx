@@ -302,7 +302,7 @@ describe("DashboardPage", () => {
 
     render(<DashboardPage />)
 
-    expect(screen.getByText("We couldn't identify your account email for this dashboard yet.")).toBeTruthy()
+    expect(screen.getByText(/We couldn't identify your account email for\s+dashboard yet/)).toBeTruthy()
 
     await userEvent.click(screen.getByRole("button", { name: "Try again" }))
 

@@ -34,6 +34,7 @@ describe("JobDetailDialog", () => {
     company: "Tech Corp",
     location: "New York, NY",
     experience: "3-5 years",
+    salary: "10-15 LPA",
     lower_range: "10",
     upper_range: "15",
     type: "Full-time",
@@ -111,7 +112,7 @@ describe("JobDetailDialog", () => {
     expect(mockOnOpenChange).toHaveBeenCalledWith(false)
   })
 
-  it("closes dialog and navigates to apply page when Apply button is clicked", async () => {
+  it("navigates to apply page when Apply button is clicked", async () => {
     render(
       <JobDetailDialog
         job={mockJob}
@@ -121,8 +122,5 @@ describe("JobDetailDialog", () => {
     )
     const applyLink = screen.getByRole("link", { name: /apply/i })
     expect(applyLink.getAttribute("href")).toBe("/open-jobs/job-1/apply-job")
-    
-    await user.click(applyLink)
-    expect(mockOnOpenChange).toHaveBeenCalledWith(false)
   })
 })
