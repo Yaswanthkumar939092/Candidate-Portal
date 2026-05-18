@@ -6,7 +6,6 @@ import {
   Bookmark,
   BookmarkCheck,
   Building2,
-  Clock,
   IndianRupee,
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
@@ -61,33 +60,39 @@ export function JobMatchCard({
           <h3 className="text-base font-semibold text-foreground">
             {job.title}
           </h3>
-          <Badge
+        { job.matchPercentage &&(  <Badge
             variant="secondary"
             className="shrink-0 border-transparent bg-primary/10 text-primary"
           >
             {job.matchPercentage}%
           </Badge>
+          )}
         </div>
 
         {/* Info tags */}
         <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+        {job.company && (<span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
             <Building2 className="h-3 w-3" />
             {job.company}
           </span>
-          <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+        )}
+          {job.location && ( <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
             <MapPin className="h-3 w-3" />
             {job.location}
           </span>
-          <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
-            <Clock className="h-3 w-3" />
+          )}
+          {job.experience && ( <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+            <Briefcase className="h-3 w-3" />
             {job.experience}
           </span>
-          <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+          )}
+         {job.salary && ( <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
             <IndianRupee className="h-3 w-3" />
             {job.salary}
           </span>
+            )}
         </div>
+       
 
 {/* Skills */}
 {Array.isArray(job.skills) && job.skills.length > 0 && (
