@@ -1,7 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { FrappeAPI } from "../frappe-api";
-
-
 export const ActionCenterDataService = {
   getActionCenterData: async (userEmail: string) => {
     return FrappeAPI.get(
