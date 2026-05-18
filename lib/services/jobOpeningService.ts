@@ -49,8 +49,8 @@ export const draftJobApplicantService = {
     return response;
   },
 
-  // ✅ CREATE — POST new draft
-  createDraftJobApplicant: async (payload: any): Promise<any> => {
+  // ✅ SAVE APPLICATION — POST draft or final application
+  saveApplication: async (payload: any): Promise<any> => {
     let formData = payload.form_data;
     if (typeof formData === "string") {
       try {
@@ -60,11 +60,17 @@ export const draftJobApplicantService = {
       }
     }
 
-    const response = await FrappeAPI.post("recruitment.api.draft_application.save_draft", {
+    const postData: Record<string, any> = {
       job_applicant_email: payload.job_applicant_email,
       job_opening: payload.job_opening,
       form_data: formData,
-    });
+    };
+
+    if (payload.status) {
+      postData.status = payload.status;
+    }
+
+    const response = await FrappeAPI.post("recruitment.api.draft_application.save_application", postData);
     return response;
   },
 

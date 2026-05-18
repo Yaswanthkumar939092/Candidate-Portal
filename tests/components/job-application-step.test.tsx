@@ -195,8 +195,7 @@ describe("JobApplicationStep", () => {
       })
 
     const mockMutation = { mutate: vi.fn(), isPending: false }
-      ; (jobOpeningHooks.useCreateJobApplicant as any).mockReturnValue(mockMutation)
-      ; (jobOpeningHooks.useCreateDraftJobApplicant as any).mockReturnValue(mockMutation)
+      ; (jobOpeningHooks.useSaveApplication as any).mockReturnValue(mockMutation)
       ; (jobOpeningHooks.useUpdateDraftJobApplicant as any).mockReturnValue(mockMutation)
       ; (jobOpeningHooks.useDeleteDraftJobApplicant as any).mockReturnValue(mockMutation)
   })
@@ -542,12 +541,8 @@ describe("JobApplicationStep Coverage Enhancements", () => {
       })
 
        
-      ; (jobOpeningHooks.useCreateJobApplicant as any).mockReturnValue({
+      ; (jobOpeningHooks.useSaveApplication as any).mockReturnValue({
         mutate: mockMutate,
-        isPending: false,
-      })
-      ; (jobOpeningHooks.useCreateDraftJobApplicant as any).mockReturnValue({
-        mutate: vi.fn(),
         isPending: false,
       })
       ; (jobOpeningHooks.useUpdateDraftJobApplicant as any).mockReturnValue({

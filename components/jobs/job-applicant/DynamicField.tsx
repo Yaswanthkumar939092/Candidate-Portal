@@ -12,9 +12,8 @@ import { DynamicFieldRenderer } from "@/components/ui/field-renderer";
 import { cn } from "@/lib/utils";
 import { useJobApp } from "@/lib/contexts/job-application-context";
 import {
-  useCreateDraftJobApplicant,
+  useSaveApplication,
   useUpdateDraftJobApplicant,
-  useCreateJobApplicant,
   useDeleteDraftJobApplicant,
 } from "@/lib/hooks/useJobOpening";
 import { toast } from "sonner";
@@ -139,9 +138,8 @@ export function JobApplicationStep({
   className,
 }: JobApplicationStepProps) {
   const { stepData, setStepData, initializeAllStepsFromDraft } = useJobApp();
-  const { mutate, isPending } = useCreateJobApplicant();
-  const { mutate: draftMutate, isPending: isDraftPending } =
-    useCreateDraftJobApplicant();
+  const { mutate: saveApplicationMutate, isPending } = useSaveApplication();
+  const isDraftPending = isPending;
   const { mutate: draftUpdateMutate, isPending: isDraftUpdatePending } =
     useUpdateDraftJobApplicant();
   const { mutate: deleteDraftMutate } = useDeleteDraftJobApplicant();
@@ -268,8 +266,12 @@ export function JobApplicationStep({
     setStepData(stepKey, data);
 
     if (isLastStep) {
-      const payload = buildFinalPayload(data);
-      mutate(payload as Parameters<typeof mutate>[0], {
+      const draftPayload = buildDraftPayload(data);
+      const submitPayload = {
+        ...draftPayload,
+        status: "Open",
+      };
+      saveApplicationMutate(submitPayload as any, {
         onSuccess: () => {
           toast.success("Application submitted successfully!");
           // ✅ Delete draft after successful submission
@@ -309,7 +311,7 @@ export function JobApplicationStep({
       );
     } else {
       // CREATE new draft
-      draftMutate(draftPayload as any, {
+      saveApplicationMutate(draftPayload as any, {
         onSuccess: (responseData) => {
           const newName = responseData?.name ?? responseData?.data?.name ?? null;
           setDraftName(newName);

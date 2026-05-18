@@ -6,7 +6,7 @@ import {
   useCreateJobApplicant, 
   useGetDraftJobApplicant,
   useGetAllDrafts,
-  useCreateDraftJobApplicant,
+  useSaveApplication,
   useUpdateDraftJobApplicant,
   useDeleteDraftJobApplicant,
   useJobApplicationForm
@@ -26,7 +26,7 @@ vi.mock("@/lib/services/jobOpeningService", () => ({
   draftJobApplicantService: { 
     getDraftJobApplicant: vi.fn(),
     getAllDrafts: vi.fn(),
-    createDraftJobApplicant: vi.fn(),
+    saveApplication: vi.fn(),
     updateDraftJobApplicant: vi.fn(),
     deleteDraftJobApplicant: vi.fn(),
   },
@@ -124,14 +124,14 @@ describe("useJobOpening Hooks", () => {
       expect(consoleErrorSpy).toHaveBeenCalled();
     });
 
-    it("useCreateDraftJobApplicant callbacks work", async () => {
-      (draftJobApplicantService.createDraftJobApplicant as any).mockResolvedValue({ id: "1" });
-      const { result } = renderHook(() => useCreateDraftJobApplicant(), { wrapper });
+    it("useSaveApplication callbacks work", async () => {
+      (draftJobApplicantService.saveApplication as any).mockResolvedValue({ id: "1" });
+      const { result } = renderHook(() => useSaveApplication(), { wrapper });
       result.current.mutate({} as any);
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
       expect(consoleLogSpy).toHaveBeenCalled();
 
-      (draftJobApplicantService.createDraftJobApplicant as any).mockRejectedValue(new Error("err"));
+      (draftJobApplicantService.saveApplication as any).mockRejectedValue(new Error("err"));
       result.current.mutate({} as any);
       await waitFor(() => expect(result.current.isError).toBe(true));
       expect(consoleErrorSpy).toHaveBeenCalled();
