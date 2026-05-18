@@ -171,7 +171,7 @@ export default function DashboardPage() {
   if (!user?.email) {
     return (
       <DashboardErrorState
-        message="We couldn't identify your account email for this dashboard yet."
+        message="We couldn't identify your account email for  dashboard yet."
         onRetry={() => void refetch()}
       />
     );
