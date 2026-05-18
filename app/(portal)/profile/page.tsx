@@ -1,24 +1,22 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { Loader2, LogOut, UserCircle2 } from "lucide-react"
 import { useAuth } from "@/lib/contexts/auth-context"
-import { supabase } from "@/lib/supabase"
+import { auth } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
 import { ProfileHeader } from "@/components/profile/profile-header"
 import { ProfileDetails } from "@/components/profile/profile-details"
 
 export default function ProfilePage() {
     const { profile, isLoading } = useAuth()
-    const router = useRouter()
     const [isSigningOut, setIsSigningOut] = useState(false)
 
     const handleSignOut = async () => {
         setIsSigningOut(true)
         try {
-            await supabase.auth.signOut()
-            router.push("/")
+            await auth.signOut()
+            window.location.assign("/login")
         } catch {
             setIsSigningOut(false)
         }

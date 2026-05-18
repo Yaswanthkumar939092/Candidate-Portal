@@ -2,15 +2,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 
-// Supabase must be mocked with a factory — the module throws at import if env vars are missing
-vi.mock("@/lib/supabase", () => ({
-  supabase: {
-    auth: {
-      signOut: vi.fn().mockResolvedValue({}),
-      getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
-      onAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),
-    },
-    from: vi.fn(),
+const mockSignOut = vi.fn()
+
+vi.mock("@/lib/auth", () => ({
+  auth: {
+    signOut: (...args: unknown[]) => mockSignOut(...args),
   },
 }))
 
@@ -18,6 +14,7 @@ vi.mock("@/lib/contexts/auth-context")
 vi.mock("@/lib/contexts/feature-flags")
 vi.mock("@/lib/contexts/theme-context")
 vi.mock("@/lib/hooks/useWebsiteBranding")
+vi.mock("@/lib/hooks/useApplicantStatus")
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
@@ -53,7 +50,7 @@ import * as authContext from "@/lib/contexts/auth-context"
 import * as featureFlagsContext from "@/lib/contexts/feature-flags"
 import * as themeContext from "@/lib/contexts/theme-context"
 import * as websiteBrandingHook from "@/lib/hooks/useWebsiteBranding"
-import { supabase } from "@/lib/supabase"
+import * as applicantStatusHook from "@/lib/hooks/useApplicantStatus"
 
 const mockUser = {
   id: "user-123",
@@ -109,9 +106,20 @@ describe("PortalNavigation", () => {
       data: mockBranding,
     } as ReturnType<typeof websiteBrandingHook.useWebsiteBranding>)
 
-    vi.mocked(supabase.auth.signOut).mockResolvedValue(
-      {} as Awaited<ReturnType<typeof supabase.auth.signOut>>
-    )
+    vi.mocked(applicantStatusHook.useApplicantStatus).mockReturnValue({
+      data: {
+        success: true,
+        data: {
+          id: "test@example.com",
+          name: "John Doe",
+          status: "Accepted",
+          flags: [],
+          applications: [{ id: "APP-1" }, { id: "APP-2" }],
+        },
+      },
+    } as ReturnType<typeof applicantStatusHook.useApplicantStatus>)
+
+    mockSignOut.mockResolvedValue(undefined)
   })
 
   it("renders navigation header", () => {
@@ -270,14 +278,32 @@ describe("PortalNavigation", () => {
     if (trigger) {
       await user.click(trigger)
       await user.click(screen.getByText("Sign Out"))
-      expect(supabase.auth.signOut).toHaveBeenCalled()
+      expect(mockSignOut).toHaveBeenCalled()
     }
   })
 
-  it("displays badge count for My Jobs", () => {
+  it("displays live badge count for My Jobs", () => {
     render(<PortalNavigation />)
-    const badges = screen.getAllByText("3")
+    const badges = screen.getAllByText("2")
     expect(badges.length).toBeGreaterThan(0)
+  })
+
+  it("hides My Jobs badge when there are no applications", () => {
+    vi.mocked(applicantStatusHook.useApplicantStatus).mockReturnValue({
+      data: {
+        success: true,
+        data: {
+          id: "test@example.com",
+          name: "John Doe",
+          status: "Open",
+          flags: [],
+          applications: [],
+        },
+      },
+    } as ReturnType<typeof applicantStatusHook.useApplicantStatus>)
+
+    render(<PortalNavigation />)
+    expect(screen.queryByText("2")).toBeNull()
   })
 
   it("filters nav items by feature flags", () => {

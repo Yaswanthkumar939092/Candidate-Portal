@@ -161,11 +161,11 @@ describe("DocumentUpload", () => {
     if (dropzone) {
       // 1. Drag Over (Line 217)
       fireEvent.dragOver(dropzone)
-      expect(dropzone.className).toContain("bg-blue-50")
+      expect(dropzone.className).toContain("bg-primary/5")
 
       // 2. Drag Leave (Line 223)
       fireEvent.dragLeave(dropzone)
-      expect(dropzone.className).not.toContain("bg-blue-50")
+      expect(dropzone.className).not.toContain("bg-primary/5")
 
       // 3. Drop (Line 204)
       const f = new File(["x"], "drop.pdf", { type: "application/pdf" })
