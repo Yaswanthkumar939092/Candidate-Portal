@@ -149,7 +149,7 @@ export default function JobApplicationPage({
   // ── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex h-[calc(100vh-64px)]  overflow-hidden">
+    <div className="flex h-[calc(100vh-64px)] justify-center  overflow-hidden">
       {/* Sidebar */}
       <JobApplicationStepNav
         currentStep={currentStep}
