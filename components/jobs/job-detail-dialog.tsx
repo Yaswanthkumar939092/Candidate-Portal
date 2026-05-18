@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/rules-of-hooks */
 "use client";
 
 import { MapPin, Building2, Clock, IndianRupee, ChevronRight } from "lucide-react";
@@ -12,7 +11,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 interface JobDetailDialogProps {
@@ -50,7 +48,6 @@ export function JobDetailDialog({
   onOpenChange,
 }: JobDetailDialogProps) {
   if (!job) return null;
-  const router = useRouter();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -97,10 +94,6 @@ export function JobDetailDialog({
           <Button size="sm" asChild className="hover:cursor-pointer gap-1 ">
             <Link
               href={`/open-jobs/${job.id}/apply-job`}
-              onClick={() => {
-                sessionStorage.setItem(`resume_reload_pending_${job.id}`, "true");
-                onOpenChange(false);
-              }}
             >
               Apply
               <ChevronRight className="h-4 w-4" />
