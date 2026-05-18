@@ -28,6 +28,17 @@ vi.mock("next/link", () => ({
   ),
 }));
 
+vi.mock("@/lib/hooks/useCandidateBranding", () => ({
+  useCandidateBranding: () => ({
+    data: {
+      title_prefix: "Physics Wallah",
+      app_logo: "/brand.png",
+    },
+    isLoading: false,
+  }),
+}));
+
+
 // ─── Helpers ────────────────────────────────────────────────────────
 const user = userEvent.setup();
 
@@ -114,11 +125,11 @@ describe("AuthForm – Login UI", () => {
     expect(screen.queryByLabelText("Confirm password")).toBeNull();
   });
 
-  it("renders 'Continue with Google' button", () => {
+  it("does not render the Google button in login mode", () => {
     render(<AuthForm {...defaultLoginProps} />);
     expect(
-      screen.getByRole("button", { name: /Continue with Google/i })
-    ).toBeTruthy();
+      screen.queryByRole("button", { name: /Continue with Google/i })
+    ).toBeNull();
   });
 
   it("renders link to register page ('Create account')", () => {
@@ -128,14 +139,14 @@ describe("AuthForm – Login UI", () => {
     expect(link.closest("a")?.getAttribute("href")).toBe("/register");
   });
 
-  it("renders the 'or continue with' divider text", () => {
+  it("does not render the social login divider in login mode", () => {
     render(<AuthForm {...defaultLoginProps} />);
-    expect(screen.getByText(/or continue with/i)).toBeTruthy();
+    expect(screen.queryByText(/or continue with/i)).toBeNull();
   });
 
   it("renders the brand logo on desktop pane", () => {
     render(<AuthForm {...defaultLoginProps} />);
-    const logo = screen.getByAltText("PW Logo");
+    const logo = screen.getByAltText("Logo");
     expect(logo).toBeTruthy();
   });
 
@@ -193,8 +204,7 @@ describe("AuthForm – Login Logic", () => {
 
     // Click the toggle button (there's only one in login mode)
     const toggleButtons = screen.getAllByRole("button").filter(
-      (btn) => !btn.textContent?.includes("Sign in") &&
-               !btn.textContent?.includes("Google")
+      (btn) => !btn.textContent?.includes("Sign in")
     );
     // First toggle is for password
     await user.click(toggleButtons[0]);
@@ -346,9 +356,9 @@ describe("AuthForm – Register UI", () => {
     expect(screen.getByText(/Already have an account\?/)).toBeTruthy();
   });
 
-  it("renders 'or sign up with' divider text", () => {
+  it("does not render the social login divider in register mode", () => {
     render(<AuthForm {...defaultRegisterProps} />);
-    expect(screen.getByText(/or sign up with/i)).toBeTruthy();
+    expect(screen.queryByText(/or sign up with/i)).toBeNull();
   });
 
   it("renders left-pane heading for register", () => {
@@ -412,12 +422,11 @@ describe("AuthForm – Register Logic", () => {
     const pwInput = screen.getByPlaceholderText("Create a strong password");
     expect(pwInput.getAttribute("type")).toBe("password");
 
-    // Get toggle buttons (exclude submit and Google buttons)
+    // Get toggle buttons and exclude submit.
     const allButtons = screen.getAllByRole("button");
     const toggleButtons = allButtons.filter(
       (btn) =>
         btn.getAttribute("type") === "button" &&
-        !btn.textContent?.includes("Google") &&
         !btn.textContent?.includes("Create")
     );
 
@@ -436,7 +445,6 @@ describe("AuthForm – Register Logic", () => {
     const toggleButtons = allButtons.filter(
       (btn) =>
         btn.getAttribute("type") === "button" &&
-        !btn.textContent?.includes("Google") &&
         !btn.textContent?.includes("Create")
     );
 
