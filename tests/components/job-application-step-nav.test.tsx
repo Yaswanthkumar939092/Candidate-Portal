@@ -283,4 +283,20 @@ describe("JobApplicationStepNav", () => {
     // Should have converted "Personal Information" to "personal_information"
     expect(screen.getByTestId("icon-check")).toBeTruthy()
   })
+
+  it("displays 0% progress when there are no tabs", () => {
+    ;(jobAppContext.useJobApp as unknown as { mockReturnValue: (val: unknown) => void }).mockReturnValue({
+      tabs: [],
+    })
+
+    render(
+      <JobApplicationStepNav
+        currentStep={0}
+        completedSteps={new Set()}
+        onStepChange={mockOnStepChange}
+      />
+    )
+
+    expect(screen.getByText("0% complete")).toBeTruthy()
+  })
 })
