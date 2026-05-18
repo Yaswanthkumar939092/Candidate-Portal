@@ -185,7 +185,9 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
 
         setStepDataState(loadedStepData);
 
-        if (localParsed?.currentStep !== undefined) {
+        const isApplicantMatch = localParsed?.applicantId === formConfig.applicantId;
+
+        if (localParsed?.currentStep !== undefined && isApplicantMatch) {
           setCurrentStep(localParsed.currentStep);
         }
 
@@ -201,7 +203,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
             t.tab.toLowerCase().replace(/\s+/g, "_")
           );
           setCompletedSteps(new Set(allStepKeys));
-        } else if (localParsed?.completedSteps) {
+        } else if (localParsed?.completedSteps && isApplicantMatch) {
           setCompletedSteps(new Set(localParsed.completedSteps));
         }
       } catch (error) {
