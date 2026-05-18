@@ -3,11 +3,11 @@
 import React, { useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { Loader2 } from "lucide-react";
-import "react-pdf/dist/esm/Page/AnnotationLayer.css";
-import "react-pdf/dist/esm/Page/TextLayer.css";
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
 
 // Configure the worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 interface PdfViewerProps {
   pdfUrl: string;
@@ -22,7 +22,7 @@ export default function PdfViewer({ pdfUrl }: PdfViewerProps) {
       onLoadSuccess={({ numPages }) => setNumPages(numPages)}
       loading={
         <div className="flex flex-col items-center gap-3 py-10">
-          <Loader2 className="h-6 w-6 animate-spin text-[#1993e5]" />
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
           <p className="text-sm text-[#64748b]">Loading Document...</p>
         </div>
       }

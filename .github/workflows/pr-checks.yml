@@ -97,6 +97,7 @@ jobs:
             NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
             NEXT_PUBLIC_SITE_URL=${{ env.NEXT_PUBLIC_SITE_URL }}
             NEXT_PUBLIC_FRAPPE_URL=${{ env.NEXT_PUBLIC_FRAPPE_URL }}
+            FRAPPE_BASE_URL=${{ env.FRAPPE_BASE_URL }}
 
       - name: Scan Docker image for critical vulnerabilities
         uses: aquasecurity/trivy-action@v0.36.0

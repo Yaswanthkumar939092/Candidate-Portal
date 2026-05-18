@@ -96,6 +96,7 @@ export function FileUploadField({
 
   const handleRemove = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (disabled || isPending) return;
     onChange?.(null);
   };
 
@@ -186,16 +187,19 @@ export function FileUploadField({
             <span className="flex-1 truncate text-sm text-foreground">
               {fileName}
             </span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
-              onClick={handleRemove}
-              aria-label={`Remove ${label}`}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            {!(disabled || isPending) && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
+                onClick={handleRemove}
+                aria-label={`Remove ${label}`}
+                disabled={disabled || isPending}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         ) : (
           <div

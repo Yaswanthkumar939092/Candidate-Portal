@@ -2,13 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { useFeatureFlags } from "@/lib/contexts/feature-flags";
 import { useTheme } from "@/lib/contexts/theme-context";
-import { supabase } from "@/lib/supabase";
+import { auth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { useWebsiteBranding } from "@/lib/hooks/useWebsiteBranding";
+import { useApplicantStatus } from "@/lib/hooks/useApplicantStatus";
 
 
 import { Button } from "@/components/ui/button";
@@ -50,7 +51,6 @@ interface NavItem {
   label: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
-  badgeCount?: number;
   flagKey?: string;
 }
 
@@ -64,7 +64,7 @@ interface PortalNavigationProps {
 const navItems: NavItem[] = [
   { label: "Home", href: "/dashboard", icon: Home },
   { label: "Open Jobs", href: "/open-jobs", icon: Briefcase, flagKey: "open_jobs" },
-  { label: "My Jobs", href: "/my-jobs", icon: ClipboardList, badgeCount: 3, flagKey: "my_jobs" },
+  { label: "My Jobs", href: "/my-jobs", icon: ClipboardList, flagKey: "my_jobs" },
   { label: "Action Center", href: "/action-center", icon: ClipboardList, flagKey: "action_center" },
 ];
 
@@ -103,8 +103,11 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
   const { data: branding } = useWebsiteBranding();
   const { isDark, toggleTheme } = useTheme();
   const pathname = usePathname();
-
-  const router = useRouter();
+  const userEmail = user?.email || user?.user_metadata?.email || "";
+  const { data: applicantStatus } = useApplicantStatus(userEmail);
+  const myJobsCount = applicantStatus?.success
+    ? applicantStatus.data?.applications?.length ?? 0
+    : 0;
 
   const filteredNavItems = navItems.filter((item) => {
     if (item.flagKey) {
@@ -134,10 +137,15 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
     return pathname.startsWith(href);
   };
 
+  const getBadgeCount = (item: NavItem) => {
+    if (item.href === "/my-jobs") return myJobsCount;
+    return 0;
+  };
+
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut();
-      router.push("/");
+      await auth.signOut();
+      window.location.assign("/login");
     } catch (error) {
       console.error("Error signing out:", error);
     }
@@ -169,6 +177,7 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
                 <div className="flex flex-col gap-2 py-6">
                   {filteredNavItems.map((item) => {
                     const active = isActive(item.href);
+                    const badgeCount = getBadgeCount(item);
                     return (
                       <Link
                         key={item.href}
@@ -182,7 +191,7 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
                       >
                         <item.icon className="h-5 w-5" />
                         <span className="flex-1">{item.label}</span>
-                        {item.badgeCount && item.badgeCount > 0 && (
+                        {badgeCount > 0 && (
                           <Badge
                             className={cn(
                               "flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-semibold border-none",
@@ -191,7 +200,7 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
                                 : "bg-muted text-muted-foreground"
                             )}
                           >
-                            {item.badgeCount}
+                            {badgeCount}
                           </Badge>
                         )}
                       </Link>
@@ -223,6 +232,7 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
         <nav className="hidden md:flex items-center gap-1">
           {filteredNavItems.map((item) => {
             const active = isActive(item.href);
+            const badgeCount = getBadgeCount(item);
 
             return (
               <Link
@@ -237,7 +247,7 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
               >
                 <span>{item.label}</span>
                 {/* Badge count for My Jobs */}
-                {item.badgeCount && item.badgeCount > 0 && (
+                {badgeCount > 0 && (
                   <Badge
                     className={cn(
                       "ml-0.5 flex items-center justify-center rounded-full px-1.5 py-1 text-[10px] font-semibold border-none",
@@ -246,7 +256,7 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
                         : "bg-muted text-muted-foreground"
                     )}
                   >
-                    {item.badgeCount}
+                    {badgeCount}
                   </Badge>
                 )}
               </Link>

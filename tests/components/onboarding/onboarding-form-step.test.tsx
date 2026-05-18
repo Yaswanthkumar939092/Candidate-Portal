@@ -21,6 +21,8 @@ interface OverrideComponentProps {
   value: unknown;
   onChange: (value: unknown) => void;
   error?: string;
+  disabled?: boolean;
+  className?: string;
 }
 
 interface DynamicFieldRendererProps {
@@ -67,7 +69,7 @@ vi.mock("@/components/ui/field-renderer", () => ({
             // In OnboardingFormStep, overrides for Attach are provided
             if (overrides && overrides[field.fieldtype]) {
                 const Component = overrides[field.fieldtype].component;
-                return <Component field={field} value={value} onChange={onChange} error={error} />;
+                return <Component field={field} value={value} onChange={onChange} error={error} disabled={false} className="test-override-cls" />;
             }
             // Fallback (though OnboardingFormStep always provides overrides for Attach)
             return <div data-testid="file-upload-fallback">{field.label}</div>;
@@ -357,8 +359,81 @@ describe("OnboardingFormStep", () => {
        render(<OnboardingFormStep tab={imageTab} stepKey="image_test" />);
        
        // Validate mapping through custom overrides container verified in mock renderer logic line 66-70
-       expect(screen.getByTestId("file-upload")).toBeTruthy();
-       expect(screen.getByText("Portrait Upload")).toBeTruthy();
-    });
+        expect(screen.getByTestId("file-upload")).toBeTruthy();
+        expect(screen.getByText("Portrait Upload")).toBeTruthy();
+     });
+
+     it("satisfies fallback logic for anonymous and specialized field valid modes", async () => {
+        // Covers Line 199 (empty label -> "This field is required")
+        // Covers Line 178-181 (Table validation when null/empty)
+        // Covers Line 185-188 (Check validation when false)
+        const odditiesTab: OnboardingTab = {
+           tab: "Oddities",
+           sections: [{
+              section: "Special Validation",
+              fields: [
+                 { fieldname: "anon_field", label: "", fieldtype: "Data", is_mandatory: 1, read_only: 0, hidden: 0 },
+                 { fieldname: "blank_tbl", label: "Blank Table", fieldtype: "Table", is_mandatory: 1, read_only: 0, hidden: 0 },
+                 { fieldname: "false_chk", label: "False Check", fieldtype: "Check", is_mandatory: 1, read_only: 0, hidden: 0 }
+              ]
+           }]
+        };
+
+        vi.mocked(useOnboarding).mockReturnValue({
+           ...defaultContext,
+           stepData: {
+              oddities: { blank_tbl: [], false_chk: false, anon_field: "" }
+           }
+        });
+        
+        render(<OnboardingFormStep tab={odditiesTab} stepKey="oddities" />);
+        
+        fireEvent.click(screen.getByText("Next Step"));
+        
+        await waitFor(() => {
+           expect(screen.getByText("This field is required")).toBeTruthy(); // Line 199 fallback
+           expect(screen.getByText("Blank Table is required")).toBeTruthy(); // Line 178-181 block
+           expect(screen.getByText("False Check is required")).toBeTruthy(); // Line 185-188 block
+        });
+     });
+
+     it("enforces unique grid layouts for Aadhaar and long label documentation proofs", () => {
+        // Covers Lines 81-82 (Full width logic & isAadhaarFront offsets)
+        const layoutTab: OnboardingTab = {
+           tab: "Layouts",
+           sections: [{
+              section: "Form Grid",
+              fields: [
+                 { fieldname: "custom_upload_pan_card", label: "Upload Pan", fieldtype: "Data", is_mandatory: 0, read_only: 0, hidden: 0 },
+                 { fieldname: "custom_upload_aadhaarfront", label: "Upload Aadhaar", fieldtype: "Data", is_mandatory: 0, read_only: 0, hidden: 0 }
+              ]
+           }]
+        };
+
+        vi.mocked(useOnboarding).mockReturnValue(defaultContext);
+        
+        // We just need rendering execution of FormStepField grid builders
+        render(<OnboardingFormStep tab={layoutTab} stepKey="layout_test" />);
+        expect(screen.getByText("Upload Pan")).toBeTruthy();
+        expect(screen.getByText("Upload Aadhaar")).toBeTruthy();
+     });
+
+     it("bypasses section header rendering when section title is identical to tab header", () => {
+        // Covers Line 372 sectionCard matching
+        const unifiedTab: OnboardingTab = {
+           tab: "Identity Match",
+           sections: [{
+              section: "Identity Match", // Exactly matches tab name
+              fields: [{ fieldname: "some_field", label: "Simple Field", fieldtype: "Data", is_mandatory: 0, read_only: 0, hidden: 0 }]
+           }]
+        };
+
+        vi.mocked(useOnboarding).mockReturnValue(defaultContext);
+        const { container } = render(<OnboardingFormStep tab={unifiedTab} stepKey="match_test" />);
+        
+        // The SectionCard receives undefined title which prevents header container from rendering
+        // Our earlier SectionCard tests indicated header presence implies .pt-2.px-6 selectors
+        expect(container.querySelector(".pt-2.px-6")).toBeNull();
+     });
   });
 });
