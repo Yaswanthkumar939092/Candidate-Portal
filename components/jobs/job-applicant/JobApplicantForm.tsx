@@ -34,26 +34,7 @@ export default function JobApplicationPage({
   });
 
   // ── Apply draft data ONCE across ALL steps on initial load ──────────────
-  useEffect(() => {
-    if (jobID) {
-      draftAppliedRef.current = false;
-
-      const pendingKeys = [
-        `resume_reload_pending_${jobID}`,
-        `apply_reload_pending_${jobID}`,
-      ];
-
-      const shouldReload = pendingKeys.some((key) =>
-        sessionStorage.getItem(key)
-      );
-
-      if (shouldReload) {
-        pendingKeys.forEach((key) => sessionStorage.removeItem(key));
-
-        setTimeout(() => { window.location.reload(); }, 10);
-      }
-    }
-  }, [jobID]);
+  
 
   useEffect(() => {
     if (!draftData?.success || !draftData?.data) return;
