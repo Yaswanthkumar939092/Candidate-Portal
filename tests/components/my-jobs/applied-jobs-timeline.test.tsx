@@ -1,10 +1,17 @@
 import { describe, it, expect, vi } from "vitest"
 import { render, screen } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { AppliedJobsTimeline } from "@/components/my-jobs/applied-jobs-timeline"
 import React from "react"
 
 vi.mock("@/components/my-jobs/view-application-modal", () => ({
-  ViewApplicationModal: () => <div data-testid="view-application-modal" />,
+  ViewApplicationModal: ({ isOpen, onClose, jobApplicantName }: any) => (
+    isOpen ? (
+      <div data-testid="view-application-modal" data-applicant={jobApplicantName}>
+        <button data-testid="close-modal" onClick={onClose}>Close</button>
+      </div>
+    ) : null
+  ),
 }))
 
 vi.mock("lucide-react", () => ({
@@ -75,6 +82,25 @@ describe("AppliedJobsTimeline", () => {
     it("renders View Application button", () => {
       renderTimeline()
       expect(screen.getByText("View Application")).toBeTruthy()
+    })
+
+    it("opens and closes the View Application modal", async () => {
+      const user = userEvent.setup()
+      renderTimeline()
+      
+      expect(screen.queryByTestId("view-application-modal")).toBeNull()
+      
+      const viewButton = screen.getByRole("button", { name: "View Application" })
+      await user.click(viewButton)
+      
+      const modal = screen.getByTestId("view-application-modal")
+      expect(modal).toBeTruthy()
+      expect(modal.getAttribute("data-applicant")).toBe("app-1")
+      
+      const closeButton = screen.getByTestId("close-modal")
+      await user.click(closeButton)
+      
+      expect(screen.queryByTestId("view-application-modal")).toBeNull()
     })
   })
 
