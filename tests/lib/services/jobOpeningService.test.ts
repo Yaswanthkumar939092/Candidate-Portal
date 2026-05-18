@@ -64,6 +64,25 @@ describe("JobOpening Services", () => {
       });
     });
 
+    it("createDraftJobApplicant calls FrappeAPI.post with save_draft", async () => {
+      const mockRes = { name: "D1", success: true };
+      (FrappeAPI.post as any).mockResolvedValue(mockRes);
+
+      const payload = {
+        job_applicant_email: "test@test.com",
+        job_opening: "JO1",
+        form_data: JSON.stringify({ age: 30 })
+      };
+
+      const result = await draftJobApplicantService.createDraftJobApplicant(payload);
+      expect(result).toEqual(mockRes);
+      expect(FrappeAPI.post).toHaveBeenCalledWith("recruitment.api.draft_application.save_draft", {
+        job_applicant_email: "test@test.com",
+        job_opening: "JO1",
+        form_data: { age: 30 }
+      });
+    });
+
     it("updateDraftJobApplicant calls FrappeAPI.getresourceDocumentData with PUT", async () => {
       const mockRes = { data: { success: true } };
       (FrappeAPI.getresourceDocumentData as any).mockResolvedValue(mockRes);
