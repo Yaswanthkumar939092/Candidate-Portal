@@ -1,4 +1,4 @@
- 
+
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -456,7 +456,7 @@ export function JobApplicationStep({
         <div className="flex items-center gap-2">
           <Button
             type="button"
-            variant="secondary"
+            variant="outline"
             onClick={onDraftSave}
             disabled={isDraftPending || isDraftUpdatePending}
           >
