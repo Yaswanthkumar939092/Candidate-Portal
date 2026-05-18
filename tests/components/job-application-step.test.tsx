@@ -716,6 +716,7 @@ describe("JobApplicationStep Coverage Enhancements", () => {
     // 1. Check successful buildFinalPayload properties in payload argument
     const payloadSent = mockMutate.mock.calls[0][0];
     expect(payloadSent.job_opening).toBe("job-submission-id");
+    expect(payloadSent.job_title).toBe("job-submission-id");
     // ensure undefined/empty mapping from previous step "emptyField" is handled:
     expect(payloadSent.emptyField).toBeFalsy();
 

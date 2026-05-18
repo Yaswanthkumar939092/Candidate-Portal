@@ -49,7 +49,7 @@ const mockInvalidateQueries = vi.fn()
 
 const sampleFormConfig = {
   applicantId: "test-applicant",
-  status: 'Pending',
+  status: 'Draft',
   tabs: [
     {
       tab: 'Personal Info',
@@ -171,23 +171,24 @@ describe('OnboardingContext', () => {
       })
     })
 
-    it('status is draft when formConfig status is Pending', async () => {
+    it('status is draft when formConfig status is Draft', async () => {
+      setupMocks({ ...sampleFormConfig, status: 'Draft' })
       render(<OnboardingProvider><ConsumerComponent /></OnboardingProvider>)
       await waitFor(() => {
         expect(screen.getByTestId('status').textContent).toBe('draft')
       })
     })
 
-    it('status is submitted when formConfig status is not Pending', async () => {
-      setupMocks({ ...sampleFormConfig, status: 'Submitted' })
+    it('status is submitted when formConfig status is Pending', async () => {
+      setupMocks({ ...sampleFormConfig, status: 'Pending' })
       render(<OnboardingProvider><ConsumerComponent /></OnboardingProvider>)
       await waitFor(() => {
         expect(screen.getByTestId('status').textContent).toBe('submitted')
       })
     })
 
-    it('marks all steps complete when status is not Pending', async () => {
-      setupMocks({ ...sampleFormConfig, status: 'Submitted' })
+    it('marks all steps complete when status is Pending', async () => {
+      setupMocks({ ...sampleFormConfig, status: 'Pending' })
       render(<OnboardingProvider><ConsumerComponent /></OnboardingProvider>)
       await waitFor(() => {
         expect(Number(screen.getByTestId('completed').textContent)).toBeGreaterThan(0)
