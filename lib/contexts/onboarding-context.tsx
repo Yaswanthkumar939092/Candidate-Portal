@@ -189,10 +189,13 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
           setCurrentStep(localParsed.currentStep);
         }
 
-        const isPending = formConfig.status === "Pending";
-        setStatus(isPending ? "draft" : "submitted");
+        const isSubmitted =
+          formConfig.status === "Pending" ||
+          formConfig.status === "Submitted" ||
+          formConfig.status === "Completed";
+        setStatus(isSubmitted ? "submitted" : "draft");
 
-        if (!isPending) {
+        if (isSubmitted) {
           // If submitted, mark all steps as completed
           const allStepKeys = formConfig.tabs.map((t) =>
             t.tab.toLowerCase().replace(/\s+/g, "_")

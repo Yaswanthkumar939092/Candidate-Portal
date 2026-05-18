@@ -240,6 +240,7 @@ export function JobApplicationStep({
     return {
       ...final,
       job_opening: jobID,
+      job_title: jobID,
       email_id: userEmail || null,
     };
   };
@@ -256,6 +257,7 @@ export function JobApplicationStep({
       status: "Pending",
       form_data: JSON.stringify(formData),
       job_opening: jobID,
+      job_title: jobID,
     };
   };
 
