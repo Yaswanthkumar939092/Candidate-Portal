@@ -252,7 +252,7 @@ export function JobApplicationStep({
 
     return {
       job_applicant_email: userEmail,
-      status: "Pending",
+      status: "Draft",
       form_data: JSON.stringify(formData),
       job_opening: jobID,
       job_title: jobID,
@@ -264,6 +264,8 @@ export function JobApplicationStep({
   const onSubmit = handleSubmit((data: Record<string, any>) => {
     // Optionally update context, but the form data itself is already centralized
     setStepData(stepKey, data);
+
+    if (!validateRequiredFields()) return;
 
     if (isLastStep) {
       const draftPayload = buildDraftPayload(data);
@@ -286,7 +288,6 @@ export function JobApplicationStep({
       return;
     }
 
-    if (!validateRequiredFields()) return;
     onNext();
   });
 
