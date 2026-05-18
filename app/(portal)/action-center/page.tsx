@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
 import { useState } from "react"
-import { Lightbulb, Plus, X } from "lucide-react"
+import { Plus,} from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 import {
@@ -160,7 +159,6 @@ function mapApiItemsToRequests(items: any[]): Request[] {
 export default function ActionCenterPage() {
   const [activeTab, setActiveTab] = useState<"tasks" | "requests">("tasks")
   const [filter, setFilter] = useState("pending")
-  const [infoBannerVisible, setInfoBannerVisible] = useState(true)
   const [requestDialogOpen, setRequestDialogOpen] = useState(false)
 
   const { user } = useAuth()
@@ -281,31 +279,6 @@ export default function ActionCenterPage() {
           )}
         </button>
       </div>
-
-      {/* Info banner */}
-      {infoBannerVisible && (
-        <div className="relative flex items-center gap-3 rounded-xl border border-blue-100 bg-[#F4FAFF] p-4 text-sm dark:border-blue-800 dark:bg-blue-900/20">
-          <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#2E90FA] self-start mt-0.5">
-            <Lightbulb className="size-4 text-white" strokeWidth={3} />
-          </div>
-          <div className="flex-1 flex flex-col gap-1">
-            <span className="font-bold text-[#101828] dark:text-gray-100">
-              Did you know?
-            </span>
-            <span className="text-[#344054] dark:text-gray-300 block sm:inline">
-              Tasks such as pre-offer submission and offer acceptance can be
-              completed directly from this dashboard.
-            </span>
-          </div>
-          <button
-            onClick={() => setInfoBannerVisible(false)}
-            className="shrink-0 text-blue-400 hover:text-blue-600 transition-colors self-start mt-0.5"
-            aria-label="Dismiss"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-      )}
 
       {/* Filter pills and Raise Request Button row */}
       <div className="flex flex-row items-center justify-between gap-4">

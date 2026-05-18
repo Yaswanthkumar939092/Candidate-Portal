@@ -48,7 +48,7 @@ function getOfficeAddress(data: DashboardData) {
 
 function mapContacts(contacts: DashboardKeyContact[]) {
   return contacts.map((contact) => ({
-    name: contact.employee_name || contact.role || contact.email || contact.name,
+    name: contact.employee_name || contact.name || contact.role || contact.email,
     role: contact.role,
     email: contact.email || undefined,
     phone: contact.phone_number || undefined,
@@ -171,7 +171,7 @@ export default function DashboardPage() {
   if (!user?.email) {
     return (
       <DashboardErrorState
-        message="We couldn't identify your account email for this dashboard yet."
+        message="We couldn't identify your account email for  dashboard yet."
         onRetry={() => void refetch()}
       />
     );

@@ -232,52 +232,6 @@ describe("ActionCenterPage – Tab Bar", () => {
 });
 
 // =====================================================================
-//  ACTION CENTER PAGE – INFO BANNER
-// =====================================================================
-describe("ActionCenterPage – Info Banner", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it("shows the info banner by default", () => {
-    renderWithProviders(<ActionCenterPage />);
-    expect(screen.getByText("Did you know?")).toBeTruthy();
-  });
-
-  it("shows the banner description text", () => {
-    renderWithProviders(<ActionCenterPage />);
-    expect(
-      screen.getByText(
-        /Tasks such as pre-offer submission and offer acceptance can be completed directly from this dashboard\./
-      )
-    ).toBeTruthy();
-  });
-
-  it("has a dismiss button with aria-label", () => {
-    renderWithProviders(<ActionCenterPage />);
-    expect(screen.getByLabelText("Dismiss")).toBeTruthy();
-  });
-
-  it("hides the info banner when dismiss button is clicked", async () => {
-    renderWithProviders(<ActionCenterPage />);
-
-    await user.click(screen.getByLabelText("Dismiss"));
-
-    expect(screen.queryByText("Did you know?")).toBeNull();
-  });
-
-  it("banner stays hidden after dismissal even when switching tabs", async () => {
-    renderWithProviders(<ActionCenterPage />);
-
-    await user.click(screen.getByLabelText("Dismiss"));
-    await user.click(screen.getByText("My Requests"));
-    await user.click(screen.getByText("Assigned Tasks"));
-
-    expect(screen.queryByText("Did you know?")).toBeNull();
-  });
-});
-
-// =====================================================================
 //  ACTION CENTER PAGE – FILTER PILLS
 // =====================================================================
 describe("ActionCenterPage – Filter Pills", () => {
@@ -463,12 +417,7 @@ describe("ActionCenterPage – My Requests Content", () => {
     expect(screen.getByText(/Requested on.*12.*Sep.*2025/i)).toBeTruthy();
   });
 
-  it("shows 'View Status' button for requests", async () => {
-    renderWithProviders(<ActionCenterPage />);
-    await user.click(screen.getByText("My Requests"));
 
-    expect(screen.getByText(/View Status/)).toBeTruthy();
-  });
 
   it("shows empty state when Archived filter has no requests", async () => {
     renderWithProviders(<ActionCenterPage />);

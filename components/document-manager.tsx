@@ -171,7 +171,7 @@ export function DocumentManager({
     setFilteredDocuments(filtered);
   }, [documents, searchQuery, selectedCategory, selectedStatus]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const handleUpload = async (files: any[]) => {
     if (!uploadCategory) return;
 

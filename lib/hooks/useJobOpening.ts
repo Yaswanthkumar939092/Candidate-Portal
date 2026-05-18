@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   draftJobApplicantService,

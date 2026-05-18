@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 import pdf from "pdf-parse/lib/pdf-parse.js" // ✅ IMPORTANT CHANGE
 
 export async function POST(req: Request) {

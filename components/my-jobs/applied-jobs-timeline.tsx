@@ -146,7 +146,6 @@ export function AppliedJobsTimeline({
       {applications.map((app) => {
         const stage = mapFlagsToStage(app.flags)
         const { designation, company, location, experience_range, employment_type } = app.job
-        console.log("Rendering application:", app.job,designation)
         return (
           <Card key={app.id} className="shadow-sm">
             <CardContent className="space-y-5">
@@ -223,67 +222,67 @@ export function AppliedJobsTimeline({
 
               {/* ── Timeline from flags ── */}
               <div className="px-2">
-  <div className="flex items-center">
-    {app.flags.map((flag, idx) => {
-      const isActive = flag.flag
-      const prevActive = idx > 0 ? app.flags[idx - 1].flag : false
+                <div className="grid grid-cols-6 md:grid-cols-8 xl:grid-cols-12 items-center">
+                  {app.flags.map((flag, idx) => {
+                    const isActive = flag.flag
+                    const prevActive = idx > 0 ? app.flags[idx - 1].flag : false
 
-      return (
-        <React.Fragment key={flag.status}>
-          {/* Left connector line (before first node, skip) */}
-          {idx > 0 && (
-            <div className="relative h-1 flex-1">
-              <div className="absolute inset-0 rounded-full bg-muted" />
-              {prevActive && isActive && (
-                <div className="absolute inset-0 rounded-full bg-green-500" />
-              )}
-              {prevActive && !isActive && (
-                <div className="absolute inset-0 rounded-full bg-green-500" />
-              )}
-            </div>
-          )}
+                    return (
+                      <React.Fragment key={flag.status}>
+                        {/* Left connector line (before first node, skip) */}
+                        {idx > 0 && (
+                          <div className="relative h-1 flex-1">
+                            <div className="absolute inset-0 rounded-full bg-muted" />
+                            {prevActive && isActive && (
+                              <div className="absolute inset-0 rounded-full bg-green-500" />
+                            )}
+                            {prevActive && !isActive && (
+                              <div className="absolute inset-0 rounded-full bg-green-500" />
+                            )}
+                          </div>
+                        )}
 
-          {/* Node + label stacked, but node stays in the flex row */}
-          <div className="flex flex-col items-center mt-10">
-            {/* Node circle */}
-            {isActive ? (
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-500">
-                <Check className="h-4 w-4 text-white" />
+                        {/* Node + label stacked, but node stays in the flex row */}
+                        <div className="flex flex-col items-center mt-10">
+                          {/* Node circle */}
+                          {isActive ? (
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-500">
+                              <Check className="h-4 w-4 text-white" />
+                            </div>
+                          ) : (
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-gray-300 bg-white dark:bg-background text-xs text-muted-foreground">
+                              {idx + 1}
+                            </div>
+                          )}
+
+                          {/* Label below — does NOT affect line alignment */}
+                          <span
+                            className={cn(
+                              "mt-2 text-center text-xs font-medium whitespace-nowrap",
+                              isActive ? "text-foreground" : "text-muted-foreground/50"
+                            )}
+                          >
+                            {flag.status}
+                          </span>
+
+                          {isActive && flag.date ? (
+                            <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                              {flag.date}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] invisible">—</span>
+                          )}
+                        </div>
+                      </React.Fragment>
+                    )
+                  })}
+                </div>
               </div>
-            ) : (
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-gray-300 bg-white dark:bg-background text-xs text-muted-foreground">
-                {idx + 1}
-              </div>
-            )}
-
-            {/* Label below — does NOT affect line alignment */}
-            <span
-              className={cn(
-                "mt-2 text-center text-xs font-medium whitespace-nowrap",
-                isActive ? "text-foreground" : "text-muted-foreground/50"
-              )}
-            >
-              {flag.status}
-            </span>
-
-            {isActive && flag.date ? (
-              <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                {flag.date}
-              </span>
-            ) : (
-              <span className="text-[10px] invisible">—</span>
-            )}
-          </div>
-        </React.Fragment>
-      )
-    })}
-  </div>
-</div>
 
               {/* ── Action ── */}
               <div>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={() => setSelectedApplication(app.id)}
                 >
@@ -295,7 +294,7 @@ export function AppliedJobsTimeline({
         )
       })}
 
-      <ViewApplicationModal 
+      <ViewApplicationModal
         jobApplicantName={selectedApplication}
         isOpen={!!selectedApplication}
         onClose={() => setSelectedApplication(null)}

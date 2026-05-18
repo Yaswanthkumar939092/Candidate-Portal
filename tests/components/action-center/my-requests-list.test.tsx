@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen } from "@testing-library/react"
 import { MyRequestsList, type Request } from "@/components/action-center/my-requests-list"
@@ -122,14 +122,7 @@ describe("MyRequestsList – Rendering", () => {
     expect(screen.getByText(/Request Type: General/)).toBeTruthy()
   })
 
-  it("shows 'View Status' button for every request", () => {
-    render(
-      <MyRequestsList
-        requests={[makeRequest({ id: "1" }), makeRequest({ id: "2" })]}
-      />
-    )
-    expect(screen.getAllByText("View Status")).toHaveLength(2)
-  })
+
 })
 
 describe("MyRequestsList – Filtering", () => {

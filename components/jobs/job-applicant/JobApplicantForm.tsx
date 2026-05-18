@@ -35,6 +35,27 @@ export default function JobApplicationPage({
 
   // ── Apply draft data ONCE across ALL steps on initial load ──────────────
   useEffect(() => {
+    if (jobID) {
+      draftAppliedRef.current = false;
+
+      const pendingKeys = [
+        `resume_reload_pending_${jobID}`,
+        `apply_reload_pending_${jobID}`,
+      ];
+
+      const shouldReload = pendingKeys.some((key) =>
+        sessionStorage.getItem(key)
+      );
+
+      if (shouldReload) {
+        pendingKeys.forEach((key) => sessionStorage.removeItem(key));
+
+        setTimeout(() => { window.location.reload(); }, 10);
+      }
+    }
+  }, [jobID]);
+
+  useEffect(() => {
     if (!draftData?.success || !draftData?.data) return;
     if (draftAppliedRef.current) return;
 
@@ -128,7 +149,7 @@ export default function JobApplicationPage({
   // ── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex h-[calc(100vh-64px)]  overflow-hidden">
+    <div className="flex h-[calc(100vh-64px)] justify-center  overflow-hidden">
       {/* Sidebar */}
       <JobApplicationStepNav
         currentStep={currentStep}
@@ -142,7 +163,7 @@ export default function JobApplicationPage({
         <div className="mx-auto w-full px-4 py-8 sm:px-6 lg:px-8">
           {/* Step header */}
           <div className="mb-6">
-            <div className="flex items-center justify-between mb-1">
+            <div className="md:hidden flex items-center justify-between mb-1">
               <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
                 Step {currentStep + 1} of {tabs.length}
               </p>
@@ -152,7 +173,7 @@ export default function JobApplicationPage({
             </div>
 
             {/* Progress bar */}
-            <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden mb-3">
+            <div className="md:hidden h-1.5 w-full rounded-full bg-muted overflow-hidden mb-3">
               <div
                 className="h-full rounded-full bg-primary transition-all duration-500 ease-out"
                 style={{ width: `${((currentStep + 1) / tabs.length) * 100}%` }}
