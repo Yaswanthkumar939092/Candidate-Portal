@@ -167,7 +167,7 @@ describe("FileUploadField", () => {
       expect(rejectTrigger).toBeTruthy();
 
       const stopSpy = vi.fn();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const dummyEvent = { stopPropagation: stopSpy } as any;
 
       fireEvent.click(rejectTrigger, dummyEvent);

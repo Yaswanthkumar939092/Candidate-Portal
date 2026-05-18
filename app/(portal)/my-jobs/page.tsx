@@ -2,10 +2,8 @@
 
 import { useState } from "react"
 import {
-  Info,
   ChevronRight,
   Trash2,
-  X,
   Building2,
   MapPin,
   Clock,
@@ -15,13 +13,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { AppliedJobsTimeline } from "@/components/my-jobs/applied-jobs-timeline"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/contexts/auth-context"
@@ -44,8 +35,6 @@ export default function MyJobsPage() {
 
 
   const [activeTab, setActiveTab] = useState<"applied" | "drafts">("applied")
-  const [filter, setFilter] = useState("active")
-  const [infoBannerVisible, setInfoBannerVisible] = useState(true)
 
   // Derive applied count from API applications array
   const appliedCount = apiData?.applications?.length ?? 0
@@ -77,27 +66,7 @@ export default function MyJobsPage() {
       </div>
 
       {/* Info banner */}
-      {infoBannerVisible && (
-        <div className="relative flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
-          <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" />
-          <div className="flex-1">
-            <p className="text-sm font-medium text-blue-800 dark:text-blue-300">
-              Did you know?
-            </p>
-            <p className="text-xs text-blue-700 dark:text-blue-400">
-              Take quick or give offer submissions and offer acceptance can be
-              completed directly from this dashboard.
-            </p>
-          </div>
-          <button
-            onClick={() => setInfoBannerVisible(false)}
-            className="shrink-0 text-blue-500 hover:text-blue-700"
-            aria-label="Dismiss"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-      )}
+      
 
       {/* Tab bar */}
       <div className="flex items-center gap-6 border-b border-border">
@@ -146,18 +115,7 @@ export default function MyJobsPage() {
       {activeTab === "applied" && (
         <div className="space-y-4">
           {/* Filter */}
-          <div>
-            <Select value={filter} onValueChange={setFilter}>
-              <SelectTrigger className="w-fit">
-                <SelectValue placeholder="Active Jobs" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">Active Jobs</SelectItem>
-                <SelectItem value="all">All Jobs</SelectItem>
-                <SelectItem value="archived">Archived</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+
 
           {/* Loading state */}
           {isLoading && (
@@ -245,7 +203,7 @@ export default function MyJobsPage() {
                     </div>
                     {/* Assuming progress might be calculated or passed, default to 50 for now if missing */}
                     <span className="shrink-0 text-sm font-semibold text-orange-600">
-                      {draft.progress || 50}%
+                      {typeof draft.progress === 'object' ? draft.progress?.percentage || 50 : draft.progress || 50}%
                     </span>
                   </div>
 
@@ -255,7 +213,7 @@ export default function MyJobsPage() {
                       Application Progress
                     </p>
                     <Progress
-                      value={draft.progress || 50}
+                      value={typeof draft.progress === 'object' ? draft.progress?.percentage || 50 : draft.progress || 50}
                       className="h-2 [&>div]:bg-orange-500"
                     />
                   </div>
@@ -271,7 +229,10 @@ export default function MyJobsPage() {
                       Discard Draft
                     </button>
                     <Button size="sm" className="gap-1" asChild>
-                      <Link href={`/open-jobs/${draft.job_opening}/apply-job`}>
+                      <Link
+                        href={`/open-jobs/${draft.job_opening}/apply-job`}
+                        onClick={() => sessionStorage.setItem(`resume_reload_pending_${draft.job_opening}`, "true")}
+                      >
                         Resume Application
                         <ChevronRight className="h-4 w-4" />
                       </Link>

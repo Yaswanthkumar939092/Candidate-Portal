@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 import { FrappeAPI } from "../frappe-api";
 
 export const JobOpeningService = {

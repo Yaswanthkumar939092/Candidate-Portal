@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 "use client";
 
-import { MapPin, Building2, Clock, IndianRupee } from "lucide-react";
+import { MapPin, Building2, Clock, IndianRupee, ChevronRight } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface JobDetailDialogProps {
   job: {
@@ -84,22 +85,26 @@ export function JobDetailDialog({
             Job Description
           </h4>
           <div
-  className="prose prose-sm max-w-none text-muted-foreground [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-0.5"
-  dangerouslySetInnerHTML={{ __html: job.description || "" }}
-/>
+            className="prose prose-sm max-w-none text-muted-foreground [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-0.5"
+            dangerouslySetInnerHTML={{ __html: job.description || "" }}
+          />
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button
-            onClick={() => {
-              onOpenChange(false);
-              router.push(`/open-jobs/${job.id}/apply-job`);
-            }}
-          >
-            Apply
+          <Button size="sm" asChild className="hover:cursor-pointer gap-1 ">
+            <Link
+              href={`/open-jobs/${job.id}/apply-job`}
+              onClick={() => {
+                sessionStorage.setItem(`resume_reload_pending_${job.id}`, "true");
+                onOpenChange(false);
+              }}
+            >
+              Apply
+              <ChevronRight className="h-4 w-4" />
+            </Link>
           </Button>
         </DialogFooter>
       </DialogContent>
