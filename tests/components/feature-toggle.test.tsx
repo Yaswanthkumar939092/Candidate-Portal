@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, fireEvent, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
@@ -21,7 +21,7 @@ vi.mock("lucide-react", async () => {
 
 // Define accessible interactions for testing form behaviors and simulations
 vi.mock("@/components/ui/slider", () => ({
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   Slider: ({ onValueChange, disabled }: any) => (
     <input
       type="range"
@@ -33,14 +33,14 @@ vi.mock("@/components/ui/slider", () => ({
 }))
 
 vi.mock("@/components/ui/select", () => ({
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   Select: ({ onValueChange, value, children }: any) => (
     <select data-testid="select-mock" value={value} onChange={(e: any) => onValueChange(e.target.value)}>{children}</select>
   ),
   SelectTrigger: ({ children }: any) => children,
   SelectValue: () => null,
   SelectContent: ({ children }: any) => children,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   SelectItem: ({ value, children }: any) => <option value={value}>{children}</option>,
 }))
 

@@ -382,7 +382,7 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
       let displayValue = "";
       if (value) {
         if (typeof value === 'object' && value !== null) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+           
           displayValue = (value as any).name || (value as any).value || "";
         } else {
           displayValue = String(value);
@@ -445,7 +445,7 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
       let displayValue = "";
       if (value) {
         if (typeof value === 'object' && value !== null) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+           
           displayValue = (value as any).name || (value as any).value || "";
         } else {
           displayValue = String(value);

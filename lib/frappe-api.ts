@@ -124,9 +124,9 @@ export const FrappeAPI = {
       method?: "GET" | "POST" | "PUT" | "DELETE";
       name?: string;
       fields?: string[];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       filters?: string[] | Record<string, any>;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       data?: any;
       page?: number;   // ✅ added
       limit?: number;  // ✅ added
