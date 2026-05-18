@@ -41,11 +41,11 @@ export const useGetAllDrafts = (email: string) => {
   });
 };
 
-export const useCreateDraftJobApplicant = () => {
+export const useSaveApplication = () => {
   return useMutation({
-    mutationFn: draftJobApplicantService.createDraftJobApplicant,
-    onSuccess: (data) => console.log("✅ Draft Created:", data),
-    onError: (error: any) => console.error("❌ Error creating draft:", error),
+    mutationFn: draftJobApplicantService.saveApplication,
+    onSuccess: (data) => console.log("✅ Application Saved:", data),
+    onError: (error: any) => console.error("❌ Error saving application:", error),
   });
 };
 
