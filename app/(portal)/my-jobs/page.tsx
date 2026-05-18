@@ -203,7 +203,7 @@ export default function MyJobsPage() {
                     </div>
                     {/* Assuming progress might be calculated or passed, default to 50 for now if missing */}
                     <span className="shrink-0 text-sm font-semibold text-orange-600">
-                      {draft.progress || 50}%
+                      {typeof draft.progress === 'object' ? draft.progress?.percentage || 50 : draft.progress || 50}%
                     </span>
                   </div>
 
@@ -213,7 +213,7 @@ export default function MyJobsPage() {
                       Application Progress
                     </p>
                     <Progress
-                      value={draft.progress || 50}
+                      value={typeof draft.progress === 'object' ? draft.progress?.percentage || 50 : draft.progress || 50}
                       className="h-2 [&>div]:bg-orange-500"
                     />
                   </div>

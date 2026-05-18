@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { render, screen, fireEvent, act } from "@testing-library/react"
 import VerticalTabs from "@/components/vertical-tabs"
@@ -13,7 +13,7 @@ vi.mock("motion/react", () => ({
   motion: {
     div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
   },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   AnimatePresence: ({ children }: any) => <>{children}</>,
 }))
 

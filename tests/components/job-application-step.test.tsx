@@ -53,7 +53,7 @@ import * as jobAppContext from "@/lib/contexts/job-application-context"
 import * as jobOpeningHooks from "@/lib/hooks/useJobOpening"
 
 vi.mock("@/components/ui/field-renderer", () => ({
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   DynamicFieldRenderer: (props: any) => {
     const { field, onChange, overrides } = props
     const defaultRender = (
@@ -70,7 +70,7 @@ vi.mock("@/components/ui/field-renderer", () => ({
     )
 
     // Inclusion logic restricted to test isolation preventing overlap
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const overrideElements: any[] = []
     if (overrides && field.fieldname === "resume") {
       if (overrides.Attach?.component) {
@@ -92,7 +92,7 @@ vi.mock("@/components/ui/field-renderer", () => ({
 }))
 
 vi.mock("@/components/onboarding/file-upload-field", () => ({
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   FileUploadField: ({ label, onChange }: any) => (
     <div>
       <label>{label}</label>
@@ -117,7 +117,7 @@ vi.mock("@/components/onboarding/section-card", () => ({
 }))
 
 vi.mock("@/components/jobs/job-applicant/ChildTable", () => ({
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   JobApplicationTableField: (props: any) => (
     <div data-testid={`table-field-${props.field?.fieldname ?? "default"}`}>
       Table Field
@@ -535,13 +535,13 @@ describe("JobApplicationStep Coverage Enhancements", () => {
     mockMethods.watch.mockReturnValue({})
     mockMethods.control._getWatch.mockReturnValue({})
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       ; (jobAppContext.useJobApp as any).mockReturnValue({
         stepData: { "step1": { otherField: "otherVal", emptyField: "" } },
         setStepData: mockSetStepData,
       })
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       ; (jobOpeningHooks.useCreateJobApplicant as any).mockReturnValue({
         mutate: mockMutate,
         isPending: false,
@@ -683,7 +683,7 @@ describe("JobApplicationStep Coverage Enhancements", () => {
     }
 
     // Capture the callback passed to mutate
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     let mutateCallbacks: any = null;
     mockMutate.mockImplementation((payload, callbacks) => {
       mutateCallbacks = callbacks;
@@ -731,7 +731,7 @@ describe("JobApplicationStep Coverage Enhancements", () => {
 
   it("handles existing step data fallback and triggers effect re-sync on prop update", async () => {
     // Force stepData for 'missingKey' to be undefined
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     ; (jobAppContext.useJobApp as any).mockReturnValue({
       stepData: {}, // empty
       setStepData: vi.fn(),
