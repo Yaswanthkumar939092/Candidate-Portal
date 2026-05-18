@@ -119,9 +119,10 @@ describe("JobDetailDialog", () => {
         onOpenChange={mockOnOpenChange}
       />
     )
-    const applyButton = screen.getByText("Apply")
-    await user.click(applyButton)
+    const applyLink = screen.getByRole("link", { name: /apply/i })
+    expect(applyLink.getAttribute("href")).toBe("/open-jobs/job-1/apply-job")
+    
+    await user.click(applyLink)
     expect(mockOnOpenChange).toHaveBeenCalledWith(false)
-    expect(mockPush).toHaveBeenCalledWith("/open-jobs/job-1/apply-job")
   })
 })
