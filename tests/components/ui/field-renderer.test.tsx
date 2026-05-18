@@ -36,7 +36,7 @@ vi.mock("@/lib/contexts/onboarding-context", () => {
 import { FrappeAPI } from "@/lib/frappe-api"
 import { useOnboarding } from "@/lib/contexts/onboarding-context"
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 const mockFrappeAPI = FrappeAPI as any
 
 describe("DynamicFieldRenderer", () => {
@@ -976,7 +976,7 @@ describe("DynamicFieldRenderer", () => {
 
       // Crucial bridge to by-pass original code early-gate on line 613
       const triggerConfigOverride = {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         component: (() => <div />) as any
       };
 
@@ -1002,7 +1002,7 @@ describe("DynamicFieldRenderer", () => {
           onChange={vi.fn()}
           onAttachChange={() => attachHandler}
           overrides={{
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             Attach: { component: CustomAttach as any }
           }}
         />
@@ -1016,7 +1016,7 @@ describe("DynamicFieldRenderer", () => {
           value=""
           onChange={vi.fn()}
           onAttachChange={() => attachHandler}
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+           
           overrides={{ Attach: {} as any }} // Truthy object to trigger path but without component
         />
       )

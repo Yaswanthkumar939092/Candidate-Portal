@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest"
 import { render, screen, fireEvent } from "@testing-library/react"
 import { UserManagementTable } from "@/components/user-management-table"
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 const mockUsers: any[] = [
   {
     id: "1",

@@ -76,7 +76,7 @@ export async function PUT(request: NextRequest) {
     const stepKeys = ONBOARDING_STEPS.map((s) => s.key) as Array<keyof OnboardingDataInsert>
     for (const key of stepKeys) {
       if (body[key] !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         ;(payload as any)[key] = body[key]
       }
     }

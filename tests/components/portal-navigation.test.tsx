@@ -41,7 +41,7 @@ vi.mock("lucide-react", async () => {
 
 vi.mock("next/image", () => ({
   __esModule: true,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   default: (props: Record<string, unknown>) => <img {...(props as any)} />,
 }))
 

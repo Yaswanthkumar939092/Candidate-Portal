@@ -1,5 +1,5 @@
-/* eslint-disable jsx-a11y/role-has-required-aria-props */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
+ 
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, fireEvent, waitFor } from "@testing-library/react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"

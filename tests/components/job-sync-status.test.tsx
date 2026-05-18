@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 import { describe, it, expect, vi, afterEach } from "vitest"
 import { render, screen, waitFor, fireEvent } from "@testing-library/react"
 import { JobSyncStatus } from "@/components/job-sync-status"
