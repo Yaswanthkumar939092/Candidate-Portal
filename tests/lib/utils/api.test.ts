@@ -1,11 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { describe, it, expect } from "vitest";
 import { NextRequest } from "next/server";
-import { 
-  getPaginationParams, 
-  getSortParams, 
-  getFilterParams, 
-  parseArrayParam, 
+import {
+  getPaginationParams,
+  getSortParams,
+  getFilterParams,
+  parseArrayParam,
   parseBooleanParam,
   getClientIP,
   validateRequiredFields,
@@ -46,7 +46,7 @@ describe("API Utils", () => {
     it("validates sort field against allowed list", () => {
       const req = new NextRequest("http://test.com/api?sort_by=age");
       const params = getSortParams(req, ["name"]);
-      expect(params.sortBy).toBe("created_at"); // fallback to default
+      expect(params.sortBy).toBe("created_at");
     });
   });
 
