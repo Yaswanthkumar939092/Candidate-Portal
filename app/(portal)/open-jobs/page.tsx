@@ -31,6 +31,9 @@ import { JobMatchCard } from "@/components/jobs/job-match-card"
 import { JobDetailDialog } from "@/components/jobs/job-detail-dialog"
 import { cn } from "@/lib/utils"
 import { useJobOpening } from "@/lib/hooks/useJobOpening"
+import { useAuth } from "@/lib/contexts/auth-context"
+import { useGetSavedJobs, useToggleSavedJob } from "@/lib/hooks/useSavedJobs"
+import { toast } from "sonner"
 
 type PageState = "upload" | "analyzing" | "results"
 
@@ -104,7 +107,12 @@ export default function OpenJobsPage() {
   const [pageState, setPageState] = useState<PageState>("upload")
   const [applyFormOpen, setApplyFormOpen] = useState(false)
   const [matchResults, setMatchResults] = useState<MatchedJob[]>([])
-  const [savedJobIds, setSavedJobIds] = useState<Set<string>>(new Set())
+  const { user } = useAuth()
+  const userEmail = user?.email || user?.user_metadata?.email || ""
+  const { data: savedJobsResponse } = useGetSavedJobs(userEmail)
+  const savedJobIdsList = savedJobsResponse?.saved_job_openings || []
+  const toggleSavedJobMutation = useToggleSavedJob()
+
   const [savedDrawerOpen, setSavedDrawerOpen] = useState(false)
 
   // filters state
@@ -122,12 +130,25 @@ export default function OpenJobsPage() {
   }, [])
 
   const handleBookmark = (jobId: string) => {
-    setSavedJobIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(jobId)) next.delete(jobId)
-      else next.add(jobId)
-      return next
-    })
+    if (!userEmail) {
+      toast.error("Please log in to save jobs")
+      return
+    }
+    toggleSavedJobMutation.mutate(
+      { email: userEmail, jobId },
+      {
+        onSuccess: (data) => {
+          if (data?.action === "saved") {
+            toast.success("Job saved successfully")
+          } else {
+            toast.success("Job removed from saved list")
+          }
+        },
+        onError: () => {
+          toast.error("Failed to update saved job status")
+        },
+      }
+    )
   }
 
   const handleViewDetails = (job: MatchedJob) => {
@@ -179,7 +200,7 @@ export default function OpenJobsPage() {
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
-  const savedJobs = matchResults.filter((job) => savedJobIds.has(job.id))
+  const savedJobs = matchResults.filter((job) => savedJobIdsList.includes(job.id))
 
   // Total pages from API response
   // Adjust the key (total_pages / pageCount / etc.) to match your API shape
@@ -304,7 +325,7 @@ export default function OpenJobsPage() {
                   <JobMatchCard
                     key={job.id}
                     job={job}
-                    isBookmarked={savedJobIds.has(job.id)}
+                    isBookmarked={savedJobIdsList.includes(job.id)}
                     onBookmark={() => handleBookmark(job.id)}
                     onViewDetails={() => handleViewDetails(job)}
                   />
