@@ -182,7 +182,7 @@ describe("AdminDashboard", () => {
     mockFrom.mockImplementation(createSupabaseFromMock())
   })
 
-  it("shows the loading state while the admin check is in flight", () => {
+  it("shows the loading state while the admin check is in flight", async () => {
     let resolveUser: (value: { id: string; email: string } | null) => void = () => {}
     mockGetCurrentUser.mockReturnValue(
       new Promise((resolve) => {
@@ -195,6 +195,10 @@ describe("AdminDashboard", () => {
     expect(screen.getByText("Loading dashboard...")).toBeTruthy()
 
     resolveUser?.({ id: "user-1", email: "admin@example.com" })
+
+    await waitFor(() => {
+      expect(screen.queryByText("Loading dashboard...")).toBeNull()
+    })
   })
 
   it("redirects to login when there is no authenticated user", async () => {
