@@ -86,25 +86,36 @@ export function JobDetailDialog({
     .ql-editor li[data-list="bullet"] {
       list-style-type: disc;
       margin-left: 1.25rem;
-      font-style: bold;
+     
     }
+
     .ql-editor li[data-list="ordered"] {
       list-style-type: decimal;
       margin-left: 1.25rem;
-      font-style: bold;
+     
     }
+
     .ql-editor .ql-ui {
       display: none;
-      font-style: bold;
     }
-    .ql-editor ol, .ql-editor ul {
+
+    .ql-editor ol,
+    .ql-editor ul {
       padding-left: 1.25rem;
-      font-style: bold;
+    }
+
+    .ql-editor h1,
+    .ql-editor h2,
+    .ql-editor h3,
+    .ql-editor h4,
+    .ql-editor h5,
+    .ql-editor h6 {
+      font-weight: bold;
     }
   `}</style>
 
   <div
-    className="prose prose-sm max-w-none text-muted-foreground"
+    className="ql-editor prose prose-sm max-w-none text-muted-foreground"
     dangerouslySetInnerHTML={{ __html: job.description || "" }}
   />
 </>
