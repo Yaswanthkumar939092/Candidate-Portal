@@ -13,9 +13,23 @@ vi.mock("@/lib/contexts/auth-context", () => ({
   useAuth: () => mockUseAuth(),
 }))
 
+const mockPush = vi.fn();
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: mockPush,
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+  }),
+}));
+
 const mockUseGetDraftJobApplicant = vi.fn()
+const mockUseCreateJobApplicant = vi.fn(() => ({ mutate: vi.fn(), isPending: false }))
+const mockUseDeleteDraftJobApplicant = vi.fn(() => ({ mutate: vi.fn() }))
+
 vi.mock("@/lib/hooks/useJobOpening", () => ({
   useGetDraftJobApplicant: (...args: any[]) => mockUseGetDraftJobApplicant(...args),
+  useCreateJobApplicant: () => mockUseCreateJobApplicant(),
+  useDeleteDraftJobApplicant: () => mockUseDeleteDraftJobApplicant(),
 }))
 
 vi.mock("@/components/jobs/job-applicant/job-applicationstep-nav", () => ({
@@ -99,10 +113,12 @@ describe("JobApplicantForm", () => {
     vi.clearAllMocks()
     mockUseAuth.mockReturnValue({ user: { email: "test@example.com" } })
     mockUseGetDraftJobApplicant.mockReturnValue({
-      success: true,
       data: {
-        name: "John Doe",
-        form_data: JSON.stringify({ name: "John Doe", email: "john@example.com" }),
+        success: true,
+        data: {
+          name: "John Doe",
+          form_data: JSON.stringify({ name: "John Doe", email: "john@example.com" }),
+        },
       },
       isLoading: false,
     })
@@ -161,7 +177,7 @@ describe("JobApplicantForm", () => {
 
     it("displays current step header", () => {
       render(<JobApplicationPage jobID="job-123" />)
-      expect(screen.getByText(/Step 1 of 2/)).toBeTruthy()
+      expect(screen.getByText(/Step 1 of 3/)).toBeTruthy()
       expect(screen.getAllByText("Personal Info").length).toBeGreaterThan(0)
     })
 
@@ -191,35 +207,25 @@ describe("JobApplicantForm", () => {
       await user.click(nextBtn)
 
       await waitFor(() => {
-        expect(screen.getByText(/Step 2 of 2/)).toBeTruthy()
+        expect(screen.getByText(/Step 2 of 3/)).toBeTruthy()
         expect(screen.getAllByText("Experience").length).toBeGreaterThan(0)
       })
     })
 
     it("navigates to previous step when handlePrev is called", async () => {
-      mockUseJobApp.mockReturnValue({
-        initializeAllStepsFromDraft: vi.fn(),
-        tabs: mockTabs,
-        isLoading: false,
-        stepData: {
-          personal_info: {},
-          experience: {},
-        },
-      })
-
       render(<JobApplicationPage jobID="job-123" />)
+      const nextBtn = screen.getByTestId("next-btn")
 
-      mockUseJobApp.mockReturnValue({
-        initializeAllStepsFromDraft: vi.fn(),
-        tabs: mockTabs,
-        isLoading: false,
-        stepData: {
-          personal_info: {},
-          experience: {},
-        },
+      await user.click(nextBtn)
+      await waitFor(() => {
+        expect(screen.getByText(/Step 2 of 3/)).toBeTruthy()
       })
 
-      expect(screen.getByText("Step 1 of 2")).toBeTruthy()
+      const prevBtn = screen.getByTestId("prev-btn")
+      await user.click(prevBtn)
+      await waitFor(() => {
+        expect(screen.getByText(/Step 1 of 3/)).toBeTruthy()
+      })
     })
 
     it("prevents navigation beyond last step", async () => {
@@ -230,14 +236,14 @@ describe("JobApplicantForm", () => {
       await user.click(nextBtn)
 
       await waitFor(() => {
-        expect(screen.getByText(/Step 2 of 2/)).toBeTruthy()
+        expect(screen.getByText(/Step 3 of 3/)).toBeTruthy()
       })
     })
 
     it("prevents navigation before first step", () => {
       render(<JobApplicationPage jobID="job-123" />)
 
-      expect(screen.getByText("Step 1 of 2")).toBeTruthy()
+      expect(screen.getByText("Step 1 of 3")).toBeTruthy()
     })
   })
 
@@ -346,6 +352,7 @@ describe("JobApplicantForm", () => {
   describe("Responsive Layout", () => {
     beforeEach(() => {
       mockUseJobApp.mockReturnValue({
+        initializeAllStepsFromDraft: vi.fn(),
         tabs: mockTabs,
         isLoading: false,
         stepData: {
@@ -371,6 +378,7 @@ describe("JobApplicantForm", () => {
   describe("Step Key Generation", () => {
     it("generates correct step key from tab name", () => {
       mockUseJobApp.mockReturnValue({
+        initializeAllStepsFromDraft: vi.fn(),
         tabs: [
           {
             tab: "Personal Info",
@@ -390,6 +398,7 @@ describe("JobApplicantForm", () => {
   describe("Props Handling", () => {
     beforeEach(() => {
       mockUseJobApp.mockReturnValue({
+        initializeAllStepsFromDraft: vi.fn(),
         tabs: mockTabs,
         isLoading: false,
         stepData: {},
@@ -399,6 +408,59 @@ describe("JobApplicantForm", () => {
     it("receives and passes jobID prop correctly", () => {
       render(<JobApplicationPage jobID="job-456" />)
       expect(screen.getByTestId("job-application-step")).toBeTruthy()
+    })
+  })
+
+  describe("Draft Data Restoration Options", () => {
+    it("restores draft data successfully when data is an array and form_data is an object", async () => {
+      const initializeMock = vi.fn()
+      mockUseJobApp.mockReturnValue({
+        initializeAllStepsFromDraft: initializeMock,
+        tabs: mockTabs,
+        isLoading: false,
+        stepData: {},
+      })
+
+      mockUseGetDraftJobApplicant.mockReturnValue({
+        data: {
+          success: true,
+          data: [{
+            name: "Draft-123",
+            form_data: { name: "Jane Doe", email: "jane@example.com" },
+          }],
+        },
+        isLoading: false,
+      })
+
+      render(<JobApplicationPage jobID="job-123" />)
+
+      await waitFor(() => {
+        expect(initializeMock).toHaveBeenCalledWith({ name: "Jane Doe", email: "jane@example.com" })
+        expect(toast.info).toHaveBeenCalledWith("Draft data restored successfully.")
+      })
+    })
+
+    it("does not restore draft if draft data success is false", async () => {
+      const initializeMock = vi.fn()
+      mockUseJobApp.mockReturnValue({
+        initializeAllStepsFromDraft: initializeMock,
+        tabs: mockTabs,
+        isLoading: false,
+        stepData: {},
+      })
+
+      mockUseGetDraftJobApplicant.mockReturnValue({
+        data: {
+          success: false,
+          data: null,
+        },
+        isLoading: false,
+      })
+
+      render(<JobApplicationPage jobID="job-123" />)
+
+      await new Promise((resolve) => setTimeout(resolve, 50))
+      expect(initializeMock).not.toHaveBeenCalled()
     })
   })
 })
