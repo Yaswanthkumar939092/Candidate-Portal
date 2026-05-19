@@ -86,7 +86,7 @@ export function ViewApplicationModal({
             </div>
           ) : error ? (
             <div className="text-center py-10 text-destructive">
-              Failed to load application details. Please try again.
+              Failed to load application details. Please try again.adasd
             </div>
           ) : (
             <div className="space-y-4 py-4">
