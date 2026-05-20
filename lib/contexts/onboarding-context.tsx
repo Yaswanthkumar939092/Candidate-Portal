@@ -191,10 +191,23 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
           setCurrentStep(localParsed.currentStep);
         }
 
+        let hasRejectedFields = false;
+        formConfig.tabs.forEach((tab) => {
+          tab.sections.forEach((section) => {
+            section.fields.forEach((field) => {
+              if (field.approval_status === "Rejected") {
+                hasRejectedFields = true;
+              }
+            });
+          });
+        });
+
         const isSubmitted =
-          formConfig.status === "Pending" ||
-          formConfig.status === "Submitted" ||
-          formConfig.status === "Completed";
+          !hasRejectedFields && (
+            formConfig.status === "Pending" ||
+            formConfig.status === "Submitted" ||
+            formConfig.status === "Completed"
+          );
         setStatus(isSubmitted ? "submitted" : "draft");
 
         if (isSubmitted) {
