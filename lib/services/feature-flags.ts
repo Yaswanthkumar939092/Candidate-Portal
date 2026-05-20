@@ -1,7 +1,15 @@
-import { FrappeAPI } from "../frappe-api";
-
 export const featureFlagsService = {
   getFeatureFlags: async () => {
-    return FrappeAPI.get("recruitment.api.candidate_portal.get_candidate_feature_flags");
+    const res = await fetch("/api/candidate-feature-flags", {
+      method: "GET",
+      credentials: "include",
+    });
+
+    if (!res.ok) {
+      throw new Error(`Feature flags request failed: ${res.statusText}`);
+    }
+
+    const data = await res.json();
+    return data.flags;
   },
 };
