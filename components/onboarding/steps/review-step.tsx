@@ -57,16 +57,6 @@ export function ReviewStep() {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [expandedSection, setExpandedSection] = useState<string | null>(null)
 
-  // Auto-redirect to dashboard if already submitted
-  useEffect(() => {
-    if (status === 'submitted') {
-      const timer = setTimeout(() => {
-        router.push('/dashboard')
-      }, 3000)
-      return () => clearTimeout(timer)
-    }
-  }, [status, router])
-
   const {
     handleSubmit,
     setValue,
@@ -85,7 +75,6 @@ export function ReviewStep() {
     try {
       setSubmitError(null)
       await submitAll()
-      router.push('/dashboard')
     } catch (error) {
       setSubmitError(
         error instanceof Error ? error.message : 'Failed to submit. Please try again.'

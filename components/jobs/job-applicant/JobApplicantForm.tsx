@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useForm, FormProvider } from "react-hook-form";
 import { useJobApp } from "@/lib/contexts/job-application-context";
 import { JobApplicationStepNav } from "./job-applicationstep-nav";
 import { JobApplicationStep } from "./DynamicField";
-import { useGetDraftJobApplicant } from "@/lib/hooks/useJobOpening";
 import { useAuth } from "@/lib/contexts/auth-context";
 
 interface JobApplicationPageProps {
@@ -17,7 +16,7 @@ interface JobApplicationPageProps {
 export default function JobApplicationPage({
   jobID,
 }: JobApplicationPageProps) {
-  const { tabs, isLoading, initializeAllStepsFromDraft } = useJobApp();
+  const { tabs, allFields, isLoading, initializeAllStepsFromDraft, draftName: apiDraftName } = useJobApp();
   const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(
@@ -25,40 +24,41 @@ export default function JobApplicationPage({
   );
 
   const userEmail = user?.email || user?.user_metadata?.email || "";
-  const { data: draftData } = useGetDraftJobApplicant(userEmail, jobID);
-  const draftAppliedRef = useRef(false);
   const [draftName, setDraftName] = useState<string | null>(null);
 
+  // ✅ Derive form values reactively from allFields (layout default or value attributes)
+  const defaultValues = useMemo(() => {
+    const formData: Record<string, any> = {};
+    if (!allFields || allFields.length === 0) return formData;
+
+    allFields.forEach((field: any) => {
+      const val = field.value !== undefined && field.value !== null ? field.value : field.default;
+      if (val !== undefined && val !== null && val !== "") {
+        formData[field.fieldname] = val;
+      }
+    });
+    return formData;
+  }, [allFields]);
+
+  // ✅ React Hook Form 'values' automatically resets and syncs in real-time when layout loads
   const methods = useForm({
     mode: "onChange",
+    values: Object.keys(defaultValues).length > 0 ? defaultValues : undefined,
   });
 
-  // ── Apply draft data ONCE across ALL steps on initial load ──────────────
-  
-
+  // ── Sync draftName from context API response when it loads ──────────────
   useEffect(() => {
-    if (!draftData?.success || !draftData?.data) return;
-    if (draftAppliedRef.current) return;
-
-    const draft = Array.isArray(draftData.data) ? draftData.data[0] : draftData.data;
-    if (!draft) return;
-
-    setDraftName(draft.name);
-
-    const formData =
-      typeof draft.form_data === "string"
-        ? JSON.parse(draft.form_data || "{}")
-        : draft.form_data || {};
-
-    if (Object.keys(formData).length) {
-      initializeAllStepsFromDraft(formData);
-      // Sync form with draft data
-      methods.reset(formData);
+    if (apiDraftName) {
+      setDraftName(apiDraftName);
     }
+  }, [apiDraftName]);
 
-    draftAppliedRef.current = true;
-    toast.info("Draft data restored successfully.");
-  }, [draftData, initializeAllStepsFromDraft, methods]);
+  // ── Apply field values ONCE across ALL steps on initial load ──────────────
+  useEffect(() => {
+    if (Object.keys(defaultValues).length > 0) {
+      initializeAllStepsFromDraft(defaultValues);
+    }
+  }, [defaultValues, initializeAllStepsFromDraft]);
 
   // ── Loading / empty states ──────────────────────────────────────────────
 
