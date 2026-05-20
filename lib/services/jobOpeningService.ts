@@ -13,6 +13,8 @@ export const JobOpeningService = {
   },
 };
 
+
+//will discard this. we are not using this. 
 export const JobApplicantService = {
   createJobApplicant: async (payload: any): Promise<any> => {
     const response = await FrappeAPI.getresourceDocumentData("Job Applicant", {
@@ -47,13 +49,29 @@ export const draftJobApplicantService = {
     return response;
   },
 
-  // ✅ CREATE — POST new draft
-  createDraftJobApplicant: async (payload: any): Promise<any> => {
-    const response = await FrappeAPI.getresourceDocumentData("Draft Application", {
-      method: "POST",
-      data: payload,
-    });
-    return response.data;
+  // ✅ SAVE APPLICATION — POST draft or final application
+  saveApplication: async (payload: any): Promise<any> => {
+    let formData = payload.form_data;
+    if (typeof formData === "string") {
+      try {
+        formData = JSON.parse(formData);
+      } catch (e) {
+        console.error("Failed to parse form_data:", e);
+      }
+    }
+
+    const postData: Record<string, any> = {
+      job_applicant_email: payload.job_applicant_email,
+      job_opening: payload.job_opening,
+      form_data: formData,
+    };
+
+    if (payload.status) {
+      postData.status = payload.status;
+    }
+
+    const response = await FrappeAPI.post("recruitment.api.draft_application.save_application", postData);
+    return response;
   },
 
   // ✅ UPDATE — PUT existing draft by name

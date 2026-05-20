@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Supabase credentials
-const supabaseUrl = '';
-const supabaseServiceKey = '';
+const supabaseUrl = 'https://luniiecxbsyajdfjtsox.supabase.co';
+const supabaseServiceKey = 'your-service-key-here';
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
@@ -25,7 +25,18 @@ async function createTables() {
       .limit(1);
 
     if (profileError && profileError.code === 'PGRST205') {
-
+      console.log('✅ Profiles table does not exist, which is expected. Database needs manual setup.');
+      console.log('\n📝 Manual Setup Instructions:');
+      console.log('1. Go to your Supabase dashboard: https://supabase.com/dashboard/project/luniiecxbsyajdfjtsox');
+      console.log('2. Navigate to the SQL Editor');
+      console.log('3. Copy and paste the contents of each migration file in order:');
+      console.log('   - 001_initial_schema.sql');
+      console.log('   - 002_rls_policies.sql');
+      console.log('   - 003_indexes.sql');
+      console.log('   - 004_feature_flags.sql');
+      console.log('   - 20240101000000_add_provider_to_profiles.sql');
+      console.log('4. Execute each migration in the SQL Editor');
+      console.log('\n📁 Migration files are located in: /home/frappe/candidate-portal/supabase/migrations/');
     } else if (profileError) {
       console.error('❌ Unexpected error:', profileError);
     } else {

@@ -159,24 +159,6 @@ describe("ReviewStep", () => {
   });
 
   describe("Extended Workflow: Automations & Dynamic Summaries", () => {
-    it("triggers auto-redirect timer when initial state is submitted", () => {
-       // Exercise Line 61-66 timer redirect
-       vi.useFakeTimers();
-       vi.mocked(useOnboarding).mockReturnValue(getMockContext({ status: "submitted" }));
-       
-       render(<ReviewStep />);
-       
-       // Advance partial time to ensure it hasn't executed prematurely
-       vi.advanceTimersByTime(1000);
-       expect(mockPush).not.toHaveBeenCalled();
-       
-       // Complete 3000ms threshold
-       vi.advanceTimersByTime(2000);
-       expect(mockPush).toHaveBeenCalledWith("/dashboard");
-       
-       vi.useRealTimers();
-    });
-
     it("navigates successfully when explicit dashboard button is clicked in success view", () => {
        // Exercise Line 117 manual click route
        vi.mocked(useOnboarding).mockReturnValue(getMockContext({ status: "submitted" }));

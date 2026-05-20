@@ -1,26 +1,25 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { featureFlagsService } from "@/lib/services/feature-flags";
-import { FrappeAPI } from "@/lib/frappe-api";
-
-// Mock FrappeAPI
-vi.mock("@/lib/frappe-api", () => ({
-  FrappeAPI: {
-    get: vi.fn(),
-  },
-}));
 
 describe("featureFlagsService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    global.fetch = vi.fn();
   });
 
-  it("getFeatureFlags calls FrappeAPI.get correctly", async () => {
+  it("getFeatureFlags calls the server-side proxy route", async () => {
     const mockFlags = { "feature-1": 1 };
-    (FrappeAPI.get as any).mockResolvedValue(mockFlags);
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      json: async () => ({ flags: mockFlags }),
+    } as Response);
 
     const result = await featureFlagsService.getFeatureFlags();
 
     expect(result).toEqual(mockFlags);
-    expect(FrappeAPI.get).toHaveBeenCalledWith("recruitment.api.candidate_portal.get_candidate_feature_flags");
+    expect(fetch).toHaveBeenCalledWith("/api/candidate-feature-flags", {
+      method: "GET",
+      credentials: "include",
+    });
   });
 });
