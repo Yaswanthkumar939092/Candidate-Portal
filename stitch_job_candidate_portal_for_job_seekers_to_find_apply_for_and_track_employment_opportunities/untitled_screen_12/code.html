@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<title>Editable Resume Builder</title>
+<style type="text/tailwindcss">
+      :root {
+        --primary-color: #3b82f6;
+        --background-color: #f8fafc;
+        --text-primary: #1e293b;
+        --text-secondary: #64748b;
+        --accent-color: #e0f2fe;
+      }
+      body {
+        font-family: 'Manrope', sans-serif;
+        background-color: var(--background-color);
+        color: var(--text-primary);
+      }
+      .button_primary {
+        @apply bg-[var(--primary-color)] text-white rounded-full px-6 py-3 text-sm font-bold leading-normal tracking-wide shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all;
+      }
+      .button_secondary {
+        @apply bg-[var(--accent-color)] text-[var(--primary-color)] rounded-full px-6 py-3 text-sm font-bold leading-normal tracking-wide hover:bg-sky-200 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-opacity-50 transition-all;
+      }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-[var(--background-color)]">
+<div class="relative flex size-full min-h-screen flex-col justify-between">
+<div class="flex-grow">
+<header class="sticky top-0 z-10 bg-white/80 backdrop-blur-sm">
+<div class="flex items-center justify-between p-4 border-b border-gray-200">
+<button class="text-[var(--text-primary)]">
+<svg fill="currentColor" height="24" viewBox="0 0 256 256" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z"></path>
+</svg>
+</button>
+<h1 class="text-lg font-bold text-center text-[var(--text-primary)]">
+              Resume
+            </h1>
+<div class="w-6"></div>
+</div>
+</header>
+<main class="p-4 space-y-8">
+<section>
+<div class="flex justify-between items-center mb-4">
+<h2 class="text-xl font-bold text-[var(--text-primary)]">
+                Experience
+              </h2>
+<button class="text-[var(--primary-color)]">
+<svg fill="currentColor" height="24" viewBox="0 0 256 256" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path></svg>
+</button>
+</div>
+<div class="space-y-4">
+<div class="bg-white rounded-xl shadow-sm p-4 flex items-center justify-between">
+<div>
+<p class="font-semibold text-[var(--text-primary)]">
+                    Tech Innovators Inc.
+                  </p>
+<p class="text-sm text-[var(--text-secondary)]">
+                    Software Engineer
+                  </p>
+</div>
+<button class="text-[var(--text-secondary)] hover:text-[var(--primary-color)]">
+<svg fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+<path d="M227.31,73.37,182.63,28.68a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63ZM92.69,208H48V163.31l88-88L180.69,120ZM192,108.68,147.31,64l24-24L216,84.68Z"></path>
+</svg>
+</button>
+</div>
+<div class="bg-white rounded-xl shadow-sm p-4 flex items-center justify-between">
+<div>
+<p class="font-semibold text-[var(--text-primary)]">
+                    Code Crafters LLC
+                  </p>
+<p class="text-sm text-[var(--text-secondary)]">
+                    Software Engineer
+                  </p>
+</div>
+<button class="text-[var(--text-secondary)] hover:text-[var(--primary-color)]">
+<svg fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+<path d="M227.31,73.37,182.63,28.68a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63ZM92.69,208H48V163.31l88-88L180.69,120ZM192,108.68,147.31,64l24-24L216,84.68Z"></path>
+</svg>
+</button>
+</div>
+</div>
+</section>
+<section>
+<div class="flex justify-between items-center mb-4">
+<h2 class="text-xl font-bold text-[var(--text-primary)]">
+                Education
+              </h2>
+<button class="text-[var(--primary-color)]">
+<svg fill="currentColor" height="24" viewBox="0 0 256 256" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path></svg>
+</button>
+</div>
+<div class="bg-white rounded-xl shadow-sm p-4 flex items-center justify-between">
+<div>
+<p class="font-semibold text-[var(--text-primary)]">
+                  University of Technology
+                </p>
+<p class="text-sm text-[var(--text-secondary)]">
+                  Computer Science
+                </p>
+</div>
+<button class="text-[var(--text-secondary)] hover:text-[var(--primary-color)]">
+<svg fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+<path d="M227.31,73.37,182.63,28.68a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63ZM92.69,208H48V163.31l88-88L180.69,120ZM192,108.68,147.31,64l24-24L216,84.68Z"></path>
+</svg>
+</button>
+</div>
+</section>
+<section>
+<div class="flex justify-between items-center mb-4">
+<h2 class="text-xl font-bold text-[var(--text-primary)]">Skills</h2>
+<button class="text-[var(--primary-color)]">
+<svg fill="currentColor" height="24" viewBox="0 0 256 256" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path></svg>
+</button>
+</div>
+<div class="flex flex-wrap gap-2">
+<span class="bg-sky-100 text-sky-800 text-sm font-medium px-4 py-2 rounded-full">Java</span>
+<span class="bg-sky-100 text-sky-800 text-sm font-medium px-4 py-2 rounded-full">Python</span>
+<span class="bg-sky-100 text-sky-800 text-sm font-medium px-4 py-2 rounded-full">SQL</span>
+<span class="bg-sky-100 text-sky-800 text-sm font-medium px-4 py-2 rounded-full">Agile</span>
+<span class="bg-sky-100 text-sky-800 text-sm font-medium px-4 py-2 rounded-full">Problem Solving</span>
+</div>
+</section>
+</main>
+</div>
+<footer class="sticky bottom-0 bg-white/80 backdrop-blur-sm shadow-t">
+<div class="p-4 space-y-4">
+<div class="flex justify-between gap-4">
+<button class="button_secondary flex-1">
+<span>Download</span>
+</button>
+<button class="button_primary flex-1">
+<span>Update</span>
+</button>
+</div>
+</div>
+<nav class="flex justify-around items-center border-t border-gray-200 pt-2 pb-4">
+<a class="flex flex-col items-center justify-end gap-1 text-[var(--text-secondary)]" href="#">
+<svg fill="currentColor" height="24" viewBox="0 0 256 256" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M218.83,103.77l-80-75.48a1.14,1.14,0,0,1-.11-.11,16,16,0,0,0-21.53,0l-.11.11L37.17,103.77A16,16,0,0,0,32,115.55V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V160h32v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V115.55A16,16,0,0,0,218.83,103.77ZM208,208H160V160a16,16,0,0,0-16-16H112a16,16,0,0,0-16,16v48H48V115.55l.11-.1L128,40l79.9,75.43.11.1Z"></path>
+</svg>
+<p class="text-xs font-medium">Home</p>
+</a>
+<a class="flex flex-col items-center justify-end gap-1 text-[var(--text-secondary)]" href="#">
+<svg fill="currentColor" height="24" viewBox="0 0 256 256" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path>
+</svg>
+<p class="text-xs font-medium">Search</p>
+</a>
+<a class="flex flex-col items-center justify-end gap-1 text-[var(--text-secondary)]" href="#">
+<svg fill="currentColor" height="24" viewBox="0 0 256 256" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M216,56H176V48a24,24,0,0,0-24-24H104A24,24,0,0,0,80,48v8H40A16,16,0,0,0,24,72V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V72A16,16,0,0,0,216,56ZM96,48a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96ZM216,72v41.61A184,184,0,0,1,128,136a184.07,184.07,0,0,1-88-22.38V72Zm0,128H40V131.64A200.19,200.19,0,0,0,128,152a200.25,200.25,0,0,0,88-20.37V200ZM104,112a8,8,0,0,1,8-8h32a8,8,0,0,1,0,16H112A8,8,0,0,1,104,112Z"></path>
+</svg>
+<p class="text-xs font-medium">Applications</p>
+</a>
+<a class="flex flex-col items-center justify-end gap-1 text-[var(--primary-color)]" href="#">
+<svg fill="currentColor" height="24" viewBox="0 0 256 256" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M230.93,220a8,8,0,0,1-6.93,4H32a8,8,0,0,1-6.92-12c15.23-26.33,38.7-45.21,66.09-54.16a72,72,0,1,1,73.66,0c27.39,8.95,50.86,27.83,66.09,54.16A8,8,0,0,1,230.93,220Z"></path>
+</svg>
+<p class="text-xs font-medium">Profile</p>
+</a>
+</nav>
+</footer>
+</div>
+
+</body></html>

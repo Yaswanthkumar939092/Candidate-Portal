@@ -1,0 +1,40 @@
+
+ RUN  v4.1.5 /Users/anilrajput/containers/homefirst-Customs/Candidate-Portal
+
+ ✓ tests/components/job-application-step.test.tsx (18 tests) 309ms
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'full_name')
+ ❯ components/jobs/job-applicant/DynamicField.tsx:194:19
+    192|       if (!(field.reqd || field.is_mandatory)) return;
+    193|
+    194|       const val = currentValues[field.fieldname];
+       |                   ^
+    195|       const isEmpty =
+    196|         val === undefined ||
+ ❯ validateRequiredFields components/jobs/job-applicant/DynamicField.tsx:190:18
+ ❯ components/jobs/job-applicant/DynamicField.tsx:285:10
+ ❯ tests/components/job-application-step.test.tsx:133:12
+ ❯ executeDispatch node_modules/react-dom/cjs/react-dom-client.development.js:16368:9
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:1522:13
+ ❯ processDispatchQueue node_modules/react-dom/cjs/react-dom-client.development.js:16418:19
+ ❯ node_modules/react-dom/cjs/react-dom-client.development.js:17016:9
+ ❯ batchedUpdates$1 node_modules/react-dom/cjs/react-dom-client.development.js:3262:40
+
+This error originated in "tests/components/job-application-step.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "calls onNext when Next button is clicked with valid data". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+     Errors  1 error
+   Start at  12:38:58
+   Duration  1.44s (transform 152ms, setup 62ms, import 353ms, tests 309ms, environment 595ms)
+

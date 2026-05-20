@@ -1,0 +1,171 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent } from "@testing-library/react";
+import { OnboardingStepNav } from "@/components/onboarding/onboarding-step-nav";
+import { useOnboarding, OnboardingContextType } from "@/lib/contexts/onboarding-context";
+
+vi.mock("@/lib/contexts/onboarding-context", () => ({
+  useOnboarding: vi.fn(),
+}));
+
+describe("OnboardingStepNav", () => {
+  const mockGoToStep = vi.fn();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const defaultProps: OnboardingContextType = {
+    currentStep: 0,
+    stepData: {},
+    completedSteps: new Set(),
+    isDirty: false,
+    isLoading: false,
+    isError: false,
+    isSaving: false,
+    status: "draft",
+    setStepData: vi.fn(),
+    goToStep: mockGoToStep,
+    nextStep: vi.fn(),
+    prevStep: vi.fn(),
+    markStepComplete: vi.fn(),
+    submitAll: vi.fn(),
+    getFieldValue: vi.fn(),
+    formConfig: {
+      applicantId: "test-id",
+      status: "Pending",
+      tabs: [
+        { tab: "Personal Information", sections: [] },
+        { tab: "Education Details", sections: [] }
+      ]
+    }
+  };
+
+  it("renders onboarding header and progress bar", () => {
+    vi.mocked(useOnboarding).mockReturnValue(defaultProps);
+    render(<OnboardingStepNav />);
+
+    expect(screen.getByText("Onboarding")).toBeTruthy();
+    expect(screen.getByText("Complete your profile to get started.")).toBeTruthy();
+  });
+
+  it("calculates progress percentage correctly", () => {
+    // 2 tabs + 1 review = 3 steps total.
+    // 1 completed step.
+    vi.mocked(useOnboarding).mockReturnValue({
+      ...defaultProps,
+      completedSteps: new Set(["personal_information"])
+    });
+
+    const { container } = render(<OnboardingStepNav />);
+    const progressBar = container.querySelector(".bg-primary-foreground.transition-all");
+    expect(progressBar).toHaveStyle("width: 33%");
+  });
+
+  it("renders steps with correct status indicators", () => {
+    vi.mocked(useOnboarding).mockReturnValue({
+      ...defaultProps,
+      currentStep: 1, // At Education Details
+      completedSteps: new Set(["personal_information"])
+    });
+
+    render(<OnboardingStepNav />);
+
+    // Personal Information should show check icon (completed)
+    // Education Details should show active style (2)
+    // Review should show pending style (3)
+
+    expect(screen.getByText("Personal Information")).toBeTruthy();
+    expect(screen.getByText("Education Details")).toBeTruthy();
+    expect(screen.getByText("Review")).toBeTruthy();
+
+    // Check for check icon in completed step
+    const completedStep = screen.getByText("Personal Information").parentElement;
+    expect(completedStep?.querySelector("svg")).toBeTruthy(); // Check icon
+  });
+
+  it("calls goToStep when a clickable step is clicked", () => {
+    vi.mocked(useOnboarding).mockReturnValue({
+      ...defaultProps,
+      currentStep: 1,
+      completedSteps: new Set(["personal_information"])
+    });
+
+    render(<OnboardingStepNav />);
+
+    const firstStep = screen.getByText("Personal Information");
+    fireEvent.click(firstStep);
+    expect(mockGoToStep).toHaveBeenCalledWith(0);
+  });
+
+  it("disables future steps that are not yet clickable", () => {
+    vi.mocked(useOnboarding).mockReturnValue(defaultProps);
+    render(<OnboardingStepNav />);
+
+    const futureStep = screen.getByText("Education Details").parentElement;
+    expect(futureStep).toBeDisabled();
+
+    fireEvent.click(futureStep!);
+    expect(mockGoToStep).not.toHaveBeenCalled();
+  });
+
+  it("renders back to dashboard link", () => {
+    vi.mocked(useOnboarding).mockReturnValue(defaultProps);
+    render(<OnboardingStepNav />);
+
+    const backLink = screen.getByText("Back to Dashboard");
+    expect(backLink).toBeTruthy();
+    expect(backLink.closest('a')).toHaveAttribute('href', '/dashboard');
+  });
+
+  describe("Specific Missed Line Coverage Expansion", () => {
+    it("falls back safely to empty step set when formConfig tabs are completely omitted", () => {
+      // Covers Line 25-36 (formConfig?.tabs fallback, and zero progress divisor logic)
+      vi.mocked(useOnboarding).mockReturnValue({
+        ...defaultProps,
+        formConfig: undefined
+      });
+      const { container } = render(<OnboardingStepNav />);
+      
+      // Review will still be generated as the solitary step (line 32)
+      expect(screen.getByText("Review")).toBeTruthy();
+      const progressBar = container.querySelector(".bg-primary-foreground.transition-all");
+      expect(progressBar).toHaveStyle("width: 0%"); // 0 completed / 1 step = 0%
+    });
+
+    it("applies specific style indicators for steps that are past but not formally completed", () => {
+       // Covers Line 86 style branch: isPast && !isCompleted && !isCurrent
+       vi.mocked(useOnboarding).mockReturnValue({
+         ...defaultProps,
+         currentStep: 1,
+         completedSteps: new Set() // Zero steps explicitly marked as completed
+       });
+       
+       render(<OnboardingStepNav />);
+       
+       const firstStepButton = screen.getByText("Personal Information").closest("button")!;
+       // Line 86 injects "text-muted-foreground hover:bg-muted"
+       expect(firstStepButton).toHaveClass("text-muted-foreground");
+    });
+
+    it("displays granular field completion metrics when step count metadata exists", () => {
+       // Covers Line 114: step.counts rendering
+       vi.mocked(useOnboarding).mockReturnValue({
+          ...defaultProps,
+          formConfig: {
+             applicantId: "v2-id",
+             status: "Pending",
+             tabs: [
+                { 
+                  tab: "Counted Set", 
+                  sections: [], 
+                  field_counts: { filled: 4, total: 10, approved: 0, rejected: 0, pending: 0 } 
+                }
+             ]
+          }
+       });
+       
+       render(<OnboardingStepNav />);
+       expect(screen.getByText("4/10")).toBeTruthy();
+    });
+  });
+});
