@@ -38,22 +38,23 @@ export default function JobApplicationPage({
   
 
   useEffect(() => {
-    if (!draftData?.success || !draftData?.data) return;
+    // useGetDraftJobApplicant returns { data: draftData, isLoading }
+    // so draftData is already { success, data } — don't go one level deeper
+    const response = draftData;
+    if (!response?.success || !response?.data) return;
     if (draftAppliedRef.current) return;
 
-    const draft = Array.isArray(draftData.data) ? draftData.data[0] : draftData.data;
+    const draft = Array.isArray(response.data) ? response.data[0] : response.data;
     if (!draft) return;
 
     setDraftName(draft.name);
 
-    const formData =
-      typeof draft.form_data === "string"
-        ? JSON.parse(draft.form_data || "{}")
-        : draft.form_data || {};
+    const formData = typeof draft.form_data === "string"
+      ? JSON.parse(draft.form_data || "{}")
+      : draft.form_data || {};
 
     if (Object.keys(formData).length) {
       initializeAllStepsFromDraft(formData);
-      // Sync form with draft data
       methods.reset(formData);
     }
 
