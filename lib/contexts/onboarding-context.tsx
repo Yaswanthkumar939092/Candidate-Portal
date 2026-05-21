@@ -185,20 +185,38 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
 
         setStepDataState(loadedStepData);
 
-        if (localParsed?.currentStep !== undefined) {
+        const isApplicantMatch = localParsed?.applicantId === formConfig.applicantId;
+
+        if (localParsed?.currentStep !== undefined && isApplicantMatch) {
           setCurrentStep(localParsed.currentStep);
         }
 
-        const isPending = formConfig.status === "Pending";
-        setStatus(isPending ? "draft" : "submitted");
+        let hasRejectedFields = false;
+        formConfig.tabs.forEach((tab) => {
+          tab.sections.forEach((section) => {
+            section.fields.forEach((field) => {
+              if (field.approval_status === "Rejected") {
+                hasRejectedFields = true;
+              }
+            });
+          });
+        });
 
-        if (!isPending) {
+        const isSubmitted =
+          !hasRejectedFields && (
+            formConfig.status === "Pending" ||
+            formConfig.status === "Submitted" ||
+            formConfig.status === "Completed"
+          );
+        setStatus(isSubmitted ? "submitted" : "draft");
+
+        if (isSubmitted) {
           // If submitted, mark all steps as completed
           const allStepKeys = formConfig.tabs.map((t) =>
             t.tab.toLowerCase().replace(/\s+/g, "_")
           );
           setCompletedSteps(new Set(allStepKeys));
-        } else if (localParsed?.completedSteps) {
+        } else if (localParsed?.completedSteps && isApplicantMatch) {
           setCompletedSteps(new Set(localParsed.completedSteps));
         }
       } catch (error) {

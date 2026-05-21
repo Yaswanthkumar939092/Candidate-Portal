@@ -64,6 +64,46 @@ describe("JobOpening Services", () => {
       });
     });
 
+    it("saveApplication calls FrappeAPI.post with save_application", async () => {
+      const mockRes = { name: "D1", success: true };
+      (FrappeAPI.post as any).mockResolvedValue(mockRes);
+
+      const payload = {
+        job_applicant_email: "test@test.com",
+        job_opening: "JO1",
+        form_data: JSON.stringify({ age: 30 })
+      };
+
+      const result = await draftJobApplicantService.saveApplication(payload);
+      expect(result).toEqual(mockRes);
+      expect(FrappeAPI.post).toHaveBeenCalledWith("recruitment.api.draft_application.save_application", {
+        job_applicant_email: "test@test.com",
+        job_opening: "JO1",
+        form_data: { age: 30 }
+      });
+    });
+
+    it("saveApplication includes status parameter when provided", async () => {
+      const mockRes = { name: "D1", success: true };
+      (FrappeAPI.post as any).mockResolvedValue(mockRes);
+
+      const payload = {
+        job_applicant_email: "test@test.com",
+        job_opening: "JO1",
+        form_data: { age: 30 },
+        status: "Open"
+      };
+
+      const result = await draftJobApplicantService.saveApplication(payload);
+      expect(result).toEqual(mockRes);
+      expect(FrappeAPI.post).toHaveBeenCalledWith("recruitment.api.draft_application.save_application", {
+        job_applicant_email: "test@test.com",
+        job_opening: "JO1",
+        form_data: { age: 30 },
+        status: "Open"
+      });
+    });
+
     it("updateDraftJobApplicant calls FrappeAPI.getresourceDocumentData with PUT", async () => {
       const mockRes = { data: { success: true } };
       (FrappeAPI.getresourceDocumentData as any).mockResolvedValue(mockRes);

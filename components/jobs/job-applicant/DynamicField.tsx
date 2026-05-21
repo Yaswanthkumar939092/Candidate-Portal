@@ -1,4 +1,4 @@
- 
+
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -12,9 +12,8 @@ import { DynamicFieldRenderer } from "@/components/ui/field-renderer";
 import { cn } from "@/lib/utils";
 import { useJobApp } from "@/lib/contexts/job-application-context";
 import {
-  useCreateDraftJobApplicant,
+  useSaveApplication,
   useUpdateDraftJobApplicant,
-  useCreateJobApplicant,
   useDeleteDraftJobApplicant,
 } from "@/lib/hooks/useJobOpening";
 import { toast } from "sonner";
@@ -139,9 +138,8 @@ export function JobApplicationStep({
   className,
 }: JobApplicationStepProps) {
   const { stepData, setStepData, initializeAllStepsFromDraft } = useJobApp();
-  const { mutate, isPending } = useCreateJobApplicant();
-  const { mutate: draftMutate, isPending: isDraftPending } =
-    useCreateDraftJobApplicant();
+  const { mutate: saveApplicationMutate, isPending } = useSaveApplication();
+  const isDraftPending = isPending;
   const { mutate: draftUpdateMutate, isPending: isDraftUpdatePending } =
     useUpdateDraftJobApplicant();
   const { mutate: deleteDraftMutate } = useDeleteDraftJobApplicant();
@@ -240,6 +238,7 @@ export function JobApplicationStep({
     return {
       ...final,
       job_opening: jobID,
+      job_title: jobID,
       email_id: userEmail || null,
     };
   };
@@ -253,9 +252,10 @@ export function JobApplicationStep({
 
     return {
       job_applicant_email: userEmail,
-      status: "Pending",
+      status: "Draft",
       form_data: JSON.stringify(formData),
       job_opening: jobID,
+      job_title: jobID,
     };
   };
 
@@ -265,9 +265,15 @@ export function JobApplicationStep({
     // Optionally update context, but the form data itself is already centralized
     setStepData(stepKey, data);
 
+    if (!validateRequiredFields()) return;
+
     if (isLastStep) {
-      const payload = buildFinalPayload(data);
-      mutate(payload as Parameters<typeof mutate>[0], {
+      const draftPayload = buildDraftPayload(data);
+      const submitPayload = {
+        ...draftPayload,
+        status: "Open",
+      };
+      saveApplicationMutate(submitPayload as any, {
         onSuccess: () => {
           toast.success("Application submitted successfully!");
           // ✅ Delete draft after successful submission
@@ -282,7 +288,6 @@ export function JobApplicationStep({
       return;
     }
 
-    if (!validateRequiredFields()) return;
     onNext();
   });
 
@@ -307,7 +312,7 @@ export function JobApplicationStep({
       );
     } else {
       // CREATE new draft
-      draftMutate(draftPayload as any, {
+      saveApplicationMutate(draftPayload as any, {
         onSuccess: (responseData) => {
           const newName = responseData?.name ?? responseData?.data?.name ?? null;
           setDraftName(newName);
@@ -454,7 +459,7 @@ export function JobApplicationStep({
         <div className="flex items-center gap-2">
           <Button
             type="button"
-            variant="secondary"
+            variant="outline"
             onClick={onDraftSave}
             disabled={isDraftPending || isDraftUpdatePending}
           >

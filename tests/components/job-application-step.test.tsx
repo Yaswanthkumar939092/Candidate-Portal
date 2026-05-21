@@ -195,8 +195,7 @@ describe("JobApplicationStep", () => {
       })
 
     const mockMutation = { mutate: vi.fn(), isPending: false }
-      ; (jobOpeningHooks.useCreateJobApplicant as any).mockReturnValue(mockMutation)
-      ; (jobOpeningHooks.useCreateDraftJobApplicant as any).mockReturnValue(mockMutation)
+      ; (jobOpeningHooks.useSaveApplication as any).mockReturnValue(mockMutation)
       ; (jobOpeningHooks.useUpdateDraftJobApplicant as any).mockReturnValue(mockMutation)
       ; (jobOpeningHooks.useDeleteDraftJobApplicant as any).mockReturnValue(mockMutation)
   })
@@ -542,12 +541,8 @@ describe("JobApplicationStep Coverage Enhancements", () => {
       })
 
        
-      ; (jobOpeningHooks.useCreateJobApplicant as any).mockReturnValue({
+      ; (jobOpeningHooks.useSaveApplication as any).mockReturnValue({
         mutate: mockMutate,
-        isPending: false,
-      })
-      ; (jobOpeningHooks.useCreateDraftJobApplicant as any).mockReturnValue({
-        mutate: vi.fn(),
         isPending: false,
       })
       ; (jobOpeningHooks.useUpdateDraftJobApplicant as any).mockReturnValue({
@@ -716,6 +711,7 @@ describe("JobApplicationStep Coverage Enhancements", () => {
     // 1. Check successful buildFinalPayload properties in payload argument
     const payloadSent = mockMutate.mock.calls[0][0];
     expect(payloadSent.job_opening).toBe("job-submission-id");
+    expect(payloadSent.job_title).toBe("job-submission-id");
     // ensure undefined/empty mapping from previous step "emptyField" is handled:
     expect(payloadSent.emptyField).toBeFalsy();
 
