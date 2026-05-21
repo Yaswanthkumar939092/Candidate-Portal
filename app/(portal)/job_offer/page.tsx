@@ -91,7 +91,6 @@ function JobOfferContent() {
   const [rejectionMessage, setRejectionMessage] = useState("");
   const [showMissingReasonPopup, setShowMissingReasonPopup] = useState(false);
   const [showDeclinedPopup, setShowDeclinedPopup] = useState(false);
-  const [hoursRemaining] = useState<number | null>(48);
 
   const handleAccept = async () => {
     if (!isTermsChecked || isAccepting) return;
@@ -193,15 +192,15 @@ function JobOfferContent() {
             </div>
           ) : (
             <>
-              {hoursRemaining !== null && hoursRemaining > 0 && (
+              {offerData?.expiry_display && (
                 <div className="mb-1">
                   <span className="inline-block px-3.5 py-1 rounded-[4px] text-[11px] font-bold tracking-[1.2px] uppercase bg-[#fff3cd] text-[#856404]">
-                    OFFER EXPIRES IN {hoursRemaining} HOURS
+                    OFFER EXPIRES IN {offerData?.expiry_display}
                   </span>
                 </div>
               )}
 
-              <div className="flex items-start justify-between mb-0">
+              {/* <div className="flex items-start justify-between mb-0">
                 <NextImage
                   src={logoData?.logo_url ? `${process.env.NEXT_PUBLIC_FRAPPE_URL}${logoData.logo_url}` : "/Logo.jpg"}
                   alt="LOGO"
@@ -219,7 +218,9 @@ function JobOfferContent() {
                     {offerData.applicant_name || ""}
                   </span>
                 </div>
-              </div>
+              </div> */}
+
+
 
               <div className="flex flex-col lg:flex-row gap-8 items-start">
                 {/* Left: Offer content */}
@@ -257,10 +258,10 @@ function JobOfferContent() {
                     <div className="text-[1.1rem] font-semibold text-[#1a2332] px-5 pt-4 pb-2.5">
                       Offer Summary
                     </div>
-                    <div className="bg-[#eaf4fb] p-5 border border-[#e2e8f0] rounded-lg mx-5 mb-4">
-                      <div className="flex justify-between items-center py-1.5">
-                        <span className="text-[0.85rem] text-[#64748b]">Role</span>
-                        <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right">
+                    <div className="bg-[#eaf4fb] p-5 border border-[#e2e8f0] rounded-lg mx-5 mb-4 overflow-hidden">
+                      <div className="flex justify-between items-center py-1.5 gap-4">
+                        <span className="text-[0.85rem] text-[#64748b] shrink-0">Role</span>
+                        <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right truncate">
                           {offerData.designation || "Intern"}
                         </span>
                       </div>

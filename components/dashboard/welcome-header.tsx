@@ -38,6 +38,7 @@ function getFirstName(name?: string): string {
  */
 export function WelcomeHeader({ name, greeting, className }: WelcomeHeaderProps) {
   const { profile } = useAuth()
+
   const resolvedGreeting = greeting || getGreeting()
   const firstName = getFirstName(name)
 
@@ -56,15 +57,17 @@ export function WelcomeHeader({ name, greeting, className }: WelcomeHeaderProps)
           Here is your onboarding snapshot. You are all set for your first day.
         </p>
       </div>
-      {isProfileActive && (
-        <Badge
-          variant="outline"
-          className="shrink-0 gap-1.5 border-green-200 bg-green-50 px-3 py-1 text-sm font-medium text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400 rounded-2xl"
-        >
-          <span className="h-2 w-2 rounded-full bg-green-500" />
-          Profile Active
-        </Badge>
-      )}
+      <div className="flex flex-col items-end gap-3 shrink-0">
+        {isProfileActive && (
+          <Badge
+            variant="outline"
+            className="gap-1.5 border-green-200 bg-green-50 px-3 py-1 text-sm font-medium text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400 rounded-2xl"
+          >
+            <span className="h-2 w-2 rounded-full bg-green-500" />
+            Profile Active
+          </Badge>
+        )}
+      </div>
     </div>
   )
 }
