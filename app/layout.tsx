@@ -39,6 +39,9 @@ export const metadata: Metadata = {
   authors: [{ name: "Physics Wallah" }],
   creator: "Physics Wallah",
   publisher: "Physics Wallah",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
