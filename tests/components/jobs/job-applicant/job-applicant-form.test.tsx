@@ -4,8 +4,33 @@ import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import JobApplicationPage from "@/components/jobs/job-applicant/JobApplicantForm"
 
+const { mockUseJobApp } = vi.hoisted(() => {
+  const mockFn = vi.fn().mockImplementation(() => ({
+    initializeAllStepsFromDraft: vi.fn(),
+    allFields: [],
+    draftName: null,
+    tabs: [],
+    isLoading: false,
+    stepData: {},
+  }));
+
+  mockFn.mockReturnValue = (val: any) => {
+    return mockFn.mockImplementation(() => ({
+      initializeAllStepsFromDraft: vi.fn(),
+      allFields: [],
+      draftName: null,
+      tabs: [],
+      isLoading: false,
+      stepData: {},
+      ...val,
+    }));
+  };
+
+  return { mockUseJobApp: mockFn };
+});
+
 vi.mock("@/lib/contexts/job-application-context", () => ({
-  useJobApp: vi.fn(),
+  useJobApp: mockUseJobApp,
 }))
 
 const mockUseAuth = vi.fn()
@@ -79,8 +104,6 @@ vi.mock("sonner", () => ({
 
 import { useJobApp } from "@/lib/contexts/job-application-context"
 import { toast } from "sonner"
-
-const mockUseJobApp = useJobApp as ReturnType<typeof vi.fn>
 
 const mockTabs = [
   {

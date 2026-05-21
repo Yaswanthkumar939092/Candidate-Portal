@@ -7,8 +7,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Supabase credentials from .env.local
-const supabaseUrl = 'https://luniiecxbsyajdfjtsox.supabase.co';
-const supabaseServiceKey = 'REDACTED_SUPABASE_SECRET';
+const supabaseUrl = '';
+const supabaseServiceKey = '';
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
