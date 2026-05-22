@@ -41,7 +41,10 @@ export const useUpdateJobOfferStatus = () => {
 
   return useMutation({
     mutationFn: jobOfferService.updateJobOfferStatus,
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
+      // Invalidate the summary and status queries to reflect the new status
+      queryClient.invalidateQueries({ queryKey: ["jobOfferSummary", variables.appl] });
+      queryClient.invalidateQueries({ queryKey: ["jobOfferStatus", variables.appl] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
