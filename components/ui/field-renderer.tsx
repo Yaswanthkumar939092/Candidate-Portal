@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { useOptionalOnboarding } from "@/lib/contexts/onboarding-context";
 import { Combobox } from "@/components/ui/combobox";
 import { useDebounce } from "@/lib/hooks/useDebounce";
+import { useLinkFieldOptions } from "@/lib/hooks/useLinkFieldOptions";
 
 export interface FormField {
   fieldname: string;
@@ -340,50 +341,17 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
   },
   Link: {
     component: ({ field, value, onChange, error, disabled, className }) => {
-      const [options, setOptions] = React.useState<string[]>([]);
-      const [loading, setLoading] = React.useState(false);
       const [search, setSearch] = React.useState("");
       const debouncedSearch = useDebounce(search, 300);
 
-      React.useEffect(() => {
-        if (!field.options) return;
-        const doctype = field.options;
-        const fetchOptions = async () => {
-          try {
-            setLoading(true);
-            
-            const filters: Record<string, any> = {};
-            if (debouncedSearch) {
-              filters.name = ["like", `%${debouncedSearch}%`];
-            }
-
-            const res = await FrappeAPI.getresourceDocumentData(doctype, {
-              fields: ["name"],
-              filters,
-              page: 1, 
-              limit: 20, 
-            });
-            const data = (res?.data ?? []) as Array<{ name?: unknown }>;
-            const optionsList = data
-              .map((item) => item.name)
-              .filter((name): name is string => typeof name === "string");
-            setOptions(optionsList);
-          } catch (err) {
-            console.error("Link fetch error:", err);
-            setOptions([]);
-          } finally {
-            setLoading(false);
-          }
-        };
-
-        fetchOptions();
-      }, [field.options, debouncedSearch]);
+      const doctype = field.options || "";
+      const { data, isLoading } = useLinkFieldOptions(doctype, debouncedSearch);
+      const results = data?.results ?? [];
 
       let displayValue = "";
       if (value) {
-        if (typeof value === 'object' && value !== null) {
-           
-          displayValue = (value as any).name || (value as any).value || "";
+        if (typeof value === "object" && value !== null) {
+          displayValue = (value as any).id || (value as any).name || (value as any).value || "";
         } else {
           displayValue = String(value);
         }
@@ -393,20 +361,25 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
         const finalOptions: Array<{ value: string; label: string }> = [];
         const seen = new Set<string>();
 
+        const matchingResult = results.find((r) => r.id === displayValue);
+
         if (displayValue) {
-          finalOptions.push({ value: displayValue, label: displayValue });
+          finalOptions.push({
+            value: displayValue,
+            label: matchingResult ? matchingResult.label : displayValue,
+          });
           seen.add(displayValue);
         }
 
-        options.forEach((opt) => {
-          if (!seen.has(opt)) {
-            finalOptions.push({ value: opt, label: opt });
-            seen.add(opt);
+        results.forEach((opt) => {
+          if (!seen.has(opt.id)) {
+            finalOptions.push({ value: opt.id, label: opt.label });
+            seen.add(opt.id);
           }
         });
 
         return finalOptions;
-      }, [options, displayValue]);
+      }, [results, displayValue]);
 
       return (
         <div className={cn("space-y-1.5", className)}>
@@ -423,9 +396,9 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
               value={displayValue}
               onValueChange={(val) => onChange(val)}
               options={comboboxOptions}
-              placeholder={loading ? "Loading..." : `Select ${field.label}`}
+              placeholder={isLoading ? "Loading..." : `Select ${field.label}`}
               searchPlaceholder={`Search ${field.label}...`}
-              loading={loading}
+              loading={isLoading}
               searchValue={search}
               onSearchValueChange={setSearch}
               className={getValidationClass(field)}

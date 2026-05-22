@@ -81,6 +81,7 @@ export interface FrappeAuthSettings {
   enable_mobile_otp: 0 | 1;
   mobile_delivery_mode: "Disabled" | "Frappe SMS Settings";
   enable_email_signup?: 0 | 1;
+  redirect_to?: string;
 }
 
 export type AuthChangeEvent = "SIGNED_IN" | "SIGNED_OUT" | "TOKEN_REFRESHED";
