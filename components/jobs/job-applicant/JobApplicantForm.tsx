@@ -67,24 +67,35 @@ export default function JobApplicationPage({
   // ── Restore draft data from API ──────────────────────────────────────────
   useEffect(() => {
     if (!draftData?.success || !draftData?.data) return;
-
+  
     let formData: Record<string, any> | null = null;
-
-    if (Array.isArray(draftData.data)) {
-      const draft = draftData.data[0];
-      if (draft) {
-        formData = typeof draft.form_data === "string"
-          ? JSON.parse(draft.form_data)
-          : draft.form_data;
+  
+    try {
+      if (Array.isArray(draftData.data)) {
+        const draft = draftData.data[0];
+  
+        if (draft) {
+          formData =
+            typeof draft.form_data === "string"
+              ? JSON.parse(draft.form_data)
+              : draft.form_data;
+        }
+      } else {
+        const raw = draftData.data.form_data;
+  
+        formData =
+          typeof raw === "string"
+            ? JSON.parse(raw)
+            : raw;
       }
-    } else {
-      const raw = draftData.data.form_data;
-      formData = typeof raw === "string" ? JSON.parse(raw) : raw;
-    }
-
-    if (formData) {
-      initializeAllStepsFromDraft(formData);
-      toast.info("Draft data restored successfully.");
+  
+      if (formData) {
+        initializeAllStepsFromDraft(formData);
+        toast.info("Draft data restored successfully.");
+      }
+    } catch (error) {
+      console.error("Failed to parse draft form data:", error);
+      toast.error("Unable to restore saved draft.");
     }
   }, [draftData]);
 
