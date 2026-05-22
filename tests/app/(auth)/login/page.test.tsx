@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import LoginPage from "@/app/(auth)/login/page";
@@ -483,6 +483,76 @@ describe("LoginPage – Edge Cases", () => {
       await waitFor(() => {
         expect(screen.getByText("Password set successfully! Please log in using your email and password.")).toBeTruthy();
         expect(screen.getByText("Welcome! 👋")).toBeTruthy();
+      });
+    });
+  });
+
+  describe("LoginPage – Redirect Handling based on auth_settings redirect_to", () => {
+    let assignMock: any;
+
+    beforeEach(() => {
+      vi.clearAllMocks();
+      assignMock = vi.fn();
+      vi.stubGlobal("location", { assign: assignMock });
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it("redirects to action-center when redirect_to is action_center", async () => {
+      mockGetAuthSettings.mockResolvedValue({
+        ...defaultAuthSettings,
+        allow_email_otp_login: 0,
+        enable_email_otp: 0,
+        redirect_to: "action_center",
+      });
+      mockSignIn.mockResolvedValue({ status: "success" });
+
+      await renderLoginPage();
+      await user.type(screen.getByPlaceholderText("you@example.com"), "test@test.com");
+      await user.type(screen.getByPlaceholderText("Enter your password"), "password123");
+      await user.click(screen.getByRole("button", { name: /Sign in to your account/i }));
+
+      await waitFor(() => {
+        expect(assignMock).toHaveBeenCalledWith("/action-center");
+      });
+    });
+
+    it("redirects to my-jobs when redirect_to is my_jobs", async () => {
+      mockGetAuthSettings.mockResolvedValue({
+        ...defaultAuthSettings,
+        allow_email_otp_login: 0,
+        enable_email_otp: 0,
+        redirect_to: "my_jobs",
+      });
+      mockSignIn.mockResolvedValue({ status: "success" });
+
+      await renderLoginPage();
+      await user.type(screen.getByPlaceholderText("you@example.com"), "test@test.com");
+      await user.type(screen.getByPlaceholderText("Enter your password"), "password123");
+      await user.click(screen.getByRole("button", { name: /Sign in to your account/i }));
+
+      await waitFor(() => {
+        expect(assignMock).toHaveBeenCalledWith("/my-jobs");
+      });
+    });
+
+    it("defaults to /dashboard when redirect_to is not specified", async () => {
+      mockGetAuthSettings.mockResolvedValue({
+        ...defaultAuthSettings,
+        allow_email_otp_login: 0,
+        enable_email_otp: 0,
+      });
+      mockSignIn.mockResolvedValue({ status: "success" });
+
+      await renderLoginPage();
+      await user.type(screen.getByPlaceholderText("you@example.com"), "test@test.com");
+      await user.type(screen.getByPlaceholderText("Enter your password"), "password123");
+      await user.click(screen.getByRole("button", { name: /Sign in to your account/i }));
+
+      await waitFor(() => {
+        expect(assignMock).toHaveBeenCalledWith("/dashboard");
       });
     });
   });
