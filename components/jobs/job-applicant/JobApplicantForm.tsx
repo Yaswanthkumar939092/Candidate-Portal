@@ -9,6 +9,7 @@ import { JobApplicationStepNav } from "./job-applicationstep-nav";
 import { JobApplicationStep } from "./DynamicField";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { JobApplicationReviewStep } from "./job-application-review-step";
+import { useGetDraftJobApplicant } from "@/lib/hooks/useJobOpening";
 
 interface JobApplicationPageProps {
   jobID: string;
@@ -19,12 +20,14 @@ export default function JobApplicationPage({
 }: JobApplicationPageProps) {
   const { tabs, allFields, isLoading, initializeAllStepsFromDraft, draftName: apiDraftName } = useJobApp();
   const { user } = useAuth();
+  const userEmail = user?.email || user?.user_metadata?.email || "";
+  const { data: draftData } = useGetDraftJobApplicant(jobID, userEmail);
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(
     new Set()
   );
 
-  const userEmail = user?.email || user?.user_metadata?.email || "";
+  
   const [draftName, setDraftName] = useState<string | null>(null);
 
   // ✅ Derive form values reactively from allFields (layout default or value attributes)
@@ -60,6 +63,30 @@ export default function JobApplicationPage({
       initializeAllStepsFromDraft(defaultValues);
     }
   }, [defaultValues, initializeAllStepsFromDraft]);
+
+  // ── Restore draft data from API ──────────────────────────────────────────
+  useEffect(() => {
+    if (!draftData?.success || !draftData?.data) return;
+
+    let formData: Record<string, any> | null = null;
+
+    if (Array.isArray(draftData.data)) {
+      const draft = draftData.data[0];
+      if (draft) {
+        formData = typeof draft.form_data === "string"
+          ? JSON.parse(draft.form_data)
+          : draft.form_data;
+      }
+    } else {
+      const raw = draftData.data.form_data;
+      formData = typeof raw === "string" ? JSON.parse(raw) : raw;
+    }
+
+    if (formData) {
+      initializeAllStepsFromDraft(formData);
+      toast.info("Draft data restored successfully.");
+    }
+  }, [draftData]);
 
   // ── Loading / empty states ──────────────────────────────────────────────
 
