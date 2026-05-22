@@ -499,12 +499,12 @@ function JobOfferContent() {
 
       {/* POPUP: OFFER DECLINED */}
       {showDeclinedPopup && (
-        <div className="fixed inset-0 bg-black/10 z-9999 flex items-center justify-center px-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-9999 flex items-center justify-center px-4">
           <div className="relative bg-white rounded-[20px] p-[48px_36px_36px] max-w-[420px] w-full text-center shadow-[0_8px_32px_rgba(0,0,0,0.1)]">
             <button
               onClick={() => {
                 setShowDeclinedPopup(false);
-                window.location.reload();
+                router.push("/dashboard");
               }}
               className="absolute top-4 right-4 bg-transparent border-none cursor-pointer text-[#64748b] hover:text-[#1a2332]"
             >

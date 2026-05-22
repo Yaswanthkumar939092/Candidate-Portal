@@ -189,10 +189,10 @@ describe("JobOfferPage", () => {
 
     expect(screen.getByText(/We appreciate the time and effort/)).toBeTruthy();
 
-    // Close popup should reload
+    // Close popup should redirect to dashboard
     const closeBtn = screen.getByRole("button", { name: "" }); // The X button
     fireEvent.click(closeBtn);
-    expect(window.location.reload).toHaveBeenCalled();
+    expect(mockPush).toHaveBeenCalledWith("/dashboard");
   });
 
   it("updates rejection comments, allows cancelling, and dismisses the missing-reason popup", async () => {
