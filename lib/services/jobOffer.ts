@@ -59,16 +59,10 @@ export const jobOfferService = {
     }
   },
 
-  downloadJobOfferPdf: async (appl: string): Promise<Blob> => {
-    try {
-      const blob = await FrappeAPI.getBlob("recruitment.job_offer_utils.download_job_offer_pdf", {
-        appl,
-      });
-      return blob;
-    } catch (error) {
-      console.error("Failed to fetch job offer PDF:", error);
-      throw error;
-    }
+  getJobOfferPdfUrl: (appl: string): string => {
+    const configuredUrl = (process.env.NEXT_PUBLIC_FRAPPE_URL || "").replace(/\/$/, "");
+    const params = new URLSearchParams({ appl }).toString();
+    return `${configuredUrl}/api/method/recruitment.job_offer_utils.download_job_offer_pdf?${params}`;
   },
 
   updateJobOfferStatus: async (

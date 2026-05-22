@@ -1,13 +1,31 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowRight, CheckCircle2, ShieldCheck, Loader2 } from "lucide-react"
+import { ArrowRight, CheckCircle2, ShieldCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { CircularProgress } from "@/components/shared/circular-progress"
 import { useAuth } from "@/lib/contexts/auth-context"
 import { useCurrentUser } from "@/lib/hooks/useUser"
 import { useJobOfferPdf } from "@/lib/hooks/useJobOffer"
+import { toast } from "sonner"
+
+/** Download the offer letter as a file. Fetches with credentials so cookies work. */
+async function downloadPdf(url: string) {
+  try {
+    const res = await fetch(url, { credentials: "include" });
+    if (!res.ok) throw new Error("Download failed");
+    const blob = await res.blob();
+    const href = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = href;
+    a.download = "Offer_Letter.pdf";
+    a.click();
+    URL.revokeObjectURL(href);
+  } catch {
+    toast.error("Could not download the offer letter. Please try again.");
+  }
+}
 
 import { DashboardData } from "@/types/dashboard"
 
@@ -130,51 +148,30 @@ export function OnboardingSnapshot({
                 <>
                   {/* Mobile: download directly */}
                   <Button
-                    asChild
                     variant="outline"
                     size="lg"
+                    onClick={() => pdfUrl && downloadPdf(pdfUrl)}
+                    disabled={!pdfUrl}
                     className={cn(
-                      "flex sm:hidden border-black text-black hover:bg-black/10 hover:text-black rounded-xl font-semibold justify-center",
-                      !pdfUrl && "opacity-50 pointer-events-none"
+                      "flex sm:hidden border-black text-black hover:bg-black/10 hover:text-black rounded-xl font-semibold justify-center"
                     )}
                   >
-                    <a
-                      href={pdfUrl || "#"}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      download="Offer_Letter.pdf"
-                    >
-                      {isPdfLoading ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
-                      )}
-                      Preview / Download Offer
-                    </a>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                    Preview / Download Offer
                   </Button>
 
-                  {/* Desktop: open in new tab (no download attribute) */}
+                  {/* Desktop: open PDF in new tab */}
                   <Button
-                    asChild
                     variant="outline"
                     size="lg"
+                    onClick={() => pdfUrl && window.open(pdfUrl, "_blank", "noopener,noreferrer")}
+                    disabled={!pdfUrl}
                     className={cn(
-                      "hidden sm:flex border border-black  bg-transparent text-black hover:bg-black/10 hover:text-black rounded-xl font-semibold justify-center",
-                      !pdfUrl && "opacity-50 pointer-events-none"
+                      "hidden sm:flex border border-black bg-transparent text-black hover:bg-black/10 hover:text-black rounded-xl font-semibold justify-center"
                     )}
                   >
-                    <a
-                      href={pdfUrl || "#"}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {isPdfLoading ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
-                      )}
-                      Preview / Download Offer
-                    </a>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
+                    Preview / Download Offer
                   </Button>
                 </>
               )}

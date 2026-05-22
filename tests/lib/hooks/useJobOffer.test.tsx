@@ -15,7 +15,7 @@ import React from "react";
 vi.mock("@/lib/services/jobOffer", () => ({
   jobOfferService: {
     getJobOfferSummary: vi.fn(),
-    downloadJobOfferPdf: vi.fn(),
+    getJobOfferPdfUrl: vi.fn(),
     getJobOfferStatus: vi.fn(),
     getRejectionReasons: vi.fn(),
     updateJobOfferStatus: vi.fn(),
@@ -68,40 +68,27 @@ describe("useJobOffer Hooks", () => {
     expect(result.current.data).toEqual(mockData);
   });
 
-  it("useJobOfferPdf fetches the PDF URL and revokes it on unmount", async () => {
-    const createUrlSpy = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:job-offer-pdf-url");
-    const revokeSpy = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => { });
-    const mockBlob = new Blob(["test"], { type: "application/pdf" });
-    vi.mocked(jobOfferService.downloadJobOfferPdf).mockResolvedValue(mockBlob as any);
+  it("useJobOfferPdf returns a URL string when appl and enabled are set", () => {
+    vi.mocked(jobOfferService.getJobOfferPdfUrl).mockReturnValue("https://frappe.example.com/api/method/recruitment.job_offer_utils.download_job_offer_pdf?appl=test%40example.com");
 
-    const { result, unmount } = renderHook(
+    const { result } = renderHook(
       () => useJobOfferPdf("test@example.com"),
       { wrapper }
     );
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-
-    expect(result.current.pdfUrl).toBe("blob:job-offer-pdf-url");
+    expect(result.current.pdfUrl).toContain("download_job_offer_pdf");
+    expect(result.current.isLoading).toBe(false);
     expect(result.current.error).toBeNull();
-    expect(jobOfferService.downloadJobOfferPdf).toHaveBeenCalledWith("test@example.com");
-
-    unmount();
-
-    expect(revokeSpy).toHaveBeenCalledWith("blob:job-offer-pdf-url");
-    createUrlSpy.mockRestore();
-    revokeSpy.mockRestore();
   });
 
-  it("useJobOfferPdf stays idle when disabled", async () => {
+  it("useJobOfferPdf returns null when disabled", () => {
     const { result } = renderHook(
       () => useJobOfferPdf("test@example.com", false),
       { wrapper }
     );
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-
     expect(result.current.pdfUrl).toBeNull();
-    expect(jobOfferService.downloadJobOfferPdf).not.toHaveBeenCalled();
+    expect(result.current.isLoading).toBe(false);
   });
 
   it("useRejectionReasons fetches data correctly", async () => {
