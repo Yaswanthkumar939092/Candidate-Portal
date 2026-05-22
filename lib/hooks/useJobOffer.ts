@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { jobOfferService } from "../services/jobOffer";
 
 export const useJobOfferSummary = (appl: string, enabled = true) => {
@@ -20,17 +20,22 @@ export const useJobOfferPdf = (appl: string, enabled = true) => {
     refetchOnWindowFocus: false,
   });
 
-  // Revoke the object URL when the component unmounts or data changes
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+
+  // Create/revoke the object URL when the component mounts/unmounts or query data changes
   useEffect(() => {
-    return () => {
-      if (query.data) {
-        URL.revokeObjectURL(query.data);
-      }
-    };
+    if (query.data) {
+      const url = URL.createObjectURL(query.data);
+      setPdfUrl(url);
+      return () => {
+        URL.revokeObjectURL(url);
+        setPdfUrl(null);
+      };
+    }
   }, [query.data]);
 
   return {
-    pdfUrl: query.data ?? null,
+    pdfUrl,
     isLoading: query.isLoading,
     error: query.error,
   };

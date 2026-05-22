@@ -46,7 +46,8 @@ describe("useJobOffer Hooks", () => {
       designation: "Software Engineer",
       duration_display: "6 Months",
       expected_doj_display: "2026-05-01",
-      stipend_display: "₹50,000"
+      stipend_display: "₹50,000",
+      expiry_display: "2 Days"
     };
     vi.mocked(jobOfferService.getJobOfferSummary).mockResolvedValue(mockData);
 
@@ -68,8 +69,10 @@ describe("useJobOffer Hooks", () => {
   });
 
   it("useJobOfferPdf fetches the PDF URL and revokes it on unmount", async () => {
+    const createUrlSpy = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:job-offer-pdf-url");
     const revokeSpy = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => { });
-    vi.mocked(jobOfferService.downloadJobOfferPdf).mockResolvedValue("blob:job-offer-pdf-url");
+    const mockBlob = new Blob(["test"], { type: "application/pdf" });
+    vi.mocked(jobOfferService.downloadJobOfferPdf).mockResolvedValue(mockBlob as any);
 
     const { result, unmount } = renderHook(
       () => useJobOfferPdf("test@example.com"),
@@ -85,6 +88,7 @@ describe("useJobOffer Hooks", () => {
     unmount();
 
     expect(revokeSpy).toHaveBeenCalledWith("blob:job-offer-pdf-url");
+    createUrlSpy.mockRestore();
     revokeSpy.mockRestore();
   });
 
