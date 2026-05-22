@@ -66,7 +66,7 @@ export default function LoginPage() {
         return;
       }
 
-      redirectToDashboard();
+      redirectToDashboard(settings?.redirect_to);
     } catch (error) {
       console.error("Login error:", error);
       setError(error instanceof Error ? error.message : "Failed to sign in");
@@ -94,7 +94,7 @@ export default function LoginPage() {
         return;
       }
 
-      redirectToDashboard();
+      redirectToDashboard(settings?.redirect_to);
     } catch (error) {
       console.error("OTP login error:", error);
       setError(error instanceof Error ? error.message : "Failed to verify OTP");
@@ -194,8 +194,17 @@ export default function LoginPage() {
   );
 }
 
-function redirectToDashboard() {
-  window.location.assign("/dashboard");
+function redirectToDashboard(redirectTo?: string) {
+  const landingRoutes: Record<string, string> = {
+    home: "/dashboard",
+    open_jobs: "/open-jobs",
+    my_jobs: "/my-jobs",
+    action_center: "/action-center",
+    documents: "/documents",
+    candidate_dashboard: "/dashboard",
+  };
+  const target = redirectTo ? (landingRoutes[redirectTo] || "/dashboard") : "/dashboard";
+  window.location.assign(target);
 }
 
 function AuthUnavailable({ title, message }: { title: string; message: string }) {
