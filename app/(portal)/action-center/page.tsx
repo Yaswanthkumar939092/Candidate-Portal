@@ -303,7 +303,7 @@ export default function ActionCenterPage() {
             )}
             onClick={() => setFilter("accepted")}
           >
-            Archived ({currentAcceptedCount})
+            Completed ({currentAcceptedCount})
           </button>
         </div>
         {activeTab === "requests" && (

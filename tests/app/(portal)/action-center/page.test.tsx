@@ -205,7 +205,7 @@ describe("ActionCenterPage – Tab Bar", () => {
     renderWithProviders(<ActionCenterPage />);
 
     // Switch to accepted filter
-    await user.click(screen.getByText(/Archived/));
+    await user.click(screen.getByText(/Completed/));
 
     // Switch tab
     await user.click(screen.getByText("My Requests"));
@@ -220,7 +220,7 @@ describe("ActionCenterPage – Tab Bar", () => {
 
     // Go to requests, change filter
     await user.click(screen.getByText("My Requests"));
-    await user.click(screen.getByText(/Archived/));
+    await user.click(screen.getByText(/Completed/));
 
     // Switch back to tasks
     await user.click(screen.getByText("Assigned Tasks"));
@@ -244,9 +244,9 @@ describe("ActionCenterPage – Filter Pills", () => {
     expect(screen.getByText(/Pending \(\d+\)/)).toBeTruthy();
   });
 
-  it("renders Archived filter pill with count", () => {
+  it("renders Completed filter pill with count", () => {
     renderWithProviders(<ActionCenterPage />);
-    expect(screen.getByText(/Archived \(\d+\)/)).toBeTruthy();
+    expect(screen.getByText(/Completed \(\d+\)/)).toBeTruthy();
   });
 
   it("Pending filter is active by default", () => {
@@ -256,19 +256,19 @@ describe("ActionCenterPage – Filter Pills", () => {
     expect(pendingBtn.classList.contains("bg-white")).toBe(true);
   });
 
-  it("switches to Archived filter when clicked", async () => {
+  it("switches to Completed filter when clicked", async () => {
     renderWithProviders(<ActionCenterPage />);
 
-    await user.click(screen.getByText(/Archived/));
+    await user.click(screen.getByText(/Completed/));
 
-    const archivedBtn = screen.getByText(/Archived/);
-    expect(archivedBtn.classList.contains("bg-white")).toBe(true);
+    const CompletedBtn = screen.getByText(/Completed/);
+    expect(CompletedBtn.classList.contains("bg-white")).toBe(true);
   });
 
   it("switches back to Pending filter when clicked", async () => {
     renderWithProviders(<ActionCenterPage />);
 
-    await user.click(screen.getByText(/Archived/));
+    await user.click(screen.getByText(/Completed/));
     await user.click(screen.getByText(/Pending/));
 
     const pendingBtn = screen.getByText(/Pending/);
@@ -281,10 +281,10 @@ describe("ActionCenterPage – Filter Pills", () => {
     expect(screen.getByText("Pending (1)")).toBeTruthy();
   });
 
-  it("shows correct task archived count (4 approved/completed tasks)", () => {
+  it("shows correct task Completed count (4 approved/completed tasks)", () => {
     renderWithProviders(<ActionCenterPage />);
     // From mock data: 4 tasks are completed or approved
-    expect(screen.getByText("Archived (4)")).toBeTruthy();
+    expect(screen.getByText("Completed (4)")).toBeTruthy();
   });
 
   it("updates counts when switching to My Requests tab", async () => {
@@ -295,7 +295,7 @@ describe("ActionCenterPage – Filter Pills", () => {
     // From mock data: 1 request is pending_approval
     expect(screen.getByText("Pending (1)")).toBeTruthy();
     // From mock data: 0 requests are approved
-    expect(screen.getByText("Archived (0)")).toBeTruthy();
+    expect(screen.getByText("Completed (0)")).toBeTruthy();
   });
 });
 
@@ -322,9 +322,9 @@ describe("ActionCenterPage – Assigned Tasks Content", () => {
     expect(screen.getByText(/Complete now/)).toBeTruthy();
   });
 
-  it("shows completed/approved tasks when Archived filter is active", async () => {
+  it("shows completed/approved tasks when Completed filter is active", async () => {
     renderWithProviders(<ActionCenterPage />);
-    await user.click(screen.getByText(/Archived/));
+    await user.click(screen.getByText(/Completed/));
 
     expect(screen.getByText("Offer Letter Released")).toBeTruthy();
     expect(screen.getByText("Pre-Offer Submission")).toBeTruthy();
@@ -334,7 +334,7 @@ describe("ActionCenterPage – Assigned Tasks Content", () => {
 
   it("shows 'View Details' button for completed/approved tasks", async () => {
     renderWithProviders(<ActionCenterPage />);
-    await user.click(screen.getByText(/Archived/));
+    await user.click(screen.getByText(/Completed/));
 
     const viewButtons = screen.getAllByText(/View Details/);
     expect(viewButtons.length).toBeGreaterThanOrEqual(1);
@@ -351,29 +351,29 @@ describe("ActionCenterPage – Assigned Tasks Content", () => {
     expect(screen.getByText(/Due by 15 May 2025/)).toBeTruthy();
   });
 
-  it("shows completed date for archived tasks", async () => {
+  it("shows completed date for Completed tasks", async () => {
     renderWithProviders(<ActionCenterPage />);
-    await user.click(screen.getByText(/Archived/));
+    await user.click(screen.getByText(/Completed/));
 
     expect(screen.getAllByText(/Completed on.*04.*Sep.*2025/i).length).toBeGreaterThanOrEqual(1);
   });
 
-  it("hides pending tasks when Archived filter is active", async () => {
+  it("hides pending tasks when Completed filter is active", async () => {
     renderWithProviders(<ActionCenterPage />);
-    await user.click(screen.getByText(/Archived/));
+    await user.click(screen.getByText(/Completed/));
 
     expect(screen.queryByText("PF Form")).toBeNull();
   });
 
-  it("hides archived tasks when Pending filter is active", () => {
+  it("hides Completed tasks when Pending filter is active", () => {
     renderWithProviders(<ActionCenterPage />);
     // These are completed/approved and should not show under Pending
     expect(screen.queryByText("Offer Letter Released")).toBeNull();
   });
 
-  it("groups tasks by category in Archived view", async () => {
+  it("groups tasks by category in Completed view", async () => {
     renderWithProviders(<ActionCenterPage />);
-    await user.click(screen.getByText(/Archived/));
+    await user.click(screen.getByText(/Completed/));
 
     // Both "Recruitment" and "Onboarding" categories should appear
     expect(screen.getByText("Recruitment")).toBeTruthy();
@@ -419,10 +419,10 @@ describe("ActionCenterPage – My Requests Content", () => {
 
 
 
-  it("shows empty state when Archived filter has no requests", async () => {
+  it("shows empty state when Completed filter has no requests", async () => {
     renderWithProviders(<ActionCenterPage />);
     await user.click(screen.getByText("My Requests"));
-    await user.click(screen.getByText(/Archived/));
+    await user.click(screen.getByText(/Completed/));
 
     expect(
       screen.getByText("No requests found for the selected filter.")
@@ -681,7 +681,7 @@ describe("ActionCenterPage – Edge Cases", () => {
     vi.clearAllMocks();
   });
 
-  it("shows empty state when no pending tasks exist (archived filter selected)", async () => {
+  it("shows empty state when no pending tasks exist (Completed filter selected)", async () => {
     // With the mock data, only 1 pending task. Switch to a view that might be empty
     renderWithProviders(<ActionCenterPage />);
     // Pending filter shows 1 task, so it should not be empty
@@ -701,7 +701,7 @@ describe("ActionCenterPage – Edge Cases", () => {
   it("handles rapid filter switching without errors", async () => {
     renderWithProviders(<ActionCenterPage />);
 
-    await user.click(screen.getByText(/Archived/));
+    await user.click(screen.getByText(/Completed/));
     await user.click(screen.getByText(/Pending/));
 
     expect(screen.getByText("PF Form")).toBeTruthy();
@@ -712,8 +712,8 @@ describe("ActionCenterPage – Edge Cases", () => {
     // Pending filter
     expect(screen.getByText("Action Required")).toBeTruthy();
 
-    // Archived filter
-    await user.click(screen.getByText(/Archived/));
+    // Completed filter
+    await user.click(screen.getByText(/Completed/));
     expect(screen.getAllByText("Completed").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("Approved").length).toBeGreaterThanOrEqual(1);
   });
