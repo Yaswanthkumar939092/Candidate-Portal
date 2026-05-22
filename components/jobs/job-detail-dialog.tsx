@@ -81,10 +81,44 @@ export function JobDetailDialog({
           <h4 className="text-sm font-semibold text-foreground">
             Job Description
           </h4>
-          <div
-            className="prose prose-sm max-w-none text-muted-foreground [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-0.5"
-            dangerouslySetInnerHTML={{ __html: job.description || "" }}
-          />
+          <>
+  <style>{`
+    .ql-editor li[data-list="bullet"] {
+      list-style-type: disc;
+      margin-left: 1.25rem;
+     
+    }
+
+    .ql-editor li[data-list="ordered"] {
+      list-style-type: decimal;
+      margin-left: 1.25rem;
+     
+    }
+
+    .ql-editor .ql-ui {
+      display: none;
+    }
+
+    .ql-editor ol,
+    .ql-editor ul {
+      padding-left: 1.25rem;
+    }
+
+    .ql-editor h1,
+    .ql-editor h2,
+    .ql-editor h3,
+    .ql-editor h4,
+    .ql-editor h5,
+    .ql-editor h6 {
+      font-weight: bold;
+    }
+  `}</style>
+
+  <div
+    className="ql-editor prose prose-sm max-w-none text-muted-foreground"
+    dangerouslySetInnerHTML={{ __html: job.description || "" }}
+  />
+</>
         </div>
 
         <DialogFooter>

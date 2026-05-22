@@ -18,6 +18,9 @@ import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/contexts/auth-context"
 import { useApplicantStatus } from "@/lib/hooks/useApplicantStatus"
 import { useGetAllDrafts, useDeleteDraftJobApplicant } from "@/lib/hooks/useJobOpening"
+import { useGetSavedJobs, useGetSavedJobDetails, useToggleSavedJob } from "@/lib/hooks/useSavedJobs"
+import { JobMatchCard } from "@/components/jobs/job-match-card"
+import { JobDetailDialog } from "@/components/jobs/job-detail-dialog"
 import { toast } from "sonner"
 import Link from "next/link"
 
@@ -34,11 +37,24 @@ export default function MyJobsPage() {
   const drafts = draftsResponse?.data || []
 
 
-  const [activeTab, setActiveTab] = useState<"applied" | "drafts">("applied")
+  const { data: savedJobsResponse, isLoading: isLoadingSaved } = useGetSavedJobs(userEmail)
+  const savedJobOpenings = savedJobsResponse?.saved_job_openings || []
+
+  const { data: savedJobDetailsResponse, isLoading: isLoadingDetails } = useGetSavedJobDetails(savedJobOpenings)
+  const savedJobsDetails = savedJobDetailsResponse?.data || []
+
+  const toggleSavedJobMutation = useToggleSavedJob()
+
+  const [selectedJob, setSelectedJob] = useState<any | null>(null)
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [applyFormOpen, setApplyFormOpen] = useState(false)
+
+  const [activeTab, setActiveTab] = useState<"applied" | "drafts" | "saved">("applied")
 
   // Derive applied count from API applications array
   const appliedCount = apiData?.applications?.length ?? 0
   const draftCount = drafts.length
+  const savedCount = savedJobOpenings.length
 
   const handleDeleteDraft = (jobId: string) => {
     deleteDraft(
@@ -53,6 +69,40 @@ export default function MyJobsPage() {
         },
       }
     )
+  }
+
+  const handleBookmark = (jobId: string) => {
+    toggleSavedJobMutation.mutate(
+      { email: userEmail, jobId },
+      {
+        onSuccess: (data) => {
+          if (data?.action === "saved") {
+            toast.success("Job saved successfully")
+          } else {
+            toast.success("Job removed from saved list")
+          }
+        },
+        onError: () => {
+          toast.error("Failed to update saved job status")
+        },
+      }
+    )
+  }
+
+  const handleViewDetails = (job: any) => {
+    setSelectedJob({
+      id: job.name,
+      title: job.job_title || job.designation,
+      company: job.company,
+      location: job.location || job.custom_location || "Not specified",
+      type: job.employment_type || "full-time",
+      experience: job.custom_work_experience,
+      lower_range: job.lower_range,
+      upper_range: job.upper_range,
+      description: job.description,
+      status: job.status,
+    })
+    setDialogOpen(true)
   }
 
   return (
@@ -106,6 +156,26 @@ export default function MyJobsPage() {
             </Badge>
           )}
           {activeTab === "drafts" && (
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground" />
+          )}
+        </button>
+
+        <button
+          className={cn(
+            "relative flex items-center gap-1.5 pb-2.5 text-sm font-medium transition-colors",
+            activeTab === "saved"
+              ? "text-foreground"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+          onClick={() => setActiveTab("saved")}
+        >
+          Saved Jobs
+          {savedCount > 0 && (
+            <Badge variant="secondary" className="ml-0.5 h-5 px-1.5 text-[10px]">
+              {savedCount}
+            </Badge>
+          )}
+          {activeTab === "saved" && (
             <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground" />
           )}
         </button>
@@ -243,6 +313,66 @@ export default function MyJobsPage() {
           )}
         </div>
       )}
+
+      {/* Saved Jobs Tab */}
+      {activeTab === "saved" && (
+        <div className="space-y-4">
+          {isLoadingSaved || isLoadingDetails ? (
+            <p className="text-sm text-muted-foreground text-center py-12">
+              Loading saved jobs...
+            </p>
+          ) : savedJobsDetails.length === 0 ? (
+            <div className="rounded-lg border border-dashed p-12 text-center">
+              <p className="text-sm text-muted-foreground">
+                No saved jobs. Start browsing open jobs to save opportunities.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {savedJobsDetails.map((job: any) => {
+                const mappedJob = {
+                  id: job.name,
+                  title: job.job_title || job.designation,
+                  company: job.company,
+                  location: job.location || job.custom_location || "Not specified",
+                  type: job.employment_type || "full-time",
+                  experience: job.custom_work_experience,
+                  salary: job.lower_range && job.upper_range ? `${job.lower_range} - ${job.upper_range} LPA` : "",
+                  skills: job.skills ? job.skills.map((s: any) => s.skill) : [],
+                  matchPercentage: 0,
+                };
+                return (
+                  <JobMatchCard
+                    key={job.name}
+                    job={mappedJob}
+                    isBookmarked={true}
+                    onBookmark={() => handleBookmark(job.name)}
+                    onViewDetails={() => handleViewDetails(job)}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      <JobDetailDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        job={
+          selectedJob
+            ? {
+                ...selectedJob,
+                upper_range: selectedJob.upper_range || null,
+                lower_range: selectedJob.lower_range || null,
+                custom_qualifications: selectedJob.custom_qualifications || [],
+                salary: `${selectedJob.lower_range || 0} - ${selectedJob.upper_range || 0} LPA`,
+                skills: selectedJob.skills || [],
+                matchPercentage: selectedJob.matchPercentage || 0,
+              }
+            : null
+        }
+      />
     </div>
   )
 }

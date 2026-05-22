@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Plus,} from "lucide-react"
+import { Plus, } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 import {
@@ -299,11 +299,11 @@ export default function ActionCenterPage() {
               "inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-sm font-medium transition-all",
               filter === "accepted"
                 ? "bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-gray-100"
-                : "text-slate-500 hover:text-slate-900 dark:text-gray-400 dark:hover:text-gray-300"
+                : "text-slate-500 hover:text-slate-900 dark:text-gray-400 dark:hover:text-gray-400"
             )}
             onClick={() => setFilter("accepted")}
           >
-            Archived ({currentAcceptedCount})
+            Completed ({currentAcceptedCount})
           </button>
         </div>
         {activeTab === "requests" && (

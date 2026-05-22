@@ -262,6 +262,7 @@ describe('FrappeEnvironmentsPage', () => {
 
     fireEvent.click(screen.getByText('Create'))
     await waitFor(() => expect(mockFetch).toHaveBeenCalledWith('/api/admin/frappe-environments', expect.objectContaining({ method: 'POST' })))
+    await waitFor(() => expect(screen.queryByTestId('dialog')).toBeNull())
 
     // Error path (re-open dialog for error test)
     fireEvent.click(screen.getAllByText('Add Environment')[0])
