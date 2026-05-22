@@ -89,8 +89,8 @@ describe("JobApplicationStepNav", () => {
       />
     )
 
-    // 2 out of 3 steps = 67%
-    expect(screen.getByText(/67% complete/)).toBeTruthy()
+    // 2 out of 4 steps (3 tabs + 1 review) = 50%
+    expect(screen.getByText(/50% complete/)).toBeTruthy()
   })
 
   it("renders all step buttons", () => {
@@ -239,7 +239,7 @@ describe("JobApplicationStepNav", () => {
   })
 
   it("shows 100% progress when all steps completed", () => {
-    const completedSteps = new Set(["basic_details", "experience", "education"])
+    const completedSteps = new Set(["basic_details", "experience", "education", "review"])
 
     render(
       <JobApplicationStepNav

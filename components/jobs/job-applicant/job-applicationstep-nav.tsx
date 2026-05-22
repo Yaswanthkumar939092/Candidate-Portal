@@ -27,10 +27,13 @@ export function JobApplicationStepNav({
 }: JobApplicationStepNavProps) {
   const { tabs } = useJobApp();
 
-  const steps = tabs.map((t: { tab: string }) => ({
-    key: t.tab.toLowerCase().replace(/\s+/g, "_"),
-    label: t.tab,
-  }));
+  const steps = [
+    ...tabs.map((t: { tab: string }) => ({
+      key: t.tab.toLowerCase().replace(/\s+/g, "_"),
+      label: t.tab,
+    })),
+    { key: "review", label: "Review & Submit" },
+  ];
 
   const totalSteps = steps.length;
   const progressPercentage =

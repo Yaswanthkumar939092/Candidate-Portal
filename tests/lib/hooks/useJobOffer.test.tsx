@@ -125,6 +125,8 @@ describe("useJobOffer Hooks", () => {
       }),
       expect.anything()
     );
-    expect(invalidateSpy).toHaveBeenCalled();
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["jobOfferSummary", "test@example.com"] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["jobOfferStatus", "test@example.com"] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["dashboard"] });
   });
 });
