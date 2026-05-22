@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, act } from "@testing-library/react";
-import PdfViewer from "@/app/job_offer/PdfViewer";
+import PdfViewer from "@/app/(portal)/job_offer/PdfViewer";
 
 // Mock react-pdf CSS imports
 vi.mock("react-pdf/dist/Page/AnnotationLayer.css", () => ({}));

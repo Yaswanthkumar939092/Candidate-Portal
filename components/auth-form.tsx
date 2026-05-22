@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Eye, EyeOff, CheckCircle2, ArrowRight, MailCheck } from "lucide-react";
+import { Eye, EyeOff, CheckCircle2, ArrowRight, MailCheck, AlertCircle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCandidateBranding } from "@/lib/hooks/useCandidateBranding";
@@ -24,11 +24,15 @@ interface AuthFormProps {
   type: "login" | "register";
   onSubmit: (data: AuthFormData) => void;
   isLoading?: boolean;
-  loginStep?: "credentials" | "otp";
+  loginStep?: "credentials" | "otp" | "setPassword";
   otpEmail?: string;
   otpValue?: string;
   onOtpChange?: (value: string) => void;
   onBackToCredentials?: () => void;
+  allowSignup?: boolean;
+  enableEmailSignup?: boolean;
+  isPasswordless?: boolean;
+  onPasswordlessToggle?: (value: boolean) => void;
 }
 
 export function AuthForm({
@@ -40,6 +44,10 @@ export function AuthForm({
   otpValue = "",
   onOtpChange,
   onBackToCredentials,
+  allowSignup = true,
+  enableEmailSignup = false,
+  isPasswordless = false,
+  onPasswordlessToggle,
 }: AuthFormProps) {
   const { data: branding } = useCandidateBranding();
   const [formData, setFormData] = useState<AuthFormData>({
@@ -160,14 +168,26 @@ export function AuthForm({
         <div className="w-full max-w-[440px] space-y-8">
           <div>
             <h2 className="text-[32px] font-[700] text-[#0F172A] mb-2 tracking-tight">
-              {type === "login" && loginStep === "otp" ? "Check your email" : type === "login" ? "Welcome back! 👋" : "Create your account"}
+              {type === "login" && loginStep === "otp"
+                ? "Check your email"
+                : type === "login" && loginStep === "setPassword"
+                  ? "Set your password"
+                  : type === "login" && isPasswordless
+                    ? "Verify your email"
+                    : type === "login"
+                      ? "Welcome! 👋"
+                      : "Create your account"}
             </h2>
             <p className="text-[16px] font-[400] text-[#64748B]">
               {type === "login" && loginStep === "otp"
                 ? `Enter the OTP sent to ${otpEmail || "your email"}`
-                : type === "login"
-                  ? "Please enter your credentials to access your account"
-                  : "Start your journey with us today"
+                : type === "login" && loginStep === "setPassword"
+                  ? "Create a password for your account to ensure secure access in the future."
+                  : type === "login" && isPasswordless
+                    ? "We'll send a 6-digit verification code to your email address to confirm your account."
+                    : type === "login"
+                      ? "Please enter your credentials to access your account"
+                      : "Start your journey with us today"
               }
             </p>
           </div>
@@ -218,6 +238,68 @@ export function AuthForm({
               </div>
             )}
 
+            {loginStep === "setPassword" && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="password-new" className="text-[14px] font-[500] text-[#344054]">
+                    New Password
+                  </Label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                    </div>
+                    <Input
+                      id="password-new"
+                      type={showPassword ? "text" : "password"}
+                      value={formData.password}
+                      onChange={(e) => handleInputChange("password", e.target.value)}
+                      className="h-11 pl-10 pr-10 rounded-[8px] border-[#E2E8F0] focus:border-[#0F172A] focus:ring-[#0F172A]"
+                      placeholder="Enter your new password"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#0F172A]"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword" className="text-[14px] font-[500] text-[#344054]">
+                    Confirm New Password
+                  </Label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                    </div>
+                    <Input
+                      id="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={formData.confirmPassword}
+                      onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
+                      className="h-11 pl-10 pr-10 rounded-[8px] border-[#E2E8F0] focus:border-[#0F172A] focus:ring-[#0F172A]"
+                      placeholder="Confirm your new password"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#0F172A]"
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+
             {loginStep === "credentials" && (
               <>
                 <div className="space-y-2">
@@ -242,34 +324,36 @@ export function AuthForm({
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-[14px] font-[500] text-[#344054]">
-                    Password
-                  </Label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
+                {!isPasswordless && (
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-[14px] font-[500] text-[#344054]">
+                      Password
+                    </Label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                      </div>
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        value={formData.password}
+                        onChange={(e) => handleInputChange("password", e.target.value)}
+                        className="h-11 pl-10 pr-10 rounded-[8px] border-[#E2E8F0] focus:border-[#0F172A] focus:ring-[#0F172A]"
+                        placeholder={type === "login" ? "Enter your password" : "Create a strong password"}
+                        required={!isPasswordless}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#0F172A]"
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
                     </div>
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      value={formData.password}
-                      onChange={(e) => handleInputChange("password", e.target.value)}
-                      className="h-11 pl-10 pr-10 rounded-[8px] border-[#E2E8F0] focus:border-[#0F172A] focus:ring-[#0F172A]"
-                      placeholder={type === "login" ? "Enter your password" : "Create a strong password"}
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#0F172A]"
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
                   </div>
-                </div>
+                )}
               </>
             )}
 
@@ -304,7 +388,7 @@ export function AuthForm({
               </div>
             )}
 
-            {type === "login" && loginStep === "credentials" ? (
+            {type === "login" && loginStep === "credentials" && !isPasswordless ? (
               <div className="flex items-center justify-between text-sm mt-6">
                 <div className="flex items-center space-x-2">
                   <Checkbox id="remember" className="border-gray-300 text-[#0F172A] focus:ring-[#0F172A] rounded-[4px]" />
@@ -330,7 +414,18 @@ export function AuthForm({
               disabled={isLoading}
               className="w-full h-12 bg-[#0F172A] hover:bg-[#1E293B] text-white font-medium rounded-[8px] transition-colors duration-200 mt-6 flex items-center justify-center gap-2"
             >
-              {isLoading ? "Please wait..." : (type === "login" && loginStep === "otp" ? "Verify and continue" : type === "login" ? "Sign in to your account" : "Create your account")}
+              {isLoading
+                ? "Please wait..."
+                : type === "login" && loginStep === "otp"
+                  ? "Verify and continue"
+                  : type === "login" && loginStep === "setPassword"
+                    ? "Set password"
+                    : type === "login" && isPasswordless
+                      ? "Send verification code"
+                      : type === "login"
+                        ? "Sign in to your account"
+                        : "Create your account"
+              }
               {!isLoading && <ArrowRight className="w-4 h-4" />}
             </Button>
 
@@ -345,18 +440,83 @@ export function AuthForm({
                 Use a different email
               </Button>
             )}
+
+            {type === "login" && loginStep === "setPassword" && onBackToCredentials && (
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full mt-2"
+                onClick={onBackToCredentials}
+                disabled={isLoading}
+              >
+                Cancel and back to login
+              </Button>
+            )}
+
+            {type === "login" && isPasswordless && loginStep === "credentials" && (
+              <div className="bg-[#EFF6FF] border border-[#DBEAFE] rounded-[12px] p-4 mt-6 flex gap-3 text-left">
+                <div className="flex-shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-[#2563EB] flex items-center justify-center text-white">
+                    <AlertCircle className="w-5 h-5" />
+                  </div>
+                </div>
+                <div>
+                  <h4 className="text-[14px] font-[600] text-[#1E3A8A]">Why do I need to verify?</h4>
+                  <p className="text-[13px] font-[400] text-[#1E40AF] mt-1 leading-relaxed">
+                    To protect your career data and ensure secure access to your onboarding dashboard and team communications.
+                  </p>
+                </div>
+              </div>
+            )}
           </form>
 
           {loginStep === "credentials" && (
-            <p className="text-center text-sm text-[#64748B] mt-8">
-              {type === "login" ? "Don't have an account? " : "Already have an account? "}
-              <Link
-                href={type === "login" ? "/register" : "/login"}
-                className="font-semibold text-[#2563EB] hover:text-[#1D4ED8] transition-colors"
-              >
-                {type === "login" ? "Create account" : "Sign in"}
-              </Link>
-            </p>
+            <div className="text-center text-sm text-[#64748B] mt-8 flex flex-col items-center justify-center gap-2">
+              {type === "login" ? (
+                isPasswordless ? (
+                  <button
+                    type="button"
+                    onClick={() => onPasswordlessToggle?.(false)}
+                    className="font-semibold text-[#2563EB] hover:text-[#1D4ED8] transition-colors"
+                  >
+                    Back to password login
+                  </button>
+                ) : (
+                  <>
+                    {allowSignup && (
+                      <div>
+                        {"Don't have an account? "}
+                        <Link
+                          href="/register"
+                          className="font-semibold text-[#2563EB] hover:text-[#1D4ED8] transition-colors"
+                        >
+                          Create account
+                        </Link>
+                      </div>
+                    )}
+                    {enableEmailSignup && (
+                      <button
+                        type="button"
+                        onClick={() => onPasswordlessToggle?.(true)}
+                        className="font-semibold text-[#2563EB] hover:text-[#1D4ED8] transition-colors"
+                      >
+                        Access Candidate portal
+                      </button>
+                    )}
+                  </>
+                )
+              ) : (
+                <div>
+                  Already have an account?{" "}
+                  <Link
+                    href="/login"
+                    className="font-semibold text-[#2563EB] hover:text-[#1D4ED8] transition-colors"
+                  >
+                    Sign in
+                  </Link>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>

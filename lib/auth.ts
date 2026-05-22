@@ -24,6 +24,16 @@ export interface VerifyOtpData extends RequestOtpData {
   otp: string;
 }
 
+export interface RequestEmailSignupOtpData {
+  email: string;
+}
+
+export interface RequestEmailSignupOtpResponse {
+  status: "otp_required" | string;
+  otp_log?: string;
+  delivery_status?: string;
+}
+
 export interface AuthError {
   message: string;
   status?: number;
@@ -49,6 +59,7 @@ export interface FrappeAuthUser {
   enabled?: 0 | 1 | boolean;
   user_type?: string;
   roles?: string[];
+  password_setup_required?: boolean;
   user_metadata: {
     full_name?: string | null;
     avatar_url?: string | null;
@@ -69,6 +80,7 @@ export interface FrappeAuthSettings {
   enable_email_otp: 0 | 1;
   enable_mobile_otp: 0 | 1;
   mobile_delivery_mode: "Disabled" | "Frappe SMS Settings";
+  enable_email_signup?: 0 | 1;
 }
 
 export type AuthChangeEvent = "SIGNED_IN" | "SIGNED_OUT" | "TOKEN_REFRESHED";
@@ -201,6 +213,13 @@ export const auth = {
     );
   },
 
+  requestEmailSignupOtp: async ({ email }: RequestEmailSignupOtpData): Promise<RequestEmailSignupOtpResponse> => {
+    return frappeMethod<RequestEmailSignupOtpResponse>(
+      `${FRAPPE_AUTH_METHOD}.request_email_signup_otp`,
+      { email },
+    );
+  },
+
   verifyOtp: async ({ identifier, otp, purpose = "Login", identifierType = "Email" }: VerifyOtpData) => {
     const data = await frappeMethod<{ status: string; user: FrappeAuthUser }>(
       `${FRAPPE_AUTH_METHOD}.verify_otp`,
@@ -220,6 +239,15 @@ export const auth = {
 
   updatePassword: async () => {
     throw new Error("Password updates are managed from Frappe for candidate accounts.");
+  },
+
+  setPassword: async (password: string): Promise<{ status: string; user: FrappeAuthUser | null }> => {
+    const data = await frappeMethod<{ status: string; user: FrappeAuthUser }>(
+      `${FRAPPE_AUTH_METHOD}.set_password`,
+      { password },
+    );
+    const user = mapUser(data.user);
+    return { status: data.status, user };
   },
 
   getSession: async (): Promise<FrappeSession | null> => {

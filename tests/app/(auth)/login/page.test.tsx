@@ -40,8 +40,11 @@ vi.mock("next/link", () => ({
 
 const mockSignIn = vi.fn();
 const mockRequestOtp = vi.fn();
+const mockRequestEmailSignupOtp = vi.fn();
 const mockVerifyOtp = vi.fn();
 const mockGetAuthSettings = vi.fn();
+const mockSetPassword = vi.fn();
+const mockSignOut = vi.fn();
 
 const defaultAuthSettings = {
   enabled: 1,
@@ -58,8 +61,11 @@ vi.mock("@/lib/auth", () => ({
   auth: {
     signIn: (...args: unknown[]) => mockSignIn(...args),
     requestOtp: (...args: unknown[]) => mockRequestOtp(...args),
+    requestEmailSignupOtp: (...args: unknown[]) => mockRequestEmailSignupOtp(...args),
     verifyOtp: (...args: unknown[]) => mockVerifyOtp(...args),
     getAuthSettings: (...args: unknown[]) => mockGetAuthSettings(...args),
+    setPassword: (...args: unknown[]) => mockSetPassword(...args),
+    signOut: (...args: unknown[]) => mockSignOut(...args),
   },
 }));
 
@@ -95,9 +101,9 @@ describe("LoginPage – UI Rendering", () => {
   });
 
   it("renders the AuthForm in login mode with correct heading", async () => {
-    await renderLoginPage();
-    expect(screen.getByText("Welcome back! 👋")).toBeTruthy();
-  });
+     await renderLoginPage();
+     expect(screen.getByText("Welcome! 👋")).toBeTruthy();
+   });
 
   it("renders email and password inputs", async () => {
     await renderLoginPage();
@@ -404,5 +410,80 @@ describe("LoginPage – Edge Cases", () => {
     });
 
     consoleSpy.mockRestore();
+  });
+
+  describe("LoginPage – Passwordless set password flow", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      mockGetAuthSettings.mockResolvedValue({
+        ...defaultAuthSettings,
+        allow_signup: 0,
+        enable_email_signup: 1,
+      });
+    });
+
+    it("verifies OTP and transitions to password setting step, then successfully sets password", async () => {
+      mockRequestEmailSignupOtp.mockResolvedValue({
+        status: "otp_required",
+        otp_log: "123",
+        delivery_status: "Sent",
+      });
+      mockVerifyOtp.mockResolvedValue({ status: "success" });
+      mockSetPassword.mockResolvedValue({ status: "success" });
+      mockSignOut.mockResolvedValue({ status: "success" });
+
+      await renderLoginPage();
+
+      // Click "Access Candidate portal"
+      const accessBtn = screen.getByRole("button", { name: /Access Candidate portal/i });
+      await user.click(accessBtn);
+
+      // Submit email to request OTP
+      await user.type(screen.getByPlaceholderText("you@example.com"), "candidate@example.com");
+      await user.click(screen.getByRole("button", { name: /Send verification code/i }));
+
+      await waitFor(() => {
+        expect(mockRequestEmailSignupOtp).toHaveBeenCalledWith(
+          expect.objectContaining({
+            email: "candidate@example.com",
+          })
+        );
+      });
+
+      // Verification code screen should now be active. Enter OTP.
+      await user.type(screen.getByPlaceholderText("Enter OTP"), "123456");
+      await user.click(screen.getByRole("button", { name: /Verify and continue/i }));
+
+      await waitFor(() => {
+        expect(mockVerifyOtp).toHaveBeenCalledWith(
+          expect.objectContaining({
+            identifier: "candidate@example.com",
+            otp: "123456",
+            purpose: "Signup",
+          })
+        );
+      });
+
+      // Should now be on the Set Password screen. Check headings and inputs.
+      await waitFor(() => {
+        expect(screen.getByText("Set your password")).toBeTruthy();
+      });
+
+      // Enter matching passwords and submit
+      await user.type(screen.getByPlaceholderText("Enter your new password"), "NewPassword@123");
+      await user.type(screen.getByPlaceholderText("Confirm your new password"), "NewPassword@123");
+      await user.click(screen.getByRole("button", { name: /Set password/i }));
+
+      await waitFor(() => {
+        expect(mockSetPassword).toHaveBeenCalledWith("NewPassword@123");
+        expect(mockSignOut).toHaveBeenCalled();
+      });
+
+      // Should now be redirected to the default login screen with a success alert message.
+      await waitFor(() => {
+        expect(screen.getByText("Password set successfully! Please log in using your email and password.")).toBeTruthy();
+        expect(screen.getByText("Welcome! 👋")).toBeTruthy();
+      });
+    });
   });
 });
