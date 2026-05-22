@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Plus,} from "lucide-react"
+import { Plus, } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 import {
@@ -303,7 +303,7 @@ export default function ActionCenterPage() {
             )}
             onClick={() => setFilter("accepted")}
           >
-            Archived ({currentAcceptedCount})
+            Completed ({currentAcceptedCount})
           </button>
         </div>
         {activeTab === "requests" && (
