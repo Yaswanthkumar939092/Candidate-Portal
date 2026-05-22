@@ -259,10 +259,10 @@ describe("ActionCenterPage – Filter Pills", () => {
   it("switches to Completed filter when clicked", async () => {
     renderWithProviders(<ActionCenterPage />);
 
-    await user.click(screen.getByText(/Completed/));
+    await user.click(screen.getByRole('button', { name: /Completed/ }));
 
-    const CompletedBtn = screen.getByText(/Completed/);
-    expect(CompletedBtn.classList.contains("bg-white")).toBe(true);
+const CompletedBtn = screen.getByRole('button', { name: /Completed/ });
+expect(CompletedBtn.classList.contains('bg-white')).toBe(true);
   });
 
   it("switches back to Pending filter when clicked", async () => {
