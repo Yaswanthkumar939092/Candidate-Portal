@@ -1,7 +1,34 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { OnboardingSnapshot } from "@/components/dashboard/onboarding-snapshot";
 import { DashboardData } from "@/types/dashboard";
+
+// Mock the auth context
+vi.mock("@/lib/contexts/auth-context", () => ({
+  useAuth: () => ({
+    user: null,
+    profile: { id: "1", full_name: "Test User" },
+    isLoading: false,
+    isOnboardingComplete: false,
+    refreshProfile: vi.fn(),
+  }),
+}));
+
+// Mock current user hook
+vi.mock("@/lib/hooks/useUser", () => ({
+  useCurrentUser: () => ({
+    userEmail: "test@example.com",
+    isLoading: false,
+  }),
+}));
+
+// Mock job offer pdf hook
+vi.mock("@/lib/hooks/useJobOffer", () => ({
+  useJobOfferPdf: () => ({
+    pdfUrl: "mock-pdf-url",
+    isLoading: false,
+  }),
+}));
 
 const DEFAULT_MOCK_PAYLOAD: DashboardData = {
   name: "Test User",

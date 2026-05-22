@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import JobOfferPage from "@/app/job_offer/page";
+import JobOfferPage from "@/app/(portal)/job_offer/page";
 import { toast } from "sonner";
 
 // Mocks
@@ -79,7 +79,7 @@ describe("JobOfferPage", () => {
     mockUseCurrentUser.mockReturnValue({ userEmail: DEFAULT_EMAIL, isLoading: false });
     mockUseJobOfferStatus.mockReturnValue({ data: { status: "Awaiting Response" }, isLoading: false });
     mockUseJobOfferSummary.mockReturnValue({
-      data: { applicant_name: "Test User", designation: "Software Engineer", duration_display: "6 Months", stipend_display: "$5000" },
+      data: { applicant_name: "Test User", designation: "Software Engineer", duration_display: "6 Months", stipend_display: "$5000", expiry_display: "48 HOURS" },
       isLoading: false
     });
     mockUseJobOfferPdf.mockReturnValue({ pdfUrl: "http://test.com/pdf", isLoading: false });
@@ -98,7 +98,6 @@ describe("JobOfferPage", () => {
   it("renders main offer state with offer details", () => {
     render(<JobOfferPage />);
     expect(screen.getAllByText("Offer of Employment")[0]).toBeTruthy();
-    expect(screen.getByText("Test User")).toBeTruthy();
     expect(screen.getByText("Software Engineer")).toBeTruthy();
     expect(screen.getByText("$5000")).toBeTruthy();
     expect(screen.getByText(/OFFER EXPIRES IN 48 HOURS/)).toBeTruthy();

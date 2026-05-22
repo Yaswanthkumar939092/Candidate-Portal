@@ -1,6 +1,7 @@
 import { FrappeAPI } from "../frappe-api";
 
 export interface JobOfferSummary {
+  expiry_display:string;
   applicant_name: string;
   designation: string;
   duration_display: string;
