@@ -8,6 +8,8 @@ import { useJobApp } from "@/lib/contexts/job-application-context";
 import { JobApplicationStepNav } from "./job-applicationstep-nav";
 import { JobApplicationStep } from "./DynamicField";
 import { useAuth } from "@/lib/contexts/auth-context";
+import { JobApplicationReviewStep } from "./job-application-review-step";
+import { useGetDraftJobApplicant } from "@/lib/hooks/useJobOpening";
 
 interface JobApplicationPageProps {
   jobID: string;
@@ -18,12 +20,14 @@ export default function JobApplicationPage({
 }: JobApplicationPageProps) {
   const { tabs, allFields, isLoading, initializeAllStepsFromDraft, draftName: apiDraftName } = useJobApp();
   const { user } = useAuth();
+  const userEmail = user?.email || user?.user_metadata?.email || "";
+  const { data: draftData } = useGetDraftJobApplicant(jobID, userEmail);
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(
     new Set()
   );
 
-  const userEmail = user?.email || user?.user_metadata?.email || "";
+  
   const [draftName, setDraftName] = useState<string | null>(null);
 
   // ✅ Derive form values reactively from allFields (layout default or value attributes)
@@ -60,6 +64,41 @@ export default function JobApplicationPage({
     }
   }, [defaultValues, initializeAllStepsFromDraft]);
 
+  // ── Restore draft data from API ──────────────────────────────────────────
+  useEffect(() => {
+    if (!draftData?.success || !draftData?.data) return;
+  
+    let formData: Record<string, any> | null = null;
+  
+    try {
+      if (Array.isArray(draftData.data)) {
+        const draft = draftData.data[0];
+  
+        if (draft) {
+          formData =
+            typeof draft.form_data === "string"
+              ? JSON.parse(draft.form_data)
+              : draft.form_data;
+        }
+      } else {
+        const raw = draftData.data.form_data;
+  
+        formData =
+          typeof raw === "string"
+            ? JSON.parse(raw)
+            : raw;
+      }
+  
+      if (formData) {
+        initializeAllStepsFromDraft(formData);
+        toast.info("Draft data restored successfully.");
+      }
+    } catch (error) {
+      console.error("Failed to parse draft form data:", error);
+      toast.error("Unable to restore saved draft.");
+    }
+  }, [draftData]);
+
   // ── Loading / empty states ──────────────────────────────────────────────
 
   if (isLoading) {
@@ -74,8 +113,9 @@ export default function JobApplicationPage({
 
   // ── Helpers ─────────────────────────────────────────────────────────────
 
+  const isReviewStep = currentStep === tabs.length;
   const currentTab = tabs[currentStep];
-  const stepKey = currentTab.tab.toLowerCase().replace(/\s+/g, "_");
+  const stepKey = currentTab?.tab.toLowerCase().replace(/\s+/g, "_") ?? "";
 
   const markStepComplete = (key: string) => {
     setCompletedSteps((prev) => new Set([...prev, key]));
@@ -86,6 +126,7 @@ export default function JobApplicationPage({
    * Returns a map of fieldname → error message.
    */
   const validateCurrentStep = (): Record<string, string> => {
+    if (!currentTab) return {};
     const data = methods.getValues();
     const errors: Record<string, string> = {};
 
@@ -108,7 +149,8 @@ export default function JobApplicationPage({
 
   const handleNext = () => {
     markStepComplete(stepKey);
-    setCurrentStep((p) => Math.min(p + 1, tabs.length - 1));
+    // Allow advancing to the review step (tabs.length)
+    setCurrentStep((p) => Math.min(p + 1, tabs.length));
   };
 
   const handlePrev = () => {
@@ -116,7 +158,7 @@ export default function JobApplicationPage({
   };
 
   const handleStepChange = (nextIndex: number) => {
-    if (nextIndex > currentStep) {
+    if (!isReviewStep && nextIndex > currentStep) {
       const errors = validateCurrentStep();
       if (Object.keys(errors).length > 0) {
         toast.warning("Please fill all required fields before proceeding.");
@@ -128,6 +170,8 @@ export default function JobApplicationPage({
   };
 
   // ── Render ───────────────────────────────────────────────────────────────
+
+  const totalStepsWithReview = tabs.length + 1;
 
   return (
     <div className="flex h-[calc(100vh-64px)] justify-center  overflow-hidden">
@@ -146,10 +190,10 @@ export default function JobApplicationPage({
           <div className="mb-6">
             <div className="md:hidden flex items-center justify-between mb-1">
               <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-                Step {currentStep + 1} of {tabs.length}
+                Step {currentStep + 1} of {totalStepsWithReview}
               </p>
               <p className="text-xs font-medium text-muted-foreground">
-                {Math.round(((currentStep + 1) / tabs.length) * 100)}%
+                {Math.round(((currentStep + 1) / totalStepsWithReview) * 100)}%
               </p>
             </div>
 
@@ -157,29 +201,39 @@ export default function JobApplicationPage({
             <div className="md:hidden h-1.5 w-full rounded-full bg-muted overflow-hidden mb-3">
               <div
                 className="h-full rounded-full bg-primary transition-all duration-500 ease-out"
-                style={{ width: `${((currentStep + 1) / tabs.length) * 100}%` }}
+                style={{ width: `${((currentStep + 1) / totalStepsWithReview) * 100}%` }}
               />
             </div>
 
             <h1 className="mt-1 text-2xl font-bold text-foreground">
-              {currentTab.tab}
+              {isReviewStep ? "Review & Submit" : currentTab.tab}
             </h1>
           </div>
 
-          <FormProvider {...methods}>
-            <JobApplicationStep
-              tab={currentTab}
-              stepKey={stepKey}
-              currentStep={currentStep}
-              totalSteps={tabs.length}
-              jobID={jobID}
-              onNext={handleNext}
+          {isReviewStep ? (
+            <JobApplicationReviewStep
+              completedSteps={completedSteps}
+              goToStep={handleStepChange}
               onPrev={handlePrev}
-              methods={methods}
+              jobID={jobID}
               draftName={draftName}
-              setDraftName={setDraftName}
             />
-          </FormProvider>
+          ) : (
+            <FormProvider {...methods}>
+              <JobApplicationStep
+                tab={currentTab}
+                stepKey={stepKey}
+                currentStep={currentStep}
+                totalSteps={totalStepsWithReview}
+                jobID={jobID}
+                onNext={handleNext}
+                onPrev={handlePrev}
+                methods={methods}
+                draftName={draftName}
+                setDraftName={setDraftName}
+              />
+            </FormProvider>
+          )}
         </div>
       </main>
     </div>

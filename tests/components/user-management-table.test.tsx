@@ -109,7 +109,7 @@ describe("UserManagementTable", () => {
     expect(onRoleChange).toHaveBeenCalledWith("1", "admin")
   })
 
-  it("triggers activate/deactivate actions", async () => {
+  it("triggers activate action", async () => {
     render(
       <UserManagementTable
         users={mockUsers}
@@ -126,6 +126,19 @@ describe("UserManagementTable", () => {
     fireEvent.click(menuButtons[0])
     fireEvent.click(await screen.findByText("Activate User"))
     expect(onActivateUser).toHaveBeenCalledWith("1")
+  })
+
+  it("triggers deactivate action", async () => {
+    render(
+      <UserManagementTable
+        users={mockUsers}
+        onRoleChange={onRoleChange}
+        onActivateUser={onActivateUser}
+        onDeactivateUser={onDeactivateUser}
+      />
+    )
+
+    const menuButtons = screen.getAllByRole("button", { name: /open menu/i })
 
     // Test deactivate
     fireEvent.pointerDown(menuButtons[1])
