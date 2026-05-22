@@ -43,18 +43,14 @@ describe("jobOfferService", () => {
     expect(FrappeAPI.get).toHaveBeenCalledWith(expect.stringContaining("get_company_logo"));
   });
 
-  it("downloadJobOfferPdf calls FrappeAPI.getBlob and returns object URL", async () => {
+  it("downloadJobOfferPdf calls FrappeAPI.getBlob and returns blob", async () => {
     const mockBlob = new Blob(["test"], { type: "application/pdf" });
     (FrappeAPI.getBlob as any).mockResolvedValue(mockBlob);
-    const mockUrl = "blob:url";
-    const createUrlSpy = vi.spyOn(URL, "createObjectURL").mockReturnValue(mockUrl);
 
     const result = await jobOfferService.downloadJobOfferPdf("test@test.com");
 
-    expect(result).toBe(mockUrl);
+    expect(result).toBe(mockBlob);
     expect(FrappeAPI.getBlob).toHaveBeenCalledWith(expect.stringContaining("download_job_offer_pdf"), { appl: "test@test.com" });
-    
-    createUrlSpy.mockRestore();
   });
 
   it("updateJobOfferStatus calls FrappeAPI.post", async () => {

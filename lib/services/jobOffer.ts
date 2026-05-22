@@ -59,12 +59,12 @@ export const jobOfferService = {
     }
   },
 
-  downloadJobOfferPdf: async (appl: string): Promise<string> => {
+  downloadJobOfferPdf: async (appl: string): Promise<Blob> => {
     try {
       const blob = await FrappeAPI.getBlob("recruitment.job_offer_utils.download_job_offer_pdf", {
         appl,
       });
-      return URL.createObjectURL(blob);
+      return blob;
     } catch (error) {
       console.error("Failed to fetch job offer PDF:", error);
       throw error;
