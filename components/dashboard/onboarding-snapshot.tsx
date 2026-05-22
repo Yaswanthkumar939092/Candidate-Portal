@@ -1,10 +1,13 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowRight, CheckCircle2, ShieldCheck } from "lucide-react"
+import { ArrowRight, CheckCircle2, ShieldCheck, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { CircularProgress } from "@/components/shared/circular-progress"
+import { useAuth } from "@/lib/contexts/auth-context"
+import { useCurrentUser } from "@/lib/hooks/useUser"
+import { useJobOfferPdf } from "@/lib/hooks/useJobOffer"
 
 import { DashboardData } from "@/types/dashboard"
 
@@ -52,6 +55,12 @@ export function OnboardingSnapshot({
   dashboardPayload,
   className,
 }: OnboardingSnapshotProps) {
+  const { profile } = useAuth()
+  const { userEmail } = useCurrentUser()
+  const { pdfUrl, isLoading: isPdfLoading } = useJobOfferPdf(userEmail || "", true)
+
+  const isProfileActive = Boolean(profile)
+
   const form_completion = dashboardPayload?.form_completion;
   const onboardingStage = dashboardPayload?.onboarding_stage;
 
@@ -104,18 +113,71 @@ export function OnboardingSnapshot({
                 : "Complete your onboarding tasks to get ready for your first day. Upload required documents and fill in your details."}
             </p>
 
-            {/* CTA Button */}
-            <div className="pt-2">
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
               <Button
                 asChild
                 size="lg"
-                className="bg-black text-white font-semibold hover:bg-black/80 rounded-xl"
+                className="bg-black text-white font-semibold hover:bg-black/80 rounded-xl text-center"
               >
                 <Link href="/onboarding">
                   View Your Journey
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
+
+              {isProfileActive && (
+                <>
+                  {/* Mobile: download directly */}
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="lg"
+                    className={cn(
+                      "flex sm:hidden border-black text-black hover:bg-black/10 hover:text-black rounded-xl font-semibold justify-center",
+                      !pdfUrl && "opacity-50 pointer-events-none"
+                    )}
+                  >
+                    <a
+                      href={pdfUrl || "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      download="Offer_Letter.pdf"
+                    >
+                      {isPdfLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                      )}
+                      Preview / Download Offer
+                    </a>
+                  </Button>
+
+                  {/* Desktop: open in new tab (no download attribute) */}
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="lg"
+                    className={cn(
+                      "hidden sm:flex border border-black  bg-transparent text-black hover:bg-black/10 hover:text-black rounded-xl font-semibold justify-center",
+                      !pdfUrl && "opacity-50 pointer-events-none"
+                    )}
+                  >
+                    <a
+                      href={pdfUrl || "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {isPdfLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                      )}
+                      Preview / Download Offer
+                    </a>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
 

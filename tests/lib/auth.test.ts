@@ -158,6 +158,59 @@ describe("Frappe candidate auth", () => {
     await expect(auth.signInWithOAuth("google")).rejects.toThrow("not enabled")
   })
 
+  it("requests an email signup OTP through the recruitment Frappe API", async () => {
+    fetchMock.mockResolvedValueOnce(frappePayload({
+      status: "otp_required",
+      otp_log: "CAND-OTP-2026-00001",
+      delivery_status: "Sent",
+    }))
+
+    const result = await auth.requestEmailSignupOtp({
+      email: "candidate@example.com",
+    })
+
+    expect(result.status).toBe("otp_required")
+    expect(result.otp_log).toBe("CAND-OTP-2026-00001")
+    expect(result.delivery_status).toBe("Sent")
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://localhost:8005/api/method/recruitment.api.candidate_auth.request_email_signup_otp",
+      expect.objectContaining({
+        method: "POST",
+        credentials: "include",
+        body: JSON.stringify({
+          email: "candidate@example.com",
+        }),
+      }),
+    )
+  })
+
+  it("sets the password through the recruitment Frappe API", async () => {
+    fetchMock.mockResolvedValueOnce(frappePayload({
+      status: "success",
+      user: {
+        name: "candidate@example.com",
+        email: "candidate@example.com",
+        password_setup_required: false,
+      },
+    }))
+
+    const result = await auth.setPassword("newpassword")
+
+    expect(result.status).toBe("success")
+    expect(result.user?.email).toBe("candidate@example.com")
+    expect(result.user?.password_setup_required).toBe(false)
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://localhost:8005/api/method/recruitment.api.candidate_auth.set_password",
+      expect.objectContaining({
+        method: "POST",
+        credentials: "include",
+        body: JSON.stringify({
+          password: "newpassword",
+        }),
+      }),
+    )
+  })
+
   it("returns a noop auth-state subscription for compatibility", () => {
     const result = onAuthStateChange(vi.fn())
     expect(result.data.subscription.unsubscribe()).toBeUndefined()

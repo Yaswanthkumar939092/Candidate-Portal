@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AuthForm, AuthFormData } from "@/components/auth-form";
 import { auth, type FrappeAuthSettings } from "@/lib/auth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle, MailCheck, CheckCircle2 } from "lucide-react";
 
-export default function LoginPage() {
+export default function VerifyEmailPage() {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -14,7 +16,6 @@ export default function LoginPage() {
   const [otp, setOtp] = useState("");
   const [settings, setSettings] = useState<FrappeAuthSettings | null>(null);
   const [isSettingsLoading, setIsSettingsLoading] = useState(true);
-  const [isPasswordless, setIsPasswordless] = useState(false);
   const [isSettingPassword, setIsSettingPassword] = useState(false);
 
   useEffect(() => {
@@ -37,45 +38,25 @@ export default function LoginPage() {
     };
   }, []);
 
-  const handleLogin = async (formData: AuthFormData) => {
+  const handleRequestOtp = async (formData: AuthFormData) => {
     setIsLoading(true);
     setError(null);
     setSuccessMessage(null);
 
     try {
-      if (isPasswordless) {
-        await auth.requestEmailSignupOtp({
-          email: formData.email,
-        });
-        setPendingOtpEmail(formData.email);
-        return;
-      }
-
-      await auth.signIn({
+      await auth.requestEmailSignupOtp({
         email: formData.email,
-        password: formData.password,
       });
-
-      if (settings?.allow_email_otp_login === 1 && settings.enable_email_otp === 1) {
-        await auth.requestOtp({
-          identifier: formData.email,
-          purpose: "Login",
-          identifierType: "Email",
-        });
-        setPendingOtpEmail(formData.email);
-        return;
-      }
-
-      redirectToDashboard();
+      setPendingOtpEmail(formData.email);
     } catch (error) {
-      console.error("Login error:", error);
-      setError(error instanceof Error ? error.message : "Failed to sign in");
+      console.error("Request OTP error:", error);
+      setError(error instanceof Error ? error.message : "Failed to send verification code");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleVerifyLoginOtp = async () => {
+  const handleVerifyOtp = async () => {
     if (!pendingOtpEmail) return;
 
     setIsLoading(true);
@@ -85,18 +66,12 @@ export default function LoginPage() {
       await auth.verifyOtp({
         identifier: pendingOtpEmail,
         otp,
-        purpose: isPasswordless ? "Signup" : "Login",
+        purpose: "Signup",
         identifierType: "Email",
       });
-
-      if (isPasswordless) {
-        setIsSettingPassword(true);
-        return;
-      }
-
-      redirectToDashboard();
+      setIsSettingPassword(true);
     } catch (error) {
-      console.error("OTP login error:", error);
+      console.error("Verify OTP error:", error);
       setError(error instanceof Error ? error.message : "Failed to verify OTP");
     } finally {
       setIsLoading(false);
@@ -117,11 +92,11 @@ export default function LoginPage() {
       await auth.setPassword(formData.password);
       await auth.signOut();
 
-      setIsPasswordless(false);
       setIsSettingPassword(false);
       setPendingOtpEmail(null);
       setOtp("");
       setSuccessMessage("Password set successfully! Please log in using your email and password.");
+      router.push("/login");
     } catch (error) {
       console.error("Set password error:", error);
       setError(error instanceof Error ? error.message : "Failed to set password");
@@ -130,12 +105,16 @@ export default function LoginPage() {
     }
   };
 
-  const resetLoginStep = () => {
+  const resetState = () => {
     setPendingOtpEmail(null);
     setOtp("");
     setError(null);
     setSuccessMessage(null);
     setIsSettingPassword(false);
+  };
+
+  const handleBackToLogin = () => {
+    router.push("/login");
   };
 
   return (
@@ -150,43 +129,43 @@ export default function LoginPage() {
           </Alert>
         </div>
       )}
+
       {error && (
         <div className="p-4 w-full max-w-md">
-          <Alert className="border-destructive/30 bg-destructive/10">
-            <AlertTriangle className="w-4 h-4 text-destructive" />
-            <AlertDescription className="text-destructive">
-              {error}
-            </AlertDescription>
+          <Alert variant="destructive">
+            <AlertTriangle className="w-4 h-4" />
+            <AlertDescription>{error}</AlertDescription>
           </Alert>
         </div>
       )}
+
       {isSettingsLoading ? (
-        <AuthUnavailable title="Loading login" message="Checking candidate authentication settings." />
-      ) : !settings ? (
-        <AuthUnavailable title="Login unavailable" message="Unable to load candidate authentication settings." />
-      ) : settings?.enabled === 0 ? (
-        <AuthUnavailable title="Login unavailable" message="Candidate portal authentication is disabled." />
+        <div className="flex flex-col items-center justify-center py-12">
+          <div className="w-8 h-8 border-4 border-[#2563EB] border-t-transparent rounded-full animate-spin"></div>
+          <p className="mt-4 text-sm text-[#64748B]">Loading settings...</p>
+        </div>
       ) : (
         <>
-          {settings.allow_password_login === 1 && (
+          {settings && settings.enable_email_signup === 1 ? (
             <AuthForm
               type="login"
-              onSubmit={isSettingPassword ? handleSetPassword : pendingOtpEmail ? handleVerifyLoginOtp : handleLogin}
+              onSubmit={isSettingPassword ? handleSetPassword : pendingOtpEmail ? handleVerifyOtp : handleRequestOtp}
               isLoading={isLoading}
               loginStep={isSettingPassword ? "setPassword" : pendingOtpEmail ? "otp" : "credentials"}
               otpEmail={pendingOtpEmail || undefined}
               otpValue={otp}
               onOtpChange={setOtp}
-              onBackToCredentials={resetLoginStep}
+              onBackToCredentials={resetState}
               allowSignup={settings.allow_signup === 1}
               enableEmailSignup={settings.enable_email_signup === 1}
-              isPasswordless={isPasswordless}
-              onPasswordlessToggle={setIsPasswordless}
+              isPasswordless={true}
+              onPasswordlessToggle={handleBackToLogin}
             />
-          )}
-
-          {settings.allow_password_login === 0 && (
-            <AuthUnavailable title="Login unavailable" message="Password login is not enabled for candidate accounts." />
+          ) : (
+            <AuthUnavailable
+              title="Access unavailable"
+              message="Accessing candidate portal via email verification is not enabled."
+            />
           )}
         </>
       )}
@@ -194,16 +173,12 @@ export default function LoginPage() {
   );
 }
 
-function redirectToDashboard() {
-  window.location.assign("/dashboard");
-}
-
 function AuthUnavailable({ title, message }: { title: string; message: string }) {
   return (
     <div className="w-full max-w-md rounded-lg border bg-card p-6 text-center text-card-foreground shadow-sm">
       <MailCheck className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
-      <h1 className="text-xl font-semibold">{title}</h1>
-      <p className="mt-2 text-sm text-muted-foreground">{message}</p>
+      <h2 className="mb-1 text-lg font-semibold tracking-tight">{title}</h2>
+      <p className="text-sm text-muted-foreground">{message}</p>
     </div>
   );
 }

@@ -62,9 +62,9 @@ describe("AuthForm – Login UI", () => {
     vi.clearAllMocks();
   });
 
-  it("renders the login heading 'Welcome back! 👋'", () => {
+  it("renders the login heading 'Welcome! 👋'", () => {
     render(<AuthForm {...defaultLoginProps} />);
-    expect(screen.getByText("Welcome back! 👋")).toBeTruthy();
+    expect(screen.getByText("Welcome! 👋")).toBeTruthy();
   });
 
   it("renders the login subtitle text", () => {
@@ -264,6 +264,59 @@ describe("AuthForm – Login Logic", () => {
         lastName: "",
       })
     );
+  });
+});
+
+// =====================================================================
+//  PASSWORDLESS LOGIN FORM  – UI & LOGIC TESTS
+// =====================================================================
+describe("AuthForm – Passwordless UI & Interaction", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("renders the heading 'Verify your email' and subheading", () => {
+    render(<AuthForm {...defaultLoginProps} isPasswordless={true} />);
+    expect(screen.getByText("Verify your email")).toBeTruthy();
+    expect(
+      screen.getByText("We'll send a 6-digit verification code to your email address to confirm your account.")
+    ).toBeTruthy();
+  });
+
+  it("hides the password field in passwordless mode", () => {
+    render(<AuthForm {...defaultLoginProps} isPasswordless={true} />);
+    expect(screen.queryByPlaceholderText("Enter your password")).toBeNull();
+  });
+
+  it("renders the submit button as 'Send verification code'", () => {
+    render(<AuthForm {...defaultLoginProps} isPasswordless={true} />);
+    expect(
+      screen.getByRole("button", { name: /Send verification code/i })
+    ).toBeTruthy();
+  });
+
+  it("renders the 'Why do I need to verify?' card", () => {
+    render(<AuthForm {...defaultLoginProps} isPasswordless={true} />);
+    expect(screen.getByText("Why do I need to verify?")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "To protect your career data and ensure secure access to your onboarding dashboard and team communications."
+      )
+    ).toBeTruthy();
+  });
+
+  it("calls onPasswordlessToggle(false) when Back to password login is clicked", async () => {
+    const onPasswordlessToggle = vi.fn();
+    render(
+      <AuthForm
+        {...defaultLoginProps}
+        isPasswordless={true}
+        onPasswordlessToggle={onPasswordlessToggle}
+      />
+    );
+    const backBtn = screen.getByRole("button", { name: /Back to password login/i });
+    await user.click(backBtn);
+    expect(onPasswordlessToggle).toHaveBeenCalledWith(false);
   });
 });
 
@@ -555,5 +608,31 @@ describe("AuthForm – Edge Cases", () => {
     render(<AuthForm {...defaultLoginProps} />);
     const emailInput = screen.getByPlaceholderText("you@example.com");
     expect(emailInput).toHaveAttribute("type", "email");
+  });
+
+  describe("AuthForm – Set Password Flow", () => {
+    it("renders set password heading, inputs and button correctly", () => {
+      render(<AuthForm {...defaultLoginProps} loginStep="setPassword" />);
+      expect(screen.getByText("Set your password")).toBeTruthy();
+      expect(screen.getByText("Create a password for your account to ensure secure access in the future.")).toBeTruthy();
+      expect(screen.getByLabelText("New Password")).toBeTruthy();
+      expect(screen.getByLabelText("Confirm New Password")).toBeTruthy();
+      expect(screen.queryByPlaceholderText("you@example.com")).toBeNull();
+      expect(screen.getByRole("button", { name: /Set password/i })).toBeTruthy();
+    });
+
+    it("renders cancel button and triggers onBackToCredentials", async () => {
+      const onBackToCredentials = vi.fn();
+      render(
+        <AuthForm
+          {...defaultLoginProps}
+          loginStep="setPassword"
+          onBackToCredentials={onBackToCredentials}
+        />
+      );
+      const cancelBtn = screen.getByRole("button", { name: /Cancel and back to login/i });
+      await user.click(cancelBtn);
+      expect(onBackToCredentials).toHaveBeenCalled();
+    });
   });
 });
