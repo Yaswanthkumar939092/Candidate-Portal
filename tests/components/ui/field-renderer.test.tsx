@@ -35,8 +35,16 @@ vi.mock("@/lib/contexts/onboarding-context", () => {
 
 import { FrappeAPI } from "@/lib/frappe-api"
 import { useOnboarding } from "@/lib/contexts/onboarding-context"
+import { useLinkFieldOptions } from "@/lib/hooks/useLinkFieldOptions"
 
- 
+vi.mock("@/lib/hooks/useLinkFieldOptions", () => ({
+  useLinkFieldOptions: vi.fn(() => ({
+    data: undefined,
+    isLoading: false,
+    isError: false,
+  })),
+}))
+
 const mockFrappeAPI = FrappeAPI as any
 
 describe("DynamicFieldRenderer", () => {
@@ -437,9 +445,19 @@ describe("DynamicFieldRenderer", () => {
 
   describe("Link Field Type", () => {
     it("renders link field and fetches options", async () => {
-      mockFrappeAPI.getresourceDocumentData.mockResolvedValue({
-        data: [{ name: "User1" }, { name: "User2" }],
-      })
+      vi.mocked(useLinkFieldOptions).mockReturnValue({
+        data: {
+          status: "success",
+          doctype: "User",
+          title_field: "name",
+          total: 2,
+          results: [
+            { id: "User1", label: "User1" },
+            { id: "User2", label: "User2" },
+          ],
+        },
+        isLoading: false,
+      } as any)
 
       const field: FormField = {
         fieldname: "user",
@@ -453,17 +471,15 @@ describe("DynamicFieldRenderer", () => {
       )
 
       await waitFor(() => {
-        expect(mockFrappeAPI.getresourceDocumentData).toHaveBeenCalledWith(
-          "User",
-          expect.objectContaining({ fields: ["name"] })
-        )
+        expect(useLinkFieldOptions).toHaveBeenCalledWith("User", "")
       })
     })
 
     it("displays loading state while fetching link options", () => {
-      mockFrappeAPI.getresourceDocumentData.mockImplementation(
-        () => new Promise(() => { })
-      )
+      vi.mocked(useLinkFieldOptions).mockReturnValue({
+        data: undefined,
+        isLoading: true,
+      } as any)
 
       const field: FormField = {
         fieldname: "department",
@@ -481,9 +497,20 @@ describe("DynamicFieldRenderer", () => {
     })
 
     it("handles link option selection", async () => {
-      mockFrappeAPI.getresourceDocumentData.mockResolvedValue({
-        data: [{ name: "Sales" }, { name: "HR" }, { name: "IT" }],
-      })
+      vi.mocked(useLinkFieldOptions).mockReturnValue({
+        data: {
+          status: "success",
+          doctype: "Department",
+          title_field: "name",
+          total: 3,
+          results: [
+            { id: "Sales", label: "Sales" },
+            { id: "HR", label: "HR" },
+            { id: "IT", label: "IT" },
+          ],
+        },
+        isLoading: false,
+      } as any)
 
       const field: FormField = {
         fieldname: "dept",
@@ -496,10 +523,6 @@ describe("DynamicFieldRenderer", () => {
       render(
         <DynamicFieldRenderer field={field} value="" onChange={onChange} />
       )
-
-      await waitFor(() => {
-        expect(mockFrappeAPI.getresourceDocumentData).toHaveBeenCalled()
-      }, { timeout: 2000 })
 
       await user.click(screen.getByRole("combobox"))
 
@@ -852,8 +875,12 @@ describe("DynamicFieldRenderer", () => {
     })
 
     it("handles Link component API fetch failure gracefully", async () => {
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => { })
-      mockFrappeAPI.getresourceDocumentData.mockRejectedValueOnce(new Error("Network failed"))
+      vi.mocked(useLinkFieldOptions).mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isError: true,
+        error: new Error("Network failed"),
+      } as any)
 
       const field: FormField = {
         fieldname: "link_test",
@@ -864,13 +891,22 @@ describe("DynamicFieldRenderer", () => {
 
       render(<DynamicFieldRenderer field={field} value="" onChange={vi.fn()} />)
 
-      await waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalledWith("Link fetch error:", expect.any(Error))
-      })
-      consoleSpy.mockRestore()
+      // Verify that it renders without crashing
+      expect(screen.getByRole("combobox")).toBeTruthy()
     })
 
     it("extracts name from Object types in Link and Select values, and inserts missing default values dynamically", async () => {
+      vi.mocked(useLinkFieldOptions).mockReturnValue({
+        data: {
+          status: "success",
+          doctype: "SampleDoc",
+          title_field: "name",
+          total: 1,
+          results: [{ id: "ExistingDoc", label: "ExistingDoc" }],
+        },
+        isLoading: false,
+      } as any)
+
       const field: FormField = {
         fieldname: "link_obj",
         label: "Link Object",
@@ -878,20 +914,13 @@ describe("DynamicFieldRenderer", () => {
         options: "SampleDoc",
       }
 
-      mockFrappeAPI.getresourceDocumentData.mockResolvedValue({ data: [{ name: "ExistingDoc" }] })
-
       // Test Object extraction and dynamic option inclusion logic lines
       render(<DynamicFieldRenderer field={field} value={{ name: "InjectedForeignValue" }} onChange={vi.fn()} />)
-
-      // Crucial: wait for the loading state to resolve so dynamic injection occurs
-      await waitFor(() => {
-        expect(mockFrappeAPI.getresourceDocumentData).toHaveBeenCalled()
-      })
 
       // Trigger dropdown
       await user.click(screen.getByRole("combobox"))
 
-      // Line 389 verification: InjectedForeignValue is present in choices because it was spliced into options
+      // Verification: InjectedForeignValue is present in choices because it was spliced into options
       const elements = await screen.findAllByText("InjectedForeignValue")
       expect(elements.length).toBeGreaterThan(0)
 
