@@ -1,49 +1,75 @@
 /** @vitest-environment jsdom */
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, act } from "@testing-library/react";
 import PdfViewer from "@/app/(portal)/job_offer/PdfViewer";
 
-// Mock react-pdf CSS imports
-vi.mock("react-pdf/dist/Page/AnnotationLayer.css", () => ({}));
-vi.mock("react-pdf/dist/Page/TextLayer.css", () => ({}));
-
-interface DocumentProps {
-  children?: React.ReactNode;
-  onLoadSuccess?: (data: { numPages: number }) => void;
-  file: string;
-}
-
-interface PageProps {
-  pageNumber: number;
-}
-
-// Mock react-pdf
-vi.mock("react-pdf", () => ({
-  Document: ({ children, onLoadSuccess, file }: DocumentProps) => {
-    // Simulate successful load
-    if (onLoadSuccess) {
-      onLoadSuccess({ numPages: 2 });
-    }
-    return <div data-testid="pdf-document" data-file={file}>{children}</div>;
-  },
-  Page: ({ pageNumber }: PageProps) => <div data-testid={`pdf-page-${pageNumber}`}>Page {pageNumber}</div>,
-  pdfjs: {
-    GlobalWorkerOptions: {
-      workerSrc: ""
-    },
-    version: "1.2.3"
-  }
-}));
-
 describe("PdfViewer", () => {
-  it("renders correctly and shows pages after loading", () => {
-    render(<PdfViewer pdfUrl="http://example.com/test.pdf" />);
-    
-    expect(screen.getByTestId("pdf-document")).toBeTruthy();
-    expect(screen.getByTestId("pdf-document").getAttribute("data-file")).toBe("http://example.com/test.pdf");
-    
-    // Check if 2 pages are rendered (as mocked)
-    expect(screen.getByTestId("pdf-page-1")).toBeTruthy();
-    expect(screen.getByTestId("pdf-page-2")).toBeTruthy();
+  beforeEach(() => {
+    vi.stubGlobal("URL", {
+      createObjectURL: vi.fn(() => "blob:http://localhost:3000/some-uuid"),
+      revokeObjectURL: vi.fn(),
+    });
+    vi.stubGlobal("fetch", vi.fn());
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("fetches the PDF as a blob and renders it with the object URL on success", async () => {
+    const mockBlob = new Blob(["pdf content"], { type: "application/pdf" });
+    const mockResponse = {
+      ok: true,
+      blob: vi.fn().mockResolvedValue(mockBlob),
+    };
+    (global.fetch as any).mockResolvedValue(mockResponse);
+
+    await act(async () => {
+      render(<PdfViewer pdfUrl="http://example.com/test.pdf" />);
+    });
+
+    // Verify fetch was called with credentials
+    expect(global.fetch).toHaveBeenCalledWith("http://example.com/test.pdf", {
+      credentials: "include",
+    });
+
+    // Verify URL.createObjectURL was called with the blob
+    expect(URL.createObjectURL).toHaveBeenCalledWith(mockBlob);
+
+    // Verify the iframe src is set to the blob URL
+    const iframe = screen.getByTitle("Offer Letter");
+    expect(iframe).toBeTruthy();
+    expect(iframe.getAttribute("src")).toBe("blob:http://localhost:3000/some-uuid");
+  });
+
+  it("falls back to the direct pdfUrl if the fetch fails", async () => {
+    (global.fetch as any).mockRejectedValue(new Error("Network error"));
+
+    await act(async () => {
+      render(<PdfViewer pdfUrl="http://example.com/test.pdf" />);
+    });
+
+    // Verify the iframe src falls back to the original URL
+    const iframe = screen.getByTitle("Offer Letter");
+    expect(iframe).toBeTruthy();
+    expect(iframe.getAttribute("src")).toBe("http://example.com/test.pdf");
+  });
+
+  it("falls back to the direct pdfUrl if the response is not ok", async () => {
+    const mockResponse = {
+      ok: false,
+      statusText: "Forbidden",
+    };
+    (global.fetch as any).mockResolvedValue(mockResponse);
+
+    await act(async () => {
+      render(<PdfViewer pdfUrl="http://example.com/test.pdf" />);
+    });
+
+    // Verify the iframe src falls back to the original URL
+    const iframe = screen.getByTitle("Offer Letter");
+    expect(iframe).toBeTruthy();
+    expect(iframe.getAttribute("src")).toBe("http://example.com/test.pdf");
   });
 });
+
