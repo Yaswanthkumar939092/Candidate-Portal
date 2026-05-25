@@ -1,5 +1,4 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
 import { jobOfferService } from "../services/jobOffer";
 
 export const useJobOfferSummary = (appl: string, enabled = true) => {
@@ -11,34 +10,14 @@ export const useJobOfferSummary = (appl: string, enabled = true) => {
   });
 };
 
+/**
+ * Returns the direct Frappe API URL for the PDF.
+ * The browser loads it with cookies, so no fetch/blob is needed.
+ * Returns null when appl is empty so consumers can guard the UI.
+ */
 export const useJobOfferPdf = (appl: string, enabled = true) => {
-  const query = useQuery({
-    queryKey: ["jobOfferPdf", appl],
-    queryFn: () => jobOfferService.downloadJobOfferPdf(appl),
-    enabled: !!appl && enabled,
-    staleTime: 1000 * 60 * 10, // 10 minutes — PDF doesn't change often
-    refetchOnWindowFocus: false,
-  });
-
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-
-  // Create/revoke the object URL when the component mounts/unmounts or query data changes
-  useEffect(() => {
-    if (query.data) {
-      const url = URL.createObjectURL(query.data);
-      setPdfUrl(url);
-      return () => {
-        URL.revokeObjectURL(url);
-        setPdfUrl(null);
-      };
-    }
-  }, [query.data]);
-
-  return {
-    pdfUrl,
-    isLoading: query.isLoading,
-    error: query.error,
-  };
+  const pdfUrl = appl && enabled ? jobOfferService.getJobOfferPdfUrl(appl) : null;
+  return { pdfUrl, isLoading: false, error: null };
 };
 
 export const useUpdateJobOfferStatus = () => {

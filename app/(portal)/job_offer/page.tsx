@@ -8,18 +8,25 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useJobOfferSummary, useJobOfferPdf, useUpdateJobOfferStatus, useJobOfferStatus, useRejectionReasons } from "@/lib/hooks/useJobOffer";
 import { useCurrentUser } from "@/lib/hooks/useUser";
 import { useCompanyLogo } from "@/lib/hooks/useCompanyLogo";
-import dynamic from "next/dynamic";
+import PdfViewer from "./PdfViewer";
 import { Button } from "@/components/ui/button";
 
-const PdfViewer = dynamic(() => import("./PdfViewer"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex flex-col items-center gap-3 py-10">
-      <Loader2 className="h-6 w-6 animate-spin text-primary" />
-      <p className="text-sm text-[#64748b]">Loading Document Viewer...</p>
-    </div>
-  ),
-});
+/** Download the offer letter as a file. Fetches with credentials so cookies work. */
+async function downloadPdf(url: string) {
+  try {
+    const res = await fetch(url, { credentials: "include" });
+    if (!res.ok) throw new Error("Download failed");
+    const blob = await res.blob();
+    const href = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = href;
+    a.download = "Offer_Letter.pdf";
+    a.click();
+    URL.revokeObjectURL(href);
+  } catch {
+    toast.error("Could not download the offer letter. Please try again.");
+  }
+}
 
 
 
@@ -61,7 +68,7 @@ function JobOfferContent() {
   const isPdfNeeded = statusNormalized === "awaiting response";
 
   const { data: offerData, isLoading: isApiLoading } = useJobOfferSummary(applicantEmail, isSummaryNeeded);
-  const { pdfUrl, isLoading: isPdfLoading } = useJobOfferPdf(applicantEmail, isPdfNeeded);
+  const { pdfUrl } = useJobOfferPdf(applicantEmail, isPdfNeeded);
   const { mutateAsync: updateStatus } = useUpdateJobOfferStatus();
   const { data: reasonsData, isLoading: isReasonsLoading } = useRejectionReasons();
 
@@ -228,15 +235,8 @@ function JobOfferContent() {
                   <h1 className="text-[1.6rem] md:text-[1.6rem] font-semibold text-[#1a2332] my-3 md:my-[15px] leading-[1.15] text-center">
                     Offer of Employment
                   </h1>
-                  {isPdfLoading ? (
-                    <div className="bg-white border border-[#e2e8f0] rounded-xl p-8 shadow-[0_1px_3px_rgba(0,0,0,0.04)] flex items-center justify-center min-h-[600px]">
-                      <div className="flex flex-col items-center gap-3">
-                        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                        <p className="text-sm text-[#64748b]">Loading offer letter...</p>
-                      </div>
-                    </div>
-                  ) : pdfUrl ? (
-                    <div className="bg-[#f1f5f9] border border-[#e2e8f0] rounded-xl overflow-y-auto overflow-x-hidden shadow-[inset_0_1px_4px_rgba(0,0,0,0.05)] p-6" style={{ height: "80vh", minHeight: "600px" }}>
+                  {pdfUrl ? (
+                    <div className="bg-[#f1f5f9] border border-[#e2e8f0] rounded-xl overflow-hidden shadow-[inset_0_1px_4px_rgba(0,0,0,0.05)]" style={{ height: "80vh", minHeight: "600px" }}>
                       <PdfViewer pdfUrl={pdfUrl} />
                     </div>
                   ) : (
@@ -293,20 +293,14 @@ function JobOfferContent() {
 
                     <div className="p-5">
                       <div className="block lg:hidden">
-                        <a
-                          href={pdfUrl || "#"}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          download="Offer_Letter.pdf"
-                          className={`flex items-center justify-center gap-2 w-full p-2.5 bg-transparent text-[#2563eb] border-[1.5px] border-[#2563eb] rounded-lg text-[0.85rem] font-semibold no-underline mb-2.5 text-center transition-colors duration-200 hover:bg-[#2563eb]/6 ${!pdfUrl ? 'opacity-50 pointer-events-none' : ''}`}
+                        <button
+                          onClick={() => pdfUrl && downloadPdf(pdfUrl)}
+                          disabled={!pdfUrl}
+                          className="flex items-center justify-center gap-2 w-full p-2.5 bg-transparent text-[#2563eb] border-[1.5px] border-[#2563eb] rounded-lg text-[0.85rem] font-semibold mb-2.5 text-center transition-colors duration-200 hover:bg-[#2563eb]/6 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          {isPdfLoading ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
-                          )}
-                          Download / Preview Offer Letter
-                        </a>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                          Download Offer Letter
+                        </button>
                       </div>
 
                       <label className="flex items-start gap-2.5 text-[0.82rem] text-[#334155] cursor-pointer leading-[1.45] mb-4 bg-[#fff8e1] border border-[#ffe0b2] rounded-lg p-3">
@@ -322,19 +316,14 @@ function JobOfferContent() {
                       </label>
 
                       <div className="hidden lg:block">
-                        <a
-                          href={pdfUrl || "#"}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={`flex items-center justify-center gap-2 w-full p-2.5 bg-transparent text-[#2563eb] border-[1.5px] border-[#2563eb] rounded-lg text-[0.85rem] font-semibold no-underline mb-2.5 text-center transition-colors duration-200 hover:bg-[#2563eb]/6 ${!pdfUrl ? 'opacity-50 pointer-events-none' : ''}`}
+                        <button
+                          onClick={() => pdfUrl && window.open(pdfUrl, "_blank", "noopener,noreferrer")}
+                          disabled={!pdfUrl}
+                          className="flex items-center justify-center gap-2 w-full p-2.5 bg-transparent text-[#2563eb] border-[1.5px] border-[#2563eb] rounded-lg text-[0.85rem] font-semibold mb-2.5 text-center transition-colors duration-200 hover:bg-[#2563eb]/6 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          {isPdfLoading ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
-                          )}
-                          Download / Preview Offer Letter
-                        </a>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
+                          Preview / Download Offer Letter
+                        </button>
                       </div>
 
                       <button
