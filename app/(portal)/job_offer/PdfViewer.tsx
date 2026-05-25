@@ -12,8 +12,10 @@ export default function PdfViewer({ pdfUrl }: PdfViewerProps) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    setIframeSrc(null);
+    setIsLoading(Boolean(pdfUrl));
+
     if (!pdfUrl) {
-      setIsLoading(false);
       return;
     }
 
