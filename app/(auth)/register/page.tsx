@@ -92,7 +92,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-0 md:p-8">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-0 md:p-4 lg:p-8">
       {error && (
         <div className="p-4">
           <Alert className="max-w-md mx-auto border-destructive/30 bg-destructive/10">

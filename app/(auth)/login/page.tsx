@@ -139,7 +139,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-0 md:p-8">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-0 md:p-4 lg:p-8">
       {successMessage && (
         <div className="p-4 w-full max-w-md">
           <Alert className="border-emerald-500/30 bg-emerald-50 text-emerald-800">
