@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google";
-import { FeatureFlagProvider } from "@/lib/contexts/feature-flags";
 import { AuthProvider } from "@/lib/contexts/auth-context";
 
 import { Toaster } from "sonner";
 import Providers from "./providers";
+
+import { candidateBrandingService } from "@/lib/services/candidate-branding";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,27 +23,45 @@ const spaceGrotesk = Space_Grotesk({
   weight: ["300", "400", "500", "600", "700"],
 });
 
-export const metadata: Metadata = {
-  title: {
-    default: "Physics Wallah - Candidate Portal",
-    template: "%s | Physics Wallah",
-  },
-  description:
-    "Physics Wallah Candidate Portal — onboarding, job applications, and employee lifecycle management.",
-  keywords: [
-    "physics wallah",
-    "candidate portal",
-    "onboarding",
-    "jobs",
-    "careers",
-  ],
-  authors: [{ name: "Physics Wallah" }],
-  creator: "Physics Wallah",
-  publisher: "Physics Wallah",
-  icons: {
-    icon: "/favicon.svg",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  let titlePrefix = "ERP";
+  let faviconUrl = "/favicon.svg";
+
+  try {
+    const branding = await candidateBrandingService.getCandidateBranding();
+    if (branding?.title_prefix) {
+      titlePrefix = branding.title_prefix;
+    }
+    if (branding?.app_logo) {
+      faviconUrl = branding.app_logo.startsWith("http")
+        ? branding.app_logo
+        : `${(process.env.NEXT_PUBLIC_FRAPPE_URL || "").replace(/\/$/, "")}${branding.app_logo.startsWith("/") ? branding.app_logo : `/${branding.app_logo}`}`;
+    }
+  } catch (error) {
+    // Graceful fallback if branding endpoint fails or is unavailable
+  }
+
+  return {
+    title: {
+      default: `${titlePrefix} - Candidate Portal`,
+      template: `%s | ${titlePrefix}`,
+    },
+    description: `${titlePrefix} Candidate Portal — onboarding, job applications, and employee lifecycle management.`,
+    keywords: [
+      titlePrefix.toLowerCase(),
+      "candidate portal",
+      "onboarding",
+      "jobs",
+      "careers",
+    ],
+    authors: [{ name: titlePrefix }],
+    creator: titlePrefix,
+    publisher: titlePrefix,
+    icons: {
+      icon: faviconUrl,
+    },
+  };
+}
 
 export default function RootLayout({
   children,
@@ -64,12 +83,10 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <Providers>
-        <AuthProvider>
-          <FeatureFlagProvider>
+          <AuthProvider>
             {children}
             <Toaster position="top-right" richColors />
-          </FeatureFlagProvider>
-        </AuthProvider>
+          </AuthProvider>
         </Providers>
       </body>
     </html>

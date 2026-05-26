@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect } from "react";
-import { useWebsiteBranding } from "@/lib/hooks/useWebsiteBranding";
+import { useCandidateBranding } from "@/lib/hooks/useCandidateBranding";
 
 /**
  * Component that dynamically updates the browser tab's favicon (logo)
  * using the company logo URL fetched from the website branding API.
  */
 export function DynamicFavicon() {
-  const { data: branding } = useWebsiteBranding();
+  const { data: branding } = useCandidateBranding();
 
   useEffect(() => {
     // Resolve the logo URL
@@ -17,7 +17,7 @@ export function DynamicFavicon() {
     if (branding?.app_logo) {
       logoUrl = branding.app_logo.startsWith("http")
         ? branding.app_logo
-        : `${process.env.NEXT_PUBLIC_FRAPPE_URL || ""}${branding.app_logo}`;
+        : `${(process.env.NEXT_PUBLIC_FRAPPE_URL || "").replace(/\/$/, "")}${branding.app_logo.startsWith("/") ? branding.app_logo : `/${branding.app_logo}`}`;
     }
 
     // Find all favicon link tags and update their href

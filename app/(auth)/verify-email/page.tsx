@@ -1,42 +1,45 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AuthForm, AuthFormData } from "@/components/auth-form";
-import { auth, type FrappeAuthSettings } from "@/lib/auth";
+import { auth } from "@/lib/auth";
+import { useAuthSettings } from "@/lib/hooks/useAuthSettings";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle, MailCheck, CheckCircle2 } from "lucide-react";
 
 export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-0 md:p-8">
+        <div className="flex flex-col items-center justify-center py-12">
+          <div className="w-8 h-8 border-4 border-[#2563EB] border-t-transparent rounded-full animate-spin"></div>
+          <p className="mt-4 text-sm text-[#64748B]">Loading...</p>
+        </div>
+      </div>
+    }>
+      <VerifyEmailContent />
+    </Suspense>
+  );
+}
+
+function VerifyEmailContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const purposeParam = searchParams.get("purpose");
+  const isPasswordReset = purposeParam === "Password Reset";
+
+  const { data: settings, isLoading: isSettingsLoading, error: settingsError } = useAuthSettings();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [pendingOtpEmail, setPendingOtpEmail] = useState<string | null>(null);
   const [otp, setOtp] = useState("");
-  const [settings, setSettings] = useState<FrappeAuthSettings | null>(null);
-  const [isSettingsLoading, setIsSettingsLoading] = useState(true);
   const [isSettingPassword, setIsSettingPassword] = useState(false);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    auth.getAuthSettings()
-      .then((data) => {
-        if (isMounted) setSettings(data);
-      })
-      .catch((error) => {
-        console.error("Auth settings error:", error);
-        if (isMounted) setError(error instanceof Error ? error.message : "Failed to load auth settings");
-      })
-      .finally(() => {
-        if (isMounted) setIsSettingsLoading(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const displayError = settingsError
+    ? (settingsError instanceof Error ? settingsError.message : "Failed to load auth settings")
+    : error;
 
   const handleRequestOtp = async (formData: AuthFormData) => {
     setIsLoading(true);
@@ -44,9 +47,13 @@ export default function VerifyEmailPage() {
     setSuccessMessage(null);
 
     try {
-      await auth.requestEmailSignupOtp({
-        email: formData.email,
-      });
+      if (isPasswordReset) {
+        await auth.resetPassword(formData.email);
+      } else {
+        await auth.requestEmailSignupOtp({
+          email: formData.email,
+        });
+      }
       setPendingOtpEmail(formData.email);
     } catch (error) {
       console.error("Request OTP error:", error);
@@ -66,7 +73,7 @@ export default function VerifyEmailPage() {
       await auth.verifyOtp({
         identifier: pendingOtpEmail,
         otp,
-        purpose: "Signup",
+        purpose: isPasswordReset ? "Password Reset" : "Signup",
         identifierType: "Email",
       });
       setIsSettingPassword(true);
@@ -130,11 +137,11 @@ export default function VerifyEmailPage() {
         </div>
       )}
 
-      {error && (
+      {displayError && (
         <div className="p-4 w-full max-w-md">
           <Alert variant="destructive">
             <AlertTriangle className="w-4 h-4" />
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>{displayError}</AlertDescription>
           </Alert>
         </div>
       )}
@@ -160,6 +167,7 @@ export default function VerifyEmailPage() {
               enableEmailSignup={settings.enable_email_signup === 1}
               isPasswordless={true}
               onPasswordlessToggle={handleBackToLogin}
+              purpose={isPasswordReset ? "Password Reset" : "Signup"}
             />
           ) : (
             <AuthUnavailable
