@@ -6,6 +6,15 @@ import VerifyEmailPage from "@/app/(auth)/verify-email/page";
 // ─── Mocks ──────────────────────────────────────────────────────────
 const mockPush = vi.fn();
 const mockGet = vi.fn();
+const mockToastError = vi.fn();
+const mockToastSuccess = vi.fn();
+
+vi.mock("sonner", () => ({
+  toast: {
+    error: (...args: any[]) => mockToastError(...args),
+    success: (...args: any[]) => mockToastSuccess(...args),
+  },
+}));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -81,7 +90,7 @@ vi.mock("@/lib/auth", () => ({
     getAuthSettings: (...args: unknown[]) => mockGetAuthSettings(...args),
     setPassword: (...args: unknown[]) => mockSetPassword(...args),
     signOut: (...args: unknown[]) => mockSignOut(...args),
-    resetPassword: (email: string) => mockRequestOtp({ identifier: email, purpose: "Password Reset" }),
+    resetPassword: (email: string) => mockRequestOtp({ identifier: email, purpose: "Password Reset", mode: "password_reset" }),
   },
 }));
 
@@ -165,6 +174,7 @@ describe("VerifyEmailPage Flow", () => {
     await waitFor(() => {
       expect(mockRequestEmailSignupOtp).toHaveBeenCalledWith({
         email: "candidate@example.com",
+        mode: "verify_email",
       });
     });
 
@@ -183,6 +193,7 @@ describe("VerifyEmailPage Flow", () => {
         otp: "123456",
         purpose: "Signup",
         identifierType: "Email",
+        otp_log: "OTP-123",
       });
     });
 
@@ -207,7 +218,7 @@ describe("VerifyEmailPage Flow", () => {
   });
 
   it("successfully requests OTP, verifies OTP, and sets password in Password Reset flow", async () => {
-    mockGet.mockReturnValue("Password Reset");
+    mockGet.mockImplementation((key) => key === "purpose" ? "Password Reset" : null);
     mockRequestOtp.mockResolvedValue({
       status: "otp_required",
       otp_log: "OTP-123",
@@ -232,6 +243,7 @@ describe("VerifyEmailPage Flow", () => {
       expect(mockRequestOtp).toHaveBeenCalledWith({
         identifier: "candidate@example.com",
         purpose: "Password Reset",
+        mode: "password_reset",
       });
     });
 
@@ -250,6 +262,7 @@ describe("VerifyEmailPage Flow", () => {
         otp: "123456",
         purpose: "Password Reset",
         identifierType: "Email",
+        otp_log: "OTP-123",
       });
     });
 

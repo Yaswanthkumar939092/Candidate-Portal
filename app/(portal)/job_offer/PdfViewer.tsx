@@ -32,14 +32,14 @@ export default function PdfViewer({ pdfUrl }: PdfViewerProps) {
         
         if (active) {
           objectUrl = URL.createObjectURL(blob);
-          setIframeSrc(objectUrl);
+          setIframeSrc(`${objectUrl}#toolbar=0&navpanes=0`);
           setIsLoading(false);
         }
       } catch (error) {
         console.warn("Failed to load PDF via blob, falling back to direct URL:", error);
         if (active) {
           // Fallback to the direct URL if blob fetch fails (e.g. due to CORS or network issues)
-          setIframeSrc(pdfUrl);
+          setIframeSrc(`${pdfUrl}#toolbar=0&navpanes=0`);
           setIsLoading(false);
         }
       }

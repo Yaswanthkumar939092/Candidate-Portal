@@ -5,6 +5,15 @@ import LoginPage from "@/app/(auth)/login/page";
 
 // ─── Mocks ──────────────────────────────────────────────────────────
 const mockPush = vi.fn();
+const mockToastError = vi.fn();
+const mockToastSuccess = vi.fn();
+
+vi.mock("sonner", () => ({
+  toast: {
+    error: (...args: any[]) => mockToastError(...args),
+    success: (...args: any[]) => mockToastSuccess(...args),
+  },
+}));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -308,7 +317,7 @@ describe("LoginPage – Error Handling", () => {
     await user.click(screen.getByRole("button", { name: /Sign in to your account/i }));
 
     await waitFor(() => {
-      expect(screen.getByText("Invalid login credentials")).toBeTruthy();
+      expect(mockToastError).toHaveBeenCalledWith("Invalid login credentials");
     });
   });
 
@@ -321,11 +330,11 @@ describe("LoginPage – Error Handling", () => {
     await user.click(screen.getByRole("button", { name: /Sign in to your account/i }));
 
     await waitFor(() => {
-      expect(screen.getByText("Failed to sign in")).toBeTruthy();
+      expect(mockToastError).toHaveBeenCalledWith("Failed to sign in");
     });
   });
 
-  it("renders error inside an Alert component with role='alert'", async () => {
+  it("triggers toast.error for errors", async () => {
     mockSignIn.mockRejectedValue(new Error("Bad creds"));
     await renderLoginPage();
 
@@ -334,7 +343,7 @@ describe("LoginPage – Error Handling", () => {
     await user.click(screen.getByRole("button", { name: /Sign in to your account/i }));
 
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toBeTruthy();
+      expect(mockToastError).toHaveBeenCalledWith("Bad creds");
     });
   });
 
@@ -347,7 +356,7 @@ describe("LoginPage – Error Handling", () => {
     await user.click(screen.getByRole("button", { name: /Sign in to your account/i }));
 
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toBeTruthy();
+      expect(mockToastError).toHaveBeenCalledWith("fail");
     });
     expect(mockSignIn).toHaveBeenCalled();
   });
@@ -361,14 +370,14 @@ describe("LoginPage – Error Handling", () => {
     await user.click(screen.getByRole("button", { name: /Sign in to your account/i }));
 
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toBeTruthy();
+      expect(mockToastError).toHaveBeenCalledWith("fail");
     });
 
     const btn = screen.getByRole("button", { name: /Sign in to your account/i });
     expect(btn).not.toBeDisabled();
   });
 
-  it("clears previous error when attempting another login", async () => {
+  it("displays error on first failed attempt and succeeds on second attempt", async () => {
     mockSignIn
       .mockRejectedValueOnce(new Error("First error"))
       .mockResolvedValueOnce({ user: {}, session: {} });
@@ -381,14 +390,14 @@ describe("LoginPage – Error Handling", () => {
     await user.click(screen.getByRole("button", { name: /Sign in to your account/i }));
 
     await waitFor(() => {
-      expect(screen.getByText("First error")).toBeTruthy();
+      expect(mockToastError).toHaveBeenCalledWith("First error");
     });
 
-    // Second attempt – should succeed and clear error
+    // Second attempt – should succeed
     await user.click(screen.getByRole("button", { name: /Sign in to your account/i }));
 
     await waitFor(() => {
-      expect(screen.queryByText("First error")).toBeNull();
+      expect(mockSignIn).toHaveBeenCalledTimes(2);
     });
   });
 });
@@ -411,7 +420,7 @@ describe("LoginPage – Edge Cases", () => {
     await user.click(screen.getByRole("button", { name: /Sign in to your account/i }));
 
     await waitFor(() => {
-      expect(screen.getByText("Network Error")).toBeTruthy();
+      expect(mockToastError).toHaveBeenCalledWith("Network Error");
     });
   });
 
@@ -500,7 +509,7 @@ describe("LoginPage – Edge Cases", () => {
 
       // Should now be redirected to the default login screen with a success alert message.
       await waitFor(() => {
-        expect(screen.getByText("Password set successfully! Please log in using your email and password.")).toBeTruthy();
+        expect(mockToastSuccess).toHaveBeenCalledWith("Password resetted successfully please login!");
         expect(screen.getByText("Welcome! 👋")).toBeTruthy();
       });
     });
