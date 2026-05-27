@@ -61,6 +61,25 @@ vi.mock("@/lib/auth", () => ({
   },
 }));
 
+let currentSettings = { ...defaultAuthSettings };
+const originalMockResolvedValue = mockGetAuthSettings.mockResolvedValue;
+mockGetAuthSettings.mockResolvedValue = (value: any) => {
+  currentSettings = value;
+  return originalMockResolvedValue.call(mockGetAuthSettings, value);
+};
+
+vi.mock("@/lib/hooks/useAuthSettings", () => ({
+  useAuthSettings: () => ({
+    data: currentSettings,
+    isLoading: false,
+    error: null,
+  }),
+}));
+
+beforeEach(() => {
+  currentSettings = { ...defaultAuthSettings };
+});
+
 vi.mock("@/lib/hooks/useCandidateBranding", () => ({
   useCandidateBranding: () => ({
     data: null,

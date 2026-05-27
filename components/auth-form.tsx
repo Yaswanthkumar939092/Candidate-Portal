@@ -12,6 +12,7 @@ import {
   ArrowRight,
   MailCheck,
   AlertCircle,
+  Loader2,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -39,6 +40,7 @@ interface AuthFormProps {
   enableEmailSignup?: boolean;
   isPasswordless?: boolean;
   onPasswordlessToggle?: (value: boolean) => void;
+  purpose?: "Signup" | "Password Reset";
 }
 
 export function AuthForm({
@@ -54,6 +56,7 @@ export function AuthForm({
   enableEmailSignup = false,
   isPasswordless = false,
   onPasswordlessToggle,
+  purpose = "Signup",
 }: AuthFormProps) {
   const { data: branding } = useCandidateBranding();
   const [formData, setFormData] = useState<AuthFormData>({
@@ -97,8 +100,8 @@ export function AuthForm({
                 branding?.app_logo
                   ? branding.app_logo.startsWith("http")
                     ? branding.app_logo
-                    : `${process.env.NEXT_PUBLIC_FRAPPE_URL}${branding.app_logo}`
-                  : "/brand.jpg"
+                    : `${(process.env.NEXT_PUBLIC_FRAPPE_URL || "").replace(/\/$/, "")}${branding.app_logo.startsWith("/") ? branding.app_logo : `/${branding.app_logo}`}`
+                  : "/fallback.png"
               }
               alt="Logo"
               width={100}
@@ -206,9 +209,9 @@ export function AuthForm({
               {type === "login" && loginStep === "otp"
                 ? "Check your email"
                 : type === "login" && loginStep === "setPassword"
-                  ? "Set your password"
+                  ? (purpose === "Password Reset" ? "Reset your password" : "Set your password")
                   : type === "login" && isPasswordless
-                    ? "Verify your email"
+                    ? (purpose === "Password Reset" ? "Reset your password" : "Verify your email")
                     : type === "login"
                       ? "Welcome! 👋"
                       : "Create your account"}
@@ -217,9 +220,13 @@ export function AuthForm({
               {type === "login" && loginStep === "otp"
                 ? `Enter the OTP sent to ${otpEmail || "your email"}`
                 : type === "login" && loginStep === "setPassword"
-                  ? "Create a password for your account to ensure secure access in the future."
+                  ? (purpose === "Password Reset"
+                    ? "Create a new password for your account."
+                    : "Create a password for your account to ensure secure access in the future.")
                   : type === "login" && isPasswordless
-                    ? "We'll send a 6-digit verification code to your email address to confirm your account."
+                    ? (purpose === "Password Reset"
+                      ? "We'll send a 6-digit verification code to your email address to reset your password."
+                      : "We'll send a 6-digit verification code to your email address to confirm your account.")
                     : type === "login"
                       ? "Please enter your credentials to access your account"
                       : "Start your journey with us today"}
@@ -556,7 +563,7 @@ export function AuthForm({
                   </label>
                 </div>
                 <Link
-                  href="#"
+                  href="/verify-email?purpose=Password%20Reset"
                   className="font-semibold text-[#2563EB] hover:text-[#1D4ED8] transition-colors"
                 >
                   Forgot password?
@@ -596,9 +603,12 @@ export function AuthForm({
               disabled={isLoading}
               className="w-full h-10 bg-[#0F172A] hover:bg-[#1E293B] text-white font-medium rounded-[8px] transition-colors duration-200 mt-4 flex items-center justify-center gap-2"
             >
-              {isLoading
-                ? "Please wait..."
-                : type === "login" && loginStep === "otp"
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Please wait...
+                </>
+              ) : type === "login" && loginStep === "otp"
                   ? "Verify and continue"
                   : type === "login" && loginStep === "setPassword"
                     ? "Set password"
@@ -636,7 +646,7 @@ export function AuthForm({
                 </Button>
               )}
 
-            {type === "login" &&
+            {/* {type === "login" &&
               isPasswordless &&
               loginStep === "credentials" && (
                 <div className="bg-[#EFF6FF] border border-[#DBEAFE] rounded-[12px] p-4 mt-6 flex gap-3 text-left">
@@ -655,20 +665,21 @@ export function AuthForm({
                     </p>
                   </div>
                 </div>
-              )}
+              )} */}
           </form>
 
           {loginStep === "credentials" && (
             <div className="text-center text-sm text-[#64748B] mt-6 flex flex-col items-center justify-center gap-2">
               {type === "login" ? (
                 isPasswordless ? (
-                  <button
-                    type="button"
-                    onClick={() => onPasswordlessToggle?.(false)}
-                    className="font-semibold text-[#2563EB] hover:text-[#1D4ED8] transition-colors"
-                  >
-                    Back to password login
-                  </button>
+                  <div>
+                    <Link
+                      href="/login"
+                      className="font-semibold text-[#2563EB] hover:text-[#1D4ED8] transition-colors"
+                    >
+                      Back to login
+                    </Link>
+                  </div>
                 ) : (
                   <>
                     {allowSignup && (
@@ -682,7 +693,7 @@ export function AuthForm({
                         </Link>
                       </div>
                     )}
-                    {enableEmailSignup && (
+                    {/* {enableEmailSignup && (
                       <button
                         type="button"
                         onClick={() => onPasswordlessToggle?.(true)}
@@ -690,7 +701,7 @@ export function AuthForm({
                       >
                         Access Candidate portal
                       </button>
-                    )}
+                    )} */}
                   </>
                 )
               ) : (

@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render } from "@testing-library/react";
 import { DynamicFavicon } from "@/components/dynamic-favicon";
-import * as websiteBrandingHook from "@/lib/hooks/useWebsiteBranding";
+import * as candidateBrandingHook from "@/lib/hooks/useCandidateBranding";
 
-// Mock the useWebsiteBranding hook
-vi.mock("@/lib/hooks/useWebsiteBranding");
+// Mock the useCandidateBranding hook
+vi.mock("@/lib/hooks/useCandidateBranding");
 
 describe("DynamicFavicon", () => {
   let initialEnvFrappeUrl: string | undefined;
@@ -23,7 +23,7 @@ describe("DynamicFavicon", () => {
   });
 
   it("creates a link element with /favicon.svg fallback if branding is not loaded or missing logo", () => {
-    vi.mocked(websiteBrandingHook.useWebsiteBranding).mockReturnValue({
+    vi.mocked(candidateBrandingHook.useCandidateBranding).mockReturnValue({
       data: undefined,
     } as any);
 
@@ -43,7 +43,7 @@ describe("DynamicFavicon", () => {
     initialLink.type = "image/x-icon";
     document.head.appendChild(initialLink);
 
-    vi.mocked(websiteBrandingHook.useWebsiteBranding).mockReturnValue({
+    vi.mocked(candidateBrandingHook.useCandidateBranding).mockReturnValue({
       data: {
         app_logo: "/files/company_logo.png",
       },
@@ -59,7 +59,7 @@ describe("DynamicFavicon", () => {
   });
 
   it("uses absolute URLs directly without modifying them", () => {
-    vi.mocked(websiteBrandingHook.useWebsiteBranding).mockReturnValue({
+    vi.mocked(candidateBrandingHook.useCandidateBranding).mockReturnValue({
       data: {
         app_logo: "https://external.cdn/logo.svg",
       },

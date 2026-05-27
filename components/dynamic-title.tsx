@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
-import { useWebsiteBranding } from "@/lib/hooks/useWebsiteBranding";
+import { useCandidateBranding } from "@/lib/hooks/useCandidateBranding";
 
 export function DynamicTitle() {
-  const { data: branding } = useWebsiteBranding();
+  const { data: branding } = useCandidateBranding();
 
   useEffect(() => {
     if (branding?.title_prefix) {

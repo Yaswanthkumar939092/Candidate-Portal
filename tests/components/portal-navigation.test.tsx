@@ -13,7 +13,7 @@ vi.mock("@/lib/auth", () => ({
 vi.mock("@/lib/contexts/auth-context")
 vi.mock("@/lib/contexts/feature-flags")
 vi.mock("@/lib/contexts/theme-context")
-vi.mock("@/lib/hooks/useWebsiteBranding")
+vi.mock("@/lib/hooks/useCandidateBranding")
 vi.mock("@/lib/hooks/useApplicantStatus")
 
 vi.mock("next/navigation", () => ({
@@ -49,7 +49,7 @@ import { PortalNavigation } from "@/components/portal/portal-navigation"
 import * as authContext from "@/lib/contexts/auth-context"
 import * as featureFlagsContext from "@/lib/contexts/feature-flags"
 import * as themeContext from "@/lib/contexts/theme-context"
-import * as websiteBrandingHook from "@/lib/hooks/useWebsiteBranding"
+import * as candidateBrandingHook from "@/lib/hooks/useCandidateBranding"
 import * as applicantStatusHook from "@/lib/hooks/useApplicantStatus"
 
 const mockUser = {
@@ -102,9 +102,9 @@ describe("PortalNavigation", () => {
       mode: "light",
     })
 
-    vi.mocked(websiteBrandingHook.useWebsiteBranding).mockReturnValue({
+    vi.mocked(candidateBrandingHook.useCandidateBranding).mockReturnValue({
       data: mockBranding,
-    } as ReturnType<typeof websiteBrandingHook.useWebsiteBranding>)
+    } as ReturnType<typeof candidateBrandingHook.useCandidateBranding>)
 
     vi.mocked(applicantStatusHook.useApplicantStatus).mockReturnValue({
       data: {
