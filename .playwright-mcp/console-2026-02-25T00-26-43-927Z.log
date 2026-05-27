@@ -1,2 +1,0 @@
-[   12982ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://trhuskonqiggrthhjauk.supabase.co/rest/v1/onboarding_data?select=*&user_id=eq.e33a19cb-4576-4ea3-8b6e-299d9b445d6f:0
-[   13030ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://trhuskonqiggrthhjauk.supabase.co/rest/v1/onboarding_data?select=*&user_id=eq.e33a19cb-4576-4ea3-8b6e-299d9b445d6f:0
