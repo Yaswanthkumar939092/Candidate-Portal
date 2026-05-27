@@ -8,9 +8,8 @@ import { useFeatureFlags } from "@/lib/contexts/feature-flags";
 import { useTheme } from "@/lib/contexts/theme-context";
 import { auth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
-import { useWebsiteBranding } from "@/lib/hooks/useWebsiteBranding";
+import { useCandidateBranding } from "@/lib/hooks/useCandidateBranding";
 import { useApplicantStatus } from "@/lib/hooks/useApplicantStatus";
-
 
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -63,9 +62,24 @@ interface PortalNavigationProps {
 
 const navItems: NavItem[] = [
   { label: "Home", href: "/dashboard", icon: Home },
-  { label: "Open Jobs", href: "/open-jobs", icon: Briefcase, flagKey: "open_jobs" },
-  { label: "My Jobs", href: "/my-jobs", icon: ClipboardList, flagKey: "my_jobs" },
-  { label: "Action Center", href: "/action-center", icon: ClipboardList, flagKey: "action_center" },
+  {
+    label: "Open Jobs",
+    href: "/open-jobs",
+    icon: Briefcase,
+    flagKey: "open_jobs",
+  },
+  {
+    label: "My Jobs",
+    href: "/my-jobs",
+    icon: ClipboardList,
+    flagKey: "my_jobs",
+  },
+  {
+    label: "Action Center",
+    href: "/action-center",
+    icon: ClipboardList,
+    flagKey: "action_center",
+  },
 ];
 
 /**
@@ -100,13 +114,13 @@ function formatRole(role: string): string {
 export function PortalNavigation({ className }: PortalNavigationProps) {
   const { user, profile } = useAuth();
   const { isEnabled } = useFeatureFlags();
-  const { data: branding } = useWebsiteBranding();
+  const { data: branding } = useCandidateBranding();
   const { isDark, toggleTheme } = useTheme();
   const pathname = usePathname();
   const userEmail = user?.email || user?.user_metadata?.email || "";
   const { data: applicantStatus } = useApplicantStatus(userEmail);
   const myJobsCount = applicantStatus?.success
-    ? applicantStatus.data?.applications?.length ?? 0
+    ? (applicantStatus.data?.applications?.length ?? 0)
     : 0;
 
   const filteredNavItems = navItems.filter((item) => {
@@ -155,7 +169,7 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
     <header
       className={cn(
         "fixed top-0 left-0 right-0 z-50 h-16 border-b bg-card shadow-sm",
-        className
+        className,
       )}
     >
       <div className="container mx-auto flex h-full items-center justify-between px-4">
@@ -172,7 +186,9 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
               </SheetTrigger>
               <SheetContent side="left" className="w-[80vw] sm:w-[350px]">
                 <SheetHeader>
-                  <SheetTitle className="text-left font-bold text-lg">Navigation</SheetTitle>
+                  <SheetTitle className="text-left font-bold text-lg">
+                    Navigation
+                  </SheetTitle>
                 </SheetHeader>
                 <div className="flex flex-col gap-2 py-6">
                   {filteredNavItems.map((item) => {
@@ -186,7 +202,7 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
                           "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                           active
                             ? "bg-[var(--nav-active-bg)] text-[var(--nav-active-text)]"
-                            : "hover:bg-muted text-muted-foreground"
+                            : "hover:bg-muted text-muted-foreground",
                         )}
                       >
                         <item.icon className="h-5 w-5" />
@@ -197,7 +213,7 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
                               "flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-semibold border-none",
                               active
                                 ? "bg-[var(--nav-active-text)]/20 text-[var(--nav-active-text)]"
-                                : "bg-muted text-muted-foreground"
+                                : "bg-muted text-muted-foreground",
                             )}
                           >
                             {badgeCount}
@@ -214,7 +230,13 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
           {/* Desktop/Mobile PW Logo */}
           <Link href="/dashboard" className="flex shrink-0 items-center gap-2">
             <Image
-              src={branding?.app_logo ? (branding.app_logo.startsWith('http') ? branding.app_logo : `${process.env.NEXT_PUBLIC_FRAPPE_URL}${branding.app_logo}`) : "/brand2.png"}
+              src={
+                branding?.app_logo
+                  ? branding.app_logo.startsWith("http")
+                    ? branding.app_logo
+                    : `${(process.env.NEXT_PUBLIC_FRAPPE_URL || "").replace(/\/$/, "")}${branding.app_logo.startsWith("/") ? branding.app_logo : `/${branding.app_logo}`}`
+                  : "/fallback.png"
+              }
               alt={branding?.title_prefix || "Logo"}
               width={32}
               height={32}
@@ -222,10 +244,9 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
               className="shrink-0"
             />
             <span className="text-[14px] sm:text-base font-extrabold text-black uppercase hidden sm:block">
-              {branding?.title_prefix || "BRAND NAME"}
+              {branding?.title_prefix || ""}
             </span>
           </Link>
-
         </div>
 
         {/* Center: Nav links with pill-style active states (Hidden on Mobile) */}
@@ -242,7 +263,7 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
                   "relative flex items-center gap-2 text-sm font-medium px-4 py-1.5 rounded-full transition-all duration-300 ease-in-out",
                   active
                     ? "bg-[var(--nav-active-bg)] text-[var(--nav-active-text)]"
-                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
                 )}
               >
                 <span>{item.label}</span>
@@ -253,7 +274,7 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
                       "ml-0.5 flex items-center justify-center rounded-full px-1.5 py-1 text-[10px] font-semibold border-none",
                       active
                         ? "bg-[var(--nav-active-text)]/20 text-[var(--nav-active-text)]"
-                        : "bg-muted text-muted-foreground"
+                        : "bg-muted text-muted-foreground",
                     )}
                   >
                     {badgeCount}
@@ -275,10 +296,7 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
           {/* User dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="flex items-center gap-2 px-2"
-              >
+              <Button variant="ghost" className="flex items-center gap-2 px-2">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={avatarUrl} alt={displayName} />
                   <AvatarFallback className="bg-primary text-primary-foreground text-xs">
@@ -337,8 +355,15 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
                 </Link>
               </DropdownMenuItem>
 
-              <DropdownMenuItem onClick={toggleTheme} className="cursor-pointer">
-                {isDark ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
+              <DropdownMenuItem
+                onClick={toggleTheme}
+                className="cursor-pointer"
+              >
+                {isDark ? (
+                  <Sun className="mr-2 h-4 w-4" />
+                ) : (
+                  <Moon className="mr-2 h-4 w-4" />
+                )}
                 <span>{isDark ? "Light mode" : "Dark mode"}</span>
               </DropdownMenuItem>
 

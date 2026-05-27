@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/contexts/auth-context'
 import { Loader2 } from 'lucide-react'
 import { PortalNavigation } from '@/components/portal/portal-navigation'
+import { FeatureFlagProvider, FeatureFlagLoader } from '@/lib/contexts/feature-flags'
 
 /**
  * Portal layout with authentication guard.
@@ -47,11 +48,15 @@ export default function PortalLayout({
 
   // Authenticated -- render portal chrome + page content.
   return (
-    <div className="min-h-screen bg-background">
-      <PortalNavigation />
-      <main className="flex-1 pt-16">
-        {children}
-      </main>
-    </div>
+    <FeatureFlagProvider>
+      <FeatureFlagLoader>
+        <div className="min-h-screen bg-background">
+          <PortalNavigation />
+          <main className="flex-1 pt-16">
+            {children}
+          </main>
+        </div>
+      </FeatureFlagLoader>
+    </FeatureFlagProvider>
   )
 }

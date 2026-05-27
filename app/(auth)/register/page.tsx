@@ -1,41 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AuthForm, AuthFormData } from "@/components/auth-form";
-import { auth, type FrappeAuthSettings } from "@/lib/auth";
+import { auth } from "@/lib/auth";
+import { useAuthSettings } from "@/lib/hooks/useAuthSettings";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertTriangle, MailCheck } from "lucide-react";
+import { AlertTriangle, MailCheck, Loader2 } from "lucide-react";
 
 export default function RegisterPage() {
+  const { data: settings, isLoading: isSettingsLoading, error: settingsError } = useAuthSettings();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
   const [otp, setOtp] = useState("");
-  const [settings, setSettings] = useState<FrappeAuthSettings | null>(null);
-  const [isSettingsLoading, setIsSettingsLoading] = useState(true);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    auth.getAuthSettings()
-      .then((data) => {
-        if (isMounted) setSettings(data);
-      })
-      .catch((error) => {
-        console.error("Auth settings error:", error);
-        if (isMounted) setError(error instanceof Error ? error.message : "Failed to load auth settings");
-      })
-      .finally(() => {
-        if (isMounted) setIsSettingsLoading(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const displayError = settingsError
+    ? (settingsError instanceof Error ? settingsError.message : "Failed to load auth settings")
+    : error;
 
   const handleRegister = async (formData: AuthFormData) => {
     if (formData.password !== formData.confirmPassword) {
@@ -93,12 +77,12 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-0 md:p-4 lg:p-8">
-      {error && (
+      {displayError && (
         <div className="p-4">
           <Alert className="max-w-md mx-auto border-destructive/30 bg-destructive/10">
             <AlertTriangle className="w-4 h-4 text-destructive" />
             <AlertDescription className="text-destructive">
-              {error}
+              {displayError}
             </AlertDescription>
           </Alert>
         </div>
@@ -134,8 +118,15 @@ export default function RegisterPage() {
               required
             />
           </div>
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Verifying..." : "Verify and continue"}
+          <Button type="submit" className="w-full h-10 flex items-center justify-center gap-2" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Verifying...
+              </>
+            ) : (
+              "Verify and continue"
+            )}
           </Button>
         </form>
       ) : (

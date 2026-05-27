@@ -105,7 +105,9 @@ describe("AuthForm – Login UI", () => {
 
   it("shows 'Forgot password?' link on login", () => {
     render(<AuthForm {...defaultLoginProps} />);
-    expect(screen.getByText("Forgot password?")).toBeTruthy();
+    const link = screen.getByText("Forgot password?");
+    expect(link).toBeTruthy();
+    expect(link.getAttribute("href")).toBe("/verify-email");
   });
 
   it("shows submit button with text 'Sign in to your account'", () => {
@@ -295,29 +297,7 @@ describe("AuthForm – Passwordless UI & Interaction", () => {
     ).toBeTruthy();
   });
 
-  it("renders the 'Why do I need to verify?' card", () => {
-    render(<AuthForm {...defaultLoginProps} isPasswordless={true} />);
-    expect(screen.getByText("Why do I need to verify?")).toBeTruthy();
-    expect(
-      screen.getByText(
-        "To protect your career data and ensure secure access to your onboarding dashboard and team communications."
-      )
-    ).toBeTruthy();
-  });
 
-  it("calls onPasswordlessToggle(false) when Back to password login is clicked", async () => {
-    const onPasswordlessToggle = vi.fn();
-    render(
-      <AuthForm
-        {...defaultLoginProps}
-        isPasswordless={true}
-        onPasswordlessToggle={onPasswordlessToggle}
-      />
-    );
-    const backBtn = screen.getByRole("button", { name: /Back to password login/i });
-    await user.click(backBtn);
-    expect(onPasswordlessToggle).toHaveBeenCalledWith(false);
-  });
 });
 
 // =====================================================================

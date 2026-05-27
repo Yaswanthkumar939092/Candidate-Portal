@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { websiteBrandingService } from "@/lib/services/website-branding";
+import { candidateBrandingService } from "@/lib/services/candidate-branding";
 import { FrappeAPI } from "@/lib/frappe-api";
 
 // Mock FrappeAPI
@@ -9,18 +9,18 @@ vi.mock("@/lib/frappe-api", () => ({
   },
 }));
 
-describe("websiteBrandingService", () => {
+describe("candidateBrandingService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("getWebsiteBranding calls FrappeAPI.get correctly", async () => {
+  it("getCandidateBranding calls FrappeAPI.get correctly", async () => {
     const mockBranding = { title_prefix: "My Portal", app_logo: "logo.png" };
     (FrappeAPI.get as any).mockResolvedValue(mockBranding);
 
-    const result = await websiteBrandingService.getWebsiteBranding();
+    const result = await candidateBrandingService.getCandidateBranding();
 
     expect(result).toEqual(mockBranding);
-    expect(FrappeAPI.get).toHaveBeenCalledWith("cn_hrms_core.api.get_website_branding");
+    expect(FrappeAPI.get).toHaveBeenCalledWith("recruitment.api.candidate_portal.get_website_branding");
   });
 });

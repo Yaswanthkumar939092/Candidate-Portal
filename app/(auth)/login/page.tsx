@@ -1,41 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AuthForm, AuthFormData } from "@/components/auth-form";
-import { auth, type FrappeAuthSettings } from "@/lib/auth";
+import { auth } from "@/lib/auth";
+import { useAuthSettings } from "@/lib/hooks/useAuthSettings";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle, MailCheck, CheckCircle2 } from "lucide-react";
 
 export default function LoginPage() {
+  const { data: settings, isLoading: isSettingsLoading, error: settingsError } = useAuthSettings();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [pendingOtpEmail, setPendingOtpEmail] = useState<string | null>(null);
   const [otp, setOtp] = useState("");
-  const [settings, setSettings] = useState<FrappeAuthSettings | null>(null);
-  const [isSettingsLoading, setIsSettingsLoading] = useState(true);
   const [isPasswordless, setIsPasswordless] = useState(false);
   const [isSettingPassword, setIsSettingPassword] = useState(false);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    auth.getAuthSettings()
-      .then((data) => {
-        if (isMounted) setSettings(data);
-      })
-      .catch((error) => {
-        console.error("Auth settings error:", error);
-        if (isMounted) setError(error instanceof Error ? error.message : "Failed to load auth settings");
-      })
-      .finally(() => {
-        if (isMounted) setIsSettingsLoading(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const displayError = settingsError
+    ? (settingsError instanceof Error ? settingsError.message : "Failed to load auth settings")
+    : error;
 
   const handleLogin = async (formData: AuthFormData) => {
     setIsLoading(true);
@@ -150,12 +134,12 @@ export default function LoginPage() {
           </Alert>
         </div>
       )}
-      {error && (
+      {displayError && (
         <div className="p-4 w-full max-w-md">
           <Alert className="border-destructive/30 bg-destructive/10">
             <AlertTriangle className="w-4 h-4 text-destructive" />
             <AlertDescription className="text-destructive">
-              {error}
+              {displayError}
             </AlertDescription>
           </Alert>
         </div>
