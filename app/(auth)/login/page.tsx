@@ -1,13 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AuthForm, AuthFormData } from "@/components/auth-form";
 import { auth } from "@/lib/auth";
 import { useAuthSettings } from "@/lib/hooks/useAuthSettings";
 import { MailCheck } from "lucide-react";
 import { toast } from "sonner";
+import { surveyService } from "@/lib/services/survey";
+import { useAuth } from "@/lib/contexts/auth-context";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const { refreshProfile } = useAuth();
   const { data: settings, isLoading: isSettingsLoading, error: settingsError } = useAuthSettings();
   const [isLoading, setIsLoading] = useState(false);
   const [pendingOtpEmail, setPendingOtpEmail] = useState<string | null>(null);
@@ -16,6 +21,27 @@ export default function LoginPage() {
   const [isSettingPassword, setIsSettingPassword] = useState(false);
   const [receivedOtpLog, setReceivedOtpLog] = useState<string | null>(null);
   const [receivedPurpose, setReceivedPurpose] = useState<string | null>(null);
+
+  const handlePostLoginRouting = async () => {
+    try {
+      await refreshProfile();
+      const response = await surveyService.getPostLoginRoute();
+      if (typeof window !== "undefined" && window.sessionStorage) {
+        sessionStorage.setItem("showLoginToast", "true");
+      }
+      if (response.survey_required) {
+        router.push("/survey");
+      } else {
+        router.push(response.redirect_url || "/dashboard");
+      }
+    } catch (error) {
+      console.error("Post-login routing error:", error);
+      if (typeof window !== "undefined" && window.sessionStorage) {
+        sessionStorage.setItem("showLoginToast", "true");
+      }
+      router.push("/dashboard");
+    }
+  };
 
   useEffect(() => {
     if (settingsError) {
@@ -62,7 +88,7 @@ export default function LoginPage() {
         return;
       }
 
-      redirectToDashboard(settings?.redirect_to);
+      await handlePostLoginRouting();
     } catch (error) {
       console.error("Login error:", error);
       const msg = error instanceof Error ? error.message : "Failed to sign in";
@@ -92,7 +118,7 @@ export default function LoginPage() {
         return;
       }
 
-      redirectToDashboard(settings?.redirect_to);
+      await handlePostLoginRouting();
     } catch (error) {
       console.error("OTP login error:", error);
       const msg = error instanceof Error ? error.message : "Failed to verify OTP";

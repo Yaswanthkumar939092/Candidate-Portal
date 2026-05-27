@@ -179,6 +179,7 @@ describe("Frappe candidate auth", () => {
         credentials: "include",
         body: JSON.stringify({
           email: "candidate@example.com",
+          mode: "verify_email",
         }),
       }),
     )

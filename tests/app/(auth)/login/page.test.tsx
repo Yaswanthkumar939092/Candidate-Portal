@@ -54,6 +54,13 @@ const mockVerifyOtp = vi.fn();
 const mockGetAuthSettings = vi.fn();
 const mockSetPassword = vi.fn();
 const mockSignOut = vi.fn();
+const mockGetPostLoginRoute = vi.fn();
+
+vi.mock("@/lib/services/survey", () => ({
+  surveyService: {
+    getPostLoginRoute: (...args: unknown[]) => mockGetPostLoginRoute(...args),
+  },
+}));
 
 const defaultAuthSettings = {
   enabled: 1,
@@ -93,8 +100,19 @@ vi.mock("@/lib/hooks/useAuthSettings", () => ({
   }),
 }));
 
+const mockRefreshProfile = vi.fn().mockResolvedValue(undefined);
+vi.mock("@/lib/contexts/auth-context", () => ({
+  useAuth: () => ({
+    refreshProfile: mockRefreshProfile,
+  }),
+}));
+
 beforeEach(() => {
   currentSettings = { ...defaultAuthSettings };
+  mockGetPostLoginRoute.mockResolvedValue({
+    survey_required: false,
+    redirect_url: "/dashboard",
+  });
 });
 
 vi.mock("@/lib/hooks/useCandidateBranding", () => ({
@@ -515,27 +533,25 @@ describe("LoginPage – Edge Cases", () => {
     });
   });
 
-  describe("LoginPage – Redirect Handling based on auth_settings redirect_to", () => {
-    let assignMock: any;
-
+  describe("LoginPage – Redirect Handling based on survey API response", () => {
     beforeEach(() => {
       vi.clearAllMocks();
-      assignMock = vi.fn();
-      vi.stubGlobal("location", { assign: assignMock });
     });
 
-    afterEach(() => {
-      vi.unstubAllGlobals();
-    });
-
-    it("redirects to action-center when redirect_to is action_center", async () => {
+    it("redirects to /survey when survey_required is true", async () => {
       mockGetAuthSettings.mockResolvedValue({
         ...defaultAuthSettings,
         allow_email_otp_login: 0,
         enable_email_otp: 0,
-        redirect_to: "action_center",
       });
       mockSignIn.mockResolvedValue({ status: "success" });
+      mockGetPostLoginRoute.mockResolvedValue({
+        survey_required: true,
+        form_name: "Onboarding Survey",
+        form_schema: {},
+        job_applicant: "HR-APP-2026-00042",
+        job_opening: "HR-OPP-2026-00007",
+      });
 
       await renderLoginPage();
       await user.type(screen.getByPlaceholderText("you@example.com"), "test@test.com");
@@ -543,18 +559,21 @@ describe("LoginPage – Edge Cases", () => {
       await user.click(screen.getByRole("button", { name: /Sign in to your account/i }));
 
       await waitFor(() => {
-        expect(assignMock).toHaveBeenCalledWith("/action-center");
+        expect(mockPush).toHaveBeenCalledWith("/survey");
       });
     });
 
-    it("redirects to my-jobs when redirect_to is my_jobs", async () => {
+    it("redirects to redirect_url from survey API when survey_required is false", async () => {
       mockGetAuthSettings.mockResolvedValue({
         ...defaultAuthSettings,
         allow_email_otp_login: 0,
         enable_email_otp: 0,
-        redirect_to: "my_jobs",
       });
       mockSignIn.mockResolvedValue({ status: "success" });
+      mockGetPostLoginRoute.mockResolvedValue({
+        survey_required: false,
+        redirect_url: "/action-center",
+      });
 
       await renderLoginPage();
       await user.type(screen.getByPlaceholderText("you@example.com"), "test@test.com");
@@ -562,17 +581,18 @@ describe("LoginPage – Edge Cases", () => {
       await user.click(screen.getByRole("button", { name: /Sign in to your account/i }));
 
       await waitFor(() => {
-        expect(assignMock).toHaveBeenCalledWith("/my-jobs");
+        expect(mockPush).toHaveBeenCalledWith("/action-center");
       });
     });
 
-    it("defaults to /dashboard when redirect_to is not specified", async () => {
+    it("defaults to /dashboard when survey API fails", async () => {
       mockGetAuthSettings.mockResolvedValue({
         ...defaultAuthSettings,
         allow_email_otp_login: 0,
         enable_email_otp: 0,
       });
       mockSignIn.mockResolvedValue({ status: "success" });
+      mockGetPostLoginRoute.mockRejectedValue(new Error("API Error"));
 
       await renderLoginPage();
       await user.type(screen.getByPlaceholderText("you@example.com"), "test@test.com");
@@ -580,7 +600,7 @@ describe("LoginPage – Edge Cases", () => {
       await user.click(screen.getByRole("button", { name: /Sign in to your account/i }));
 
       await waitFor(() => {
-        expect(assignMock).toHaveBeenCalledWith("/dashboard");
+        expect(mockPush).toHaveBeenCalledWith("/dashboard");
       });
     });
   });

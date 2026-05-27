@@ -25,6 +25,13 @@ vi.mock("sonner", () => ({
 
 const mockGet = vi.fn();
 const mockPush = vi.fn();
+const mockSignOut = vi.fn().mockResolvedValue(undefined);
+
+vi.mock("@/lib/auth", () => ({
+  auth: {
+    signOut: () => mockSignOut(),
+  },
+}));
 
 vi.mock("next/navigation", () => ({
   useSearchParams: () => ({
@@ -153,7 +160,7 @@ describe("JobOfferPage", () => {
     expect(mockPush).toHaveBeenCalledWith("/dashboard");
   });
 
-  it("handles rejection flow correctly and shows declined popup", async () => {
+  it("handles rejection flow correctly and logs out the user", async () => {
     const mutateAsync = vi.fn().mockResolvedValue({});
     mockUseUpdateJobOfferStatus.mockReturnValue({ mutateAsync });
 
@@ -182,17 +189,10 @@ describe("JobOfferPage", () => {
       });
     });
 
-    // Should show declined popup - wait for it to render
     await waitFor(() => {
-      expect(screen.getByText("Offer Rejected")).toBeTruthy();
+      expect(mockSignOut).toHaveBeenCalled();
+      expect(mockPush).toHaveBeenCalledWith("/login");
     });
-
-    expect(screen.getByText(/We appreciate the time and effort/)).toBeTruthy();
-
-    // Close popup should redirect to dashboard
-    const closeBtn = screen.getByRole("button", { name: "" }); // The X button
-    fireEvent.click(closeBtn);
-    expect(mockPush).toHaveBeenCalledWith("/dashboard");
   });
 
   it("updates rejection comments, allows cancelling, and dismisses the missing-reason popup", async () => {
