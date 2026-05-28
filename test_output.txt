@@ -1,0 +1,412 @@
+
+ RUN  v4.1.5 /home/mr-blue/Desktop/Candidate-Portal
+
+ ✓ tests/components/survey/dynamic-survey-form.test.tsx > DynamicSurveyForm > renders empty when schema is empty, null, or undefined 50ms
+ ✓ tests/components/survey/dynamic-survey-form.test.tsx > DynamicSurveyForm > renders textfield, textarea, email, number, url, password and basic inputs 56ms
+ ✓ tests/components/survey/dynamic-survey-form.test.tsx > DynamicSurveyForm > handles basic input change events and triggers onValuesChange 13ms
+ × tests/components/survey/dynamic-survey-form.test.tsx > DynamicSurveyForm > converts input to numbers correctly, including NaN values 19ms
+   → expected last "vi.fn()" call to have been called with [ { numVal: '' } ]
+ ✓ tests/components/survey/dynamic-survey-form.test.tsx > DynamicSurveyForm > renders checkbox input, triggers change, and renders description 14ms
+ ✓ tests/components/survey/dynamic-survey-form.test.tsx > DynamicSurveyForm > renders selectbox and handles multiple checkbox values 9ms
+ ✓ tests/components/survey/dynamic-survey-form.test.tsx > DynamicSurveyForm > renders radio options and handles selection 8ms
+ ✓ tests/components/survey/dynamic-survey-form.test.tsx > DynamicSurveyForm > renders select options and handles dropdown changes 13ms
+ × tests/components/survey/dynamic-survey-form.test.tsx > DynamicSurveyForm > renders nested columns, rows, and generic container components 17ms
+   → Unable to find a label with the text of: Row 1
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<form[39m
+      [33mclass[39m=[32m"p-6 sm:p-8 space-y-6"[39m
+      [33mnovalidate[39m=[32m""[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"space-y-6"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"grid gap-4 md:grid-cols-2"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"space-y-6"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"space-y-2"[39m
+            [36m>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50 text-sm font-semibold text-foreground/90 flex items-center gap-1"[39m
+                [33mdata-slot[39m=[32m"label"[39m
+                [33mfor[39m=[32m"survey-col1"[39m
+              [36m>[39m
+                [0mCol 1[0m
+              [36m</label>[39m
+              [36m<input[39m
+                [33maria-invalid[39m=[32m"false"[39m
+                [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-background/50"[39m
+                [33mdata-slot[39m=[32m"input"[39m
+                [33mid[39m=[32m"survey-col1"[39m
+                [33mtype[39m=[32m"text"[39m
+                [33mvalue[39m=[32m""[39m
+              [36m/>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-4 rounded-lg border border-border bg-background/30 p-4"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"text-sm font-semibold text-foreground"[39m
+          [36m>[39m
+            [0mGeneric Container[0m
+          [36m</h2>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"space-y-2"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50 text-sm font-semibold text-foreground/90 flex items-center gap-1"[39m
+              [33mdata-slot[39m=[32m"label"[39m
+              [33mfor[39m=[32m"survey-cont1"[39m
+            [36m>[39m
+              [0mCont 1[0m
+            [36m</label>[39m
+            [36m<input[39m
+              [33maria-invalid[39m=[32m"false"[39m
+              [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-background/50"[39m
+              [33mdata-slot[39m=[32m"input"[39m
+              [33mid[39m=[32m"survey-cont1"[39m
+              [33mtype[39m=[32m"text"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pt-4 border-t border-border flex justify-end"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"whitespace-nowrap rounded-md text-sm disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-primary text-primary-foreground hover:bg-primary/90 h-9 has-[>svg]:px-3 w-full sm:w-auto px-6 py-2.5 font-medium flex items-center justify-center gap-2 group transition-all"[39m
+          [33mdata-slot[39m=[32m"button"[39m
+          [33mtype[39m=[32m"submit"[39m
+        [36m>[39m
+          [0mSubmit Responses[0m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-send w-4 h-4 group-hover:translate-x-1 transition-transform"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21.854 2.147-10.94 10.939"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</form>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ✓ tests/components/survey/dynamic-survey-form.test.tsx > DynamicSurveyForm > validates required fields, minLength, maxLength, pattern, and custom validators 311ms
+ × tests/components/survey/dynamic-survey-form.test.tsx > DynamicSurveyForm > handles catch blocks in regex patterns and custom validators 1053ms
+   → Unable to find an element with the text: Custom error fallback. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<form[39m
+      [33mclass[39m=[32m"p-6 sm:p-8 space-y-6"[39m
+      [33mnovalidate[39m=[32m""[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"space-y-6"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-2"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50 text-sm font-semibold text-foreground/90 flex items-center gap-1"[39m
+            [33mdata-slot[39m=[32m"label"[39m
+            [33mfor[39m=[32m"survey-badPatternField"[39m
+          [36m>[39m
+            [0mBad Pattern Field[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33maria-invalid[39m=[32m"false"[39m
+            [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-background/50"[39m
+            [33mdata-slot[39m=[32m"input"[39m
+            [33mid[39m=[32m"survey-badPatternField"[39m
+            [33mtype[39m=[32m"text"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-2"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50 text-sm font-semibold text-foreground/90 flex items-center gap-1"[39m
+            [33mdata-slot[39m=[32m"label"[39m
+            [33mfor[39m=[32m"survey-badCustomField"[39m
+          [36m>[39m
+            [0mBad Custom Field[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33maria-invalid[39m=[32m"false"[39m
+            [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-background/50"[39m
+            [33mdata-slot[39m=[32m"input"[39m
+            [33mid[39m=[32m"survey-badCustomField"[39m
+            [33mtype[39m=[32m"text"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-2"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50 text-sm font-semibold text-foreground/90 flex items-center gap-1"[39m
+            [33mdata-slot[39m=[32m"label"[39m
+            [33mfor[39m=[32m"survey-badCustomNoMsgField"[39m
+          [36m>[39m
+            [0mBad Custom No Message Field[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33maria-invalid[39m=[32m"false"[39m
+            [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-background/50"[39m
+            [33mdata-slot[39m=[32m"input"[39m
+            [33mid[39m=[32m"survey-badCustomNoMsgField"[39m
+            [33mtype[39m=[32m"text"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pt-4 border-t border-border flex justify-end"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"whitespace-nowrap rounded-md text-sm disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-primary text-primary-foreground hover:bg-primary/90 h-9 has-[>svg]:px-3 w-full sm:w-auto px-6 py-2.5 font-medium flex items-center justify-center gap-2 group transition-all"[39m
+          [33mdata-slot[39m=[32m"button"[39m
+          [33mtype[39m=[32m"submit"[39m
+        [36m>[39m
+          [0mSubmit Responses[0m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-send w-4 h-4 group-hover:translate-x-1 transition-transform"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21.854 2.147-10.94 10.939"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</form>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<form[39m
+      [33mclass[39m=[32m"p-6 sm:p-8 space-y-6"[39m
+      [33mnovalidate[39m=[32m""[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"space-y-6"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-2"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50 text-sm font-semibold text-foreground/90 flex items-center gap-1"[39m
+            [33mdata-slot[39m=[32m"label"[39m
+            [33mfor[39m=[32m"survey-badPatternField"[39m
+          [36m>[39m
+            [0mBad Pattern Field[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33maria-invalid[39m=[32m"false"[39m
+            [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-background/50"[39m
+            [33mdata-slot[39m=[32m"input"[39m
+            [33mid[39m=[32m"survey-badPatternField"[39m
+            [33mtype[39m=[32m"text"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-2"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50 text-sm font-semibold text-foreground/90 flex items-center gap-1"[39m
+            [33mdata-slot[39m=[32m"label"[39m
+            [33mfor[39m=[32m"survey-badCustomField"[39m
+          [36m>[39m
+            [0mBad Custom Field[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33maria-invalid[39m=[32m"false"[39m
+            [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-background/50"[39m
+            [33mdata-slot[39m=[32m"input"[39m
+            [33mid[39m=[32m"survey-badCustomField"[39m
+            [33mtype[39m=[32m"text"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-2"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50 text-sm font-semibold text-foreground/90 flex items-center gap-1"[39m
+            [33mdata-slot[39m=[32m"label"[39m
+            [33mfor[39m=[32m"survey-badCustomNoMsgField"[39m
+          [36m>[39m
+            [0mBad Custom No Message Field[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33maria-invalid[39m=[32m"false"[39m
+            [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-background/50"[39m
+            [33mdata-slot[39m=[32m"input"[39m
+            [33mid[39m=[32m"survey-badCustomNoMsgField"[39m
+            [33mtype[39m=[32m"text"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pt-4 border-t border-border flex justify-end"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"whitespace-nowrap rounded-md text-sm disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-primary text-primary-foreground hover:bg-primary/90 h-9 has-[>svg]:px-3 w-full sm:w-auto px-6 py-2.5 font-medium flex items-center justify-center gap-2 group transition-all"[39m
+          [33mdata-slot[39m=[32m"button"[39m
+          [33mtype[39m=[32m"submit"[39m
+        [36m>[39m
+          [0mSubmit Responses[0m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-send w-4 h-4 group-hover:translate-x-1 transition-transform"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21.854 2.147-10.94 10.939"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</form>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ✓ tests/components/survey/dynamic-survey-form.test.tsx > DynamicSurveyForm > hides fields conditionally using simple 'when/eq' logic, json-logic, and custom conditionals 12ms
+ ✓ tests/components/survey/dynamic-survey-form.test.tsx > DynamicSurveyForm > handles conditional show: false scenarios 7ms
+ ✓ tests/components/survey/dynamic-survey-form.test.tsx > DynamicSurveyForm > evaluates conditional JSON Logic expression nodes including 'or', '!', '==', and nested vars 9ms
+ ✓ tests/components/survey/dynamic-survey-form.test.tsx > DynamicSurveyForm > handles errors and non-boolean results in custom conditionals 4ms
+ ✓ tests/components/survey/dynamic-survey-form.test.tsx > DynamicSurveyForm > handles isSubmitting prop properly by disabling the submit button 35ms
+ × tests/components/survey/dynamic-survey-form.test.tsx > DynamicSurveyForm > removes errors when field value changes to valid 40ms
+   → Unable to find a label with the text of: Username
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<form[39m
+      [33mclass[39m=[32m"p-6 sm:p-8 space-y-6"[39m
+      [33mnovalidate[39m=[32m""[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"space-y-6"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-2"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50 text-sm font-semibold text-foreground/90 flex items-center gap-1"[39m
+            [33mdata-slot[39m=[32m"label"[39m
+            [33mfor[39m=[32m"survey-username"[39m
+          [36m>[39m
+            [0mUsername[0m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-destructive"[39m
+            [36m>[39m
+              [0m*[0m
+            [36m</span>[39m
+          [36m</label>[39m
+          [36m<input[39m
+            [33maria-invalid[39m=[32m"true"[39m
+            [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-background/50"[39m
+            [33mdata-slot[39m=[32m"input"[39m
+            [33mid[39m=[32m"survey-username"[39m
+            [33mtype[39m=[32m"text"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-medium text-destructive"[39m
+          [36m>[39m
+            [0mUsername is required.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pt-4 border-t border-border flex justify-end"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"whitespace-nowrap rounded-md text-sm disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-primary text-primary-foreground hover:bg-primary/90 h-9 has-[>svg]:px-3 w-full sm:w-auto px-6 py-2.5 font-medium flex items-center justify-center gap-2 group transition-all"[39m
+          [33mdata-slot[39m=[32m"button"[39m
+          [33mtype[39m=[32m"submit"[39m
+        [36m>[39m
+          [0mSubmit Responses[0m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-send w-4 h-4 group-hover:translate-x-1 transition-transform"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21.854 2.147-10.94 10.939"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</form>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 13 passed (17)
+   Start at  14:13:18
+   Duration  3.11s (transform 241ms, setup 99ms, import 453ms, tests 1.67s, environment 695ms)
+

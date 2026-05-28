@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
-import { Plus, } from "lucide-react"
+import { Suspense, useState } from "react"
+import { Plus, Loader2 } from "lucide-react"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 
 import {
@@ -156,8 +157,12 @@ function mapApiItemsToRequests(items: any[]): Request[] {
 /**
  * Action Center page -- shows assigned tasks and user requests in tabbed layout.
  */
-export default function ActionCenterPage() {
-  const [activeTab, setActiveTab] = useState<"tasks" | "requests">("tasks")
+function ActionCenterContent() {
+  const searchParams = useSearchParams()
+  const tabParam = searchParams.get("tab")
+  const [activeTab, setActiveTab] = useState<"tasks" | "requests">(
+    tabParam === "requests" ? "requests" : "tasks"
+  )
   const [filter, setFilter] = useState("pending")
   const [requestDialogOpen, setRequestDialogOpen] = useState(false)
 
@@ -346,5 +351,22 @@ export default function ActionCenterPage() {
         onSubmit={handleRequestSubmit}
       />
     </div>
+  )
+}
+
+export default function ActionCenterPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm font-medium text-slate-600 dark:text-slate-300">Loading action center...</p>
+          </div>
+        </div>
+      }
+    >
+      <ActionCenterContent />
+    </Suspense>
   )
 }

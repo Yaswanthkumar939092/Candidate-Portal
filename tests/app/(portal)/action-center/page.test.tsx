@@ -41,6 +41,8 @@ vi.mock("next/link", () => ({
   ),
 }));
 
+const mockSearchParamsGet = vi.fn().mockReturnValue(null);
+
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: vi.fn(),
@@ -51,7 +53,7 @@ vi.mock("next/navigation", () => ({
     prefetch: vi.fn(),
   }),
   useSearchParams: () => ({
-    get: vi.fn(),
+    get: (key: string) => mockSearchParamsGet(key),
   }),
   usePathname: () => "",
 }));
@@ -124,6 +126,10 @@ vi.mock("@/lib/hooks/useAcationCenter", () => ({
 // Use pointerEventsCheck: 0 because Radix Select renders spans with
 // pointer-events: none that jsdom incorrectly blocks.
 const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+beforeEach(() => {
+  mockSearchParamsGet.mockReturnValue(null);
+});
 
 // =====================================================================
 //  ACTION CENTER PAGE – PAGE HEADER UI
@@ -716,5 +722,13 @@ describe("ActionCenterPage – Edge Cases", () => {
     await user.click(screen.getByText(/Completed/));
     expect(screen.getAllByText("Completed").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("Approved").length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("defaults active tab to My Requests if search param tab=requests is set", async () => {
+    mockSearchParamsGet.mockImplementation((key: string) => key === "tab" ? "requests" : null);
+    renderWithProviders(<ActionCenterPage />);
+    
+    // The "My Requests" tab should be active, so "Raise Request" button should be visible
+    expect(screen.getByRole("button", { name: /Raise Request/i })).toBeTruthy();
   });
 });
