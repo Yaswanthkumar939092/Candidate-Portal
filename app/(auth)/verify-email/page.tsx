@@ -1,12 +1,12 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AuthForm, AuthFormData } from "@/components/auth-form";
 import { auth } from "@/lib/auth";
 import { useAuthSettings } from "@/lib/hooks/useAuthSettings";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, MailCheck, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
+import { MailCheck } from "lucide-react";
 
 export default function VerifyEmailPage() {
   return (
@@ -27,37 +27,51 @@ function VerifyEmailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const purposeParam = searchParams.get("purpose");
+  const emailParam = searchParams.get("email") || "";
   const isPasswordReset = purposeParam === "Password Reset";
 
   const { data: settings, isLoading: isSettingsLoading, error: settingsError } = useAuthSettings();
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [pendingOtpEmail, setPendingOtpEmail] = useState<string | null>(null);
   const [otp, setOtp] = useState("");
   const [isSettingPassword, setIsSettingPassword] = useState(false);
+  const [receivedOtpLog, setReceivedOtpLog] = useState<string | null>(null);
+  const [receivedPurpose, setReceivedPurpose] = useState<string | null>(null);
 
-  const displayError = settingsError
-    ? (settingsError instanceof Error ? settingsError.message : "Failed to load auth settings")
-    : error;
+  useEffect(() => {
+    if (settingsError) {
+      const msg = settingsError instanceof Error ? settingsError.message : "Failed to load auth settings";
+      toast.error(msg);
+    }
+  }, [settingsError]);
 
   const handleRequestOtp = async (formData: AuthFormData) => {
     setIsLoading(true);
-    setError(null);
-    setSuccessMessage(null);
 
     try {
+      let response;
       if (isPasswordReset) {
-        await auth.resetPassword(formData.email);
+        response = await auth.resetPassword(formData.email);
       } else {
-        await auth.requestEmailSignupOtp({
+        response = await auth.requestEmailSignupOtp({
           email: formData.email,
+          mode: "verify_email",
         });
       }
       setPendingOtpEmail(formData.email);
+      if (response) {
+        if (response.otp_log) {
+          setReceivedOtpLog(response.otp_log);
+        }
+        if (response.purpose) {
+          setReceivedPurpose(response.purpose);
+        }
+      }
+      toast.success(`Verification code sent to ${formData.email}`);
     } catch (error) {
       console.error("Request OTP error:", error);
-      setError(error instanceof Error ? error.message : "Failed to send verification code");
+      const msg = error instanceof Error ? error.message : "Failed to send verification code";
+      toast.error(msg);
     } finally {
       setIsLoading(false);
     }
@@ -67,19 +81,21 @@ function VerifyEmailContent() {
     if (!pendingOtpEmail) return;
 
     setIsLoading(true);
-    setError(null);
 
     try {
       await auth.verifyOtp({
         identifier: pendingOtpEmail,
         otp,
-        purpose: isPasswordReset ? "Password Reset" : "Signup",
+        purpose: (receivedPurpose || (isPasswordReset ? "Password Reset" : "Signup")) as any,
         identifierType: "Email",
+        otp_log: receivedOtpLog || undefined,
       });
       setIsSettingPassword(true);
+      toast.success("OTP verified successfully!");
     } catch (error) {
       console.error("Verify OTP error:", error);
-      setError(error instanceof Error ? error.message : "Failed to verify OTP");
+      const msg = error instanceof Error ? error.message : "Failed to verify OTP";
+      toast.error(msg);
     } finally {
       setIsLoading(false);
     }
@@ -87,13 +103,11 @@ function VerifyEmailContent() {
 
   const handleSetPassword = async (formData: AuthFormData) => {
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
+      toast.error("Passwords do not match");
       return;
     }
 
     setIsLoading(true);
-    setError(null);
-    setSuccessMessage(null);
 
     try {
       await auth.setPassword(formData.password);
@@ -102,11 +116,12 @@ function VerifyEmailContent() {
       setIsSettingPassword(false);
       setPendingOtpEmail(null);
       setOtp("");
-      setSuccessMessage("Password set successfully! Please log in using your email and password.");
+      toast.success("Password resetted successfully please login!");
       router.push("/login");
     } catch (error) {
       console.error("Set password error:", error);
-      setError(error instanceof Error ? error.message : "Failed to set password");
+      const msg = error instanceof Error ? error.message : "Failed to set password";
+      toast.error(msg);
     } finally {
       setIsLoading(false);
     }
@@ -115,9 +130,9 @@ function VerifyEmailContent() {
   const resetState = () => {
     setPendingOtpEmail(null);
     setOtp("");
-    setError(null);
-    setSuccessMessage(null);
     setIsSettingPassword(false);
+    setReceivedOtpLog(null);
+    setReceivedPurpose(null);
   };
 
   const handleBackToLogin = () => {
@@ -126,26 +141,6 @@ function VerifyEmailContent() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-0 md:p-8">
-      {successMessage && (
-        <div className="p-4 w-full max-w-md">
-          <Alert className="border-emerald-500/30 bg-emerald-50 text-emerald-800">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            <AlertDescription className="text-emerald-800">
-              {successMessage}
-            </AlertDescription>
-          </Alert>
-        </div>
-      )}
-
-      {displayError && (
-        <div className="p-4 w-full max-w-md">
-          <Alert variant="destructive">
-            <AlertTriangle className="w-4 h-4" />
-            <AlertDescription>{displayError}</AlertDescription>
-          </Alert>
-        </div>
-      )}
-
       {isSettingsLoading ? (
         <div className="flex flex-col items-center justify-center py-12">
           <div className="w-8 h-8 border-4 border-[#2563EB] border-t-transparent rounded-full animate-spin"></div>
@@ -168,6 +163,7 @@ function VerifyEmailContent() {
               isPasswordless={true}
               onPasswordlessToggle={handleBackToLogin}
               purpose={isPasswordReset ? "Password Reset" : "Signup"}
+              defaultEmail={emailParam}
             />
           ) : (
             <AuthUnavailable

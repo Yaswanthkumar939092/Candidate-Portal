@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/lib/contexts/auth-context'
 import { Loader2 } from 'lucide-react'
 import { PortalNavigation } from '@/components/portal/portal-navigation'
@@ -22,6 +22,9 @@ export default function PortalLayout({
 }) {
   const { user, isLoading } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
+
+  const showNavigation = pathname !== '/survey' && !pathname.startsWith('/job_offer')
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -51,8 +54,8 @@ export default function PortalLayout({
     <FeatureFlagProvider>
       <FeatureFlagLoader>
         <div className="min-h-screen bg-background">
-          <PortalNavigation />
-          <main className="flex-1 pt-16">
+          {showNavigation && <PortalNavigation />}
+          <main className={showNavigation ? "flex-1 pt-16" : "flex-1"}>
             {children}
           </main>
         </div>

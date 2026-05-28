@@ -10,6 +10,7 @@ import { useCurrentUser } from "@/lib/hooks/useUser";
 import { useCompanyLogo } from "@/lib/hooks/useCompanyLogo";
 import PdfViewer from "./PdfViewer";
 import { Button } from "@/components/ui/button";
+import { auth } from "@/lib/auth";
 
 /** Download the offer letter as a file. Fetches with credentials so cookies work. */
 async function downloadPdf(url: string) {
@@ -133,8 +134,9 @@ function JobOfferContent() {
         reason: rejectionReason,
         message: rejectionMessage,
       });
-      toast.success("Offer rejected.");
-      setShowDeclinedPopup(true);
+      toast.success("Offer rejected. Logging out...");
+      await auth.signOut();
+      router.push("/login");
     } catch (error) {
       const errorMessage = (error as Error).message || "An error occurred while rejecting the offer.";
       toast.error(errorMessage);

@@ -1,37 +1,70 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AuthForm, AuthFormData } from "@/components/auth-form";
 import { auth } from "@/lib/auth";
 import { useAuthSettings } from "@/lib/hooks/useAuthSettings";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, MailCheck, CheckCircle2 } from "lucide-react";
+import { MailCheck } from "lucide-react";
+import { toast } from "sonner";
+import { surveyService } from "@/lib/services/survey";
+import { useAuth } from "@/lib/contexts/auth-context";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const { refreshProfile } = useAuth();
   const { data: settings, isLoading: isSettingsLoading, error: settingsError } = useAuthSettings();
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [pendingOtpEmail, setPendingOtpEmail] = useState<string | null>(null);
   const [otp, setOtp] = useState("");
   const [isPasswordless, setIsPasswordless] = useState(false);
   const [isSettingPassword, setIsSettingPassword] = useState(false);
+  const [receivedOtpLog, setReceivedOtpLog] = useState<string | null>(null);
+  const [receivedPurpose, setReceivedPurpose] = useState<string | null>(null);
 
-  const displayError = settingsError
-    ? (settingsError instanceof Error ? settingsError.message : "Failed to load auth settings")
-    : error;
+  const handlePostLoginRouting = async () => {
+    try {
+      await refreshProfile();
+      const response = await surveyService.getPostLoginRoute();
+      if (typeof window !== "undefined" && window.sessionStorage) {
+        sessionStorage.setItem("showLoginToast", "true");
+      }
+      if (response.survey_required) {
+        router.push("/survey");
+      } else {
+        router.push(response.redirect_url || "/dashboard");
+      }
+    } catch (error) {
+      console.error("Post-login routing error:", error);
+      if (typeof window !== "undefined" && window.sessionStorage) {
+        sessionStorage.setItem("showLoginToast", "true");
+      }
+      router.push("/dashboard");
+    }
+  };
+
+  useEffect(() => {
+    if (settingsError) {
+      const msg = settingsError instanceof Error ? settingsError.message : "Failed to load auth settings";
+      toast.error(msg);
+    }
+  }, [settingsError]);
 
   const handleLogin = async (formData: AuthFormData) => {
     setIsLoading(true);
-    setError(null);
-    setSuccessMessage(null);
 
     try {
       if (isPasswordless) {
-        await auth.requestEmailSignupOtp({
+        const response = await auth.requestEmailSignupOtp({
           email: formData.email,
+          mode: "verify_email",
         });
         setPendingOtpEmail(formData.email);
+        if (response) {
+          if (response.otp_log) setReceivedOtpLog(response.otp_log);
+          if (response.purpose) setReceivedPurpose(response.purpose);
+        }
+        toast.success(`Verification code sent to ${formData.email}`);
         return;
       }
 
@@ -41,19 +74,25 @@ export default function LoginPage() {
       });
 
       if (settings?.allow_email_otp_login === 1 && settings.enable_email_otp === 1) {
-        await auth.requestOtp({
+        const response = await auth.requestOtp({
           identifier: formData.email,
           purpose: "Login",
           identifierType: "Email",
         });
         setPendingOtpEmail(formData.email);
+        if (response) {
+          if (response.otp_log) setReceivedOtpLog(response.otp_log);
+          if (response.purpose) setReceivedPurpose(response.purpose);
+        }
+        toast.success(`Verification code sent to ${formData.email}`);
         return;
       }
 
-      redirectToDashboard(settings?.redirect_to);
+      await handlePostLoginRouting();
     } catch (error) {
       console.error("Login error:", error);
-      setError(error instanceof Error ? error.message : "Failed to sign in");
+      const msg = error instanceof Error ? error.message : "Failed to sign in";
+      toast.error(msg);
     } finally {
       setIsLoading(false);
     }
@@ -63,25 +102,27 @@ export default function LoginPage() {
     if (!pendingOtpEmail) return;
 
     setIsLoading(true);
-    setError(null);
 
     try {
       await auth.verifyOtp({
         identifier: pendingOtpEmail,
         otp,
-        purpose: isPasswordless ? "Signup" : "Login",
+        purpose: (receivedPurpose || (isPasswordless ? "Signup" : "Login")) as any,
         identifierType: "Email",
+        otp_log: receivedOtpLog || undefined,
       });
 
       if (isPasswordless) {
         setIsSettingPassword(true);
+        toast.success("OTP verified successfully!");
         return;
       }
 
-      redirectToDashboard(settings?.redirect_to);
+      await handlePostLoginRouting();
     } catch (error) {
       console.error("OTP login error:", error);
-      setError(error instanceof Error ? error.message : "Failed to verify OTP");
+      const msg = error instanceof Error ? error.message : "Failed to verify OTP";
+      toast.error(msg);
     } finally {
       setIsLoading(false);
     }
@@ -89,13 +130,11 @@ export default function LoginPage() {
 
   const handleSetPassword = async (formData: AuthFormData) => {
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
+      toast.error("Passwords do not match");
       return;
     }
 
     setIsLoading(true);
-    setError(null);
-    setSuccessMessage(null);
 
     try {
       await auth.setPassword(formData.password);
@@ -105,10 +144,11 @@ export default function LoginPage() {
       setIsSettingPassword(false);
       setPendingOtpEmail(null);
       setOtp("");
-      setSuccessMessage("Password set successfully! Please log in using your email and password.");
+      toast.success("Password resetted successfully please login!");
     } catch (error) {
       console.error("Set password error:", error);
-      setError(error instanceof Error ? error.message : "Failed to set password");
+      const msg = error instanceof Error ? error.message : "Failed to set password";
+      toast.error(msg);
     } finally {
       setIsLoading(false);
     }
@@ -117,33 +157,13 @@ export default function LoginPage() {
   const resetLoginStep = () => {
     setPendingOtpEmail(null);
     setOtp("");
-    setError(null);
-    setSuccessMessage(null);
     setIsSettingPassword(false);
+    setReceivedOtpLog(null);
+    setReceivedPurpose(null);
   };
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-0 md:p-4 lg:p-8">
-      {successMessage && (
-        <div className="p-4 w-full max-w-md">
-          <Alert className="border-emerald-500/30 bg-emerald-50 text-emerald-800">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            <AlertDescription className="text-emerald-800">
-              {successMessage}
-            </AlertDescription>
-          </Alert>
-        </div>
-      )}
-      {displayError && (
-        <div className="p-4 w-full max-w-md">
-          <Alert className="border-destructive/30 bg-destructive/10">
-            <AlertTriangle className="w-4 h-4 text-destructive" />
-            <AlertDescription className="text-destructive">
-              {displayError}
-            </AlertDescription>
-          </Alert>
-        </div>
-      )}
       {isSettingsLoading ? (
         <AuthUnavailable title="Loading login" message="Checking candidate authentication settings." />
       ) : !settings ? (
@@ -188,6 +208,9 @@ function redirectToDashboard(redirectTo?: string) {
     candidate_dashboard: "/dashboard",
   };
   const target = redirectTo ? (landingRoutes[redirectTo] || "/dashboard") : "/dashboard";
+  if (typeof window !== "undefined" && window.sessionStorage) {
+    sessionStorage.setItem("showLoginToast", "true");
+  }
   window.location.assign(target);
 }
 

@@ -16,6 +16,18 @@ vi.mock("@/lib/auth", () => ({
   profileFromFrappeUser: mockProfileFromFrappeUser,
 }))
 
+const mockToastSuccess = vi.fn()
+
+vi.mock("sonner", () => ({
+  toast: {
+    success: (...args: any[]) => mockToastSuccess(...args),
+  },
+}))
+
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/dashboard",
+}))
+
 const frappeUser = {
   id: "candidate@example.com",
   name: "candidate@example.com",
@@ -104,5 +116,24 @@ describe("AuthProvider", () => {
     expect(mockGetProfile).not.toHaveBeenCalled()
     expect(mockProfileFromFrappeUser).toHaveBeenCalledWith(frappeUser)
     expect(screen.getByTestId("stage").textContent).toBe("candidate")
+  })
+
+  it("displays success toast and clears sessionStorage when showLoginToast is set to true", async () => {
+    const sessionStorageSpy = vi.spyOn(Storage.prototype, 'getItem').mockReturnValue("true")
+    const sessionStorageRemoveSpy = vi.spyOn(Storage.prototype, 'removeItem')
+
+    render(
+      <AuthProvider>
+        <AuthStateProbe />
+      </AuthProvider>,
+    )
+
+    await waitFor(() => expect(screen.getByTestId("loading").textContent).toBe("false"))
+
+    expect(mockToastSuccess).toHaveBeenCalledWith("Successfully logged in!")
+    expect(sessionStorageRemoveSpy).toHaveBeenCalledWith("showLoginToast")
+
+    sessionStorageSpy.mockRestore()
+    sessionStorageRemoveSpy.mockRestore()
   })
 })

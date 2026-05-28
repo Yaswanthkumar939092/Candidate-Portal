@@ -20,6 +20,9 @@ export default function AuthCallbackPage() {
 
         if (data.session) {
           // Successful authentication
+          if (typeof window !== "undefined" && window.sessionStorage) {
+            sessionStorage.setItem("showLoginToast", "true");
+          }
           router.push('/dashboard');
         } else {
           // No session found
