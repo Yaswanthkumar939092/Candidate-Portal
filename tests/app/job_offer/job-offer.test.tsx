@@ -160,7 +160,7 @@ describe("JobOfferPage", () => {
     expect(mockPush).toHaveBeenCalledWith("/dashboard");
   });
 
-  it("handles rejection flow correctly and logs out the user", async () => {
+  it("handles rejection flow correctly and displays the Offer Declined page", async () => {
     const mutateAsync = vi.fn().mockResolvedValue({});
     mockUseUpdateJobOfferStatus.mockReturnValue({ mutateAsync });
 
@@ -189,6 +189,20 @@ describe("JobOfferPage", () => {
       });
     });
 
+    // Check that we render the OFFER DECLINED page
+    expect(screen.getByText("OFFER DECLINED")).toBeTruthy();
+    expect(screen.getByText("Offer Letter Declined")).toBeTruthy();
+    expect(screen.getByText("Reason for Rejection:")).toBeTruthy();
+    expect(screen.getByText("Salary")).toBeTruthy();
+
+    // Verify "Raise Request" button navigates to /action-center
+    const raiseRequestBtn = screen.getByRole("button", { name: /Raise Request/i });
+    fireEvent.click(raiseRequestBtn);
+    expect(mockPush).toHaveBeenCalledWith("/action-center");
+
+    // Verify "Logout" button signs out and routes to /login
+    const logoutBtn = screen.getByRole("button", { name: /Logout/i });
+    fireEvent.click(logoutBtn);
     await waitFor(() => {
       expect(mockSignOut).toHaveBeenCalled();
       expect(mockPush).toHaveBeenCalledWith("/login");

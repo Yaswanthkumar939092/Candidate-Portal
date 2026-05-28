@@ -1,33 +1,62 @@
 "use client";
 
-import { useSurvey, useSubmitSurvey } from "@/lib/hooks/useSurvey";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import {
-  Loader2,
-  CheckCircle2,
-  Send,
-  FileText,
-  ClipboardList,
-} from "lucide-react";
+import { DynamicSurveyForm } from "@/components/survey/dynamic-survey-form";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
+import { useSurvey, useSubmitSurvey } from "@/lib/hooks/useSurvey";
+import { CheckCircle2, ClipboardList, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import NextImage from "next/image";
+import { useCurrentUser } from "@/lib/hooks/useUser";
+import { useJobOfferSummary } from "@/lib/hooks/useJobOffer";
+import { useCompanyLogo } from "@/lib/hooks/useCompanyLogo";
+
+const fallbackSurveySchema = {
+  components: [
+    {
+      key: "interest_reason",
+      type: "textarea",
+      label: "Why are you interested in this position?",
+      placeholder: "Describe your motivations and interest in the role",
+      validate: { required: true },
+    },
+    {
+      key: "notice_period",
+      type: "number",
+      label: "What is your standard notice period (in days)?",
+      placeholder: "e.g. 30",
+      validate: { required: true, min: 0 },
+    },
+    {
+      key: "visa_sponsorship",
+      type: "select",
+      label: "Do you require visa sponsorship to work?",
+      placeholder: "Select an option",
+      validate: { required: true },
+      data: {
+        values: [
+          { label: "No", value: "No" },
+          { label: "Yes", value: "Yes" },
+        ],
+      },
+    },
+  ],
+};
 
 export default function SurveyPage() {
   const { data, isLoading, error } = useSurvey();
   const { mutateAsync: submitSurveyMutate } = useSubmitSurvey();
   const router = useRouter();
+  const { userEmail } = useCurrentUser();
+  const { data: offerData } = useJobOfferSummary(userEmail || "");
+  const { data: logoData } = useCompanyLogo();
   const [formValues, setFormValues] = useState<Record<string, any>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     if (!isLoading && data && !data.survey_required) {
-      // If survey is not required, redirect to action-center or home
       router.push((data as any).redirect_url || "/dashboard");
     }
   }, [data, isLoading, router]);
@@ -85,7 +114,6 @@ export default function SurveyPage() {
     );
   }
 
-  // Double check if redirect is in progress
   if (!data.survey_required) {
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center p-6 bg-gradient-to-br from-background via-background to-secondary/30">
@@ -100,24 +128,19 @@ export default function SurveyPage() {
   }
 
   const { form_name, form_schema, job_applicant, job_opening } = data;
-  const components = (form_schema as any)?.components || [];
+  const surveySchema = (form_schema as { components?: any[] })?.components
+    ?.length
+    ? (form_schema as { components?: any[] })
+    : fallbackSurveySchema;
 
-  const handleValueChange = (key: string, val: any) => {
-    setFormValues((prev) => ({
-      ...prev,
-      [key]: val,
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (values: Record<string, any>) => {
     setIsSubmitting(true);
 
     try {
       const res = await submitSurveyMutate({
         job_applicant,
         job_opening,
-        response: formValues,
+        response: values,
       });
       setSubmitted(true);
       toast.success("Survey submitted successfully!");
@@ -127,158 +150,13 @@ export default function SurveyPage() {
       }, 2000);
     } catch (err) {
       console.error("Survey submit error:", err);
-      toast.error(err instanceof Error ? err.message : "Failed to submit survey. Please try again.");
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "Failed to submit survey. Please try again.",
+      );
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const renderComponent = (comp: any) => {
-    if (comp.type === "button" && comp.key === "submit") {
-      return null;
-    }
-
-    const isRequired = comp.validate?.required;
-    const value = formValues[comp.key] ?? "";
-
-    switch (comp.type) {
-      case "textfield":
-      case "email":
-      case "number":
-      case "phoneNumber":
-      case "password":
-        return (
-          <div key={comp.key} className="space-y-2">
-            <Label
-              htmlFor={comp.key}
-              className="text-sm font-semibold text-foreground/90 flex items-center gap-1"
-            >
-              {comp.label}
-              {isRequired && <span className="text-destructive">*</span>}
-            </Label>
-            <Input
-              id={comp.key}
-              type={
-                comp.type === "phoneNumber"
-                  ? "tel"
-                  : comp.type === "textfield"
-                    ? "text"
-                    : comp.type
-              }
-              placeholder={comp.placeholder}
-              required={isRequired}
-              value={value}
-              onChange={(e) => handleValueChange(comp.key, e.target.value)}
-              className="bg-background/50 border-border focus-visible:ring-primary focus-visible:ring-offset-background transition-all"
-            />
-          </div>
-        );
-
-      case "textarea":
-        return (
-          <div key={comp.key} className="space-y-2">
-            <Label
-              htmlFor={comp.key}
-              className="text-sm font-semibold text-foreground/90 flex items-center gap-1"
-            >
-              {comp.label}
-              {isRequired && <span className="text-destructive">*</span>}
-            </Label>
-            <Textarea
-              id={comp.key}
-              placeholder={comp.placeholder}
-              required={isRequired}
-              value={value}
-              onChange={(e) => handleValueChange(comp.key, e.target.value)}
-              className="bg-background/50 border-border min-h-[100px] focus-visible:ring-primary transition-all"
-            />
-          </div>
-        );
-
-      case "checkbox":
-        return (
-          <div
-            key={comp.key}
-            className="flex items-center space-x-3 space-y-0 rounded-lg border p-4 bg-background/30 border-border/80"
-          >
-            <Checkbox
-              id={comp.key}
-              checked={!!value}
-              onCheckedChange={(checked) =>
-                handleValueChange(comp.key, checked)
-              }
-            />
-            <div className="space-y-1 leading-none">
-              <Label
-                htmlFor={comp.key}
-                className="text-sm font-medium text-foreground cursor-pointer flex items-center gap-1"
-              >
-                {comp.label}
-                {isRequired && <span className="text-destructive">*</span>}
-              </Label>
-              {comp.description && (
-                <p className="text-xs text-muted-foreground">
-                  {comp.description}
-                </p>
-              )}
-            </div>
-          </div>
-        );
-
-      case "select":
-        const options = comp.data?.values || [];
-        return (
-          <div key={comp.key} className="space-y-2">
-            <Label
-              htmlFor={comp.key}
-              className="text-sm font-semibold text-foreground/90 flex items-center gap-1"
-            >
-              {comp.label}
-              {isRequired && <span className="text-destructive">*</span>}
-            </Label>
-            <select
-              id={comp.key}
-              required={isRequired}
-              value={value}
-              onChange={(e) => handleValueChange(comp.key, e.target.value)}
-              className="flex h-10 w-full rounded-md border border-border bg-background/50 px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all text-foreground"
-            >
-              <option value="" className="bg-card text-foreground">
-                {comp.placeholder || `Select ${comp.label}`}
-              </option>
-              {options.map((opt: any) => (
-                <option
-                  key={opt.value}
-                  value={opt.value}
-                  className="bg-card text-foreground"
-                >
-                  {opt.label || opt.value}
-                </option>
-              ))}
-            </select>
-          </div>
-        );
-
-      default:
-        return (
-          <div key={comp.key} className="space-y-2">
-            <Label
-              htmlFor={comp.key}
-              className="text-sm font-semibold text-foreground/90 flex items-center gap-1"
-            >
-              {comp.label}
-              {isRequired && <span className="text-destructive">*</span>}
-            </Label>
-            <Input
-              id={comp.key}
-              placeholder={comp.placeholder}
-              required={isRequired}
-              value={value}
-              onChange={(e) => handleValueChange(comp.key, e.target.value)}
-              className="bg-background/50 border-border focus-visible:ring-primary transition-all"
-            />
-          </div>
-        );
     }
   };
 
@@ -302,130 +180,60 @@ export default function SurveyPage() {
 
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-background via-background to-secondary/40 flex justify-center items-start">
-      <div className="w-full max-w-2xl mt-4 sm:mt-8">
-        {/* Upper Header Card */}
-        <div className="mb-6 rounded-2xl p-6 bg-card border border-border shadow-md flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 overflow-hidden">
-          <div className="flex items-center gap-3 min-w-0 w-full sm:w-auto">
-            <div className="p-2.5 bg-primary/10 rounded-xl text-primary shrink-0">
-              <ClipboardList className="w-6 h-6" />
+      <div className="w-full max-w-5xl mx-auto">
+        {/* Header containing Company Logo and User Profile */}
+        <div className="flex items-center justify-between mb-8">
+          <NextImage
+            src={
+              logoData?.logo_url
+                ? `${process.env.NEXT_PUBLIC_FRAPPE_URL}${logoData.logo_url}`
+                : "/Logo.jpg"
+            }
+            alt="LOGO"
+            width={180}
+            height={60}
+            className="h-25 md:h-25  max-w-full w-auto object-contain"
+            priority
+            unoptimized={!!logoData?.logo_url}
+          />
+          <div className="flex items-center gap-2.5 pr-2.5">
+            <div className="w-10 h-10 rounded-full bg-[#1a2332] text-white flex items-center justify-center text-[1rem] font-bold shadow-sm">
+              {(offerData?.applicant_name || "U")[0].toUpperCase()}
             </div>
-            <div className="min-w-0 flex-1">
-              <h1
-                className="text-xl font-bold text-foreground truncate"
-                title={form_name || "Survey"}
-              >
-                {form_name || "Recruitment Survey"}
-              </h1>
-            </div>
+            <span className="text-[0.95rem] font-semibold text-[#1a2332] dark:text-slate-200">
+              {offerData?.applicant_name || ""}
+            </span>
           </div>
         </div>
 
-        {/* Form Container */}
-        <div className="rounded-2xl border border-border bg-card/75 backdrop-blur-md shadow-lg overflow-hidden">
-          <div className="h-1.5 bg-gradient-to-r from-primary/80 to-purple-500" />
-
-          <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6">
-            {components.length > 0 ? (
-              <div className="space-y-6">
-                {components.map((comp: any) => renderComponent(comp))}
+        {/* Survey Form Card */}
+        <div className="max-w-2xl mx-auto mt-4 sm:mt-8">
+          <div className="mb-6 rounded-2xl p-6 bg-card border border-border shadow-md flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 overflow-hidden">
+            <div className="flex items-center gap-3 min-w-0 w-full sm:w-auto">
+              <div className="p-2.5 bg-primary/10 rounded-xl text-primary shrink-0">
+                <ClipboardList className="w-6 h-6" />
               </div>
-            ) : (
-              /* Fallback default questionnaire fields if components are empty */
-              <div className="space-y-6">
-                <p className="text-sm text-muted-foreground border-b border-border pb-4">
-                  Please provide the following details to assist us with the
-                  onboarding process.
-                </p>
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="q1"
-                    className="text-sm font-semibold text-foreground flex items-center gap-1"
-                  >
-                    Why are you interested in this position?{" "}
-                    <span className="text-destructive">*</span>
-                  </Label>
-                  <Textarea
-                    id="q1"
-                    required
-                    placeholder="Describe your motivations and interest in the role"
-                    value={formValues.interest_reason ?? ""}
-                    onChange={(e) =>
-                      handleValueChange("interest_reason", e.target.value)
-                    }
-                    className="bg-background/50 border-border focus-visible:ring-primary"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="q2"
-                    className="text-sm font-semibold text-foreground flex items-center gap-1"
-                  >
-                    What is your standard notice period (in days)?{" "}
-                    <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    id="q2"
-                    type="number"
-                    required
-                    placeholder="e.g. 30"
-                    value={formValues.notice_period ?? ""}
-                    onChange={(e) =>
-                      handleValueChange("notice_period", e.target.value)
-                    }
-                    className="bg-background/50 border-border focus-visible:ring-primary"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="q3"
-                    className="text-sm font-semibold text-foreground flex items-center gap-1"
-                  >
-                    Do you require visa sponsorship to work?{" "}
-                    <span className="text-destructive">*</span>
-                  </Label>
-                  <select
-                    id="q3"
-                    required
-                    value={formValues.visa_sponsorship ?? ""}
-                    onChange={(e) =>
-                      handleValueChange("visa_sponsorship", e.target.value)
-                    }
-                    className="flex h-10 w-full rounded-md border border-border bg-background/50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all text-foreground"
-                  >
-                    <option value="" className="bg-card">
-                      Select an option
-                    </option>
-                    <option value="No" className="bg-card">
-                      No
-                    </option>
-                    <option value="Yes" className="bg-card">
-                      Yes
-                    </option>
-                  </select>
-                </div>
+              <div className="min-w-0 flex-1">
+                <h1
+                  className="text-xl font-bold text-foreground truncate"
+                  title={form_name || "Survey"}
+                >
+                  {form_name || "Recruitment Survey"}
+                </h1>
               </div>
-            )}
-
-            <div className="pt-4 border-t border-border flex justify-end">
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full sm:w-auto px-6 py-2.5 font-medium flex items-center justify-center gap-2 group transition-all"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Submitting...
-                  </>
-                ) : (
-                  <>
-                    Submit Responses
-                    <Send className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </>
-                )}
-              </Button>
             </div>
-          </form>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-card/75 backdrop-blur-md shadow-lg overflow-hidden">
+            <div className="h-1.5 bg-gradient-to-r from-primary/80 to-purple-500" />
+            <DynamicSurveyForm
+              schema={surveySchema}
+              values={formValues}
+              onValuesChange={setFormValues}
+              onSubmit={handleSubmit}
+              isSubmitting={isSubmitting}
+            />
+          </div>
         </div>
       </div>
     </div>
