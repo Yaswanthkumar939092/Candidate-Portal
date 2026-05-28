@@ -198,7 +198,7 @@ describe("JobOfferPage", () => {
     // Verify "Raise Request" button navigates to /action-center
     const raiseRequestBtn = screen.getByRole("button", { name: /Raise Request/i });
     fireEvent.click(raiseRequestBtn);
-    expect(mockPush).toHaveBeenCalledWith("/action-center");
+    expect(mockPush).toHaveBeenCalledWith("/action-center?tab=requests");
 
     // Verify "Logout" button signs out and routes to /login
     const logoutBtn = screen.getByRole("button", { name: /Logout/i });
