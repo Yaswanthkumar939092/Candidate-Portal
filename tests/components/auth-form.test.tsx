@@ -107,7 +107,7 @@ describe("AuthForm – Login UI", () => {
     render(<AuthForm {...defaultLoginProps} />);
     const link = screen.getByText("Forgot password?");
     expect(link).toBeTruthy();
-    expect(link.getAttribute("href")).toBe("/verify-email");
+    expect(link.getAttribute("href")).toContain("/verify-email?purpose=Password%20Reset");
   });
 
   it("shows submit button with text 'Sign in to your account'", () => {

@@ -41,6 +41,7 @@ interface AuthFormProps {
   isPasswordless?: boolean;
   onPasswordlessToggle?: (value: boolean) => void;
   purpose?: "Signup" | "Password Reset";
+  defaultEmail?: string;
 }
 
 export function AuthForm({
@@ -57,10 +58,11 @@ export function AuthForm({
   isPasswordless = false,
   onPasswordlessToggle,
   purpose = "Signup",
+  defaultEmail,
 }: AuthFormProps) {
   const { data: branding } = useCandidateBranding();
   const [formData, setFormData] = useState<AuthFormData>({
-    email: "",
+    email: defaultEmail || "",
     password: "",
     confirmPassword: "",
     firstName: "",
@@ -563,7 +565,7 @@ export function AuthForm({
                   </label>
                 </div>
                 <Link
-                  href="/verify-email?purpose=Password%20Reset"
+                  href={`/verify-email?purpose=Password%20Reset${formData.email ? `&email=${encodeURIComponent(formData.email)}` : ""}`}
                   className="font-semibold text-[#2563EB] hover:text-[#1D4ED8] transition-colors"
                 >
                   Forgot password?

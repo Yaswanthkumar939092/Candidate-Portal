@@ -2,14 +2,21 @@
 
 import React, { useState, Suspense, useEffect } from "react";
 import NextImage from "next/image";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useJobOfferSummary, useJobOfferPdf, useUpdateJobOfferStatus, useJobOfferStatus, useRejectionReasons } from "@/lib/hooks/useJobOffer";
+import {
+  useJobOfferSummary,
+  useJobOfferPdf,
+  useUpdateJobOfferStatus,
+  useJobOfferStatus,
+  useRejectionReasons,
+} from "@/lib/hooks/useJobOffer";
 import { useCurrentUser } from "@/lib/hooks/useUser";
 import { useCompanyLogo } from "@/lib/hooks/useCompanyLogo";
 import PdfViewer from "./PdfViewer";
 import { Button } from "@/components/ui/button";
+import { auth } from "@/lib/auth";
 
 /** Download the offer letter as a file. Fetches with credentials so cookies work. */
 async function downloadPdf(url: string) {
@@ -27,8 +34,6 @@ async function downloadPdf(url: string) {
     toast.error("Could not download the offer letter. Please try again.");
   }
 }
-
-
 
 export default function JobOfferPage() {
   return (
@@ -56,21 +61,37 @@ function JobOfferContent() {
   // Use param if available, else fallback to userEmail
   const applicantEmail = applParam || userEmail || "";
 
-  const { data: statusData, isLoading: isStatusLoading, isError: isStatusError, error: statusError } = useJobOfferStatus(applicantEmail);
+  const {
+    data: statusData,
+    isLoading: isStatusLoading,
+    isError: isStatusError,
+    error: statusError,
+  } = useJobOfferStatus(applicantEmail);
   const statusNormalized = statusData?.status?.toLowerCase();
 
-  const [gameState, setGameState] = useState<"loading" | "main" | "rejection" | "accepted" | "processed" | "expired">("main");
+  const [gameState, setGameState] = useState<
+    "loading" | "main" | "rejection" | "accepted" | "processed" | "expired" | "rejected"
+  >("main");
   const [justAccepted, setJustAccepted] = useState(false);
+  const [justRejected, setJustRejected] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  // Only fetch summary, logo, and PDF if status is awaiting response or just accepted in this session
-  const isSummaryNeeded = statusNormalized === "awaiting response" || (statusNormalized === "accepted" && justAccepted);
+  // Only fetch summary, logo, and PDF if status is awaiting response or just accepted/rejected in this session
+  const isSummaryNeeded =
+    statusNormalized === "awaiting response" ||
+    (statusNormalized === "accepted" && justAccepted) ||
+    (statusNormalized === "rejected" && justRejected);
   const { data: logoData } = useCompanyLogo(isSummaryNeeded);
   const isPdfNeeded = statusNormalized === "awaiting response";
 
-  const { data: offerData, isLoading: isApiLoading } = useJobOfferSummary(applicantEmail, isSummaryNeeded);
+  const { data: offerData, isLoading: isApiLoading } = useJobOfferSummary(
+    applicantEmail,
+    isSummaryNeeded,
+  );
   const { pdfUrl } = useJobOfferPdf(applicantEmail, isPdfNeeded);
   const { mutateAsync: updateStatus } = useUpdateJobOfferStatus();
-  const { data: reasonsData, isLoading: isReasonsLoading } = useRejectionReasons();
+  const { data: reasonsData, isLoading: isReasonsLoading } =
+    useRejectionReasons();
 
   useEffect(() => {
     if (statusNormalized) {
@@ -82,14 +103,19 @@ function JobOfferContent() {
           setGameState("processed");
         }
       } else if (statusNormalized === "rejected") {
-        setGameState("processed");
+        // Show rejection screen 'only once' after rejection in this session.
+        if (justRejected) {
+          setGameState("rejected");
+        } else {
+          setGameState("processed");
+        }
       } else if (statusNormalized === "expired") {
         setGameState("expired");
       } else if (statusNormalized === "awaiting response") {
         setGameState("main");
       }
     }
-  }, [statusNormalized, justAccepted]);
+  }, [statusNormalized, justAccepted, justRejected]);
 
   const [isTermsChecked, setIsTermsChecked] = useState(false);
   const [isAccepting, setIsAccepting] = useState(false);
@@ -112,7 +138,9 @@ function JobOfferContent() {
       setGameState("accepted");
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (error) {
-      const errorMessage = (error as Error).message || "An error occurred while accepting the offer.";
+      const errorMessage =
+        (error as Error).message ||
+        "An error occurred while accepting the offer.";
       toast.error(errorMessage);
     } finally {
       setIsAccepting(false);
@@ -134,12 +162,28 @@ function JobOfferContent() {
         message: rejectionMessage,
       });
       toast.success("Offer rejected.");
-      setShowDeclinedPopup(true);
+      setJustRejected(true);
+      setGameState("rejected");
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (error) {
-      const errorMessage = (error as Error).message || "An error occurred while rejecting the offer.";
+      const errorMessage =
+        (error as Error).message ||
+        "An error occurred while rejecting the offer.";
       toast.error(errorMessage);
     } finally {
       setIsRejecting(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await auth.signOut();
+      router.push("/login");
+    } catch {
+      toast.error("Failed to sign out. Please try again.");
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
@@ -159,10 +203,13 @@ function JobOfferContent() {
       <div className="font-sans text-[#334155] bg-[#f8fafc] min-h-screen flex items-center justify-center">
         <div className="bg-white p-8 rounded-xl shadow-sm border border-red-100 flex flex-col items-center gap-4 max-w-md text-center">
           <AlertCircle className="h-12 w-12 text-red-500" />
-          <h2 className="text-xl font-semibold text-slate-800">Oops! Something went wrong</h2>
+          <h2 className="text-xl font-semibold text-slate-800">
+            Oops! Something went wrong
+          </h2>
           <p className="text-slate-600">
             {isStatusError
-              ? (statusError as Error)?.message || "We couldn't fetch the offer status. Please try again later."
+              ? (statusError as Error)?.message ||
+                "We couldn't fetch the offer status. Please try again later."
               : "No applicant email provided. Please check the link in your email."}
           </p>
           <button
@@ -195,7 +242,9 @@ function JobOfferContent() {
           {!offerData ? (
             <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
               <AlertCircle className="h-10 w-10 text-slate-300 mb-4" />
-              <p className="text-slate-500">Offer details not found for this applicant.</p>
+              <p className="text-slate-500">
+                Offer details not found for this applicant.
+              </p>
             </div>
           ) : (
             <>
@@ -207,9 +256,13 @@ function JobOfferContent() {
                 </div>
               )}
 
-              {/* <div className="flex items-start justify-between mb-0">
+              <div className="flex items-start justify-between mb-0">
                 <NextImage
-                  src={logoData?.logo_url ? `${process.env.NEXT_PUBLIC_FRAPPE_URL}${logoData.logo_url}` : "/Logo.jpg"}
+                  src={
+                    logoData?.logo_url
+                      ? `${process.env.NEXT_PUBLIC_FRAPPE_URL}${logoData.logo_url}`
+                      : "/Logo.jpg"
+                  }
                   alt="LOGO"
                   width={180}
                   height={60}
@@ -225,9 +278,7 @@ function JobOfferContent() {
                     {offerData.applicant_name || ""}
                   </span>
                 </div>
-              </div> */}
-
-
+              </div>
 
               <div className="flex flex-col lg:flex-row gap-8 items-start">
                 {/* Left: Offer content */}
@@ -236,12 +287,17 @@ function JobOfferContent() {
                     Offer of Employment
                   </h1>
                   {pdfUrl ? (
-                    <div className="bg-[#f1f5f9] border border-[#e2e8f0] rounded-xl overflow-hidden shadow-[inset_0_1px_4px_rgba(0,0,0,0.05)]" style={{ height: "80vh", minHeight: "600px" }}>
+                    <div
+                      className="bg-[#f1f5f9] border border-[#e2e8f0] rounded-xl overflow-hidden shadow-[inset_0_1px_4px_rgba(0,0,0,0.05)]"
+                      style={{ height: "80vh", minHeight: "600px" }}
+                    >
                       <PdfViewer pdfUrl={pdfUrl} />
                     </div>
                   ) : (
                     <div className="bg-white border border-[#e2e8f0] rounded-xl p-8 overflow-x-auto shadow-[0_1px_3px_rgba(0,0,0,0.04)] flex flex-col items-center justify-center min-h-[400px]">
-                      <p className="text-[#64748b]">Offer letter content could not be loaded.</p>
+                      <p className="text-[#64748b]">
+                        Offer letter content could not be loaded.
+                      </p>
                     </div>
                   )}
                 </div>
@@ -260,14 +316,18 @@ function JobOfferContent() {
                     </div>
                     <div className="bg-[#eaf4fb] p-5 border border-[#e2e8f0] rounded-lg mx-5 mb-4 overflow-hidden">
                       <div className="flex justify-between items-center py-1.5 gap-4">
-                        <span className="text-[0.85rem] text-[#64748b] shrink-0">Role</span>
+                        <span className="text-[0.85rem] text-[#64748b] shrink-0">
+                          Role
+                        </span>
                         <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right truncate">
                           {offerData.designation || "Intern"}
                         </span>
                       </div>
                       {offerData.duration_display && (
                         <div className="flex justify-between items-center py-1.5">
-                          <span className="text-[0.85rem] text-[#64748b]">Duration</span>
+                          <span className="text-[0.85rem] text-[#64748b]">
+                            Duration
+                          </span>
                           <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right">
                             {offerData.duration_display}
                           </span>
@@ -275,7 +335,9 @@ function JobOfferContent() {
                       )}
                       {offerData.expected_doj_display && (
                         <div className="flex justify-between items-center py-1.5">
-                          <span className="text-[0.85rem] text-[#64748b]">Joining Date</span>
+                          <span className="text-[0.85rem] text-[#64748b]">
+                            Joining Date
+                          </span>
                           <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right">
                             {offerData.expected_doj_display}
                           </span>
@@ -283,7 +345,9 @@ function JobOfferContent() {
                       )}
                       {offerData.stipend_display && (
                         <div className="flex justify-between items-center py-1.5">
-                          <span className="text-[0.85rem] text-[#64748b]">Amount</span>
+                          <span className="text-[0.85rem] text-[#64748b]">
+                            Amount
+                          </span>
                           <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right">
                             {offerData.stipend_display}
                           </span>
@@ -298,7 +362,20 @@ function JobOfferContent() {
                           disabled={!pdfUrl}
                           className="flex items-center justify-center gap-2 w-full p-2.5 bg-transparent text-[#2563eb] border-[1.5px] border-[#2563eb] rounded-lg text-[0.85rem] font-semibold mb-2.5 text-center transition-colors duration-200 hover:bg-[#2563eb]/6 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                          </svg>
                           Download Offer Letter
                         </button>
                       </div>
@@ -311,17 +388,35 @@ function JobOfferContent() {
                           onChange={(e) => setIsTermsChecked(e.target.checked)}
                         />
                         <span>
-                          I declare that I have read and understood the entire offer letter and agree to the terms and conditions outlined above.
+                          I declare that I have read and understood the entire
+                          offer letter and agree to the terms and conditions
+                          outlined above.
                         </span>
                       </label>
 
                       <div className="hidden lg:block">
                         <button
-                          onClick={() => pdfUrl && window.open(pdfUrl, "_blank", "noopener,noreferrer")}
+                          onClick={() =>
+                            pdfUrl &&
+                            window.open(pdfUrl, "_blank", "noopener,noreferrer")
+                          }
                           disabled={!pdfUrl}
                           className="flex items-center justify-center gap-2 w-full p-2.5 bg-transparent text-[#2563eb] border-[1.5px] border-[#2563eb] rounded-lg text-[0.85rem] font-semibold mb-2.5 text-center transition-colors duration-200 hover:bg-[#2563eb]/6 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
+                            <polyline points="15 3 21 3 21 9" />
+                            <line x1="10" y1="14" x2="21" y2="3" />
+                          </svg>
                           Preview / Download Offer Letter
                         </button>
                       </div>
@@ -335,7 +430,18 @@ function JobOfferContent() {
                           <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                         )}
                         {!isAccepting && (
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                          <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
                         )}
                         {isAccepting ? "Accepting..." : "Accept Offer"}
                       </button>
@@ -347,7 +453,19 @@ function JobOfferContent() {
                           window.scrollTo({ top: 0, behavior: "smooth" });
                         }}
                       >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
                         Reject Offer
                       </button>
                     </div>
@@ -362,9 +480,12 @@ function JobOfferContent() {
       {/* STATE: REJECTION FLOW */}
       {gameState === "rejection" && (
         <div className="max-w-[700px] mx-auto px-5 py-[60px]">
-          <h1 className="text-[2rem] font-semibold text-[#1a2332] mt-4 mb-2">Reject Offer</h1>
+          <h1 className="text-[2rem] font-semibold text-[#1a2332] mt-4 mb-2">
+            Reject Offer
+          </h1>
           <p className="text-[0.95rem] text-[#64748b] mb-7">
-            We&apos;re sorry to see you go. Please let us know why you are declining this offer.
+            We&apos;re sorry to see you go. Please let us know why you are
+            declining this offer.
           </p>
           <div className="bg-white border border-[#e2e8f0] rounded-xl p-7 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
             <div className="flex items-center gap-2.5 text-[1.15rem] font-semibold text-[#1a2332] mb-5">
@@ -375,7 +496,9 @@ function JobOfferContent() {
               value={rejectionReason}
               onChange={(e) => setRejectionReason(e.target.value)}
             >
-              <option value="">{isReasonsLoading ? "Loading reasons..." : "Select a reason..."}</option>
+              <option value="">
+                {isReasonsLoading ? "Loading reasons..." : "Select a reason..."}
+              </option>
               {reasonsData?.map((r) => (
                 <option key={r.reason} value={r.reason}>
                   {r.name}
@@ -416,7 +539,15 @@ function JobOfferContent() {
         <div className="max-w-[700px] mx-auto px-5 py-[60px] text-center">
           <div className="mb-4">
             <div className="w-[70px] h-[70px] bg-[#4caf50] rounded-full flex items-center justify-center mx-auto shadow-[0_8px_32px_rgba(76,175,80,0.3)] animate-[jo-pop_0.5s_cubic-bezier(0.34,1.56,0.64,1)_forwards]">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8 text-white">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-8 h-8 text-white"
+              >
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </div>
@@ -433,7 +564,8 @@ function JobOfferContent() {
           </p>
           <div className="bg-white border border-[#e2e8f0] rounded-xl p-6 max-w-[520px] mx-auto mb-5 text-left shadow-sm">
             <div className="text-[0.95rem] text-[#334155] leading-[1.6]">
-              Keep checking your email for further updates on your onboarding and LMS journey.
+              Keep checking your email for further updates on your onboarding
+              and LMS journey.
             </div>
           </div>
           <div className="mt-7 flex flex-col items-center gap-3">
@@ -442,9 +574,97 @@ function JobOfferContent() {
               className="px-6 py-2.5 bg-[#4caf50] text-white rounded-lg font-semibold hover:bg-[#43a047] transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 h-11"
             >
               Go to Dashboard
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
             </Button>
-            <p className="text-[12px] text-gray-400 mt-2">You can also close this browser window</p>
+            <p className="text-[12px] text-gray-400 mt-2">
+              You can also close this browser window
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* STATE: REJECTED CONFIRMATION */}
+      {gameState === "rejected" && (
+        <div className="max-w-[700px] mx-auto px-5 py-[60px] text-center">
+          <div className="mb-4">
+            <div className="w-[70px] h-[70px] bg-[#ef4444] rounded-full flex items-center justify-center mx-auto shadow-[0_8px_32px_rgba(239,68,68,0.3)] animate-[jo-pop_0.5s_cubic-bezier(0.34,1.56,0.64,1)_forwards]">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-8 h-8 text-white"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </div>
+          </div>
+          <span className="inline-block px-7 py-2.5 rounded-sm text-[1.3rem] font-semibold tracking-[2px] uppercase bg-[#fef2f2] text-[#ef4444] mb-4">
+            OFFER DECLINED
+          </span>
+          <h1 className="text-[2.5rem] font-semibold text-[#1a2332] mt-3 mb-4">
+            Offer Letter Declined
+          </h1>
+          <p className="text-[1rem] text-[#64748b] max-w-[500px] mx-auto mb-8 leading-[1.6]">
+            You have declined the offer letter. If this was a mistake or you wish to raise a request regarding your decision, please proceed below.
+          </p>
+          <div className="bg-white border border-[#e2e8f0] rounded-xl p-6 max-w-[520px] mx-auto mb-5 text-left shadow-sm">
+            <div className="text-[0.95rem] text-[#334155] leading-[1.6]">
+              <div className="font-semibold text-[#1a2332] mb-1">Reason for Rejection:</div>
+              <div className="text-[#64748b] mb-3">{rejectionReason}</div>
+              {rejectionMessage && (
+                <>
+                  <div className="font-semibold text-[#1a2332] mb-1">Additional Message:</div>
+                  <div className="text-[#64748b] italic">&ldquo;{rejectionMessage}&rdquo;</div>
+                </>
+              )}
+            </div>
+          </div>
+          <div className="mt-7 flex flex-row flex-wrap items-center justify-center gap-4">
+            <Button
+              onClick={() => router.push("/action-center?tab=requests")}
+              className="px-6 py-2.5 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90 transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 h-11"
+            >
+              Raise Request
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M15 3h6v6" />
+                <path d="M10 14 21 3" />
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+              </svg>
+            </Button>
+            <Button
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              variant="outline"
+              className="px-6 py-2.5 border border-[#e2e8f0] text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all duration-200 flex items-center justify-center gap-2 h-11"
+            >
+              {isLoggingOut ? "Logging out..." : "Logout"}
+              <LogOut className="h-4.5 w-4.5" />
+            </Button>
           </div>
         </div>
       )}
@@ -453,13 +673,25 @@ function JobOfferContent() {
       {gameState === "processed" && (
         <div className="max-w-[600px] mx-auto px-5 py-[100px] text-center">
           <div className="w-20 h-20 bg-[#eaf4fb] rounded-[20px] flex items-center justify-center mx-auto mb-6">
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+            <svg
+              width="36"
+              height="36"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#64748b"
+              strokeWidth="2"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
           </div>
           <h2 className="text-[1.5rem] font-semibold text-[#1a2332] mb-3">
             You have already accepted or rejected the Offer Letter.
           </h2>
           <p className="text-[0.95rem] text-[#64748b] leading-[1.6] mb-8">
-            If you believe this is an error, please contact our HR department for assistance.
+            If you believe this is an error, please contact our HR department
+            for assistance.
           </p>
           <div className="flex flex-col items-center gap-3">
             <Button
@@ -467,7 +699,19 @@ function JobOfferContent() {
               className="px-6 py-2.5 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90 transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 h-11"
             >
               Go to Dashboard
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
             </Button>
           </div>
         </div>
@@ -477,9 +721,21 @@ function JobOfferContent() {
       {gameState === "expired" && (
         <div className="max-w-[600px] mx-auto px-5 py-[100px] text-center">
           <div className="w-20 h-20 bg-[#eaf4fb] rounded-[20px] flex items-center justify-center mx-auto mb-6">
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#dc3545" strokeWidth="2"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+            <svg
+              width="36"
+              height="36"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#dc3545"
+              strokeWidth="2"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
           </div>
-          <h2 className="text-[1.5rem] font-bold text-[#1a2332] mb-3">Your Offer Letter Has Expired</h2>
+          <h2 className="text-[1.5rem] font-bold text-[#1a2332] mb-3">
+            Your Offer Letter Has Expired
+          </h2>
           <p className="text-[0.95rem] text-[#64748b] leading-[1.6]">
             Please contact the HR department for assistance.
           </p>
@@ -497,15 +753,42 @@ function JobOfferContent() {
               }}
               className="absolute top-4 right-4 bg-transparent border-none cursor-pointer text-[#64748b] hover:text-[#1a2332]"
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
             </button>
             <div className="w-14 h-14 rounded-full bg-[#e8edf5] flex items-center justify-center mx-auto mb-6">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3d4f7c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#3d4f7c"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
             </div>
-            <h2 className="text-[1.5rem] font-bold text-[#1a2332] mb-4">Offer Rejected</h2>
+            <h2 className="text-[1.5rem] font-bold text-[#1a2332] mb-4">
+              Offer Rejected
+            </h2>
             <p className="text-[0.9rem] text-[#64748b] mb-8 leading-[1.7]">
-              Thank you for letting us know. We appreciate the time and effort you invested in our
-              interview process. We wish you the very best in your future endeavors.
+              Thank you for letting us know. We appreciate the time and effort
+              you invested in our interview process. We wish you the very best
+              in your future endeavors.
             </p>
           </div>
         </div>
@@ -516,9 +799,24 @@ function JobOfferContent() {
         <div className="fixed inset-0 bg-black/40 z-9999 flex items-center justify-center px-4">
           <div className="bg-white rounded-[20px] p-9 max-w-[400px] w-full text-center shadow-[0_8px_32_rgba(0,0,0,0.15)]">
             <div className="w-14 h-14 rounded-full bg-[#fff3cd] flex items-center justify-center mx-auto mb-5">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#856404" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#856404"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
             </div>
-            <h2 className="text-[1.4rem] font-semibold text-[#1a2332] mb-3">Reason Required</h2>
+            <h2 className="text-[1.4rem] font-semibold text-[#1a2332] mb-3">
+              Reason Required
+            </h2>
             <p className="text-[0.95rem] text-[#64748b] mb-6 leading-[1.6]">
               Please select a rejection reason to proceed.
             </p>

@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { ArrowRight, CheckCircle2, ShieldCheck } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { CircularProgress } from "@/components/shared/circular-progress"
-import { useAuth } from "@/lib/contexts/auth-context"
-import { useCurrentUser } from "@/lib/hooks/useUser"
-import { useJobOfferPdf } from "@/lib/hooks/useJobOffer"
-import { toast } from "sonner"
+import Link from "next/link";
+import { ArrowRight, CheckCircle2, ShieldCheck } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { CircularProgress } from "@/components/shared/circular-progress";
+import { useAuth } from "@/lib/contexts/auth-context";
+import { useCurrentUser } from "@/lib/hooks/useUser";
+import { useJobOfferPdf } from "@/lib/hooks/useJobOffer";
+import { toast } from "sonner";
 
 /** Download the offer letter as a file. Fetches with credentials so cookies work. */
 async function downloadPdf(url: string) {
@@ -27,26 +27,26 @@ async function downloadPdf(url: string) {
   }
 }
 
-import { DashboardData } from "@/types/dashboard"
+import { DashboardData } from "@/types/dashboard";
 
 interface OnboardingSnapshotProps {
   /** Number of onboarding steps that have been completed. */
-  completedSteps: number
+  completedSteps: number;
   /** Total number of onboarding steps (default: 8). */
-  totalSteps?: number
+  totalSteps?: number;
   /** ISO date string for the joining date. */
-  joiningDate?: string
-  dashboardPayload?: DashboardData
-  className?: string
+  joiningDate?: string;
+  dashboardPayload?: DashboardData;
+  className?: string;
 }
 
 /**
  * Formats an ISO date string into a human-friendly date like "September 8th".
  */
 function formatJoiningDateLong(iso: string): string {
-  const date = new Date(iso)
-  const month = date.toLocaleDateString("en-US", { month: "long" })
-  const day = date.getDate()
+  const date = new Date(iso);
+  const month = date.toLocaleDateString("en-US", { month: "long" });
+  const day = date.getDate();
   const suffix =
     day === 1 || day === 21 || day === 31
       ? "st"
@@ -54,8 +54,8 @@ function formatJoiningDateLong(iso: string): string {
         ? "nd"
         : day === 3 || day === 23
           ? "rd"
-          : "th"
-  return `${month} ${day}${suffix}`
+          : "th";
+  return `${month} ${day}${suffix}`;
 }
 
 /**
@@ -73,11 +73,14 @@ export function OnboardingSnapshot({
   dashboardPayload,
   className,
 }: OnboardingSnapshotProps) {
-  const { profile } = useAuth()
-  const { userEmail } = useCurrentUser()
-  const { pdfUrl, isLoading: isPdfLoading } = useJobOfferPdf(userEmail || "", true)
+  const { profile } = useAuth();
+  const { userEmail } = useCurrentUser();
+  const { pdfUrl, isLoading: isPdfLoading } = useJobOfferPdf(
+    userEmail || "",
+    true,
+  );
 
-  const isProfileActive = Boolean(profile)
+  const isProfileActive = Boolean(profile);
 
   const form_completion = dashboardPayload?.form_completion;
   const onboardingStage = dashboardPayload?.onboarding_stage;
@@ -89,7 +92,8 @@ export function OnboardingSnapshot({
         ? Math.round((completedSteps / totalSteps) * 100)
         : 0;
 
-  const isComplete = onboardingStage?.toLowerCase() === "onboarding complete" ||
+  const isComplete =
+    onboardingStage?.toLowerCase() === "onboarding complete" ||
     onboardingStage?.toLowerCase() === "complete" ||
     onboardingStage?.toLowerCase() === "completed" ||
     dashboardPayload?.onboarding_status === true ||
@@ -97,7 +101,12 @@ export function OnboardingSnapshot({
 
   const displayJoiningDate = dashboardPayload?.date_of_joining || joiningDate;
   return (
-    <div className={cn("space-y-4 border border-[#E5E7EB] rounded-[calc(1rem+8px)] p-2 bg-white shadow-sm", className)}>
+    <div
+      className={cn(
+        "space-y-4 border border-[#E5E7EB] rounded-[calc(1rem+8px)] p-2 bg-white shadow-sm",
+        className,
+      )}
+    >
       {/* Main onboarding card */}
 
       <div className="relative overflow-hidden rounded-xl bg-linear-to-b from-[#F0F9FF] to-[#E0F2FE]  p-6  sm:p-8">
@@ -110,11 +119,12 @@ export function OnboardingSnapshot({
                 "inline-flex w-fit items-center gap-1.5 rounded-full bg-white px-3 py-1 text-[12px] font-bold uppercase tracking-wider shadow-[0_2px_10px_rgb(0,0,0,0.02)]",
                 isComplete
                   ? "text-[#026AA2] border border-[#026AA2]/10"
-                  : "text-gray-600 border border-gray-200"
+                  : "text-gray-600 border border-gray-200",
               )}
             >
               {isComplete && <ShieldCheck className="h-4 w-4 text-[#12B76A]" />}
-              {onboardingStage || (isComplete ? "ONBOARDING COMPLETE" : "ONBOARDING IN PROGRESS")}
+              {onboardingStage ||
+                (isComplete ? "ONBOARDING COMPLETE" : "ONBOARDING IN PROGRESS")}
             </span>
 
             {/* Heading */}
@@ -139,7 +149,8 @@ export function OnboardingSnapshot({
                 className="bg-black text-white font-semibold hover:bg-black/80 rounded-xl text-center"
               >
                 <Link href="/onboarding">
-                  View Your Journey
+                  {/* View Your Journey */}
+                  Complete your onboarding
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
@@ -153,10 +164,23 @@ export function OnboardingSnapshot({
                     onClick={() => pdfUrl && downloadPdf(pdfUrl)}
                     disabled={!pdfUrl}
                     className={cn(
-                      "flex sm:hidden border-black text-black hover:bg-black/10 hover:text-black rounded-xl font-semibold justify-center"
+                      "flex sm:hidden border-black text-black hover:bg-black/10 hover:text-black rounded-xl font-semibold justify-center",
                     )}
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
                     Preview / Download Offer
                   </Button>
 
@@ -164,13 +188,29 @@ export function OnboardingSnapshot({
                   <Button
                     variant="outline"
                     size="lg"
-                    onClick={() => pdfUrl && window.open(pdfUrl, "_blank", "noopener,noreferrer")}
+                    onClick={() =>
+                      pdfUrl &&
+                      window.open(pdfUrl, "_blank", "noopener,noreferrer")
+                    }
                     disabled={!pdfUrl}
                     className={cn(
-                      "hidden sm:flex border border-black bg-transparent text-black hover:bg-black/10 hover:text-black rounded-xl font-semibold justify-center"
+                      "hidden sm:flex border border-black bg-transparent text-black hover:bg-black/10 hover:text-black rounded-xl font-semibold justify-center",
                     )}
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
+                      <polyline points="15 3 21 3 21 9" />
+                      <line x1="10" y1="14" x2="21" y2="3" />
+                    </svg>
                     Preview / Download Offer
                   </Button>
                 </>
@@ -189,7 +229,7 @@ export function OnboardingSnapshot({
                   "[&_span]:text-[#101828] [&_span]:text-3xl [&_span]:font-bold",
                   isComplete
                     ? "[&_circle:last-of-type]:text-[#12B76A]"
-                    : "[&_circle:last-of-type]:text-[#026AA2]"
+                    : "[&_circle:last-of-type]:text-[#026AA2]",
                 )}
               />
               {/* "Ready" label below percentage inside the circle */}
@@ -209,5 +249,5 @@ export function OnboardingSnapshot({
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -39,7 +39,7 @@ describe("PdfViewer", () => {
     // Verify the iframe src is set to the blob URL
     const iframe = screen.getByTitle("Offer Letter");
     expect(iframe).toBeTruthy();
-    expect(iframe.getAttribute("src")).toBe("blob:http://localhost:3000/some-uuid");
+    expect(iframe.getAttribute("src")).toBe("blob:http://localhost:3000/some-uuid#toolbar=0&navpanes=0");
   });
 
   it("falls back to the direct pdfUrl if the fetch fails", async () => {
@@ -52,7 +52,7 @@ describe("PdfViewer", () => {
     // Verify the iframe src falls back to the original URL
     const iframe = screen.getByTitle("Offer Letter");
     expect(iframe).toBeTruthy();
-    expect(iframe.getAttribute("src")).toBe("http://example.com/test.pdf");
+    expect(iframe.getAttribute("src")).toBe("http://example.com/test.pdf#toolbar=0&navpanes=0");
   });
 
   it("falls back to the direct pdfUrl if the response is not ok", async () => {
@@ -69,7 +69,7 @@ describe("PdfViewer", () => {
     // Verify the iframe src falls back to the original URL
     const iframe = screen.getByTitle("Offer Letter");
     expect(iframe).toBeTruthy();
-    expect(iframe.getAttribute("src")).toBe("http://example.com/test.pdf");
+    expect(iframe.getAttribute("src")).toBe("http://example.com/test.pdf#toolbar=0&navpanes=0");
   });
 });
 

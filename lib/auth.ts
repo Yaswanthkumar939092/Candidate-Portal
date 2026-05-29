@@ -18,20 +18,25 @@ export interface RequestOtpData {
   identifier: string;
   purpose?: "Signup" | "Login" | "Verify Email" | "Verify Mobile" | "Password Reset";
   identifierType?: "Email" | "Mobile";
+  mode?: "password_reset" | "verify_email";
 }
 
 export interface VerifyOtpData extends RequestOtpData {
   otp: string;
+  otp_log?: string;
 }
 
 export interface RequestEmailSignupOtpData {
   email: string;
+  mode?: "password_reset" | "verify_email";
 }
 
 export interface RequestEmailSignupOtpResponse {
-  status: "otp_required" | string;
+  status: string;
   otp_log?: string;
   delivery_status?: string;
+  purpose?: string;
+  mode?: string;
 }
 
 export interface AuthError {
@@ -207,24 +212,24 @@ export const auth = {
     return { ...data, user, session: data.status === "success" && user ? { user } : null };
   },
 
-  requestOtp: async ({ identifier, purpose = "Login", identifierType = "Email" }: RequestOtpData) => {
-    return frappeMethod<{ status: string; otp_log?: string; delivery_status?: string }>(
+  requestOtp: async ({ identifier, purpose = "Login", identifierType = "Email", mode }: RequestOtpData) => {
+    return frappeMethod<{ status: string; otp_log?: string; delivery_status?: string; purpose?: string; mode?: string }>(
       `${FRAPPE_AUTH_METHOD}.request_otp`,
-      { identifier, purpose, identifier_type: identifierType },
+      { identifier, purpose, identifier_type: identifierType, mode },
     );
   },
 
-  requestEmailSignupOtp: async ({ email }: RequestEmailSignupOtpData): Promise<RequestEmailSignupOtpResponse> => {
+  requestEmailSignupOtp: async ({ email, mode = "verify_email" }: RequestEmailSignupOtpData): Promise<RequestEmailSignupOtpResponse> => {
     return frappeMethod<RequestEmailSignupOtpResponse>(
       `${FRAPPE_AUTH_METHOD}.request_email_signup_otp`,
-      { email },
+      { email, mode },
     );
   },
 
-  verifyOtp: async ({ identifier, otp, purpose = "Login", identifierType = "Email" }: VerifyOtpData) => {
+  verifyOtp: async ({ identifier, otp, purpose = "Login", identifierType = "Email", otp_log }: VerifyOtpData) => {
     const data = await frappeMethod<{ status: string; user: FrappeAuthUser }>(
       `${FRAPPE_AUTH_METHOD}.verify_otp`,
-      { identifier, otp, purpose, identifier_type: identifierType },
+      { identifier, otp, purpose, identifier_type: identifierType, otp_log },
     );
     const user = mapUser(data.user);
     return { user, session: user ? { user } : null };
@@ -235,7 +240,7 @@ export const auth = {
   },
 
   resetPassword: async (email: string) => {
-    await auth.requestOtp({ identifier: email, purpose: "Password Reset" });
+    return auth.requestOtp({ identifier: email, purpose: "Password Reset", mode: "password_reset" });
   },
 
   updatePassword: async () => {

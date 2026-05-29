@@ -1,6 +1,8 @@
 "use client"
 
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react"
+import { usePathname } from "next/navigation"
+import { toast } from "sonner"
 import { auth, getProfile, profileFromFrappeUser, type FrappeAuthUser } from "@/lib/auth"
 import type { Profile } from "@/types/database"
 
@@ -25,6 +27,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<FrappeAuthUser | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const pathname = usePathname()
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.sessionStorage) {
+      const showToast = sessionStorage.getItem("showLoginToast")
+      if (showToast === "true") {
+        toast.success("Successfully logged in!")
+        sessionStorage.removeItem("showLoginToast")
+      }
+    }
+  }, [pathname])
 
   const hydrateFromSession = useCallback(async () => {
     const session = await auth.getSession()
