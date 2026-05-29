@@ -22,17 +22,16 @@ describe("JobOpening Services", () => {
   });
 
   describe("JobOpeningService", () => {
-    it("getJobOpening calls FrappeAPI.getresourceDocumentData", async () => {
-      const mockRes = { data: [{ id: 1 }] };
-      (FrappeAPI.getresourceDocumentData as any).mockResolvedValue(mockRes);
+    it("getJobOpening calls FrappeAPI.get", async () => {
+      const mockRes = [{ name: "HR-OPN-2026-0006" }];
+      (FrappeAPI.get as any).mockResolvedValue(mockRes);
 
       const result = await JobOpeningService.getJobOpening(1, 10);
-      expect(result).toEqual(mockRes.data);
-      expect(FrappeAPI.getresourceDocumentData).toHaveBeenCalledWith("Job Opening", expect.objectContaining({
-        method: "GET",
-        page: 1,
-        limit: 10
-      }));
+      expect(result).toEqual(mockRes);
+      expect(FrappeAPI.get).toHaveBeenCalledWith("recruitment.api.channels.careers.list_openings", {
+        page: "1",
+        limit: "10"
+      });
     });
   });
 

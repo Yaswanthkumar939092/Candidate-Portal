@@ -1,15 +1,14 @@
  
+import { CustomJobOpening } from "../../types/job";
 import { FrappeAPI } from "../frappe-api";
 
 export const JobOpeningService = {
-  getJobOpening: async (page: number, limit: number): Promise<any> => {
-    const response = await FrappeAPI.getresourceDocumentData("Job Opening", {
-      method: "GET",
-      page,
-      limit,
-      fields: ["*"],
+  getJobOpening: async (page: number, limit: number): Promise<CustomJobOpening[]> => {
+    const response = await FrappeAPI.get("recruitment.api.channels.careers.list_openings", {
+      page: String(page),
+      limit: String(limit),
     });
-    return response.data;
+    return response as CustomJobOpening[];
   },
 };
 

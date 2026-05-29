@@ -52,7 +52,7 @@ describe("useJobOpening Hooks", () => {
   });
 
   it("useJobOpening fetches data correctly", async () => {
-    const mockData = { results: [] };
+    const mockData = [] as any;
     (JobOpeningService.getJobOpening as any).mockResolvedValue(mockData);
 
     const { result } = renderHook(() => useJobOpening({ page: 1, limit: 10 }), { wrapper });

@@ -15,8 +15,8 @@ import Link from "next/link";
 
 interface JobDetailDialogProps {
   job: {
-    upper_range: string | null;
-    lower_range: string | null;
+    upper_range: number | string | null;
+    lower_range: number | string | null;
     custom_qualifications: string[];
     id: string;
     title: string;

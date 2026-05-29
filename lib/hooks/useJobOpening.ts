@@ -1,5 +1,6 @@
  
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { CustomJobOpening } from "../../types/job";
 import {
   draftJobApplicantService,
   JobApplicantService,
@@ -8,7 +9,7 @@ import {
 } from "../services/jobOpeningService";
 
 export const useJobOpening = ({ page, limit }: { page: number; limit: number }) => {
-  return useQuery<any>({
+  return useQuery<CustomJobOpening[]>({
     queryKey: ["job-opening", page, limit],
     queryFn: () => JobOpeningService.getJobOpening(page, limit),
   });
