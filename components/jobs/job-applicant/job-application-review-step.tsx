@@ -89,12 +89,14 @@ export function JobApplicationReviewStep({
       })
 
       const payload = {
-        ...mergedData,
-        job_opening: jobID,
-        email_id: userEmail || null,
+        opening: jobID,
+        data: {
+          ...mergedData,
+          email_id: userEmail || null,
+        },
       }
 
-      createApplicant(payload as Parameters<typeof createApplicant>[0], {
+      createApplicant(payload, {
         onSuccess: () => {
           toast.success('Application submitted successfully!')
           if (draftName) {
@@ -102,8 +104,10 @@ export function JobApplicationReviewStep({
           }
           router.push(`/open-jobs/${jobID}/apply-job/thank-you`)
         },
-        onError: () => {
-          setSubmitError('Submission failed. Please try again.')
+        onError: (err: any) => {
+          const errMsg = err?.message || 'Submission failed. Please try again.'
+          toast.error(errMsg)
+          setSubmitError(errMsg)
         },
       })
     } catch (error) {

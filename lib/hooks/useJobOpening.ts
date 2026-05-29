@@ -1,6 +1,6 @@
  
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { CustomJobOpening } from "../../types/job";
+import { CustomJobOpening, SubmitApplicationPayload, SubmitApplicationResponse } from "../../types/job";
 import {
   draftJobApplicantService,
   JobApplicantService,
@@ -16,10 +16,10 @@ export const useJobOpening = ({ page, limit }: { page: number; limit: number }) 
 };
 
 export const useCreateJobApplicant = () => {
-  return useMutation({
+  return useMutation<SubmitApplicationResponse, Error, SubmitApplicationPayload>({
     mutationFn: JobApplicantService.createJobApplicant,
     onSuccess: (data) => console.log("✅ Job Applicant Created:", data),
-    onError: (error: any) => console.error("❌ Error creating applicant:", error),
+    onError: (error: Error) => console.error("❌ Error creating applicant:", error),
   });
 };
 

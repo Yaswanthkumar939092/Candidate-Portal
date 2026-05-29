@@ -63,12 +63,20 @@ describe("useJobOpening Hooks", () => {
   });
 
   it("useCreateJobApplicant calls service on mutate", async () => {
-    (JobApplicantService.createJobApplicant as any).mockResolvedValue({ id: "1" });
+    const mockResponse = {
+      status: "ok",
+      name: "HR-APP-2026-00123",
+      source: "Careers Page"
+    };
+    (JobApplicantService.createJobApplicant as any).mockResolvedValue(mockResponse);
     const { result } = renderHook(() => useCreateJobApplicant(), { wrapper });
 
-    result.current.mutate({ name: "John" } as any);
+    result.current.mutate({ opening: "job1", data: { name: "John" } });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(JobApplicantService.createJobApplicant).toHaveBeenCalled();
+    expect(vi.mocked(JobApplicantService.createJobApplicant).mock.calls[0][0]).toEqual({
+      opening: "job1",
+      data: { name: "John" }
+    });
   });
 
   it("useGetDraftJobApplicant fetches draft when enabled", async () => {
