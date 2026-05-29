@@ -166,11 +166,11 @@ describe("DynamicSurveyForm", () => {
 
     // Standard number input change
     fireEvent.change(input, { target: { value: "42" } });
-    expect(onValuesChange).toHaveBeenLastCalledWith({ numVal: 42 });
+    expect(onValuesChange).toHaveBeenLastCalledWith({ "num val": 42 });
 
     // Test invalid / empty numeric string
     fireEvent.change(input, { target: { value: "" } });
-    expect(onValuesChange).toHaveBeenLastCalledWith({ numVal: "" });
+    expect(onValuesChange).toHaveBeenLastCalledWith({ "num val": "" });
   });
 
   it("renders checkbox input, triggers change, and renders description", () => {
@@ -515,10 +515,10 @@ describe("DynamicSurveyForm", () => {
     fireEvent.click(submitBtn);
     expect(onSubmit).toHaveBeenLastCalledWith({
       field1: "abc",
-      emailField: "test@domain.com",
-      patternField: "ABC",
-      numField: 8,
-      customValField: "correct",
+      "email field": "test@domain.com",
+      "pattern field": "ABC",
+      "num field": 8,
+      "custom val field": "correct",
     });
   });
 
@@ -784,44 +784,46 @@ describe("DynamicSurveyForm", () => {
     expect(submitBtn.hasAttribute("disabled")).toBe(true);
   });
 
-  it("removes errors when field value changes to valid", async () => {
+  it("removes errors when field value changes and form is resubmitted", async () => {
+    const onSubmit = vi.fn();
     const schema = {
       components: [
         { key: "username", type: "textfield", label: "Username", validate: { required: true } },
       ],
     };
 
-    const { rerender } = render(
-      <DynamicSurveyForm
-        schema={schema}
-        values={{ username: "" }}
-        onValuesChange={vi.fn()}
-        onSubmit={vi.fn()}
-      />
-    );
+    function TestWrapper() {
+      const [values, setValues] = React.useState<any>({ username: "" });
+      return (
+        <DynamicSurveyForm
+          schema={schema}
+          values={values}
+          onValuesChange={setValues}
+          onSubmit={onSubmit}
+        />
+      );
+    }
+
+    render(<TestWrapper />);
 
     const submitBtn = screen.getByRole("button", { name: /Submit Responses/i });
     fireEvent.click(submitBtn);
 
     // Shows the error first
     expect(await screen.findByText("Username is required.")).toBeTruthy();
+    expect(onSubmit).not.toHaveBeenCalled();
 
-    // Simulate type to change value
+    // Type a valid value
     const input = screen.getByLabelText(/Username/i);
     fireEvent.change(input, { target: { value: "valid_user" } });
 
-    // The component checks if errors[key] is truthy, then re-runs validation
-    // and updates errors array to empty string. Let's rerender to verify
-    rerender(
-      <DynamicSurveyForm
-        schema={schema}
-        values={{ username: "valid_user" }}
-        onValuesChange={vi.fn()}
-        onSubmit={vi.fn()}
-      />
-    );
+    // Submit again — errors should clear
+    fireEvent.click(submitBtn);
 
-    expect(screen.queryByText("Username is required.")).toBeNull();
+    await waitFor(() => {
+      expect(screen.queryByText("Username is required.")).toBeNull();
+    });
+    expect(onSubmit).toHaveBeenCalled();
   });
 
   it("handles textarea input changes", () => {
@@ -866,5 +868,69 @@ describe("DynamicSurveyForm", () => {
       />
     );
     expect(screen.getByLabelText("Fallback Field")).toBeTruthy();
+  });
+
+  it("converts camelCase and space-separated keys to snake_case in schema, conditionals, and output", async () => {
+    const onSubmit = vi.fn();
+    const schema = {
+      components: [
+        {
+          key: "HowWasYourOverallFirstImpressionOfHomeFirstBeforeTheHiringProcessBegan",
+          type: "radio",
+          label: "First Impression",
+          values: [
+            { label: "Very Bad", value: "veryBad" },
+            { label: "Good", value: "good" },
+          ],
+        },
+        {
+          key: "thisIsImportantToUsCouldYouPleaseElaborate",
+          type: "textarea",
+          label: "Elaborate Details",
+          conditional: {
+            when: "HowWasYourOverallFirstImpressionOfHomeFirstBeforeTheHiringProcessBegan",
+            eq: "veryBad",
+          },
+        },
+      ],
+    };
+
+    const { rerender } = render(
+      <DynamicSurveyForm
+        schema={schema}
+        values={{}}
+        onValuesChange={vi.fn()}
+        onSubmit={onSubmit}
+      />
+    );
+
+    // Textarea is hidden initially
+    expect(screen.queryByLabelText("Elaborate Details")).toBeNull();
+
+    // Rerender with camelCase select option set to 'veryBad'
+    rerender(
+      <DynamicSurveyForm
+        schema={schema}
+        values={{
+          HowWasYourOverallFirstImpressionOfHomeFirstBeforeTheHiringProcessBegan: "veryBad",
+          thisIsImportantToUsCouldYouPleaseElaborate: "typing details here",
+        }}
+        onValuesChange={vi.fn()}
+        onSubmit={onSubmit}
+      />
+    );
+
+    // Textarea is now visible and has the correct value
+    const textarea = screen.getByLabelText("Elaborate Details") as HTMLTextAreaElement;
+    expect(textarea).toBeTruthy();
+    expect(textarea.value).toBe("typing details here");
+
+    const submitBtn = screen.getByRole("button", { name: /Submit Responses/i });
+    fireEvent.click(submitBtn);
+
+    expect(onSubmit).toHaveBeenLastCalledWith({
+      "how was your overall first impression of home first before the hiring process began": "veryBad",
+      "this is important to us could you please elaborate": "typing details here",
+    });
   });
 });
