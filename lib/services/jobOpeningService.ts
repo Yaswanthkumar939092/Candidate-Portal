@@ -1,27 +1,25 @@
  
+import { CustomJobOpening, ApplicationField, SubmitApplicationPayload, SubmitApplicationResponse, JobField } from "../../types/job";
 import { FrappeAPI } from "../frappe-api";
 
 export const JobOpeningService = {
-  getJobOpening: async (page: number, limit: number): Promise<any> => {
-    const response = await FrappeAPI.getresourceDocumentData("Job Opening", {
-      method: "GET",
-      page,
-      limit,
-      fields: ["*"],
+  getJobOpening: async (page: number, limit: number): Promise<CustomJobOpening[]> => {
+    const response = await FrappeAPI.get("recruitment.api.channels.careers.list_openings", {
+      page: String(page),
+      limit: String(limit),
     });
-    return response.data;
+    return response as CustomJobOpening[];
   },
 };
 
 
-//will discard this. we are not using this. 
 export const JobApplicantService = {
-  createJobApplicant: async (payload: any): Promise<any> => {
-    const response = await FrappeAPI.getresourceDocumentData("Job Applicant", {
-      method: "POST",
-      data: payload,
-    });
-    return response.data;
+  createJobApplicant: async (payload: SubmitApplicationPayload): Promise<SubmitApplicationResponse> => {
+    const response = await FrappeAPI.post(
+      "recruitment.api.channels.careers.submit_application",
+      payload as unknown as Record<string, unknown>
+    );
+    return response as SubmitApplicationResponse;
   },
 };
 
@@ -109,17 +107,28 @@ export const draftJobApplicantService = {
 
 export const jobApplicationService = {
   // ✅ Fetch dynamic job application fields
-  getJobApplicationForm: async (job_opening?: string, form_name?: string) => {
+  getJobApplicationForm: async (job_opening?: string, form_name?: string): Promise<{ fields: JobField[] }> => {
     try {
       const params: Record<string, string> = {};
-      if (job_opening) params.job_opening = job_opening;
-      if (form_name) params.form_name = form_name;
+      if (job_opening) params.opening = job_opening;
 
       const res = await FrappeAPI.get(
-        "recruitment.api.candidate_portal.get_all_job_applicant_fields",
+        "recruitment.api.channels.careers.get_application_fields",
         params
       );
-      return res ?? { fields: [] };
+
+      const fields = (res || []).map((field: ApplicationField) => ({
+        fieldname: field.reference_name,
+        label: field.display_name,
+        fieldtype: field.fieldtype,
+        options: field.options,
+        reqd: field.reqd,
+        is_mandatory: field.reqd,
+        tab_label: field.section,
+        section_label: "Details",
+      }));
+
+      return { fields };
     } catch (error) {
       console.error("API ERROR:", error);
       return { fields: [] };

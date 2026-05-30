@@ -264,10 +264,12 @@ describe('JobApplicationReviewStep', () => {
     await waitFor(() => {
       expect(mockCreateApplicantMutate).toHaveBeenCalledWith(
         expect.objectContaining({
-          full_name: 'John Doe',
-          email: 'john@example.com',
-          job_opening: 'job-123',
-          email_id: 'applicant@example.com',
+          opening: 'job-123',
+          data: expect.objectContaining({
+            full_name: 'John Doe',
+            email: 'john@example.com',
+            email_id: 'applicant@example.com',
+          }),
         }),
         expect.any(Object)
       )

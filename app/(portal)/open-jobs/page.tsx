@@ -31,6 +31,7 @@ import { JobMatchCard } from "@/components/jobs/job-match-card"
 import { JobDetailDialog } from "@/components/jobs/job-detail-dialog"
 import { cn } from "@/lib/utils"
 import { useJobOpening } from "@/lib/hooks/useJobOpening"
+import { CustomJobOpening } from "@/types/job"
 import { useAuth } from "@/lib/contexts/auth-context"
 import { useGetSavedJobs, useToggleSavedJob } from "@/lib/hooks/useSavedJobs"
 import { toast } from "sonner"
@@ -173,21 +174,23 @@ export default function OpenJobsPage() {
   }
 
   const mappedJobs: MatchedJob[] = useMemo(() => {
-    const list = Array.isArray(jobOpenings)
-      ? jobOpenings
-      : (jobOpenings?.data ?? [])
+    const list = Array.isArray(jobOpenings) ? jobOpenings : []
 
-    return list.map((job: any) => ({
+    return list.map((job: CustomJobOpening) => ({
       id: job.name,
       title: job.job_title || job.designation,
       company: job.company,
-      location: job.location || job.custom_location || "Not specified",
+      location: job.location || "Not specified",
       type: job.employment_type || "full-time",
-      experience: job.custom_work_experience,
-      lower_range: job.lower_range,
-      upper_range: job.upper_range,
+      experience: job.custom_work_experience || "",
+      lower_range: job.lower_range ?? null,
+      upper_range: job.upper_range ?? null,
       description: job.description,
       status: job.status,
+      custom_qualifications: [],
+      salary: job.custom_salary || (job.lower_range && job.upper_range ? `${job.lower_range} - ${job.upper_range}` : "Not disclosed"),
+      skills: job.skills_required ? job.skills_required.split(" ") : [],
+      matchPercentage: 0,
     }))
   }, [jobOpenings])
 

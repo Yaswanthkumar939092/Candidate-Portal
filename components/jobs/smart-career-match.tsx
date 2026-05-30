@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button"
 import { CircularProgress } from "@/components/shared/circular-progress"
 import { cn } from "@/lib/utils"
 import { useJobOpening } from "@/lib/hooks/useJobOpening"
+import { CustomJobOpening } from "@/types/job"
 
 // ---------------- TYPES ----------------
 export interface MatchedJob {
-  upper_range: null
-  lower_range: null
-  custom_qualifications: never[]
+  upper_range?: number | null
+  lower_range?: number | null
+  custom_qualifications?: string[]
   id: string
   title: string
   company: string
@@ -23,20 +24,6 @@ export interface MatchedJob {
   matchPercentage: number
   description: string
   status: string
-}
-
-interface FrappeJobOpening {
-  name: string
-  job_title: string
-  designation?: string
-  company: string
-  location?: string
-  custom_work_experience?: string
-  custom_salary?: string
-  employment_type?: string
-  description: string
-  status: string
-  skills_required?: string
 }
 
 interface Props {
@@ -93,7 +80,7 @@ export function SmartCareerMatch({ onAnalysisComplete, className }: Props) {
     return SKILLS.filter(skill => cleaned.includes(skill))
   }
 
-  const extractSkillsFromJob = (job: FrappeJobOpening) => {
+  const extractSkillsFromJob = (job: CustomJobOpening) => {
     const text = cleanText(`
       ${job.job_title}
       ${job.description}
@@ -128,7 +115,7 @@ export function SmartCareerMatch({ onAnalysisComplete, className }: Props) {
 
     const jobs = Array.isArray(jobOpenings)
       ? jobOpenings
-      : (jobOpenings?.data ?? [])
+      : []
 
     if (!jobs.length) {
       setError("No jobs available")
@@ -143,7 +130,7 @@ export function SmartCareerMatch({ onAnalysisComplete, className }: Props) {
 
     setProgress(75)
 
-    const results: MatchedJob[] = jobs.map((job: FrappeJobOpening) => {
+    const results: MatchedJob[] = jobs.map((job: CustomJobOpening) => {
       const jobSkills = extractSkillsFromJob(job)
       const match = getMatchScore(candidateSkills, jobSkills)
 
@@ -157,13 +144,16 @@ export function SmartCareerMatch({ onAnalysisComplete, className }: Props) {
         title: job.job_title || job.designation,
         company: job.company,
         location: job.location || "Not specified",
-        experience: job.custom_work_experience,
+        experience: job.custom_work_experience || "",
         salary: job.custom_salary || "Not disclosed",
         type: job.employment_type || "Full-time",
         skills: jobSkills,
         matchPercentage: match,
         description: job.description,
         status: job.status,
+        lower_range: job.lower_range ?? null,
+        upper_range: job.upper_range ?? null,
+        custom_qualifications: [],
       }
     })
 

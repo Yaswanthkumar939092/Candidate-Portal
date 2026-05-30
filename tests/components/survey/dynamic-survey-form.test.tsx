@@ -1,18 +1,26 @@
 import * as React from "react";
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { DynamicSurveyForm } from "@/components/survey/dynamic-survey-form";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  DynamicSurveyForm,
+  type FormioComponent,
+} from "@/components/survey/dynamic-survey-form";
 
-// Mock shadcn component inputs so we can test them easily with standard testing library APIs
 vi.mock("@/components/ui/checkbox", () => ({
-  Checkbox: ({ checked, onCheckedChange, id, disabled, "aria-invalid": ariaInvalid }: any) => (
+  Checkbox: ({
+    checked,
+    onCheckedChange,
+    id,
+    disabled,
+    "aria-invalid": ariaInvalid,
+  }: any) => (
     <input
       type="checkbox"
       id={id}
       checked={checked}
       disabled={disabled}
       aria-invalid={ariaInvalid}
-      onChange={(e) => onCheckedChange(e.target.checked)}
+      onChange={(event) => onCheckedChange?.(event.target.checked)}
       data-testid={id}
     />
   ),
@@ -23,34 +31,62 @@ vi.mock("@/components/ui/input", () => ({
     <input
       {...props}
       type={type === "number" ? "text" : type}
-      onChange={(e) => {
+      onChange={(event) => {
         if (type === "number") {
-          const val = e.target.value;
-          const num = Number(val);
-          Object.defineProperty(e.target, "valueAsNumber", {
-            value: val === "" ? NaN : num,
+          const rawValue = event.target.value;
+          Object.defineProperty(event.target, "valueAsNumber", {
+            value: rawValue === "" ? Number.NaN : Number(rawValue),
             configurable: true,
           });
         }
-        onChange?.(e);
+        onChange?.(event);
       }}
     />
   ),
 }));
 
 vi.mock("@/components/ui/select", () => ({
-  Select: ({ children, value, onValueChange, disabled }: any) => (
-    <select
-      value={value ?? ""}
-      onChange={(e) => onValueChange(e.target.value)}
-      disabled={disabled}
-      data-testid="mock-select"
-    >
-      {children}
-    </select>
-  ),
-  SelectTrigger: ({ children, id }: any) => <div id={id}>{children}</div>,
-  SelectValue: ({ placeholder }: any) => <option value="" disabled>{placeholder}</option>,
+  Select: ({ children, value, onValueChange, disabled }: any) => {
+    const options: React.ReactElement[] = [];
+    const collectOptions = (node: React.ReactNode) => {
+      React.Children.forEach(node, (child) => {
+        if (!React.isValidElement(child)) return;
+        if (child.type === "option") {
+          options.push(child);
+          return;
+        }
+        if ((child.props as any).value !== undefined) {
+          options.push(
+            <option
+              value={(child.props as any).value}
+              data-testid={`option-${(child.props as any).value}`}
+            >
+              {(child.props as any).children}
+            </option>,
+          );
+          return;
+        }
+        collectOptions((child.props as any).children);
+      });
+    };
+    collectOptions(children);
+
+    return (
+      <select
+        value={value ?? ""}
+        onChange={(event) => onValueChange(event.target.value)}
+        disabled={disabled}
+        data-testid="mock-select"
+      >
+        <option value="" disabled>
+          Select an option
+        </option>
+        {options}
+      </select>
+    );
+  },
+  SelectTrigger: ({ children }: any) => <>{children}</>,
+  SelectValue: () => null,
   SelectContent: ({ children }: any) => <>{children}</>,
   SelectItem: ({ children, value }: any) => (
     <option value={value} data-testid={`option-${value}`}>
@@ -59,149 +95,154 @@ vi.mock("@/components/ui/select", () => ({
   ),
 }));
 
-describe("DynamicSurveyForm", () => {
-  it("renders empty when schema is empty, null, or undefined", () => {
-    const onValuesChange = vi.fn();
-    const onSubmit = vi.fn();
+function renderSurvey({
+  components = [],
+  values = {},
+  onSubmit = vi.fn(),
+  isSubmitting = false,
+}: {
+  components?: FormioComponent[];
+  values?: Record<string, any>;
+  onSubmit?: ReturnType<typeof vi.fn>;
+  isSubmitting?: boolean;
+} = {}) {
+  render(
+    <DynamicSurveyForm
+      schema={{ components }}
+      values={values}
+      onValuesChange={vi.fn()}
+      onSubmit={onSubmit}
+      isSubmitting={isSubmitting}
+    />,
+  );
 
-    const { container } = render(
+  return {
+    onSubmit,
+    submit: () =>
+      fireEvent.click(screen.getByRole("button", { name: /submit responses/i })),
+  };
+}
+
+describe("DynamicSurveyForm", () => {
+  it("renders a form and submit button for null, missing, or empty schemas", () => {
+    const { container, rerender } = render(
       <DynamicSurveyForm
         schema={null}
         values={{}}
-        onValuesChange={onValuesChange}
-        onSubmit={onSubmit}
-      />
+        onValuesChange={vi.fn()}
+        onSubmit={vi.fn()}
+      />,
     );
+
     expect(container.querySelector("form")).toBeTruthy();
-    expect(container.querySelector("button[type='submit']")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /submit responses/i })).toBeTruthy();
+
+    rerender(
+      <DynamicSurveyForm
+        values={{}}
+        onValuesChange={vi.fn()}
+        onSubmit={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole("button", { name: /submit responses/i })).toBeTruthy();
+
+    rerender(
+      <DynamicSurveyForm
+        schema={{ components: [] }}
+        values={{}}
+        onValuesChange={vi.fn()}
+        onSubmit={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole("button", { name: /submit responses/i })).toBeTruthy();
   });
 
-  it("renders textfield, textarea, email, number, url, password and basic inputs", () => {
-    const onValuesChange = vi.fn();
-    const onSubmit = vi.fn();
-    const schema = {
+  it("renders supported text-like field types with labels, placeholders, descriptions, and disabled state", () => {
+    renderSurvey({
       components: [
-        { key: "name", type: "textfield", label: "Full Name", placeholder: "Enter name" },
-        { key: "bio", type: "textarea", label: "Biography", placeholder: "Tell us about yourself" },
+        {
+          key: "name",
+          type: "textfield",
+          label: "Full Name",
+          placeholder: "Enter name",
+          description: "Legal name",
+          validate: { required: true },
+        },
+        { key: "bio", type: "textarea", label: "Biography", rows: 4 },
         { key: "emailAddress", type: "email", label: "Email Address" },
         { key: "age", type: "number", label: "Age" },
         { key: "website", type: "url", label: "Website" },
         { key: "pw", type: "password", label: "Password" },
         { key: "phone", type: "phoneNumber", label: "Phone Number" },
-        { key: "dt", type: "datetime", label: "Date Time" },
-        { key: "dayField", type: "day", label: "Day Field" },
+        { key: "dateTime", type: "datetime", label: "Date Time" },
+        { key: "startDay", type: "day", label: "Start Day" },
+        { key: "timeSlot", type: "time", label: "Time Slot", disabled: true },
       ],
-    };
+    });
 
-    render(
-      <DynamicSurveyForm
-        schema={schema}
-        values={{}}
-        onValuesChange={onValuesChange}
-        onSubmit={onSubmit}
-      />
-    );
-
-    expect(screen.getByLabelText("Full Name")).toBeTruthy();
     expect(screen.getByPlaceholderText("Enter name")).toBeTruthy();
-    expect(screen.getByLabelText("Biography")).toBeTruthy();
-    expect(screen.getByLabelText("Email Address")).toBeTruthy();
-    expect(screen.getByLabelText("Age")).toBeTruthy();
-    expect(screen.getByLabelText("Website")).toBeTruthy();
-    expect(screen.getByLabelText("Password")).toBeTruthy();
-    expect(screen.getByLabelText("Phone Number")).toBeTruthy();
-    expect(screen.getByLabelText("Date Time")).toBeTruthy();
-    expect(screen.getByLabelText("Day Field")).toBeTruthy();
+    expect(screen.getByText("Legal name")).toBeTruthy();
+    expect(screen.getByLabelText(/Full Name/)).toBeTruthy();
+    expect(screen.getByLabelText("Biography")).toHaveAttribute("rows", "4");
+    expect(screen.getByLabelText("Email Address")).toHaveAttribute("type", "email");
+    expect(screen.getByLabelText("Age")).toHaveAttribute("type", "text");
+    expect(screen.getByLabelText("Website")).toHaveAttribute("type", "url");
+    expect(screen.getByLabelText("Password")).toHaveAttribute("type", "password");
+    expect(screen.getByLabelText("Phone Number")).toHaveAttribute("type", "tel");
+    expect(screen.getByLabelText("Date Time")).toHaveAttribute("type", "datetime-local");
+    expect(screen.getByLabelText("Start Day")).toHaveAttribute("type", "date");
+    expect(screen.getByLabelText("Time Slot")).toBeDisabled();
   });
 
-  it("handles basic input change events and triggers onValuesChange", () => {
-    const onValuesChange = vi.fn();
-    const onSubmit = vi.fn();
-    const schema = {
+  it("captures text, textarea, and numeric edits in the submitted visible values", async () => {
+    const { onSubmit, submit } = renderSurvey({
       components: [
         { key: "name", type: "textfield", label: "Full Name" },
+        { key: "bio", type: "textarea", label: "Biography" },
+        { key: "score", type: "number", label: "Score" },
       ],
-    };
+    });
 
-    render(
-      <DynamicSurveyForm
-        schema={schema}
-        values={{ name: "" }}
-        onValuesChange={onValuesChange}
-        onSubmit={onSubmit}
-      />
-    );
+    fireEvent.change(screen.getByLabelText("Full Name"), {
+      target: { value: "Jane Doe" },
+    });
+    fireEvent.change(screen.getByLabelText("Biography"), {
+      target: { value: "A thoughtful candidate" },
+    });
+    fireEvent.change(screen.getByLabelText("Score"), {
+      target: { value: "42" },
+    });
+    submit();
 
-    const input = screen.getByLabelText("Full Name");
-    fireEvent.change(input, { target: { value: "John Doe" } });
-    expect(onValuesChange).toHaveBeenCalledWith({ name: "John Doe" });
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith({
+        name: "Jane Doe",
+        bio: "A thoughtful candidate",
+        score: 42,
+      });
+    });
   });
 
-  it("converts input to numbers correctly, including NaN values", () => {
-    const onValuesChange = vi.fn();
-    const schema = {
-      components: [
-        { key: "numVal", type: "number", label: "Number Input" },
-      ],
-    };
+  it("submits an empty string for cleared numeric input", async () => {
+    const { onSubmit, submit } = renderSurvey({
+      components: [{ key: "score", type: "number", label: "Score" }],
+      values: { score: 7 },
+    });
 
-    function TestWrapper() {
-      const [values, setValues] = React.useState<any>({});
-      return (
-        <DynamicSurveyForm
-          schema={schema}
-          values={values}
-          onValuesChange={(next) => {
-            setValues(next);
-            onValuesChange(next);
-          }}
-          onSubmit={vi.fn()}
-        />
-      );
-    }
+    fireEvent.change(screen.getByLabelText("Score"), {
+      target: { value: "" },
+    });
+    submit();
 
-    render(<TestWrapper />);
-
-    const input = screen.getByLabelText("Number Input");
-
-    // Standard number input change
-    fireEvent.change(input, { target: { value: "42" } });
-    expect(onValuesChange).toHaveBeenLastCalledWith({ "num val": 42 });
-
-    // Test invalid / empty numeric string
-    fireEvent.change(input, { target: { value: "" } });
-    expect(onValuesChange).toHaveBeenLastCalledWith({ "num val": "" });
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith({ score: "" });
+    });
   });
 
-  it("renders checkbox input, triggers change, and renders description", () => {
-    const onValuesChange = vi.fn();
-    const onSubmit = vi.fn();
-    const schema = {
+  it("handles checkbox, selectboxes, radio, and select controls", async () => {
+    const { onSubmit, submit } = renderSurvey({
       components: [
-        { key: "agree", type: "checkbox", label: "Agree to terms", description: "Terms description" },
-      ],
-    };
-
-    render(
-      <DynamicSurveyForm
-        schema={schema}
-        values={{ agree: false }}
-        onValuesChange={onValuesChange}
-        onSubmit={onSubmit}
-      />
-    );
-
-    expect(screen.getByText("Terms description")).toBeTruthy();
-    const checkbox = screen.getByTestId("survey-agree");
-    fireEvent.click(checkbox);
-    expect(onValuesChange).toHaveBeenCalledWith({ agree: true });
-  });
-
-  it("renders selectbox and handles multiple checkbox values", () => {
-    const onValuesChange = vi.fn();
-    const onSubmit = vi.fn();
-    const schema = {
-      components: [
+        { key: "agree", type: "checkbox", label: "Agree to terms" },
         {
           key: "hobbies",
           type: "selectboxes",
@@ -211,34 +252,6 @@ describe("DynamicSurveyForm", () => {
             { label: "Gaming", value: "game" },
           ],
         },
-      ],
-    };
-
-    render(
-      <DynamicSurveyForm
-        schema={schema}
-        values={{ hobbies: { read: true } }}
-        onValuesChange={onValuesChange}
-        onSubmit={onSubmit}
-      />
-    );
-
-    expect(screen.getByText("Reading")).toBeTruthy();
-    expect(screen.getByText("Gaming")).toBeTruthy();
-
-    const gamingCheckbox = screen.getByLabelText("Gaming");
-    fireEvent.click(gamingCheckbox);
-
-    expect(onValuesChange).toHaveBeenCalledWith({
-      hobbies: { read: true, game: true },
-    });
-  });
-
-  it("renders radio options and handles selection", () => {
-    const onValuesChange = vi.fn();
-    const onSubmit = vi.fn();
-    const schema = {
-      components: [
         {
           key: "gender",
           type: "radio",
@@ -248,28 +261,6 @@ describe("DynamicSurveyForm", () => {
             { label: "Female", value: "female" },
           ],
         },
-      ],
-    };
-
-    render(
-      <DynamicSurveyForm
-        schema={schema}
-        values={{ gender: "male" }}
-        onValuesChange={onValuesChange}
-        onSubmit={onSubmit}
-      />
-    );
-
-    const femaleRadio = screen.getByLabelText("Female");
-    fireEvent.click(femaleRadio);
-    expect(onValuesChange).toHaveBeenCalledWith({ gender: "female" });
-  });
-
-  it("renders select options and handles dropdown changes", () => {
-    const onValuesChange = vi.fn();
-    const onSubmit = vi.fn();
-    const schema = {
-      components: [
         {
           key: "country",
           type: "select",
@@ -282,600 +273,433 @@ describe("DynamicSurveyForm", () => {
           },
         },
       ],
-    };
+      values: { hobbies: { read: true }, gender: "male", country: "us" },
+    });
 
-    render(
-      <DynamicSurveyForm
-        schema={schema}
-        values={{ country: "us" }}
-        onValuesChange={onValuesChange}
-        onSubmit={onSubmit}
-      />
-    );
+    fireEvent.click(screen.getByLabelText("Agree to terms"));
+    fireEvent.click(screen.getByLabelText("Gaming"));
+    fireEvent.click(screen.getByLabelText("Female"));
+    fireEvent.change(screen.getByTestId("mock-select"), { target: { value: "ca" } });
+    submit();
 
-    const select = screen.getByTestId("mock-select");
-    fireEvent.change(select, { target: { value: "ca" } });
-    expect(onValuesChange).toHaveBeenCalledWith({ country: "ca" });
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith({
+        agree: true,
+        hobbies: { read: true, game: true },
+        gender: "female",
+        country: "ca",
+      });
+    });
   });
 
-  it("renders nested columns and generic container components, and flattens rows for onSubmit", () => {
-    const onValuesChange = vi.fn();
-    const onSubmit = vi.fn();
-    const schema = {
+  it("reads select options from data.json, data.custom, and fallback values", () => {
+    renderSurvey({
+      components: [
+        {
+          key: "fromJson",
+          type: "select",
+          label: "From JSON",
+          data: { json: [{ value: "json", label: "JSON Option" }] },
+        },
+        {
+          key: "fromCustom",
+          type: "radio",
+          label: "From Custom",
+          data: { custom: [{ value: true }] },
+        },
+        {
+          key: "fromValues",
+          type: "selectboxes",
+          label: "From Values",
+          values: [{ value: 10 }],
+        },
+      ],
+    });
+
+    expect(screen.getByText("JSON Option")).toBeTruthy();
+    expect(screen.getByLabelText("true")).toBeTruthy();
+    expect(screen.getByLabelText("10")).toBeTruthy();
+  });
+
+  it("renders nested columns and container components and includes hidden row values on submit", async () => {
+    const { onSubmit, submit } = renderSurvey({
       components: [
         {
           type: "columns",
           columns: [
-            {
-              components: [{ key: "col1", type: "textfield", label: "Col 1" }],
-            },
+            { components: [{ key: "col1", type: "textfield", label: "Col 1" }] },
+            { components: [{ key: "col2", type: "textfield", label: "Col 2" }] },
           ],
         },
         {
           type: "rows",
-          rows: [
-            [
-              {
-                components: [{ key: "row1", type: "textfield", label: "Row 1" }],
-              },
-            ],
-          ],
+          rows: [[{ components: [{ key: "row1", type: "textfield", label: "Row 1" }] }]],
         },
         {
           type: "container",
           label: "Generic Container",
-          components: [
-            { key: "cont1", type: "textfield", label: "Cont 1" },
-          ],
+          components: [{ key: "cont1", type: "textfield", label: "Cont 1" }],
         },
       ],
-    };
-
-    render(
-      <DynamicSurveyForm
-        schema={schema}
-        values={{ row1: "row-val" }}
-        onValuesChange={onValuesChange}
-        onSubmit={onSubmit}
-      />
-    );
+      values: { row1: "row value" },
+    });
 
     expect(screen.getByLabelText("Col 1")).toBeTruthy();
+    expect(screen.getByLabelText("Col 2")).toBeTruthy();
     expect(screen.queryByLabelText("Row 1")).toBeNull();
     expect(screen.getByText("Generic Container")).toBeTruthy();
     expect(screen.getByLabelText("Cont 1")).toBeTruthy();
 
-    const submitBtn = screen.getByRole("button", { name: /Submit Responses/i });
-    fireEvent.click(submitBtn);
-    expect(onSubmit).toHaveBeenCalledWith({
-      col1: "",
-      row1: "row-val",
-      cont1: "",
+    submit();
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith({
+        col1: "",
+        col2: "",
+        row1: "row value",
+        cont1: "",
+      });
     });
   });
 
-  it("validates required fields, minLength, maxLength, pattern, and custom validators", async () => {
-    const onValuesChange = vi.fn();
-    const onSubmit = vi.fn();
-    const schema = {
+  it("skips buttons, hidden fields, input:false fields, unsupported fields, and components without keys", async () => {
+    const { onSubmit, submit } = renderSurvey({
       components: [
+        { key: "buttonField", type: "button", label: "Button Field" },
+        { key: "hiddenField", type: "textfield", label: "Hidden Field", hidden: true },
+        { key: "displayOnly", type: "textfield", label: "Display Only", input: false },
+        { key: "fileUpload", type: "file", label: "File Upload" },
+        { type: "textfield", label: "No Key" },
+        { key: "visibleField", type: "textfield", label: "Visible Field" },
+      ],
+    });
+
+    expect(screen.queryByLabelText("Button Field")).toBeNull();
+    expect(screen.queryByLabelText("Hidden Field")).toBeNull();
+    expect(screen.queryByLabelText("Display Only")).toBeNull();
+    expect(screen.getByLabelText("File Upload")).toBeTruthy();
+    expect(screen.queryByLabelText("No Key")).toBeNull();
+    expect(screen.getByLabelText("Visible Field")).toBeTruthy();
+
+    submit();
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith({ "visible field": "" });
+    });
+  });
+
+  it("validates required strings, arrays, empty selectboxes, and checkbox booleans", async () => {
+    const { onSubmit, submit } = renderSurvey({
+      components: [
+        { key: "name", type: "textfield", label: "Name", validate: { required: true } },
         {
-          key: "field1",
+          key: "choices",
+          type: "selectboxes",
+          label: "Choices",
+          validate: { required: true },
+          values: [{ label: "One", value: "one" }],
+        },
+        { key: "agree", type: "checkbox", label: "Agree", validate: { required: true } },
+      ],
+      values: { choices: { one: false }, agree: false },
+    });
+
+    submit();
+
+    expect(await screen.findByText("Name is required.")).toBeTruthy();
+    expect(screen.getByText("Choices is required.")).toBeTruthy();
+    expect(screen.queryByText("Agree is required.")).toBeNull();
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("validates email, minLength, maxLength, pattern, and invalid pattern fallback", async () => {
+    const { onSubmit, submit } = renderSurvey({
+      components: [
+        { key: "email", type: "email", label: "Email", validate: { customMessage: "Email custom" } },
+        { key: "short", type: "textfield", label: "Short", validate: { minLength: 3 } },
+        { key: "long", type: "textfield", label: "Long", validate: { maxLength: 5 } },
+        {
+          key: "pattern",
           type: "textfield",
-          label: "Field 1",
-          validate: { required: true, minLength: 3, maxLength: 5 },
+          label: "Pattern",
+          validate: { pattern: "^[A-Z]+$", customMessage: "Uppercase only" },
         },
         {
-          key: "emailField",
-          type: "email",
-          label: "Email Field",
-        },
-        {
-          key: "patternField",
+          key: "badPattern",
           type: "textfield",
-          label: "Pattern Field",
-          validate: { pattern: "^[A-Z]+$", customMessage: "Must be uppercase letters" },
-        },
-        {
-          key: "numField",
-          type: "number",
-          label: "Number Field",
-          validate: { min: 5, max: 10 },
-        },
-        {
-          key: "customValField",
-          type: "textfield",
-          label: "Custom Val Field",
-          validate: { custom: "valid = input === 'correct' ? true : 'must be correct';" },
+          label: "Bad Pattern",
+          validate: { pattern: "[" },
         },
       ],
-    };
-
-    const { rerender } = render(
-      <DynamicSurveyForm
-        schema={schema}
-        values={{}}
-        onValuesChange={onValuesChange}
-        onSubmit={onSubmit}
-      />
-    );
-
-    // Submit while fields are empty to trigger required
-    const submitBtn = screen.getByRole("button", { name: /Submit Responses/i });
-    fireEvent.click(submitBtn);
-
-    expect(await screen.findByText("Field 1 is required.")).toBeTruthy();
-    expect(onSubmit).not.toHaveBeenCalled();
-
-    // Rerender with values failing minLength
-    rerender(
-      <DynamicSurveyForm
-        schema={schema}
-        values={{ field1: "ab" }}
-        onValuesChange={onValuesChange}
-        onSubmit={onSubmit}
-      />
-    );
-    fireEvent.click(submitBtn);
-    expect(await screen.findByText("Field 1 must be at least 3 characters.")).toBeTruthy();
-
-    // Rerender with values failing maxLength
-    rerender(
-      <DynamicSurveyForm
-        schema={schema}
-        values={{ field1: "abcdef" }}
-        onValuesChange={onValuesChange}
-        onSubmit={onSubmit}
-      />
-    );
-    fireEvent.click(submitBtn);
-    expect(await screen.findByText("Field 1 must be 5 characters or fewer.")).toBeTruthy();
-
-    // Rerender with invalid email format
-    rerender(
-      <DynamicSurveyForm
-        schema={schema}
-        values={{ field1: "abc", emailField: "not-an-email" }}
-        onValuesChange={onValuesChange}
-        onSubmit={onSubmit}
-      />
-    );
-    fireEvent.click(submitBtn);
-    expect(await screen.findByText("Enter a valid email address.")).toBeTruthy();
-
-    // Rerender with invalid regex pattern
-    rerender(
-      <DynamicSurveyForm
-        schema={schema}
-        values={{ field1: "abc", emailField: "test@domain.com", patternField: "lowercase" }}
-        onValuesChange={onValuesChange}
-        onSubmit={onSubmit}
-      />
-    );
-    fireEvent.click(submitBtn);
-    expect(await screen.findByText("Must be uppercase letters")).toBeTruthy();
-
-    // Rerender with NaN for number field
-    rerender(
-      <DynamicSurveyForm
-        schema={schema}
-        values={{ field1: "abc", emailField: "test@domain.com", patternField: "ABC", numField: "not-a-number" }}
-        onValuesChange={onValuesChange}
-        onSubmit={onSubmit}
-      />
-    );
-    fireEvent.click(submitBtn);
-    expect(await screen.findByText("Number Field must be a number.")).toBeTruthy();
-
-    // Rerender with number field out of bounds (too small)
-    rerender(
-      <DynamicSurveyForm
-        schema={schema}
-        values={{ field1: "abc", emailField: "test@domain.com", patternField: "ABC", numField: 4 }}
-        onValuesChange={onValuesChange}
-        onSubmit={onSubmit}
-      />
-    );
-    fireEvent.click(submitBtn);
-    expect(await screen.findByText("Number Field must be at least 5.")).toBeTruthy();
-
-    // Rerender with number field out of bounds (too large)
-    rerender(
-      <DynamicSurveyForm
-        schema={schema}
-        values={{ field1: "abc", emailField: "test@domain.com", patternField: "ABC", numField: 11 }}
-        onValuesChange={onValuesChange}
-        onSubmit={onSubmit}
-      />
-    );
-    fireEvent.click(submitBtn);
-    expect(await screen.findByText("Number Field must be no more than 10.")).toBeTruthy();
-
-    // Rerender with custom validation failing
-    rerender(
-      <DynamicSurveyForm
-        schema={schema}
-        values={{ field1: "abc", emailField: "test@domain.com", patternField: "ABC", numField: 8, customValField: "wrong" }}
-        onValuesChange={onValuesChange}
-        onSubmit={onSubmit}
-      />
-    );
-    fireEvent.click(submitBtn);
-    expect(await screen.findByText("must be correct")).toBeTruthy();
-
-    // Rerender with all valid values to successfully submit
-    rerender(
-      <DynamicSurveyForm
-        schema={schema}
-        values={{ field1: "abc", emailField: "test@domain.com", patternField: "ABC", numField: 8, customValField: "correct" }}
-        onValuesChange={onValuesChange}
-        onSubmit={onSubmit}
-      />
-    );
-    fireEvent.click(submitBtn);
-    expect(onSubmit).toHaveBeenLastCalledWith({
-      field1: "abc",
-      "email field": "test@domain.com",
-      "pattern field": "ABC",
-      "num field": 8,
-      "custom val field": "correct",
+      values: {
+        email: "not-email",
+        short: "ab",
+        long: "abcdef",
+        pattern: "lower",
+        badPattern: "anything",
+      },
     });
+
+    submit();
+
+    expect(await screen.findByText("Email custom")).toBeTruthy();
+    expect(screen.getByText("Short must be at least 3 characters.")).toBeTruthy();
+    expect(screen.getByText("Long must be 5 characters or fewer.")).toBeTruthy();
+    expect(screen.getByText("Uppercase only")).toBeTruthy();
+    expect(screen.queryByText("Bad Pattern has an invalid format.")).toBeNull();
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 
-  it("handles catch blocks in regex patterns and custom validators", async () => {
-    const onSubmit = vi.fn();
-    const schema = {
+  it("validates numeric bounds and NaN values", async () => {
+    const { onSubmit, submit } = renderSurvey({
+      components: [
+        { key: "nan", type: "number", label: "NaN Number" },
+        { key: "small", type: "number", label: "Small Number", validate: { min: 5 } },
+        { key: "large", type: "number", label: "Large Number", validate: { max: 10 } },
+      ],
+      values: { nan: "not-a-number", small: 4, large: 11 },
+    });
+
+    submit();
+
+    expect(await screen.findByText("NaN Number must be a number.")).toBeTruthy();
+    expect(screen.getByText("Small Number must be at least 5.")).toBeTruthy();
+    expect(screen.getByText("Large Number must be no more than 10.")).toBeTruthy();
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("validates custom validators, caches snippets, and uses fallback messages", async () => {
+    const { onSubmit, submit } = renderSurvey({
       components: [
         {
-          key: "badPatternField",
+          key: "customString",
           type: "textfield",
-          label: "Bad Pattern Field",
-          validate: { pattern: "[" }, // Throws on RegExp compilation
+          label: "Custom String",
+          validate: { custom: "valid = input === 'ok' ? true : 'must be ok';" },
         },
         {
-          key: "badCustomField",
+          key: "customFalse",
           type: "textfield",
-          label: "Bad Custom Field",
+          label: "Custom False",
+          validate: {
+            custom: "valid = input === data.customString;",
+            customMessage: "Values must match",
+          },
+        },
+        {
+          key: "customThrow",
+          type: "textfield",
+          label: "Custom Throw",
           validate: {
             custom: "throw new Error('boom');",
             customMessage: "Custom error fallback",
           },
         },
-        {
-          key: "badCustomNoMsgField",
-          type: "textfield",
-          label: "Bad Custom No Message Field",
-          validate: {
-            custom: "throw new Error('boom');",
-          },
-        },
       ],
-    };
+      values: { customString: "bad", customFalse: "different", customThrow: "x" },
+    });
 
-    const { rerender } = render(
-      <DynamicSurveyForm
-        schema={schema}
-        values={{
-          badPatternField: "abc",
-          badCustomField: "some-value",
-          badCustomNoMsgField: "some-value",
-        }}
-        onValuesChange={vi.fn()}
-        onSubmit={onSubmit}
-      />
-    );
+    submit();
 
-    const submitBtn = screen.getByRole("button", { name: /Submit Responses/i });
-    fireEvent.click(submitBtn);
-
-    // badPatternField's invalid regex will catch and return null (no error text is shown)
-    expect(screen.queryByText("Bad Pattern Field has an invalid format.")).toBeNull();
-
-    // badCustomField throws and returns the customMessage
-    expect(await screen.findByText("Custom error fallback")).toBeTruthy();
-
-    // Rerender to test throw fallback when customMessage is omitted (returns null, no error shown)
-    rerender(
-      <DynamicSurveyForm
-        schema={schema}
-        values={{ badCustomField: "some-val" }}
-        onValuesChange={vi.fn()}
-        onSubmit={onSubmit}
-      />
-    );
-    fireEvent.click(submitBtn);
-    expect(screen.queryByText("Bad Custom No Message Field is invalid.")).toBeNull();
+    expect(await screen.findByText("must be ok")).toBeTruthy();
+    expect(screen.getByText("Values must match")).toBeTruthy();
+    expect(screen.getByText("Custom error fallback")).toBeTruthy();
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 
-  it("hides fields conditionally using simple 'when/eq' logic, json-logic, and custom conditionals", () => {
-    const onValuesChange = vi.fn();
-    const onSubmit = vi.fn();
-    const schema = {
-      components: [
-        { key: "triggerField", type: "textfield", label: "Trigger" },
-        {
-          key: "conditionalField",
-          type: "textfield",
-          label: "Simple Cond Field",
-          conditional: { when: "triggerField", eq: "show" },
-        },
-        {
-          key: "jsonCondField",
-          type: "textfield",
-          label: "JSON Cond Field",
-          conditional: {
-            json: {
-              and: [
-                { "===": [{ var: "data.triggerField" }, "show"] },
-              ],
-            },
-          },
-        },
-        {
-          key: "customCondField",
-          type: "textfield",
-          label: "Custom Cond Field",
-          customConditional: "show = data.triggerField === 'show';",
-        },
-      ],
-    };
-
-    const { rerender } = render(
-      <DynamicSurveyForm
-        schema={schema}
-        values={{ triggerField: "" }}
-        onValuesChange={onValuesChange}
-        onSubmit={onSubmit}
-      />
-    );
-
-    // Initially conditional fields are hidden
-    expect(screen.queryByLabelText("Simple Cond Field")).toBeNull();
-    expect(screen.queryByLabelText("JSON Cond Field")).toBeNull();
-    expect(screen.queryByLabelText("Custom Cond Field")).toBeNull();
-
-    // Rerender with matching value
-    rerender(
-      <DynamicSurveyForm
-        schema={schema}
-        values={{ triggerField: "show" }}
-        onValuesChange={onValuesChange}
-        onSubmit={onSubmit}
-      />
-    );
-
-    expect(screen.getByLabelText("Simple Cond Field")).toBeTruthy();
-    expect(screen.getByLabelText("JSON Cond Field")).toBeTruthy();
-    expect(screen.getByLabelText("Custom Cond Field")).toBeTruthy();
-  });
-
-  it("handles conditional show: false scenarios", () => {
-    const schema = {
-      components: [
-        { key: "triggerField", type: "textfield", label: "Trigger" },
-        {
-          key: "hideField",
-          type: "textfield",
-          label: "Hide Field",
-          conditional: { when: "triggerField", eq: "hide-me", show: false },
-        },
-      ],
-    };
-
-    const { rerender } = render(
-      <DynamicSurveyForm
-        schema={schema}
-        values={{ triggerField: "something-else" }}
-        onValuesChange={vi.fn()}
-        onSubmit={vi.fn()}
-      />
-    );
-
-    expect(screen.getByLabelText("Hide Field")).toBeTruthy();
-
-    rerender(
-      <DynamicSurveyForm
-        schema={schema}
-        values={{ triggerField: "hide-me" }}
-        onValuesChange={vi.fn()}
-        onSubmit={vi.fn()}
-      />
-    );
-
-    expect(screen.queryByLabelText("Hide Field")).toBeNull();
-  });
-
-  it("evaluates conditional JSON Logic expression nodes including 'or', '!', '==', and nested vars", () => {
-    const schema = {
-      components: [
-        { key: "valueA", type: "textfield", label: "Value A" },
-        { key: "valueB", type: "textfield", label: "Value B" },
-        {
-          key: "jsonField",
-          type: "textfield",
-          label: "JSON Field",
-          conditional: {
-            json: {
-              or: [
-                { "!": { "==": [{ var: "data.valueA" }, "hidden"] } },
-                { "===": [{ var: "data.valueB" }, "visible"] },
-              ],
-            },
-          },
-        },
-      ],
-    };
-
-    const { rerender } = render(
-      <DynamicSurveyForm
-        schema={schema}
-        values={{ valueA: "hidden", valueB: "not-visible" }}
-        onValuesChange={vi.fn()}
-        onSubmit={vi.fn()}
-      />
-    );
-
-    // False OR False => hidden
-    expect(screen.queryByLabelText("JSON Field")).toBeNull();
-
-    // Rerender: True OR False => visible
-    rerender(
-      <DynamicSurveyForm
-        schema={schema}
-        values={{ valueA: "something-else", valueB: "not-visible" }}
-        onValuesChange={vi.fn()}
-        onSubmit={vi.fn()}
-      />
-    );
-    expect(screen.getByLabelText("JSON Field")).toBeTruthy();
-  });
-
-  it("handles errors and non-boolean results in custom conditionals", () => {
-    const schema = {
-      components: [
-        {
-          key: "brokenCond",
-          type: "textfield",
-          label: "Broken Cond",
-          customConditional: "throw new Error('broken');",
-        },
-        {
-          key: "nonBoolCond",
-          type: "textfield",
-          label: "Non Boolean Cond",
-          // sets show to null, so it falls back to visible which is false
-          customConditional: "show = null; visible = false;",
-        },
-      ],
-    };
-
-    render(
-      <DynamicSurveyForm
-        schema={schema}
-        values={{}}
-        onValuesChange={vi.fn()}
-        onSubmit={vi.fn()}
-      />
-    );
-
-    // Broken conditional catches exception and shows component
-    expect(screen.getByLabelText("Broken Cond")).toBeTruthy();
-
-    // Non-boolean returns visible fallback (false)
-    expect(screen.queryByLabelText("Non Boolean Cond")).toBeNull();
-  });
-
-  it("handles isSubmitting prop properly by disabling the submit button", () => {
-    const onValuesChange = vi.fn();
-    const onSubmit = vi.fn();
-
-    render(
-      <DynamicSurveyForm
-        schema={{ components: [] }}
-        values={{}}
-        onValuesChange={onValuesChange}
-        onSubmit={onSubmit}
-        isSubmitting={true}
-      />
-    );
-
-    const submitBtn = screen.getByRole("button", { name: /Submitting.../i });
-    expect(submitBtn).toBeTruthy();
-    expect(submitBtn.hasAttribute("disabled")).toBe(true);
-  });
-
-  it("removes errors when field value changes and form is resubmitted", async () => {
-    const onSubmit = vi.fn();
-    const schema = {
+  it("clears an existing field error after editing that field to a valid value", async () => {
+    const { onSubmit, submit } = renderSurvey({
       components: [
         { key: "username", type: "textfield", label: "Username", validate: { required: true } },
       ],
-    };
+    });
 
-    function TestWrapper() {
-      const [values, setValues] = React.useState<any>({ username: "" });
-      return (
-        <DynamicSurveyForm
-          schema={schema}
-          values={values}
-          onValuesChange={setValues}
-          onSubmit={onSubmit}
-        />
-      );
-    }
-
-    render(<TestWrapper />);
-
-    const submitBtn = screen.getByRole("button", { name: /Submit Responses/i });
-    fireEvent.click(submitBtn);
-
-    // Shows the error first
+    submit();
     expect(await screen.findByText("Username is required.")).toBeTruthy();
-    expect(onSubmit).not.toHaveBeenCalled();
 
-    // Type a valid value
-    const input = screen.getByLabelText(/Username/i);
-    fireEvent.change(input, { target: { value: "valid_user" } });
-
-    // Submit again — errors should clear
-    fireEvent.click(submitBtn);
+    fireEvent.change(screen.getByLabelText(/Username/), {
+      target: { value: "valid_user" },
+    });
 
     await waitFor(() => {
       expect(screen.queryByText("Username is required.")).toBeNull();
     });
-    expect(onSubmit).toHaveBeenCalled();
+
+    submit();
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith({ username: "valid_user" });
+    });
   });
 
-  it("handles textarea input changes", () => {
-    const onValuesChange = vi.fn();
-    const schema = {
-      components: [
-        { key: "bio", type: "textarea", label: "Biography" },
-      ],
-    };
-    render(
-      <DynamicSurveyForm
-        schema={schema}
-        values={{}}
-        onValuesChange={onValuesChange}
-        onSubmit={vi.fn()}
-      />
-    );
-    const textarea = screen.getByLabelText("Biography");
-    fireEvent.change(textarea, { target: { value: "My long bio" } });
-    expect(onValuesChange).toHaveBeenCalledWith({ bio: "My long bio" });
-  });
-
-  it("returns true for unsupported JSON conditional operators by default", () => {
-    const schema = {
+  it("hides and reveals fields with simple conditional logic through visibility-changing controls", async () => {
+    renderSurvey({
       components: [
         {
-          key: "fallbackField",
+          key: "answer",
+          type: "radio",
+          label: "Answer",
+          values: [
+            { label: "Yes", value: "yes" },
+            { label: "No", value: "no" },
+          ],
+        },
+        {
+          key: "details",
           type: "textfield",
-          label: "Fallback Field",
-          conditional: {
-            json: { unsupported_op: "anything" },
-          },
+          label: "Details",
+          conditional: { when: "answer", eq: "yes" },
+        },
+        {
+          key: "hideWhenNo",
+          type: "textfield",
+          label: "Hide When No",
+          conditional: { when: "answer", eq: "no", show: false },
         },
       ],
-    };
-    render(
-      <DynamicSurveyForm
-        schema={schema}
-        values={{}}
-        onValuesChange={vi.fn()}
-        onSubmit={vi.fn()}
-      />
-    );
-    expect(screen.getByLabelText("Fallback Field")).toBeTruthy();
+    });
+
+    expect(screen.queryByLabelText("Details")).toBeNull();
+    expect(screen.getByLabelText("Hide When No")).toBeTruthy();
+
+    fireEvent.click(screen.getByLabelText("Yes"));
+    expect(await screen.findByLabelText("Details")).toBeTruthy();
+    expect(screen.getByLabelText("Hide When No")).toBeTruthy();
+
+    fireEvent.click(screen.getByLabelText("No"));
+    await waitFor(() => {
+      expect(screen.queryByLabelText("Details")).toBeNull();
+      expect(screen.queryByLabelText("Hide When No")).toBeNull();
+    });
   });
 
-  it("converts camelCase and space-separated keys to snake_case in schema, conditionals, and output", async () => {
-    const onSubmit = vi.fn();
-    const schema = {
+  it("evaluates JSON conditional operators and transformed data paths", async () => {
+    renderSurvey({
       components: [
         {
-          key: "HowWasYourOverallFirstImpressionOfHomeFirstBeforeTheHiringProcessBegan",
+          key: "statusChoice",
+          type: "select",
+          label: "Status Choice",
+          data: {
+            values: [
+              { label: "Open", value: "open" },
+              { label: "Closed", value: "closed" },
+            ],
+          },
+        },
+        {
+          key: "reviewFlag",
+          type: "checkbox",
+          label: "Review Flag",
+        },
+        {
+          key: "jsonVisible",
+          type: "textfield",
+          label: "JSON Visible",
+          conditional: {
+            json: {
+              and: [
+                { "===": [{ var: "data.statusChoice" }, "open"] },
+                { "!": { "==": [{ var: "data.reviewFlag" }, false] } },
+              ],
+            },
+          },
+        },
+        {
+          key: "jsonFallback",
+          type: "textfield",
+          label: "JSON Fallback",
+          conditional: { json: { unsupported: true } },
+        },
+      ],
+    });
+
+    expect(screen.queryByLabelText("JSON Visible")).toBeNull();
+    expect(screen.getByLabelText("JSON Fallback")).toBeTruthy();
+
+    fireEvent.change(screen.getByTestId("mock-select"), {
+      target: { value: "open" },
+    });
+    expect(await screen.findByLabelText("JSON Visible")).toBeTruthy();
+
+    fireEvent.click(screen.getByLabelText("Review Flag"));
+    expect(await screen.findByLabelText("JSON Visible")).toBeTruthy();
+  });
+
+  it("evaluates custom conditionals and defaults to visible when snippets throw", async () => {
+    renderSurvey({
+      components: [
+        {
+          key: "toggle",
+          type: "checkbox",
+          label: "Toggle",
+        },
+        {
+          key: "customVisible",
+          type: "textfield",
+          label: "Custom Visible",
+          customConditional: "show = data.toggle === true;",
+        },
+        {
+          key: "visibleFallback",
+          type: "textfield",
+          label: "Visible Fallback",
+          customConditional: "show = null; visible = false;",
+        },
+        {
+          key: "brokenCondition",
+          type: "textfield",
+          label: "Broken Condition",
+          customConditional: "throw new Error('broken');",
+        },
+      ],
+    });
+
+    expect(screen.queryByLabelText("Custom Visible")).toBeNull();
+    expect(screen.queryByLabelText("Visible Fallback")).toBeNull();
+    expect(screen.getByLabelText("Broken Condition")).toBeTruthy();
+
+    fireEvent.click(screen.getByLabelText("Toggle"));
+    expect(await screen.findByLabelText("Custom Visible")).toBeTruthy();
+  });
+
+  it("submits only currently visible values and applies default values", async () => {
+    const { onSubmit, submit } = renderSurvey({
+      components: [
+        {
+          key: "showExtra",
+          type: "checkbox",
+          label: "Show Extra",
+        },
+        {
+          key: "defaulted",
+          type: "textfield",
+          label: "Defaulted",
+          defaultValue: "from default",
+        },
+        {
+          key: "extra",
+          type: "textfield",
+          label: "Extra",
+          conditional: { when: "showExtra", eq: true },
+        },
+      ],
+      values: { extra: "should be omitted" },
+    });
+
+    submit();
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith({
+        "show extra": "",
+        defaulted: "from default",
+      });
+    });
+  });
+
+  it("normalizes schema keys, conditional keys, and incoming value keys", async () => {
+    const { onSubmit, submit } = renderSurvey({
+      components: [
+        {
+          key: "FirstImpression",
           type: "radio",
           label: "First Impression",
           values: [
@@ -884,53 +708,39 @@ describe("DynamicSurveyForm", () => {
           ],
         },
         {
-          key: "thisIsImportantToUsCouldYouPleaseElaborate",
+          key: "PleaseElaborate",
           type: "textarea",
-          label: "Elaborate Details",
-          conditional: {
-            when: "HowWasYourOverallFirstImpressionOfHomeFirstBeforeTheHiringProcessBegan",
-            eq: "veryBad",
-          },
+          label: "Please Elaborate",
+          conditional: { when: "FirstImpression", eq: "veryBad" },
         },
       ],
-    };
-
-    const { rerender } = render(
-      <DynamicSurveyForm
-        schema={schema}
-        values={{}}
-        onValuesChange={vi.fn()}
-        onSubmit={onSubmit}
-      />
-    );
-
-    // Textarea is hidden initially
-    expect(screen.queryByLabelText("Elaborate Details")).toBeNull();
-
-    // Rerender with camelCase select option set to 'veryBad'
-    rerender(
-      <DynamicSurveyForm
-        schema={schema}
-        values={{
-          HowWasYourOverallFirstImpressionOfHomeFirstBeforeTheHiringProcessBegan: "veryBad",
-          thisIsImportantToUsCouldYouPleaseElaborate: "typing details here",
-        }}
-        onValuesChange={vi.fn()}
-        onSubmit={onSubmit}
-      />
-    );
-
-    // Textarea is now visible and has the correct value
-    const textarea = screen.getByLabelText("Elaborate Details") as HTMLTextAreaElement;
-    expect(textarea).toBeTruthy();
-    expect(textarea.value).toBe("typing details here");
-
-    const submitBtn = screen.getByRole("button", { name: /Submit Responses/i });
-    fireEvent.click(submitBtn);
-
-    expect(onSubmit).toHaveBeenLastCalledWith({
-      "how was your overall first impression of home first before the hiring process began": "veryBad",
-      "this is important to us could you please elaborate": "typing details here",
+      values: {
+        FirstImpression: "veryBad",
+        PleaseElaborate: "Details here",
+      },
     });
+
+    expect(screen.getByLabelText("Please Elaborate")).toHaveValue("Details here");
+    submit();
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith({
+        "first impression": "veryBad",
+        "please elaborate": "Details here",
+      });
+    });
+  });
+
+  it("submits asynchronously and disables the submit button while isSubmitting is true", async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    renderSurvey({
+      components: [{ key: "name", type: "textfield", label: "Name" }],
+      values: { name: "Asha" },
+      onSubmit,
+      isSubmitting: true,
+    });
+
+    const submitButton = screen.getByRole("button", { name: /submitting/i });
+    expect(submitButton).toBeDisabled();
   });
 });
