@@ -1,61 +1,97 @@
-import { PreOfferForm, PreOfferFormMessage } from "../types/pre-offer";
+import { FrappeAPI } from "../frappe-api";
+import { PreOfferForm, PreOfferTab, PreOfferField, FrappePreOfferFieldResponse } from "../types/pre-offer";
 
 export const preOfferService = {
-  getPreOfferForm: async (userEmail: string): Promise<PreOfferForm> => {
-    if (!userEmail) throw new Error("User email is required");
-
-    const res = await fetch("/api/pre-offer");
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || "Failed to fetch pre-offer form");
+  getPreOfferForm: async (userEmail?: string): Promise<PreOfferForm> => {
+    const params: Record<string, string> = {};
+    if (userEmail) {
+      params.job_applicant = userEmail;
     }
 
-    const data = await res.json();
-    const message = data?.message || data;
+    const message = (await FrappeAPI.get(
+      "recruitment.api.channels.pre_offer.get_application_fields",
+      params
+    )) as FrappePreOfferFieldResponse[];
 
-    if (!message || (message.status !== "success" && data.status !== "success")) {
-      throw new Error("Failed to fetch pre-offer form");
+    if (!message || !Array.isArray(message)) {
+      throw new Error("Failed to fetch pre-offer form: Response is not a valid list of fields");
     }
 
-    return transformPreOfferForm(message);
+    return transformPreOfferForm(message, userEmail || "");
   },
 
-  submitPreOffer: async (
-    stepData: Record<string, Record<string, unknown>>,
-    userEmail: string,
-  ): Promise<{ success: boolean; message: string }> => {
-    if (!userEmail) throw new Error("User email is required");
-
-    const res = await fetch("/api/pre-offer", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ stepData }),
+  submitPreOffer: async (jobApplicant: string, data: Record<string, unknown>): Promise<any> => {
+    if (!jobApplicant) throw new Error("Job applicant is required");
+    return FrappeAPI.post("recruitment.api.channels.pre_offer.submit_application", {
+      job_applicant: jobApplicant,
+      data: JSON.stringify(data),
     });
-
-    const data = await res.json();
-    const message = data?.message || data;
-
-    if (!res.ok || !message || (message.status !== "success" && data.status !== "success")) {
-      throw new Error(message?.message || data?.message || data?.error || "Submission failed");
-    }
-
-    return {
-      success: true,
-      message: message.message || data.message || "Form submitted successfully!",
-    };
   },
 };
 
+// Helper for transforming field responses recursively
+export function transformPreOfferField(field: FrappePreOfferFieldResponse): PreOfferField {
+  return {
+    fieldname: field.reference_name,
+    label: field.display_name || field.reference_name,
+    fieldtype: field.fieldtype,
+    is_mandatory: field.reqd || 0,
+    reqd: field.reqd || 0,
+    read_only: field.read_only !== undefined ? field.read_only : (field.editability === "Editable" ? 0 : 1),
+    hidden: field.hidden !== undefined ? field.hidden : (field.visibility === "Hidden" ? 1 : 0),
+    options: field.options,
+    child_doctype: field.child_doctype,
+    child_fields: field.child_fields ? field.child_fields.map(transformPreOfferField) : undefined,
+    value: field.value !== undefined ? field.value : "",
+    default: field.default,
+    approval_status: field.approval_status,
+    hr_comment: field.hr_comment,
+  };
+}
+
 // Backend to frontend transformation
 export function transformPreOfferForm(
-  data: PreOfferFormMessage,
+  fields: FrappePreOfferFieldResponse[],
+  userEmail: string,
 ): PreOfferForm {
+  const tabMap: Record<string, PreOfferTab> = {};
+  let status = "Sent";
+
+  // Look for status field in the list of fields first
+  const statusField = fields.find(
+    (f) => f.reference_name === "pre_offer_form_status" || f.reference_name === "status"
+  );
+  if (statusField) {
+    status = (statusField.value as string) || (statusField.default as string) || "Sent";
+  }
+
+  fields.forEach((field) => {
+    // Skip status field from being rendered as an input form field if it's purely metadata
+    if (field.reference_name === "pre_offer_form_status" || field.reference_name === "status") {
+      return;
+    }
+
+    const sectionName = field.section || "Basic Details";
+
+    if (!tabMap[sectionName]) {
+      tabMap[sectionName] = {
+        tab: sectionName,
+        sections: [
+          {
+            section: sectionName,
+            fields: [],
+          },
+        ],
+      };
+    }
+
+    const mappedField = transformPreOfferField(field);
+    tabMap[sectionName].sections[0].fields.push(mappedField);
+  });
+
   return {
-    applicantId: data.job_applicant,
-    status: data.pre_offer_form_status,
-    tabs: data.tabs,
+    applicantId: userEmail,
+    status,
+    tabs: Object.values(tabMap),
   };
 }

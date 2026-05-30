@@ -1,0 +1,193 @@
+import { describe, it, expect, vi, beforeEach } from "vitest"
+import { render, screen, fireEvent, waitFor } from "@testing-library/react"
+import { PreOfferTableField } from "@/components/pre-offer-form/ChildTable"
+import { FrappeAPI } from "@/lib/frappe-api"
+
+vi.mock("@/lib/frappe-api", () => ({
+  FrappeAPI: {
+    get: vi.fn(),
+  },
+}))
+
+vi.mock("lucide-react", async () => {
+  const actual = await vi.importActual("lucide-react")
+  return {
+    ...actual,
+    Plus: () => <div data-testid="icon-plus" />,
+    Trash2: () => <div data-testid="icon-trash" />,
+  }
+})
+
+vi.mock("@/components/ui/field-renderer", () => ({
+  DynamicFieldRenderer: ({ field, value, onChange, overrides }: any) => {
+    if (overrides && overrides[field.fieldtype]) {
+      const C = overrides[field.fieldtype].component
+      return (
+        <div data-testid={`override-${field.fieldname}`}>
+          <C field={field} value={value} onChange={onChange} />
+        </div>
+      )
+    }
+
+    return (
+      <div data-testid={`field-${field.fieldname}`}>
+        <label>{field.label}</label>
+        <input
+          data-testid={`input-${field.fieldname}`}
+          defaultValue={value as string || ""}
+          onChange={(e) => onChange?.(e.target.value)}
+        />
+      </div>
+    )
+  },
+}))
+
+vi.mock("@/components/onboarding/file-upload-field", () => ({
+  FileUploadField: ({ label, onChange }: any) => (
+    <div data-testid="file-upload">
+      <label>{label}</label>
+      <button type="button" onClick={() => onChange("uploaded_document.pdf")}>Upload File</button>
+    </div>
+  ),
+}))
+
+describe("PreOfferTableField component", () => {
+  const mockField = {
+    fieldname: "education",
+    label: "Education Details",
+    fieldtype: "Table",
+    reqd: 1,
+    child_fields: [
+      {
+        fieldname: "school",
+        label: "School Name",
+        fieldtype: "Data",
+        reqd: 1,
+        hidden: 0,
+      },
+      {
+        fieldname: "transcript",
+        label: "Transcript File",
+        fieldtype: "Attach",
+        reqd: 0,
+        hidden: 0,
+      },
+    ],
+  }
+
+  const mockOnChange = vi.fn()
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it("renders table field title and Add button", () => {
+    render(
+      <PreOfferTableField
+        field={mockField}
+        value={[]}
+        onChange={mockOnChange}
+      />
+    )
+
+    expect(screen.getByText("Education Details")).toBeTruthy()
+    expect(screen.getByText("Add Education Details")).toBeTruthy()
+  })
+
+  it("triggers onChange with default values when Add button is clicked", () => {
+    render(
+      <PreOfferTableField
+        field={mockField}
+        value={[]}
+        onChange={mockOnChange}
+      />
+    )
+
+    const addButton = screen.getByRole("button", { name: "Add Education Details" })
+    fireEvent.click(addButton)
+
+    expect(mockOnChange).toHaveBeenCalledWith([{ school: "", transcript: "" }])
+  })
+
+  it("renders rows and triggers onChange with cell edits", () => {
+    const mockValue = [{ school: "Harvard", transcript: "" }]
+
+    render(
+      <PreOfferTableField
+        field={mockField}
+        value={mockValue}
+        onChange={mockOnChange}
+      />
+    )
+
+    expect(screen.getByText("#1")).toBeTruthy()
+    const input = screen.getByTestId("input-school") as HTMLInputElement
+    expect(input.value).toBe("Harvard")
+
+    fireEvent.change(input, { target: { value: "Yale" } })
+    expect(mockOnChange).toHaveBeenCalledWith([{ school: "Yale", transcript: "" }])
+  })
+
+  it("triggers cell file uploads correctly using attachment overrides", () => {
+    const mockValue = [{ school: "Harvard", transcript: "" }]
+
+    render(
+      <PreOfferTableField
+        field={mockField}
+        value={mockValue}
+        onChange={mockOnChange}
+      />
+    )
+
+    const uploadBtn = screen.getByRole("button", { name: "Upload File" })
+    fireEvent.click(uploadBtn)
+
+    expect(mockOnChange).toHaveBeenCalledWith([{ school: "Harvard", transcript: "uploaded_document.pdf" }])
+  })
+
+  it("triggers row deletion successfully", () => {
+    const mockValue = [
+      { school: "Harvard", transcript: "" },
+      { school: "Yale", transcript: "" },
+    ]
+
+    render(
+      <PreOfferTableField
+        field={mockField}
+        value={mockValue}
+        onChange={mockOnChange}
+      />
+    )
+
+    const removeButtons = screen.getAllByRole("button", { name: /Remove/i })
+    fireEvent.click(removeButtons[0]) // Delete row #1
+
+    expect(mockOnChange).toHaveBeenCalledWith([{ school: "Yale", transcript: "" }])
+  })
+
+  it("fetches columns from meta API if child_fields is not provided", async () => {
+    const fieldWithoutFields = {
+      fieldname: "education",
+      label: "Education Details",
+      fieldtype: "Table",
+      options: "EducationMeta",
+    }
+
+    const mockMetaFields = [
+      { reference_name: "degree", display_name: "Degree Title", fieldtype: "Data", hidden: 0 },
+    ]
+    ;(FrappeAPI.get as any).mockResolvedValue({ fields: mockMetaFields })
+
+    render(
+      <PreOfferTableField
+        field={fieldWithoutFields}
+        value={[]}
+        onChange={mockOnChange}
+      />
+    )
+
+    await waitFor(() => {
+      expect(FrappeAPI.get).toHaveBeenCalledWith("frappe.client.get_meta", { doctype: "EducationMeta" })
+    })
+  })
+})
