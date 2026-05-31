@@ -109,6 +109,35 @@ describe("PreOfferTableField component", () => {
     expect(mockOnChange).toHaveBeenCalledWith([{ school: "", transcript: "" }])
   })
 
+  it("renders columns provided through table_fields", () => {
+    const fieldWithTableFields = {
+      fieldname: "education",
+      label: "Education Details",
+      fieldtype: "Table",
+      table_fields: [
+        {
+          fieldname: "school_univ",
+          label: "Institute",
+          fieldtype: "Small Text",
+          reqd: 0,
+          hidden: 0,
+        },
+      ],
+    }
+
+    render(
+      <PreOfferTableField
+        field={fieldWithTableFields}
+        value={[{ school_univ: "Delhi University" }]}
+        onChange={mockOnChange}
+      />
+    )
+
+    expect(screen.getByText("Institute")).toBeTruthy()
+    expect((screen.getByTestId("input-school_univ") as HTMLInputElement).value).toBe("Delhi University")
+    expect(FrappeAPI.get).not.toHaveBeenCalled()
+  })
+
   it("renders rows and triggers onChange with cell edits", () => {
     const mockValue = [{ school: "Harvard", transcript: "" }]
 

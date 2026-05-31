@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -28,6 +28,7 @@ interface TableFieldDef {
   options?: string;
   child_doctype?: string;
   child_fields?: ChildField[];
+  table_fields?: ChildField[];
   reqd?: number | boolean;
   read_only?: number | boolean;
 }
@@ -49,6 +50,19 @@ type OverrideComponentProps = {
   className?: string;
 };
 
+const getProvidedColumns = (
+  childFields?: ChildField[],
+  tableFields?: ChildField[]
+) => {
+  const providedColumns = childFields?.length ? childFields : tableFields;
+
+  return (providedColumns || []).filter(
+    (f) =>
+      !f.hidden &&
+      !["Section Break", "Column Break"].includes(f.fieldtype)
+  );
+};
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function PreOfferTableField({
@@ -59,25 +73,23 @@ export function PreOfferTableField({
   className,
 }: PreOfferTableFieldProps) {
   const rows = Array.isArray(value) ? (value as Record<string, unknown>[]) : [];
-
-  // Use child_fields from API response if available,
-  // otherwise fetch from Frappe meta endpoint as fallback
-  const [columns, setColumns] = useState<ChildField[]>(
-    field.child_fields && field.child_fields.length > 0
-      ? field.child_fields.filter(
-          (f) =>
-            !f.hidden &&
-            !["Section Break", "Column Break"].includes(f.fieldtype)
-        )
-      : []
+  const providedColumns = useMemo(
+    () => getProvidedColumns(field.child_fields, field.table_fields),
+    [field.child_fields, field.table_fields]
   );
 
+  // Use child_fields/table_fields from API response if available,
+  // otherwise fetch from Frappe meta endpoint as fallback
+  const [columns, setColumns] = useState<ChildField[]>(providedColumns);
+
   useEffect(() => {
-    // Only fetch if no child_fields were provided and we have a doctype in options
-    if (
-      (!field.child_fields || field.child_fields.length === 0) &&
-      field.options
-    ) {
+    if (providedColumns.length > 0) {
+      setColumns(providedColumns);
+      return;
+    }
+
+    // Only fetch if no inline table columns were provided and we have a doctype in options
+    if (field.options) {
       FrappeAPI.get("frappe.client.get_meta", { doctype: field.options })
         .then((message: any) => {
           const fields: ChildField[] = message?.fields || [];
@@ -92,7 +104,7 @@ export function PreOfferTableField({
           console.error("Pre-Offer table meta fetch error:", err);
         });
     }
-  }, [field.options, field.child_fields]);
+  }, [field.options, providedColumns]);
 
   // ── Row helpers ─────────────────────────────────────────────────────────
 

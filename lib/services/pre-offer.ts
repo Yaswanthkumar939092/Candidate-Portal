@@ -31,9 +31,13 @@ export const preOfferService = {
 
 // Helper for transforming field responses recursively
 export function transformPreOfferField(field: FrappePreOfferFieldResponse): PreOfferField {
+  const fieldname = field.reference_name || field.fieldname || "";
+  const label = field.display_name || field.label || fieldname;
+  const childFields = field.child_fields || field.table_fields;
+
   return {
-    fieldname: field.reference_name,
-    label: field.display_name || field.reference_name,
+    fieldname,
+    label,
     fieldtype: field.fieldtype,
     is_mandatory: field.reqd || 0,
     reqd: field.reqd || 0,
@@ -41,7 +45,7 @@ export function transformPreOfferField(field: FrappePreOfferFieldResponse): PreO
     hidden: field.hidden !== undefined ? field.hidden : (field.visibility === "Hidden" ? 1 : 0),
     options: field.options,
     child_doctype: field.child_doctype,
-    child_fields: field.child_fields ? field.child_fields.map(transformPreOfferField) : undefined,
+    child_fields: childFields ? childFields.map(transformPreOfferField) : undefined,
     value: field.value !== undefined ? field.value : "",
     default: field.default,
     approval_status: field.approval_status,

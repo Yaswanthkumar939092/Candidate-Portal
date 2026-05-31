@@ -26,6 +26,7 @@ interface PreOfferField {
   hidden?: number | boolean;
   child_doctype?: string;
   child_fields?: any[];
+  table_fields?: any[];
 }
 
 interface PreOfferSection {
