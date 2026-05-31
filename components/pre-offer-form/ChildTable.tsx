@@ -1,0 +1,240 @@
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { Plus, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { DynamicFieldRenderer } from "@/components/ui/field-renderer";
+import { FileUploadField } from "@/components/onboarding/file-upload-field";
+import { cn } from "@/lib/utils";
+import { FrappeAPI } from "@/lib/frappe-api";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface ChildField {
+  fieldname: string;
+  label: string;
+  fieldtype: string;
+  options?: string;
+  reqd?: number | boolean;
+  read_only?: number | boolean;
+  hidden?: number | boolean;
+}
+
+interface TableFieldDef {
+  fieldname: string;
+  label: string;
+  fieldtype: string;
+  options?: string;
+  child_doctype?: string;
+  child_fields?: ChildField[];
+  reqd?: number | boolean;
+  read_only?: number | boolean;
+}
+
+interface PreOfferTableFieldProps {
+  field: TableFieldDef;
+  value: unknown;
+  onChange: (value: unknown) => void;
+  onAttachChange?: (fieldname: string) => (url: string | null) => void;
+  className?: string;
+}
+
+type OverrideComponentProps = {
+  field: ChildField;
+  value: unknown;
+  onChange: (value: unknown) => void;
+  error?: string;
+  disabled?: boolean;
+  className?: string;
+};
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+export function PreOfferTableField({
+  field,
+  value,
+  onChange,
+  onAttachChange,
+  className,
+}: PreOfferTableFieldProps) {
+  const rows = Array.isArray(value) ? (value as Record<string, unknown>[]) : [];
+
+  // Use child_fields from API response if available,
+  // otherwise fetch from Frappe meta endpoint as fallback
+  const [columns, setColumns] = useState<ChildField[]>(
+    field.child_fields && field.child_fields.length > 0
+      ? field.child_fields.filter(
+          (f) =>
+            !f.hidden &&
+            !["Section Break", "Column Break"].includes(f.fieldtype)
+        )
+      : []
+  );
+
+  useEffect(() => {
+    // Only fetch if no child_fields were provided and we have a doctype in options
+    if (
+      (!field.child_fields || field.child_fields.length === 0) &&
+      field.options
+    ) {
+      FrappeAPI.get("frappe.client.get_meta", { doctype: field.options })
+        .then((message: any) => {
+          const fields: ChildField[] = message?.fields || [];
+          const filtered = fields.filter(
+            (f) =>
+              !f.hidden &&
+              !["Section Break", "Column Break"].includes(f.fieldtype)
+          );
+          setColumns(filtered);
+        })
+        .catch((err) => {
+          console.error("Pre-Offer table meta fetch error:", err);
+        });
+    }
+  }, [field.options, field.child_fields]);
+
+  // ── Row helpers ─────────────────────────────────────────────────────────
+
+  const handleAddRow = () => {
+    const newRow: Record<string, unknown> = {};
+    columns.forEach((col) => {
+      newRow[col.fieldname] = col.fieldtype === "Check" ? 0 : "";
+    });
+    onChange([...rows, newRow]);
+  };
+
+  const handleRemoveRow = (index: number) => {
+    onChange(rows.filter((_, i) => i !== index));
+  };
+
+  const handleCellChange = (
+    rowIndex: number,
+    fieldname: string,
+    val: unknown
+  ) => {
+    const updated = [...rows];
+    updated[rowIndex] = { ...updated[rowIndex], [fieldname]: val };
+    onChange(updated);
+  };
+
+  // ── Field overrides for cells ────────────────────────────────────────────
+
+  const buildCellOverrides = (rowIndex: number) => ({
+    Attach: {
+      component: ({
+        field: cellField,
+        value: cellValue,
+        error,
+        disabled,
+        className: cellClassName,
+      }: OverrideComponentProps) => (
+        <FileUploadField
+          label={cellField.label}
+          required={!!(cellField.reqd)}
+          value={cellValue as string}
+          onChange={(url) => handleCellChange(rowIndex, cellField.fieldname, url ?? "")}
+          disabled={disabled || !!cellField.read_only}
+          error={error}
+          className={cellClassName}
+        />
+      ),
+    },
+    "Attach Image": {
+      component: ({
+        field: cellField,
+        value: cellValue,
+        error,
+        disabled,
+        className: cellClassName,
+      }: OverrideComponentProps) => (
+        <FileUploadField
+          label={cellField.label}
+          required={!!(cellField.reqd)}
+          value={cellValue as string}
+          onChange={(url) => handleCellChange(rowIndex, cellField.fieldname, url ?? "")}
+          disabled={disabled || !!cellField.read_only}
+          error={error}
+          className={cellClassName}
+        />
+      ),
+    },
+  });
+
+  // ── Render ───────────────────────────────────────────────────────────────
+
+  if (columns.length === 0) return null;
+
+  return (
+    <div className={cn("space-y-3", className)}>
+      <Label className="text-sm font-medium text-foreground">
+        {field.label}
+        {field.reqd && <span className="text-destructive"> *</span>}
+      </Label>
+
+      {/* Rows */}
+      {rows.map((row, rowIndex) => (
+        <div
+          key={rowIndex}
+          className="relative rounded-lg border border-border bg-card p-4"
+        >
+          {/* Row number badge */}
+          <span className="absolute -top-2.5 left-3 rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">
+            #{rowIndex + 1}
+          </span>
+
+          <div className="grid grid-cols-1 gap-x-4 gap-y-4 pt-1 md:grid-cols-2">
+            {columns.map((col) => {
+              if (col.hidden) return null;
+              return (
+                <DynamicFieldRenderer
+                  key={col.fieldname}
+                  field={col}
+                  value={row[col.fieldname]}
+                  onChange={(val) =>
+                    handleCellChange(rowIndex, col.fieldname, val)
+                  }
+                  disabled={!!col.read_only}
+                  onAttachChange={
+                    onAttachChange
+                      ? (fn: string) =>
+                          (url: string | null) =>
+                            handleCellChange(rowIndex, fn, url ?? "")
+                      : undefined
+                  }
+                  overrides={buildCellOverrides(rowIndex)}
+                />
+              );
+            })}
+          </div>
+
+          {/* Remove row */}
+          <div className="mt-3 flex justify-end">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+              onClick={() => handleRemoveRow(rowIndex)}
+            >
+              <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+              Remove
+            </Button>
+          </div>
+        </div>
+      ))}
+
+      {/* Add row */}
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={handleAddRow}
+        className="w-full border-dashed"
+      >
+        <Plus className="mr-1.5 h-4 w-4" />
+        Add {field.label}
+      </Button>
+    </div>
+  );
+}
