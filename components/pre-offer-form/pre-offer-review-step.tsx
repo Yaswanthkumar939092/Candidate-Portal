@@ -1,53 +1,45 @@
-"use client"
+"use client";
 
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
   AlertCircle,
   Info,
-} from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import { toast } from 'sonner'
-import { useJobApp } from '@/lib/contexts/job-application-context'
-import { useAuth } from '@/lib/contexts/auth-context'
-import { useCreateJobApplicant, useDeleteDraftJobApplicant } from '@/lib/hooks/useJobOpening'
-import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Label } from '@/components/ui/label'
-import { Separator } from '@/components/ui/separator'
-import { cn } from '@/lib/utils'
+} from "lucide-react";
+import { usePreOffer } from "@/lib/contexts/pre-offer-context";
+import { useSubmitPreOffer } from "@/lib/hooks/usePreOfferForm";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 import {
   reviewDeclarationSchema,
   type ReviewDeclarationData,
-} from '@/lib/validation/onboarding-schemas'
+} from "@/lib/validation/onboarding-schemas";
 
-interface JobApplicationReviewStepProps {
-  completedSteps: Set<string>
-  goToStep: (index: number) => void
-  onPrev: () => void
-  jobID: string
-  draftName: string | null
+interface PreOfferReviewStepProps {
+  completedSteps: Set<string>;
+  goToStep: (index: number) => void;
+  onPrev: () => void;
+  onSuccess: () => void;
 }
 
-export function JobApplicationReviewStep({
+export function PreOfferReviewStep({
   completedSteps,
   goToStep,
   onPrev,
-  jobID,
-  draftName,
-}: JobApplicationReviewStepProps) {
-  const { tabs, stepData } = useJobApp()
-  const { user } = useAuth()
-  const { mutate: createApplicant, isPending } = useCreateJobApplicant()
-  const { mutate: deleteDraft } = useDeleteDraftJobApplicant()
-  const router = useRouter()
-  const userEmail = user?.email || user?.user_metadata?.email || ''
-  const [submitError, setSubmitError] = useState<string | null>(null)
-  const [expandedSection, setExpandedSection] = useState<string | null>(null)
+  onSuccess,
+}: PreOfferReviewStepProps) {
+  const { tabs, stepData, applicantId } = usePreOffer();
+  const { mutate: submitPreOffer, isPending } = useSubmitPreOffer();
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
 
   const {
     handleSubmit,
@@ -59,63 +51,58 @@ export function JobApplicationReviewStep({
     defaultValues: {
       declaration_accepted: undefined as unknown as true,
     },
-  })
+  });
 
-  const declarationAccepted = watch('declaration_accepted')
+  const declarationAccepted = watch("declaration_accepted");
 
   const incompleteSteps = tabs
     .map((tab: any, idx: number) => ({ tab, originalIdx: idx }))
     .filter(({ tab, originalIdx }: { tab: any; originalIdx: number }) => {
-      const rawKey = tab.tab || `Step ${originalIdx + 1}`
-      const key = rawKey.toLowerCase().replace(/\s+/g, '_')
-      return !completedSteps.has(key)
-    })
+      const rawKey = tab.tab || `Step ${originalIdx + 1}`;
+      const key = rawKey.toLowerCase().replace(/\s+/g, "_");
+      return !completedSteps.has(key);
+    });
 
   const toggleSection = (key: string) => {
-    setExpandedSection(expandedSection === key ? null : key)
-  }
+    setExpandedSection(expandedSection === key ? null : key);
+  };
 
   const onSubmit = handleSubmit(async () => {
     try {
-      setSubmitError(null)
+      setSubmitError(null);
 
-      const mergedData: Record<string, unknown> = {}
+      const mergedData: Record<string, unknown> = {};
       tabs.forEach((tab: any) => {
-        const key = tab.tab.toLowerCase().replace(/\s+/g, '_')
-        const data = stepData[key] || {}
+        const key = tab.tab.toLowerCase().replace(/\s+/g, "_");
+        const data = stepData[key] || {};
         Object.entries(data).forEach(([fieldName, value]) => {
-          mergedData[fieldName] = value === '' || value === undefined ? null : value
-        })
-      })
+          mergedData[fieldName] = value === "" || value === undefined ? null : value;
+        });
+      });
 
-      const payload = {
-        opening: jobID,
-        data: {
-          ...mergedData,
-          email_id: userEmail || null,
+      submitPreOffer(
+        {
+          jobApplicant: applicantId,
+          data: mergedData,
         },
-      }
-
-      createApplicant(payload, {
-        onSuccess: () => {
-          toast.success('Application submitted successfully!')
-          if (draftName) {
-            deleteDraft({ email: userEmail, jobId: jobID })
-          }
-          router.push(`/open-jobs/${jobID}/apply-job/thank-you`)
-        },
-        onError: (err: any) => {
-          const errMsg = err?.message || 'Submission failed. Please try again.'
-          toast.error(errMsg)
-          setSubmitError(errMsg)
-        },
-      })
+        {
+          onSuccess: () => {
+            toast.success("Pre-offer details submitted successfully!");
+            onSuccess();
+          },
+          onError: (err: any) => {
+            const errMsg = err?.message || "Submission failed. Please try again.";
+            toast.error(errMsg);
+            setSubmitError(errMsg);
+          },
+        }
+      );
     } catch (error) {
-      setSubmitError(
-        error instanceof Error ? error.message : 'Failed to submit. Please try again.'
-      )
+      const errMsg = error instanceof Error ? error.message : "Failed to submit. Please try again.";
+      toast.error(errMsg);
+      setSubmitError(errMsg);
     }
-  })
+  });
 
   return (
     <div className="space-y-8">
@@ -132,8 +119,8 @@ export function JobApplicationReviewStep({
               </p>
               <div className="mt-1 flex flex-wrap gap-1">
                 {incompleteSteps.map(({ tab, originalIdx }: { tab: any; originalIdx: number }) => {
-                  const rawKey = tab.tab || `Step ${originalIdx + 1}`
-                  const key = rawKey.toLowerCase().replace(/\s+/g, '_')
+                  const rawKey = tab.tab || `Step ${originalIdx + 1}`;
+                  const key = rawKey.toLowerCase().replace(/\s+/g, "_");
                   return (
                     <button
                       key={key}
@@ -143,7 +130,7 @@ export function JobApplicationReviewStep({
                     >
                       {tab.tab || `Step ${originalIdx + 1}`}
                     </button>
-                  )
+                  );
                 })}
               </div>
             </div>
@@ -152,26 +139,30 @@ export function JobApplicationReviewStep({
 
         <div className="divide-y divide-border rounded-lg border border-border bg-white dark:bg-card">
           {tabs.map((tab: any, idx: number) => {
-            const rawKey = tab.tab || `Step ${idx + 1}`
-            const key = rawKey.toLowerCase().replace(/\s+/g, '_')
-            const isExpanded = expandedSection === key
-            const data = stepData[key]
+            const rawKey = tab.tab || `Step ${idx + 1}`;
+            const key = rawKey.toLowerCase().replace(/\s+/g, "_");
+            const isExpanded = expandedSection === key;
+            const data = stepData[key];
 
             const getSummary = () => {
-              if (!data) return ''
-              const tableField = tab.sections.flatMap((s: any) => s.fields).find((f: any) => f.fieldtype === 'Table')
+              if (!data) return "";
+              const tableField = tab.sections
+                .flatMap((s: any) => s.fields)
+                .find((f: any) => f.fieldtype === "Table");
               if (tableField) {
-                const items = data[tableField.fieldname] as unknown[]
+                const items = data[tableField.fieldname] as unknown[];
                 if (Array.isArray(items) && items.length > 0) {
-                  return `${items.length} ${tableField.label} Added`
+                  return `${items.length} ${tableField.label} Added`;
                 }
-                return `No ${tableField.label} Added`
+                return `No ${tableField.label} Added`;
               }
-              const values = Object.values(data).filter(v => v && typeof v === 'string').slice(0, 2)
-              return (values as string[]).join(', ')
-            }
+              const values = Object.values(data)
+                .filter((v) => v && typeof v === "string")
+                .slice(0, 2);
+              return (values as string[]).join(", ");
+            };
 
-            const summary = getSummary()
+            const summary = getSummary();
 
             return (
               <div key={key}>
@@ -208,39 +199,51 @@ export function JobApplicationReviewStep({
                           </p>
                           <div className="space-y-1 ml-1">
                             {s.fields.map((f: any) => {
-                              const val = (data || {})[f.fieldname]
-                              if (f.hidden) return null
+                              const val = (data || {})[f.fieldname];
+                              if (f.hidden) return null;
 
-                              if (f.fieldtype === 'Table') {
-                                const items = val as Record<string, unknown>[]
-                                if (!Array.isArray(items) || items.length === 0) return (
-                                  <p key={f.fieldname} className="italic text-xs">No {f.label} added</p>
-                                )
+                              if (f.fieldtype === "Table") {
+                                const items = val as Record<string, unknown>[];
+                                if (!Array.isArray(items) || items.length === 0)
+                                  return (
+                                    <p key={f.fieldname} className="italic text-xs">
+                                      No {f.label} added
+                                    </p>
+                                  );
                                 return (
                                   <div key={f.fieldname} className="mt-2 space-y-2">
                                     {items.map((item, i) => (
-                                      <div key={i} className="pl-3 border-l-2 border-primary/20 py-1 text-xs">
+                                      <div
+                                        key={i}
+                                        className="pl-3 border-l-2 border-primary/20 py-1 text-xs"
+                                      >
                                         {f.child_fields?.map((cf: any) => {
-                                          const cVal = item[cf.fieldname]
-                                          if (!cVal || cf.hidden) return null
+                                          const cVal = item[cf.fieldname];
+                                          if (!cVal || cf.hidden) return null;
                                           return (
                                             <p key={cf.fieldname}>
-                                              <span className="font-semibold text-foreground mr-1">{cf.label}:</span>{String(cVal)}
+                                              <span className="font-semibold text-foreground mr-1">
+                                                {cf.label}:
+                                              </span>
+                                              {String(cVal)}
                                             </p>
-                                          )
+                                          );
                                         })}
                                       </div>
                                     ))}
                                   </div>
-                                )
+                                );
                               }
 
-                              if (val === undefined || val === null || val === '') return null
+                              if (val === undefined || val === null || val === "") return null;
                               return (
                                 <p key={f.fieldname} className="text-xs">
-                                  <span className="font-semibold text-foreground mr-1">{f.label}:</span>{String(val)}
+                                  <span className="font-semibold text-foreground mr-1">
+                                    {f.label}:
+                                  </span>
+                                  {String(val)}
                                 </p>
-                              )
+                              );
                             })}
                           </div>
                         </div>
@@ -256,7 +259,7 @@ export function JobApplicationReviewStep({
                   </div>
                 )}
               </div>
-            )
+            );
           })}
         </div>
       </section>
@@ -268,8 +271,9 @@ export function JobApplicationReviewStep({
         <div className="flex items-start gap-3 rounded-lg bg-primary/5 border border-primary/20 p-4">
           <Info className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
           <p className="text-sm text-foreground">
-            I confirm all information provided is accurate and complete.
-            I understand that any false information may result in disqualification from the application process.
+            I confirm all information provided is accurate and complete. I
+            understand that any false information may result in disqualification
+            from the application process.
           </p>
         </div>
 
@@ -280,7 +284,7 @@ export function JobApplicationReviewStep({
               checked={declarationAccepted === true}
               onCheckedChange={(checked) =>
                 setValue(
-                  'declaration_accepted',
+                  "declaration_accepted",
                   checked === true ? true : (undefined as unknown as true),
                   { shouldValidate: true }
                 )
@@ -291,12 +295,14 @@ export function JobApplicationReviewStep({
               htmlFor="declaration_accepted"
               className="cursor-pointer text-sm leading-relaxed text-foreground"
             >
-              I have read and agree to the above declaration. I confirm that all information
-              provided is accurate and complete.
+              I have read and agree to the above declaration. I confirm that
+              all information provided is accurate and complete.
             </Label>
           </div>
           {errors.declaration_accepted && (
-            <p className="text-xs text-destructive">{errors.declaration_accepted.message}</p>
+            <p className="text-xs text-destructive">
+              {errors.declaration_accepted.message}
+            </p>
           )}
 
           {submitError && (
@@ -308,7 +314,12 @@ export function JobApplicationReviewStep({
 
           <Separator />
           <div className="flex items-center justify-between pt-2">
-            <Button type="button" variant="ghost" onClick={onPrev} disabled={isPending}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onPrev}
+              disabled={isPending}
+            >
               <ChevronLeft className="mr-1 h-4 w-4" />
               Back
             </Button>
@@ -316,12 +327,12 @@ export function JobApplicationReviewStep({
               type="submit"
               disabled={isPending || incompleteSteps.length > 0}
             >
-              {isPending ? 'Submitting...' : 'Submit Application'}
+              {isPending ? "Submitting..." : "Submit Application"}
               <ChevronRight className="ml-1 h-4 w-4" />
             </Button>
           </div>
         </form>
       </section>
     </div>
-  )
+  );
 }

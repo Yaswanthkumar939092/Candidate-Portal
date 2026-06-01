@@ -22,32 +22,39 @@ describe("JobOpening Services", () => {
   });
 
   describe("JobOpeningService", () => {
-    it("getJobOpening calls FrappeAPI.getresourceDocumentData", async () => {
-      const mockRes = { data: [{ id: 1 }] };
-      (FrappeAPI.getresourceDocumentData as any).mockResolvedValue(mockRes);
+    it("getJobOpening calls FrappeAPI.get", async () => {
+      const mockRes = [{ name: "HR-OPN-2026-0006" }];
+      (FrappeAPI.get as any).mockResolvedValue(mockRes);
 
       const result = await JobOpeningService.getJobOpening(1, 10);
-      expect(result).toEqual(mockRes.data);
-      expect(FrappeAPI.getresourceDocumentData).toHaveBeenCalledWith("Job Opening", expect.objectContaining({
-        method: "GET",
-        page: 1,
-        limit: 10
-      }));
+      expect(result).toEqual(mockRes);
+      expect(FrappeAPI.get).toHaveBeenCalledWith("recruitment.api.channels.careers.list_openings", {
+        page: "1",
+        limit: "10"
+      });
     });
   });
 
   describe("JobApplicantService", () => {
-    it("createJobApplicant calls FrappeAPI.getresourceDocumentData", async () => {
-      const mockRes = { data: { name: "APP1" } };
-      (FrappeAPI.getresourceDocumentData as any).mockResolvedValue(mockRes);
+    it("createJobApplicant calls FrappeAPI.post with submit_application", async () => {
+      const mockRes = {
+        status: "ok",
+        name: "HR-APP-2026-00123",
+        source: "Careers Page"
+      };
+      (FrappeAPI.post as any).mockResolvedValue(mockRes);
 
-      const payload = { first_name: "John" };
+      const payload = {
+        opening: "HR-OPN-2026-0006",
+        data: {
+          applicant_name: "Aarav Sharma",
+          email_id: "aarav@example.com",
+          phone_number: "+91-9000000000",
+        }
+      };
       const result = await JobApplicantService.createJobApplicant(payload);
-      expect(result).toEqual(mockRes.data);
-      expect(FrappeAPI.getresourceDocumentData).toHaveBeenCalledWith("Job Applicant", expect.objectContaining({
-        method: "POST",
-        data: payload
-      }));
+      expect(result).toEqual(mockRes);
+      expect(FrappeAPI.post).toHaveBeenCalledWith("recruitment.api.channels.careers.submit_application", payload);
     });
   });
 
@@ -128,12 +135,35 @@ describe("JobOpening Services", () => {
 
   describe("jobApplicationService", () => {
     it("getJobApplicationForm returns data or fallback", async () => {
-      (FrappeAPI.get as any).mockResolvedValue({ fields: [1] });
+      const mockRawFields = [
+        {
+          reference_name: "f1",
+          display_name: "Field 1",
+          fieldtype: "Data",
+          options: "",
+          reqd: 1,
+          section: "Sec 1",
+          ctq: 0,
+          visibility: "All",
+          editability: "Editable"
+        }
+      ];
+      (FrappeAPI.get as any).mockResolvedValue(mockRawFields);
       const result = await jobApplicationService.getJobApplicationForm("job1", "test");
-      expect(result.fields).toEqual([1]);
-      expect(FrappeAPI.get).toHaveBeenCalledWith(expect.any(String), {
-        job_opening: "job1",
-        form_name: "test"
+      expect(result.fields).toEqual([
+        {
+          fieldname: "f1",
+          label: "Field 1",
+          fieldtype: "Data",
+          options: "",
+          reqd: 1,
+          is_mandatory: 1,
+          tab_label: "Sec 1",
+          section_label: "Details"
+        }
+      ]);
+      expect(FrappeAPI.get).toHaveBeenCalledWith("recruitment.api.channels.careers.get_application_fields", {
+        opening: "job1"
       });
 
       (FrappeAPI.get as any).mockResolvedValue(null);

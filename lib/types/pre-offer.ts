@@ -9,6 +9,7 @@ export interface PreOfferField {
   options?: string;
   child_doctype?: string;
   child_fields?: PreOfferField[];
+  table_fields?: PreOfferField[];
   value?: unknown;
   default?: unknown;
   approval_status?: string;
@@ -34,22 +35,36 @@ export interface PreOfferTab {
   sections: PreOfferSection[];
 }
 
-export interface PreOfferFormMessage {
-  status: string;
-  form_name: string;
-  job_applicant: string;
-  pre_offer_form_status: string;
-  tabs: PreOfferTab[];
-}
-
-export interface PreOfferFormApiResponse {
-  message: PreOfferFormMessage;
-}
-
 export interface PreOfferForm {
   applicantId: string;
   status: string;
   tabs: PreOfferTab[];
 }
 
-export type PreOfferFormResponse = PreOfferFormMessage;
+export interface FrappePreOfferFieldResponse {
+  section?: string;
+  reference_name?: string;
+  display_name?: string;
+  fieldname?: string;
+  label?: string;
+  fieldtype: string;
+  options?: string;
+  reqd?: number;
+  ctq?: number;
+  visibility?: string;
+  editability?: string;
+  read_only?: number;
+  hidden?: number;
+  in_list_view?: number;
+  child_doctype?: string;
+  child_fields?: FrappePreOfferFieldResponse[];
+  table_fields?: FrappePreOfferFieldResponse[];
+  value?: unknown;
+  default?: unknown;
+  approval_status?: string;
+  hr_comment?: string;
+}
+
+export interface PreOfferFormApiResponse {
+  message: FrappePreOfferFieldResponse[];
+}
