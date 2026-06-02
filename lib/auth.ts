@@ -1,4 +1,4 @@
-import type { Profile, ProfileInsert } from "@/types/database";
+import type { Profile } from "@/types/database";
 
 const FRAPPE_AUTH_METHOD = "recruitment.api.candidate_auth";
 
@@ -282,40 +282,6 @@ export const auth = {
   signInWithOAuth: async (provider: "google" | "linkedin") => {
     throw new Error(`${provider} sign-in is not enabled for Frappe candidate auth yet.`);
   },
-};
-
-async function getSupabaseClient() {
-  const { supabase } = await import("./supabase");
-  return supabase;
-}
-
-export const createProfile = async (userId: string, profileData: Omit<ProfileInsert, "id">) => {
-  const supabase = await getSupabaseClient();
-  const { data, error } = await supabase.from("profiles").insert({ id: userId, ...profileData }).select().single();
-  if (error) throw new Error(error.message);
-  return data;
-};
-
-export const getProfile = async (userId: string): Promise<Profile | null> => {
-  const supabase = await getSupabaseClient();
-  const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single();
-  if (error) {
-    if (error.code === "PGRST116") return null;
-    throw new Error(error.message);
-  }
-  return data;
-};
-
-export const updateProfile = async (userId: string, updates: Partial<Profile>) => {
-  const supabase = await getSupabaseClient();
-  const { data, error } = await supabase
-    .from("profiles")
-    .update({ ...updates, updated_at: new Date().toISOString() })
-    .eq("id", userId)
-    .select()
-    .single();
-  if (error) throw new Error(error.message);
-  return data;
 };
 
 export const onAuthStateChange = (

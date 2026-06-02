@@ -1,26 +1,15 @@
-import { beforeEach, describe, expect, it, vi, type Mock } from "vitest"
-
-vi.mock("@/lib/supabase", () => ({
-  supabase: {
-    from: vi.fn(),
-  },
-}))
+import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import {
   auth,
-  createProfile,
   getEnabledOAuthProviders,
-  getProfile,
   getUserRole,
   isAuthenticated,
   isOAuthProviderEnabled,
   onAuthStateChange,
   profileFromFrappeUser,
-  updateProfile,
 } from "@/lib/auth"
-import { supabase } from "@/lib/supabase"
 
-const mockSupabase = supabase as unknown as { from: Mock }
 const fetchMock = vi.fn()
 
 function frappePayload(message: unknown, ok = true) {
@@ -29,28 +18,6 @@ function frappePayload(message: unknown, ok = true) {
     statusText: ok ? "OK" : "Bad Request",
     text: () => Promise.resolve(JSON.stringify({ message })),
   } as Response)
-}
-
-function mockInsertChain(result: unknown) {
-  const single = vi.fn().mockResolvedValue(result)
-  const select = vi.fn().mockReturnValue({ single })
-  const insert = vi.fn().mockReturnValue({ select })
-  mockSupabase.from.mockReturnValue({ insert })
-}
-
-function mockSelectChain(result: unknown) {
-  const single = vi.fn().mockResolvedValue(result)
-  const eq = vi.fn().mockReturnValue({ single })
-  const select = vi.fn().mockReturnValue({ eq })
-  mockSupabase.from.mockReturnValue({ select })
-}
-
-function mockUpdateChain(result: unknown) {
-  const single = vi.fn().mockResolvedValue(result)
-  const select = vi.fn().mockReturnValue({ single })
-  const eq = vi.fn().mockReturnValue({ select })
-  const update = vi.fn().mockReturnValue({ eq })
-  mockSupabase.from.mockReturnValue({ update })
 }
 
 describe("Frappe candidate auth", () => {
@@ -221,25 +188,6 @@ describe("Frappe candidate auth", () => {
 describe("profile helpers", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-  })
-
-  it("creates a profile through the existing Supabase profile table helper", async () => {
-    const profile = { id: "user-1", email: "test@example.com" }
-    mockInsertChain({ data: profile, error: null })
-
-    await expect(createProfile("user-1", { email: "test@example.com" })).resolves.toBe(profile)
-  })
-
-  it("returns null when a profile row is absent", async () => {
-    mockSelectChain({ data: null, error: { code: "PGRST116", message: "No rows found" } })
-    await expect(getProfile("user-1")).resolves.toBeNull()
-  })
-
-  it("updates a profile through the existing Supabase profile table helper", async () => {
-    const updated = { id: "user-1", email: "new@example.com" }
-    mockUpdateChain({ data: updated, error: null })
-
-    await expect(updateProfile("user-1", { email: "new@example.com" })).resolves.toBe(updated)
   })
 
   it("returns the candidate role for Frappe-auth users", async () => {
