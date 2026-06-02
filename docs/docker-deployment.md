@@ -8,11 +8,8 @@ This app builds as a Next.js standalone server and runs on port `3000` inside th
 
 Required:
 
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `NEXT_PUBLIC_SITE_URL`
 - `NEXT_PUBLIC_FRAPPE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY`
 
 Common production integrations:
 
@@ -36,8 +33,6 @@ Common production integrations:
 
 ```bash
 docker build \
-  --build-arg NEXT_PUBLIC_SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL" \
-  --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="$NEXT_PUBLIC_SUPABASE_ANON_KEY" \
   --build-arg NEXT_PUBLIC_SITE_URL="$NEXT_PUBLIC_SITE_URL" \
   --build-arg NEXT_PUBLIC_FRAPPE_URL="$NEXT_PUBLIC_FRAPPE_URL" \
   -t candidate-portal:latest .

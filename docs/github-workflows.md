@@ -35,8 +35,6 @@ Image tags:
 
 Configure these repository variables before relying on release image publishing:
 
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `NEXT_PUBLIC_SITE_URL`
 - `NEXT_PUBLIC_FRAPPE_URL`
 
