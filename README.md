@@ -1,6 +1,6 @@
 # Job Candidate Portal
 
-A comprehensive web application for job seekers to discover, apply for, and track employment opportunities. Built with Next.js 15 and React 19, integrating with Frappe ERPNext for job management and Supabase for authentication and user data.
+A comprehensive web application for candidates to discover, apply for, and track employment opportunities. Built with Next.js 15 and React 19, integrating with Frappe ERPNext for authentication, jobs, applications, onboarding, and portal configuration.
 
 ## Features
 
@@ -11,28 +11,20 @@ A comprehensive web application for job seekers to discover, apply for, and trac
 - **Application Tracking**: Monitor application status through the complete hiring pipeline
 - **Social Sharing**: Share job opportunities via social media and direct links
 
-### For Administrators
-- **Super Admin Onboarding**: First-time setup wizard for system configuration
-- **User Management**: Role assignment and permissions control
-- **Frappe Integration**: API client setup and brand logo configuration
-- **OAuth Configuration**: Google and LinkedIn authentication setup
-- **Analytics Dashboard**: Application metrics and system health monitoring
+### Administration
+- Admin configuration and data management are handled in Frappe Desk through DocTypes, roles, permissions, and portal settings.
 
 ## Tech Stack
 
 - **Frontend**: Next.js 15, React 19, TypeScript
 - **Styling**: Tailwind CSS 4 with Shadcn/ui components
-- **Authentication**: Supabase Auth with Google/LinkedIn OAuth
-- **Backend**: Dual structure with Supabase and Frappe ERPNext
-- **Database**: Supabase PostgreSQL
-- **File Storage**: Supabase Storage for documents
+- **Authentication**: Frappe candidate auth with password and OTP flows
+- **Backend**: Frappe ERPNext
+- **Data Source**: Frappe DocTypes and whitelisted APIs
 
 ## Architecture
 
-The application uses a dual-structure backend:
-
-- **Supabase**: Handles user authentication, profiles, applications, and real-time features
-- **Frappe ERPNext**: Manages job postings, company data, and HR workflows
+The application uses Frappe ERPNext as the source of truth for candidate portal data and HR workflows.
 
 ## Getting Started
 
@@ -40,7 +32,6 @@ The application uses a dual-structure backend:
 
 - Node.js 18+
 - npm or yarn
-- Supabase account
 - Frappe ERPNext instance (for job data)
 
 ### Installation
@@ -62,9 +53,10 @@ cp .env.example .env.local
 ```
 
 Configure the following variables in `.env.local`:
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
+- `NEXT_PUBLIC_FRAPPE_URL`
+- `FRAPPE_BASE_URL`
+- `FRAPPE_API_KEY`
+- `FRAPPE_API_SECRET`
 - `NEXT_PUBLIC_SITE_URL`
 
 4. Start the development server:
@@ -81,7 +73,6 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 ├── components/             # Reusable UI components
 ├── lib/                   # Utility functions and configurations
 ├── types/                 # TypeScript type definitions
-├── supabase/              # Database schema and migrations
 ├── public/                # Static assets
 └── docs/                  # Documentation files
 ```
@@ -95,14 +86,10 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 
 ## Documentation
 
-- [Product Requirements Document](./PRD.md) - Detailed product specifications
-- [API Documentation](./API_DOCUMENTATION.md) - API endpoints and integration details
 - [OAuth Implementation](./docs/oauth-implementation.md) - Authentication setup guide
 
 ## User Roles
 
-- **Super Admin**: System configuration and setup
-- **Admin**: User management and application review
 - **Candidate**: Job search and application management
 
 ## Deployment
