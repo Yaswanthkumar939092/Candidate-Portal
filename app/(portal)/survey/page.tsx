@@ -4,13 +4,10 @@ import { DynamicSurveyForm } from "@/components/survey/dynamic-survey-form";
 import { Button } from "@/components/ui/button";
 import { useSurvey, useSubmitSurvey } from "@/lib/hooks/useSurvey";
 import { CheckCircle2, ClipboardList, Loader2 } from "lucide-react";
+import { PortalStepperSidebar } from "@/components/portal/portal-stepper-sidebar";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import NextImage from "next/image";
-import { useCurrentUser } from "@/lib/hooks/useUser";
-import { useJobOfferSummary } from "@/lib/hooks/useJobOffer";
-import { useCompanyLogo } from "@/lib/hooks/useCompanyLogo";
 
 const fallbackSurveySchema = {
   components: [
@@ -48,9 +45,6 @@ export default function SurveyPage() {
   const { data, isLoading, error } = useSurvey();
   const { mutateAsync: submitSurveyMutate } = useSubmitSurvey();
   const router = useRouter();
-  const { userEmail } = useCurrentUser();
-  const { data: offerData } = useJobOfferSummary(userEmail || "");
-  const { data: logoData } = useCompanyLogo();
   const [formValues, setFormValues] = useState<Record<string, any>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -63,7 +57,7 @@ export default function SurveyPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-[80vh] flex flex-col items-center justify-center p-6 bg-gradient-to-br from-background via-background to-secondary/30">
+      <div className="min-h-[80vh] flex flex-col items-center justify-center p-6 bg-linear-to-br from-background via-background to-secondary/30">
         <div className="relative flex flex-col items-center p-8 rounded-2xl bg-card/60 backdrop-blur-md border border-border shadow-xl max-w-md w-full text-center">
           <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
           <h3 className="text-lg font-semibold text-foreground mb-1">
@@ -79,7 +73,7 @@ export default function SurveyPage() {
 
   if (error || !data) {
     return (
-      <div className="min-h-[80vh] flex flex-col items-center justify-center p-6 bg-gradient-to-br from-background via-background to-secondary/30">
+      <div className="min-h-[80vh] flex flex-col items-center justify-center p-6 bg-linear-to-br from-background via-background to-secondary/30">
         <div className="flex flex-col items-center p-8 rounded-2xl bg-card border border-destructive/20 shadow-xl max-w-md w-full text-center">
           <div className="bg-destructive/10 text-destructive p-4 rounded-full mb-4">
             <svg
@@ -116,7 +110,7 @@ export default function SurveyPage() {
 
   if (!data.survey_required) {
     return (
-      <div className="min-h-[80vh] flex flex-col items-center justify-center p-6 bg-gradient-to-br from-background via-background to-secondary/30">
+      <div className="min-h-[80vh] flex flex-col items-center justify-center p-6 bg-linear-to-br from-background via-background to-secondary/30">
         <div className="flex flex-col items-center p-8 rounded-2xl bg-card/60 backdrop-blur-md border border-border shadow-xl max-w-sm w-full text-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
           <p className="text-sm text-muted-foreground">
@@ -162,7 +156,7 @@ export default function SurveyPage() {
 
   if (submitted) {
     return (
-      <div className="min-h-[80vh] flex flex-col items-center justify-center p-6 bg-gradient-to-br from-background via-background to-secondary/30">
+      <div className="min-h-[80vh] flex flex-col items-center justify-center p-6 bg-linear-to-br from-background via-background to-secondary/30">
         <div className="flex flex-col items-center p-8 rounded-2xl bg-card border border-border shadow-xl max-w-md w-full text-center">
           <CheckCircle2 className="h-16 w-16 text-emerald-500 mb-4 animate-bounce" />
           <h2 className="text-2xl font-bold text-foreground mb-2">
@@ -177,55 +171,30 @@ export default function SurveyPage() {
       </div>
     );
   }
-
   return (
-    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-background via-background to-secondary/40 flex justify-center items-start">
-      <div className="w-full max-w-5xl mx-auto">
-        {/* Header containing Company Logo and User Profile */}
-        <div className="flex items-center justify-between mb-8">
-          <NextImage
-            src={
-              logoData?.logo_url
-                ? `${process.env.NEXT_PUBLIC_FRAPPE_URL}${logoData.logo_url}`
-                : "/Logo.jpg"
-            }
-            alt="LOGO"
-            width={180}
-            height={60}
-            className="h-25 md:h-25  max-w-full w-auto object-contain"
-            priority
-            unoptimized={!!logoData?.logo_url}
-          />
-          <div className="flex items-center gap-2.5 pr-2.5">
-            <div className="w-10 h-10 rounded-full bg-[#1a2332] text-white flex items-center justify-center text-[1rem] font-bold shadow-sm">
-              {(offerData?.applicant_name || "U")[0].toUpperCase()}
-            </div>
-            <span className="text-[0.95rem] font-semibold text-[#1a2332] dark:text-slate-200">
-              {offerData?.applicant_name || ""}
-            </span>
-          </div>
-        </div>
+    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-linear-to-br from-background via-background to-secondary/40 flex justify-center items-start">
+      <div className="w-full max-w-5xl mx-auto flex flex-col md:flex-row gap-8 items-start">
+        {/* Stepper Sidebar */}
+        <PortalStepperSidebar currentStep="survey" />
 
         {/* Survey Form Card */}
-        <div className="max-w-2xl mx-auto mt-4 sm:mt-8">
-          <div className="mb-6 rounded-2xl p-6 bg-card border border-border shadow-md flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 overflow-hidden">
-            <div className="flex items-center gap-3 min-w-0 w-full sm:w-auto">
-              <div className="p-2.5 bg-primary/10 rounded-xl text-primary shrink-0">
-                <ClipboardList className="w-6 h-6" />
+        <div className="flex-1 w-full max-w-2xl">
+          <div className="rounded-2xl border border-border bg-card/75 backdrop-blur-md shadow-lg overflow-hidden">
+            {/* Header attached inside the card */}
+            <div className="py-5 px-6 sm:px-8 flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-xl text-primary shrink-0">
+                <ClipboardList className="w-5 h-5" />
               </div>
               <div className="min-w-0 flex-1">
                 <h1
-                  className="text-xl font-bold text-foreground truncate"
+                  className="text-lg font-bold text-foreground truncate"
                   title={form_name || "Survey"}
                 >
                   {form_name || "Recruitment Survey"}
                 </h1>
               </div>
             </div>
-          </div>
 
-          <div className="rounded-2xl border border-border bg-card/75 backdrop-blur-md shadow-lg overflow-hidden">
-            <div className="h-1.5 bg-gradient-to-r from-primary/80 to-purple-500" />
             <DynamicSurveyForm
               schema={surveySchema}
               values={formValues}

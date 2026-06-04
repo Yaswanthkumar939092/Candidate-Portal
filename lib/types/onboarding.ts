@@ -13,6 +13,8 @@ export interface OnboardingField {
   default?: unknown;
   approval_status?: string;
   hr_comment?: string;
+  depends_on?: string;
+  mandatory_depends_on?: string;
 }
 
 export interface OnboardingSection {

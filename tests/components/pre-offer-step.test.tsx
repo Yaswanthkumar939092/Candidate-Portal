@@ -249,4 +249,44 @@ describe("PreOfferStep", () => {
 
     expect(mockToastWarning).toHaveBeenCalledWith("Please fill all required fields before proceeding.")
   })
+
+  it("clears field error when field value changes after a failed validation", () => {
+    let watchValue = { full_name: "" }
+    const mockMethodsWithMissing = {
+      handleSubmit: (fn: any) => (e: any) => {
+        e?.preventDefault()
+        fn(watchValue)
+      },
+      watch: () => watchValue,
+      setValue: vi.fn((key, val) => {
+        watchValue = { ...watchValue, [key]: val as string }
+      }),
+      control: {},
+      formState: { errors: {} },
+    }
+
+    const { container } = render(
+      <PreOfferStep
+        tab={mockTab}
+        stepKey="basic_details"
+        currentStep={0}
+        totalSteps={2}
+        onNext={vi.fn()}
+        onPrev={vi.fn()}
+        methods={mockMethodsWithMissing}
+      />
+    )
+
+    // Submit form with empty full_name
+    const form = container.querySelector("form")
+    fireEvent.submit(form!)
+    expect(mockToastWarning).toHaveBeenCalledWith("Please fill all required fields before proceeding.")
+
+    // Now simulate changing the input value for full_name
+    const input = screen.getByTestId("input-full_name")
+    fireEvent.change(input, { target: { value: "Jane Doe" } })
+
+    // It should call mockMethodsWithMissing.setValue to update the form value
+    expect(mockMethodsWithMissing.setValue).toHaveBeenCalledWith("full_name", "Jane Doe", { shouldValidate: false })
+  })
 })
