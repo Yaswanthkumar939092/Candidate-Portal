@@ -37,6 +37,9 @@ export interface FormField {
   options?: string;
   approval_status?: string;
   hr_comment?: string;
+  depends_on?: string;
+  mandatory_depends_on?: string;
+  value?: unknown;
 }
 
 export interface FieldRendererProps<T extends FormField> {
@@ -82,12 +85,19 @@ interface FieldConfig<T extends FormField> {
   props?: (field: T) => Record<string, unknown>;
 }
 
-function getValidationClass(field: FormField) {
+function getValidationClass(field: FormField, value?: unknown) {
   if (field.approval_status === "Approved") {
     return "border-success outline-success focus-visible:ring-success border-2 pr-10";
   }
   if (field.read_only) return "";
-  if (field.approval_status === "Rejected") {
+
+  const isValueChanged = (curr: unknown, orig: unknown) => {
+    const normCurr = curr === undefined || curr === null ? "" : String(curr).trim();
+    const normOrig = orig === undefined || orig === null ? "" : String(orig).trim();
+    return normCurr !== normOrig;
+  };
+
+  if (field.approval_status === "Rejected" && !isValueChanged(value, field.value)) {
     return "border-destructive outline-destructive focus-visible:ring-destructive border-2 pr-24";
   }
   return "";
@@ -148,44 +158,16 @@ function normalizeInputValue(field: FormField, rawValue: string) {
 
 
 export function ResubmitButton({ fieldname }: { fieldname?: string }) {
-  const [loading, setLoading] = React.useState(false);
-  const onboarding = useOptionalOnboarding();
-  if (!onboarding) return null;
-
-  const handleResubmit = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    try {
-      setLoading(true);
-      await onboarding.submitAll(fieldname);
-    } catch (err) {
-      console.error("Resubmit failed:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <Button
-      type="button"
-      onClick={handleResubmit}
-      disabled={loading || onboarding.isSaving}
-      className="h-6 px-2 text-[10px] bg-destructive text-white hover:bg-destructive/90 rounded-md font-semibold flex items-center gap-1 shadow-sm shrink-0"
-    >
-      {loading ? (
-        <Loader2 className="h-3 w-3 animate-spin" />
-      ) : (
-        "Resubmit"
-      )}
-    </Button>
-  );
+  return null;
 }
 
 function FieldStatusTooltip({
   field,
+  value,
   rightOffset = "right-3",
 }: {
   field: FormField;
+  value?: unknown;
   rightOffset?: string;
 }) {
   if (field.approval_status === "Approved") {
@@ -203,7 +185,13 @@ function FieldStatusTooltip({
 
   if (field.read_only) return null;
 
-  if (field.approval_status === "Rejected" && field.hr_comment) {
+  const isValueChanged = (curr: unknown, orig: unknown) => {
+    const normCurr = curr === undefined || curr === null ? "" : String(curr).trim();
+    const normOrig = orig === undefined || orig === null ? "" : String(orig).trim();
+    return normCurr !== normOrig;
+  };
+
+  if (field.approval_status === "Rejected" && field.hr_comment && !isValueChanged(value, field.value)) {
     return (
       <div
         className={cn(
@@ -252,11 +240,11 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
             onBlur={onBlur}
             placeholder={field.label}
             disabled={disabled || !!field.read_only}
-            className={cn("bg-muted", getValidationClass(field))}
+            className={cn("bg-muted", getValidationClass(field, value))}
             inputMode={isPhoneField(field) || isPincodeField(field) || isAadhaarField(field) ? "numeric" : undefined}
             maxLength={isPhoneField(field) ? 10 : isPincodeField(field) ? 6 : isAadhaarField(field) ? 12 : undefined}
           />
-          <FieldStatusTooltip field={field} />
+          <FieldStatusTooltip field={field} value={value} />
         </div>
         {error && <p className="text-xs text-destructive">{error}</p>}
       </div>
@@ -279,9 +267,9 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
             onBlur={onBlur}
             placeholder={field.label}
             disabled={disabled || !!field.read_only}
-            className={cn("bg-muted", getValidationClass(field))}
+            className={cn("bg-muted", getValidationClass(field, value))}
           />
-          <FieldStatusTooltip field={field} />
+          <FieldStatusTooltip field={field} value={value} />
         </div>
         {error && <p className="text-xs text-destructive">{error}</p>}
       </div>
@@ -305,9 +293,9 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
             onBlur={onBlur}
             placeholder={field.label}
             disabled={disabled || !!field.read_only}
-            className={cn("bg-muted", getValidationClass(field))}
+            className={cn("bg-muted", getValidationClass(field, value))}
           />
-          <FieldStatusTooltip field={field} />
+          <FieldStatusTooltip field={field} value={value} />
         </div>
         {error && <p className="text-xs text-destructive">{error}</p>}
       </div>
@@ -330,9 +318,9 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
               onChange={(e) => onChange(e.target.value)}
               onBlur={onBlur}
               disabled={disabled || !!field.read_only}
-              className={cn("bg-muted", getValidationClass(field))}
+              className={cn("bg-muted", getValidationClass(field, value))}
             />
-            <FieldStatusTooltip field={field} />
+            <FieldStatusTooltip field={field} value={value} />
           </div>
           {error && <p className="text-xs text-destructive">{error}</p>}
         </div>
@@ -401,9 +389,9 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
               loading={isLoading}
               searchValue={search}
               onSearchValueChange={setSearch}
-              className={getValidationClass(field)}
+              className={getValidationClass(field, displayValue)}
             />
-            <FieldStatusTooltip field={field} rightOffset="right-8" />
+            <FieldStatusTooltip field={field} value={displayValue} rightOffset="right-8" />
           </div>
 
           {error && <p className="text-xs text-destructive">{error}</p>}
@@ -452,9 +440,9 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
               options={comboboxOptions}
               placeholder={`Select ${field.label}`}
               searchPlaceholder={`Search ${field.label}...`}
-              className={getValidationClass(field)}
+              className={getValidationClass(field, displayValue)}
             />
-            <FieldStatusTooltip field={field} rightOffset="right-8" />
+            <FieldStatusTooltip field={field} value={displayValue} rightOffset="right-8" />
           </div>
           {error && <p className="text-xs text-destructive">{error}</p>}
         </div>
@@ -480,11 +468,11 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
             onBlur={onBlur}
             placeholder={field.label}
             disabled={disabled || !!field.read_only}
-            className={cn("bg-muted", getValidationClass(field))}
+            className={cn("bg-muted", getValidationClass(field, value))}
             inputMode={isPhoneField(field) || isPincodeField(field) || isAadhaarField(field) ? "numeric" : undefined}
             maxLength={isPhoneField(field) ? 10 : isPincodeField(field) ? 6 : isAadhaarField(field) ? 12 : undefined}
           />
-          <FieldStatusTooltip field={field} />
+          <FieldStatusTooltip field={field} value={value} />
         </div>
         {error && <p className="text-xs text-destructive">{error}</p>}
       </div>
@@ -507,11 +495,11 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
             onBlur={onBlur}
             placeholder={field.label}
             disabled={disabled || !!field.read_only}
-            className={cn("bg-muted", getValidationClass(field))}
+            className={cn("bg-muted", getValidationClass(field, value))}
             inputMode={isPhoneField(field) || isPincodeField(field) || isAadhaarField(field) ? "numeric" : undefined}
             maxLength={isPhoneField(field) ? 10 : isPincodeField(field) ? 6 : isAadhaarField(field) ? 12 : undefined}
           />
-          <FieldStatusTooltip field={field} />
+          <FieldStatusTooltip field={field} value={value} />
         </div>
         {error && <p className="text-xs text-destructive">{error}</p>}
       </div>
@@ -602,11 +590,11 @@ export function DynamicFieldRenderer<T extends FormField>({
             onBlur={onBlur}
             placeholder={field.label}
             disabled={disabled || isReadOnly}
-            className={cn(className, getValidationClass(field))}
+            className={cn(className, getValidationClass(field, value))}
             inputMode={isPhoneField(field) ? "numeric" : undefined}
             maxLength={isPhoneField(field) ? 10 : undefined}
           />
-          <FieldStatusTooltip field={field} />
+          <FieldStatusTooltip field={field} value={value} />
         </div>
         {error && <p className="text-xs text-destructive">{error}</p>}
       </div>

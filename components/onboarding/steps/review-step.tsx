@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
@@ -22,6 +22,8 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
+import { evaluateDependsOn } from '@/lib/onboarding-utils'
+import { toast } from 'sonner'
 
 /**
  * Review section accordion item definition.
@@ -54,8 +56,33 @@ export function ReviewStep() {
 
   const router = useRouter()
 
+  const tabs = formConfig?.tabs || []
+
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [expandedSection, setExpandedSection] = useState<string | null>(null)
+
+  const doc = useMemo(() => {
+    const merged: Record<string, any> = {}
+    Object.keys(stepData).forEach((key) => {
+      Object.assign(merged, stepData[key])
+    })
+    return merged
+  }, [stepData])
+
+  const unresolvedRejected = useMemo(() => {
+    return tabs.flatMap(t => t.sections.flatMap(s => s.fields)).filter((field) => {
+      const key = tabs.find(t => t.sections.some(s => s.fields.includes(field)))?.tab.toLowerCase().replace(/\s+/g, '_');
+      if (!key) return false;
+      
+      if (field.approval_status === "Rejected") {
+        const val = (stepData[key] || {})[field.fieldname];
+        const normVal = val === undefined || val === null ? "" : String(val).trim();
+        const normOrigVal = field.value === undefined || field.value === null ? "" : String(field.value).trim();
+        return normVal === normOrigVal;
+      }
+      return false;
+    });
+  }, [tabs, stepData]);
 
   const {
     handleSubmit,
@@ -72,6 +99,12 @@ export function ReviewStep() {
   const declarationAccepted = watch('declaration_accepted')
 
   const onSubmit = handleSubmit(async () => {
+    if (unresolvedRejected.length > 0) {
+      const errorMsg = `Please correct all rejected fields before submitting: ${unresolvedRejected.map(f => f.label).join(", ")}`;
+      setSubmitError(errorMsg);
+      toast.error("Please correct all rejected fields before submitting.");
+      return;
+    }
     try {
       setSubmitError(null)
       await submitAll()
@@ -81,8 +114,6 @@ export function ReviewStep() {
       )
     }
   })
-
-  const tabs = formConfig?.tabs || []
 
   const incompleteSteps = tabs
     .map((tab, idx) => ({ tab, originalIdx: idx }))
@@ -214,49 +245,59 @@ export function ReviewStep() {
                 {isExpanded && (
                   <div className="border-t border-border bg-muted/20 px-4 py-3">
                     <div className="space-y-1 text-sm text-muted-foreground">
-                      {tabs[section.stepIndex].sections.map((s, sIdx) => (
-                        <div key={sIdx} className="mb-4 last:mb-0">
-                          <p className="font-bold text-xs text-foreground uppercase tracking-wider mb-2">{s.section}</p>
-                          <div className="space-y-1 ml-1">
-                            {s.fields.map(f => {
-                              const val = (stepData[section.key] || {})[f.fieldname]
-                              if (f.hidden) return null
+                      {tabs[section.stepIndex].sections.map((s, sIdx) => {
+                        const hasVisibleFields = s.fields.some((f) => {
+                          return !f.hidden && (!f.depends_on || evaluateDependsOn(f.depends_on, doc));
+                        });
+                        if (!hasVisibleFields) return null;
 
-                              if (f.fieldtype === 'Table') {
-                                const items = val as Record<string, unknown>[]
-                                if (!Array.isArray(items) || items.length === 0) return (
-                                  <p key={f.fieldname} className="italic text-xs">No {f.label} added</p>
-                                )
+                        return (
+                          <div key={sIdx} className="mb-4 last:mb-0">
+                            <p className="font-bold text-xs text-foreground uppercase tracking-wider mb-2">{s.section}</p>
+                            <div className="space-y-1 ml-1">
+                              {s.fields.map(f => {
+                                const isVisible = !f.hidden && (!f.depends_on || evaluateDependsOn(f.depends_on, doc));
+                                if (!isVisible) return null;
+
+                                const val = (stepData[section.key] || {})[f.fieldname]
+
+                                if (f.fieldtype === 'Table') {
+                                  const items = val as Record<string, unknown>[]
+                                  if (!Array.isArray(items) || items.length === 0) return (
+                                    <p key={f.fieldname} className="italic text-xs">No {f.label} added</p>
+                                  )
+                                  return (
+                                    <div key={f.fieldname} className="mt-2 space-y-3">
+                                      {items.map((item, i) => (
+                                        <div key={i} className="pl-3 border-l-2 border-primary/20 py-1">
+                                          <p className="font-medium text-xs text-foreground mb-1">Item #{i + 1}</p>
+                                          {f.child_fields?.map(cf => {
+                                            const cVal = item[cf.fieldname]
+                                            const isChildVisible = !cf.hidden && (!cf.depends_on || evaluateDependsOn(cf.depends_on, item));
+                                            if (!cVal || !isChildVisible) return null
+                                            return (
+                                              <p key={cf.fieldname} className="text-xs">
+                                                <span className="font-medium">{cf.label}:</span> {String(cVal)}
+                                              </p>
+                                            )
+                                          })}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )
+                                }
+
+                                if (!val) return null
                                 return (
-                                  <div key={f.fieldname} className="mt-2 space-y-3">
-                                    {items.map((item, i) => (
-                                      <div key={i} className="pl-3 border-l-2 border-primary/20 py-1">
-                                        <p className="font-medium text-xs text-foreground mb-1">Item #{i + 1}</p>
-                                        {f.child_fields?.map(cf => {
-                                          const cVal = item[cf.fieldname]
-                                          if (!cVal || cf.hidden) return null
-                                          return (
-                                            <p key={cf.fieldname} className="text-xs">
-                                              <span className="font-medium">{cf.label}:</span> {String(cVal)}
-                                            </p>
-                                          )
-                                        })}
-                                      </div>
-                                    ))}
-                                  </div>
+                                  <p key={f.fieldname} className="text-xs">
+                                    <span className="font-medium">{f.label}:</span> {String(val)}
+                                  </p>
                                 )
-                              }
-
-                              if (!val) return null
-                              return (
-                                <p key={f.fieldname} className="text-xs">
-                                  <span className="font-medium">{f.label}:</span> {String(val)}
-                                </p>
-                              )
-                            })}
+                              })}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                     <button
                       type="button"
@@ -328,7 +369,7 @@ export function ReviewStep() {
             </Button>
             <Button
               type="submit"
-              disabled={isSaving || incompleteSteps.length > 0}
+              disabled={isSaving || incompleteSteps.length > 0 || unresolvedRejected.length > 0}
             >
               {isSaving ? 'Submitting...' : 'Submit'}
               <ChevronRight className="ml-1 h-4 w-4" />

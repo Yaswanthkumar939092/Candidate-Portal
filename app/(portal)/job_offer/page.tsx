@@ -2,7 +2,7 @@
 
 import React, { useState, Suspense, useEffect } from "react";
 import NextImage from "next/image";
-import { Loader2, AlertCircle, LogOut } from "lucide-react";
+import { Loader2, AlertCircle, LogOut, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
@@ -17,6 +17,7 @@ import { useCompanyLogo } from "@/lib/hooks/useCompanyLogo";
 import PdfViewer from "./PdfViewer";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
+import { PortalStepperSidebar } from "@/components/portal/portal-stepper-sidebar";
 
 /** Download the offer letter as a file. Fetches with credentials so cookies work. */
 async function downloadPdf(url: string) {
@@ -256,61 +257,14 @@ function JobOfferContent() {
                 </div>
               )}
 
-              <div className="flex items-start justify-between mb-0">
-                <NextImage
-                  src={
-                    logoData?.logo_url
-                      ? `${process.env.NEXT_PUBLIC_FRAPPE_URL}${logoData.logo_url}`
-                      : "/Logo.jpg"
-                  }
-                  alt="LOGO"
-                  width={180}
-                  height={60}
-                  className="h-[60px] md:h-[60px] max-w-full w-auto object-contain"
-                  priority
-                  unoptimized={!!logoData?.logo_url} // Disable optimization for external Frappe URLs if needed, or keep for local
-                />
-                <div className="flex items-center gap-2.5 pr-2.5">
-                  <div className="w-10 h-10 rounded-full bg-[#1a2332] text-white flex items-center justify-center text-[1rem] font-bold">
-                    {(offerData.applicant_name || "U")[0].toUpperCase()}
-                  </div>
-                  <span className="text-[0.95rem] font-semibold text-[#1a2332]">
-                    {offerData.applicant_name || ""}
-                  </span>
-                </div>
-              </div>
+              <div className="flex flex-col lg:flex-row gap-8 items-stretch lg:items-start w-full">
+                {/* Left Side: Stepper + Offer Summary Column */}
+                <div className="w-full lg:w-[340px] shrink-0 flex flex-col gap-6 lg:sticky lg:top-[88px]">
+                  {/* Stepper Sidebar */}
+                  <PortalStepperSidebar currentStep="offer" className="w-full md:w-full lg:w-[340px] lg:self-start" />
 
-              <div className="flex flex-col lg:flex-row gap-8 items-start">
-                {/* Left: Offer content */}
-                <div className="flex-1 min-w-0 overflow-hidden hidden sm:block">
-                  <h1 className="text-[1.6rem] md:text-[1.6rem] font-semibold text-[#1a2332] my-3 md:my-[15px] leading-[1.15] text-center">
-                    Offer of Employment
-                  </h1>
-                  {pdfUrl ? (
-                    <div
-                      className="bg-[#f1f5f9] border border-[#e2e8f0] rounded-xl overflow-hidden shadow-[inset_0_1px_4px_rgba(0,0,0,0.05)]"
-                      style={{ height: "80vh", minHeight: "600px" }}
-                    >
-                      <PdfViewer pdfUrl={pdfUrl} />
-                    </div>
-                  ) : (
-                    <div className="bg-white border border-[#e2e8f0] rounded-xl p-8 overflow-x-auto shadow-[0_1px_3px_rgba(0,0,0,0.04)] flex flex-col items-center justify-center min-h-[400px]">
-                      <p className="text-[#64748b]">
-                        Offer letter content could not be loaded.
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Right: Sidebar */}
-                <div className="w-full lg:w-[340px] shrink-0 -order-1 lg:order-0">
-                  <h1 className="hidden lg:block text-[1.6rem] font-extrabold text-[#1a2332] my-[15px] leading-[1.15] text-center">
-                    &nbsp;
-                  </h1>
-                  <h1 className="block lg:hidden text-[1.4rem] font-extrabold text-[#1a2332] my-3 leading-[1.15] text-center">
-                    Offer of Employment
-                  </h1>
-                  <div className="lg:sticky lg:top-6 bg-white border border-[#e2e8f0] rounded-xl overflow-hidden">
+                  {/* Offer Summary Card */}
+                  <div className="bg-white border border-[#e2e8f0] rounded-xl overflow-hidden shadow-sm">
                     <div className="text-[1.1rem] font-semibold text-[#1a2332] px-5 pt-4 pb-2.5">
                       Offer Summary
                     </div>
@@ -469,6 +423,39 @@ function JobOfferContent() {
                         Reject Offer
                       </button>
                     </div>
+                  </div>
+                </div>
+
+                {/* Right Side: Offer Document (PDF Preview Card) */}
+                <div className="w-full lg:flex-1 lg:min-w-0 overflow-hidden hidden sm:block">
+                  <div className="rounded-2xl border border-border bg-card/75 backdrop-blur-md shadow-lg overflow-hidden">
+                    {/* Header attached inside the card */}
+                    <div className="py-3.5 px-6 sm:px-8 flex items-center gap-3">
+                      <div className="p-2 bg-primary/10 rounded-xl text-primary shrink-0">
+                        <ClipboardList className="w-5 h-5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h1 className="text-lg font-bold text-foreground truncate">
+                          Offer of Employment
+                        </h1>
+                      </div>
+                    </div>
+
+                    {/* PDF Document body */}
+                    {pdfUrl ? (
+                      <div
+                        className="bg-[#f1f5f9] dark:bg-slate-900 overflow-hidden shadow-[inset_0_1px_4px_rgba(0,0,0,0.05)]"
+                        style={{ height: "80vh", minHeight: "600px" }}
+                      >
+                        <PdfViewer pdfUrl={pdfUrl} />
+                      </div>
+                    ) : (
+                      <div className="bg-white dark:bg-card p-8 overflow-x-auto flex flex-col items-center justify-center min-h-[400px]">
+                        <p className="text-[#64748b]">
+                          Offer letter content could not be loaded.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

@@ -15,6 +15,7 @@ import {
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useOnboarding } from "@/lib/contexts/onboarding-context";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { FileUploadField } from "@/components/onboarding/file-upload-field";
 import { cn } from "@/lib/utils";
@@ -22,6 +23,7 @@ import { OnboardingTab, OnboardingField } from "@/lib/types/onboarding";
 import { SectionCard } from "@/components/onboarding/section-card";
 import { DynamicFieldRenderer } from "@/components/ui/field-renderer";
 import { DynamicTableField } from "@/components/onboarding/dynamic-table-field";
+import { evaluateDependsOn } from "@/lib/onboarding-utils";
 interface OnboardingFormStepProps {
   tab: OnboardingTab;
   stepKey: string;
@@ -151,8 +153,21 @@ export function OnboardingFormStep({
       const errorList: FieldErrors<OnboardingFormValues> = {};
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       const phoneRegex = /^\d{10}$/;
+
+      // Build doc object for evaluating depends_on in validation
+      const doc: Record<string, any> = {};
+      Object.keys(stepData).forEach((key) => {
+        Object.assign(doc, stepData[key]);
+      });
+      Object.assign(doc, values);
+
       tab.sections.forEach((section) => {
         section.fields.forEach((field) => {
+          const isFieldVisible = !field.hidden && (!field.depends_on || evaluateDependsOn(field.depends_on, doc));
+          if (!isFieldVisible) {
+            return;
+          }
+
           const fieldValue = values[field.fieldname];
           const normalizedValue =
             typeof fieldValue === "string" ? fieldValue.trim() : fieldValue;
@@ -171,8 +186,12 @@ export function OnboardingFormStep({
             field.fieldname.toLowerCase().includes("contactnumber");
 
           const isTable = field.fieldtype === "Table";
+          const isMandatory =
+            field.is_mandatory ||
+            field.reqd ||
+            (field.mandatory_depends_on && evaluateDependsOn(field.mandatory_depends_on, doc));
 
-          if (!field.hidden && isTable) {
+          if (isTable) {
             const rows = Array.isArray(normalizedValue) ? (normalizedValue as Record<string, unknown>[]) : [];
             const visibleChildFields = field.child_fields?.filter(f => !f.hidden) || [];
             const mandatoryChildFields = visibleChildFields.filter(f => f.is_mandatory || f.reqd);
@@ -192,9 +211,8 @@ export function OnboardingFormStep({
             };
 
             const nonEmptyRows = rows.filter(row => !isRowEmpty(row));
-            const isMandatoryTable = !!(field.is_mandatory || field.reqd);
 
-            if (isMandatoryTable && nonEmptyRows.length === 0) {
+            if (isMandatory && nonEmptyRows.length === 0) {
               errorList[field.fieldname] = {
                 type: "required",
                 message: `${field.label || "This field"} is required`,
@@ -205,7 +223,7 @@ export function OnboardingFormStep({
                 message: `Please complete all required fields in ${field.label}`,
               };
             }
-          } else if (!field.hidden && (field.is_mandatory || field.reqd)) {
+          } else if (isMandatory) {
             const isCheck = field.fieldtype === "Check";
 
             if (isCheck) {
@@ -231,7 +249,6 @@ export function OnboardingFormStep({
           }
 
           if (
-            !field.hidden &&
             isEmailField &&
             typeof normalizedValue === "string" &&
             normalizedValue !== "" &&
@@ -244,7 +261,6 @@ export function OnboardingFormStep({
           }
 
           if (
-            !field.hidden &&
             isPhoneField &&
             typeof normalizedValue === "string" &&
             normalizedValue !== "" &&
@@ -270,7 +286,7 @@ export function OnboardingFormStep({
         errors: {},
       };
     },
-    [tab],
+    [tab, stepData],
   );
 
   const {
@@ -294,6 +310,35 @@ export function OnboardingFormStep({
 
   const currentFormValues = useWatch({ control });
 
+  const doc = useMemo(() => {
+    const merged: Record<string, any> = {};
+    Object.keys(stepData).forEach((key) => {
+      Object.assign(merged, stepData[key]);
+    });
+    Object.assign(merged, currentFormValues);
+    return merged;
+  }, [stepData, currentFormValues]);
+
+  // Automatically clear fields when they become hidden
+  useEffect(() => {
+    tab.sections.forEach((section) => {
+      section.fields.forEach((field) => {
+        if (field.depends_on) {
+          const isVisible = evaluateDependsOn(field.depends_on, doc);
+          if (!isVisible) {
+            const val = getValues(field.fieldname);
+            if (val !== undefined && val !== "" && val !== null && (Array.isArray(val) ? val.length > 0 : true)) {
+              setValue(field.fieldname, field.fieldtype === "Table" ? [] : "", {
+                shouldValidate: true,
+                shouldDirty: true,
+              });
+            }
+          }
+        }
+      });
+    });
+  }, [doc, tab, getValues, setValue]);
+
   // Auto-save form values to context to prevent data loss on navigation
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -304,6 +349,24 @@ export function OnboardingFormStep({
   }, [currentFormValues, getValues, setStepData, stepKey]);
 
   const onNext = handleSubmit(async (data) => {
+    const unresolvedRejectedFields = tab.sections.flatMap((s) => s.fields).filter((field) => {
+      const isVisible = !field.hidden && (!field.depends_on || evaluateDependsOn(field.depends_on, doc));
+      if (!isVisible) return false;
+
+      if (field.approval_status === "Rejected") {
+        const currentValue = data[field.fieldname];
+        const normCurr = currentValue === undefined || currentValue === null ? "" : String(currentValue).trim();
+        const normOrig = field.value === undefined || field.value === null ? "" : String(field.value).trim();
+        return normCurr === normOrig;
+      }
+      return false;
+    });
+
+    if (unresolvedRejectedFields.length > 0) {
+      toast.error(`Please correct all rejected fields before proceeding: ${unresolvedRejectedFields.map(f => f.label).join(", ")}`);
+      return;
+    }
+
     setStepData(stepKey, data);
     markStepComplete(stepKey);
     nextStep();
@@ -334,7 +397,15 @@ export function OnboardingFormStep({
             disabled={disabled || !!field.read_only}
             error={error}
             className={className}
-            isRejected={!field.read_only && field.approval_status === "Rejected"}
+            isRejected={
+              !field.read_only &&
+              field.approval_status === "Rejected" &&
+              (() => {
+                const normVal = value === undefined || value === null ? "" : String(value).trim();
+                const normOrigVal = field.value === undefined || field.value === null ? "" : String(field.value).trim();
+                return normVal === normOrigVal;
+              })()
+            }
             hrComment={field.hr_comment}
             isApproved={field.approval_status === "Approved"}
             fieldname={field.fieldname}
@@ -357,7 +428,15 @@ export function OnboardingFormStep({
             disabled={disabled || !!field.read_only}
             error={error}
             className={className}
-            isRejected={!field.read_only && field.approval_status === "Rejected"}
+            isRejected={
+              !field.read_only &&
+              field.approval_status === "Rejected" &&
+              (() => {
+                const normVal = value === undefined || value === null ? "" : String(value).trim();
+                const normOrigVal = field.value === undefined || field.value === null ? "" : String(field.value).trim();
+                return normVal === normOrigVal;
+              })()
+            }
             hrComment={field.hr_comment}
             isApproved={field.approval_status === "Approved"}
             fieldname={field.fieldname}
@@ -370,70 +449,82 @@ export function OnboardingFormStep({
 
   return (
     <form onSubmit={onNext} className={cn("space-y-8", className)}>
-      {tab.sections.map((section, idx) => (
-        <React.Fragment key={idx}>
-          {section.section.toLowerCase().includes("permanent address") && (
-            <div className="flex justify-start mb-2 px-2">
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={() => {
-                  const values = getValues();
-                  Object.keys(values).forEach((key) => {
-                    if (key.toLowerCase().includes("current")) {
-                      const permKey = key.replace(/current/i, "permanent");
-                      setValue(permKey, values[key], {
-                        shouldValidate: true,
-                        shouldDirty: true,
-                      });
-                    }
-                  });
-                }}
-              >
-                Same as Current Address
-              </Button>
-            </div>
-          )}
-          <SectionCard
-            title={section.section === tab.tab ? undefined : section.section}
-          >
-            <div
-              className={cn(
-                "grid grid-cols-1 gap-x-4 gap-y-5",
-                section.section === "Basic Details"
-                  ? "md:grid-cols-3"
-                  : "md:grid-cols-2",
-              )}
+      {tab.sections.map((section, idx) => {
+        // Check if there is at least one visible field in this section
+        const hasVisibleFields = section.fields.some((field) => {
+          return !field.hidden && (!field.depends_on || evaluateDependsOn(field.depends_on, doc));
+        });
+
+        if (!hasVisibleFields) return null;
+
+        return (
+          <React.Fragment key={idx}>
+            {section.section.toLowerCase().includes("permanent address") && (
+              <div className="flex justify-start mb-2 px-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    const values = getValues();
+                    Object.keys(values).forEach((key) => {
+                      if (key.toLowerCase().includes("current")) {
+                        const permKey = key.replace(/current/i, "permanent");
+                        setValue(permKey, values[key], {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
+                      }
+                    });
+                  }}
+                >
+                  Same as Current Address
+                </Button>
+              </div>
+            )}
+            <SectionCard
+              title={section.section === tab.tab ? undefined : section.section}
             >
-              {section.fields.map((field) =>
-                field.fieldtype === "Table" ? (
-                  <DynamicTableField
-                    key={field.fieldname}
-                    field={field}
-                    control={control}
-                    setValue={setValue as UseFormSetValue<FieldValues>}
-                    errors={errors as FieldErrors<FieldValues>}
-                    onAttachChange={handleFileUpload}
-                    overrides={fieldOverrides}
-                  />
-                ) : (
-                  <FormStepField
-                    key={field.fieldname}
-                    field={field}
-                    control={control}
-                    setValue={setValue}
-                    trigger={trigger}
-                    error={errors[field.fieldname]?.message as string}
-                    handleFileUpload={handleFileUpload}
-                    overrides={fieldOverrides}
-                  />
-                ),
-              )}
-            </div>
-          </SectionCard>
-        </React.Fragment>
-      ))}
+              <div
+                className={cn(
+                  "grid grid-cols-1 gap-x-4 gap-y-5",
+                  section.section === "Basic Details"
+                    ? "md:grid-cols-3"
+                    : "md:grid-cols-2",
+                )}
+              >
+                {section.fields.map((field) => {
+                  const isVisible = !field.hidden && (!field.depends_on || evaluateDependsOn(field.depends_on, doc));
+                  if (!isVisible) return null;
+
+                  return field.fieldtype === "Table" ? (
+                    <DynamicTableField
+                      key={field.fieldname}
+                      field={field}
+                      control={control}
+                      setValue={setValue as UseFormSetValue<FieldValues>}
+                      errors={errors as FieldErrors<FieldValues>}
+                      onAttachChange={handleFileUpload}
+                      overrides={fieldOverrides}
+                    />
+                  ) : (
+                    <FormStepField
+                      key={field.fieldname}
+                      field={field}
+                      control={control}
+                      setValue={setValue}
+                      trigger={trigger}
+                      error={errors[field.fieldname]?.message as string}
+                      handleFileUpload={handleFileUpload}
+                      overrides={fieldOverrides}
+                    />
+                  );
+                })}
+              </div>
+            </SectionCard>
+          </React.Fragment>
+        );
+      })}
 
       {/* Navigation */}
       <Separator />
