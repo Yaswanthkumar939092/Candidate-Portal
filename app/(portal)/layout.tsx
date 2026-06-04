@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/lib/contexts/auth-context'
 import { Loader2 } from 'lucide-react'
 import { PortalNavigation } from '@/components/portal/portal-navigation'
+import { SurveyOfferNavigation } from '@/components/portal/survey-offer-navigation'
 import { FeatureFlagProvider, FeatureFlagLoader } from '@/lib/contexts/feature-flags'
 
 /**
@@ -25,6 +26,7 @@ export default function PortalLayout({
   const pathname = usePathname()
 
   const showNavigation = pathname !== '/survey' && !pathname.startsWith('/job_offer')
+  const showSurveyOfferNavigation = pathname === '/survey' || pathname.startsWith('/job_offer')
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -55,7 +57,8 @@ export default function PortalLayout({
       <FeatureFlagLoader>
         <div className="min-h-screen bg-background">
           {showNavigation && <PortalNavigation />}
-          <main className={showNavigation ? "flex-1 pt-16" : "flex-1"}>
+          {showSurveyOfferNavigation && <SurveyOfferNavigation />}
+          <main className={showNavigation || showSurveyOfferNavigation ? "flex-1 pt-16" : "flex-1"}>
             {children}
           </main>
         </div>

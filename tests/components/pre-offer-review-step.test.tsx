@@ -189,4 +189,101 @@ describe("PreOfferReviewStep", () => {
     })
     expect(mockToastError).toHaveBeenCalledWith("API submit failed")
   })
+
+  it("handles synchronous submission errors gracefully", async () => {
+    mockSubmit.mockImplementation(() => {
+      throw new Error("Synchronous error during mutate")
+    })
+
+    render(
+      <PreOfferReviewStep
+        completedSteps={new Set(["basic_details"])}
+        goToStep={vi.fn()}
+        onPrev={vi.fn()}
+        onSuccess={vi.fn()}
+      />
+    )
+
+    const checkbox = screen.getByRole("checkbox")
+    fireEvent.click(checkbox)
+
+    const submitButton = screen.getByRole("button", { name: /Submit Application/i })
+    fireEvent.click(submitButton)
+
+    await waitFor(() => {
+      expect(screen.getByText("Synchronous error during mutate")).toBeTruthy()
+    })
+    expect(mockToastError).toHaveBeenCalledWith("Synchronous error during mutate")
+  })
+
+  it("renders summary for steps with empty tables and steps with only data fields", () => {
+    const mockTabsWithDiffFields = [
+      {
+        tab: "Basic Details",
+        sections: [
+          {
+            section: "Basic Details",
+            fields: [
+              { fieldname: "full_name", label: "Full Name", fieldtype: "Data" },
+              {
+                fieldname: "education_table",
+                label: "Education Details",
+                fieldtype: "Table",
+                child_fields: [{ fieldname: "school", label: "School Name", fieldtype: "Data" }],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        tab: "Experience Details",
+        sections: [
+          {
+            section: "Experience Details",
+            fields: [
+              { fieldname: "company", label: "Company", fieldtype: "Data" },
+              { fieldname: "years", label: "Years", fieldtype: "Data" },
+            ],
+          },
+        ],
+      },
+    ]
+
+    const mockStepDataDiff = {
+      basic_details: {
+        full_name: "John Doe",
+        education_table: [],
+      },
+      experience_details: {
+        company: "Google",
+        years: "5",
+      },
+    }
+
+    ;(preOfferContext.usePreOffer as unknown as { mockReturnValue: (val: unknown) => void }).mockReturnValue({
+      tabs: mockTabsWithDiffFields,
+      stepData: mockStepDataDiff,
+      applicantId: "test-id",
+    })
+
+    render(
+      <PreOfferReviewStep
+        completedSteps={new Set(["basic_details", "experience_details"])}
+        goToStep={vi.fn()}
+        onPrev={vi.fn()}
+        onSuccess={vi.fn()}
+      />
+    )
+
+    // Check table summary when empty
+    expect(screen.getByText("No Education Details Added")).toBeTruthy()
+
+    // Check non-table summary joins values
+    expect(screen.getByText("Google, 5")).toBeTruthy()
+
+    // Expand basic details to check empty table view
+    const toggleButton = screen.getByRole("button", { name: /Basic Details/i })
+    fireEvent.click(toggleButton)
+    expect(screen.getByText("No Education Details added")).toBeTruthy()
+  })
 })

@@ -18,12 +18,14 @@ vi.mock("lucide-react", async () => {
 })
 
 vi.mock("@/components/pre-offer-form/pre-offer-step-nav", () => ({
-  PreOfferStepNav: ({ currentStep, completedSteps }: { currentStep: number; completedSteps: Set<string> }) => (
+  PreOfferStepNav: ({ currentStep, completedSteps, onStepChange }: any) => (
     <nav data-testid="step-nav">
       <div>Pre-Offer Form</div>
       <div>Complete all steps to submit your pre-offer details.</div>
       <div>{Math.round((completedSteps.size / 2) * 100)}% complete</div>
       <div>Current Step: {currentStep}</div>
+      <button data-testid="goto-step-1" type="button" onClick={() => onStepChange?.(1)}>Go to Step 2</button>
+      <button data-testid="goto-step-0" type="button" onClick={() => onStepChange?.(0)}>Go to Step 1</button>
     </nav>
   ),
 }))
@@ -237,5 +239,62 @@ describe("PreOfferForm component", () => {
 
     // Restore window.location
     window.location = originalLocation
+  })
+
+  it("initializes draft and table fields correctly", () => {
+    const mockInitialize = vi.fn()
+    ;(preOfferContext.usePreOffer as unknown as { mockReturnValue: (val: unknown) => void }).mockReturnValue({
+      tabs: mockTabs,
+      allFields: [
+        { fieldname: "full_name", label: "Full Name", fieldtype: "Data", value: "John Doe" },
+        { fieldname: "education_table", label: "Education Details", fieldtype: "Table", value: null },
+      ],
+      isLoading: false,
+      stepData: {},
+      setStepData: vi.fn(),
+      initializeAllStepsFromDraft: mockInitialize,
+    })
+
+    render(<PreOfferForm />)
+    expect(mockInitialize).toHaveBeenCalledWith({
+      full_name: "John Doe",
+      education_table: [],
+    })
+  })
+
+  it("blocks step change if required fields are missing on step change", async () => {
+    const user = userEvent.setup()
+    render(<PreOfferForm />)
+
+    // Try to go to step 2 while required fields are empty
+    const goBtn = screen.getByTestId("goto-step-1")
+    await user.click(goBtn)
+
+    // It should fail validation and not change the step
+    expect(screen.getByText("Current Step: 0")).toBeTruthy()
+  })
+
+  it("allows step change if required fields are filled", async () => {
+    ;(preOfferContext.usePreOffer as unknown as { mockReturnValue: (val: unknown) => void }).mockReturnValue({
+      tabs: mockTabs,
+      allFields: [
+        { fieldname: "full_name", label: "Full Name", fieldtype: "Data", value: "Jane Doe" },
+        { fieldname: "email", label: "Email", fieldtype: "Data", value: "jane@example.com" },
+      ],
+      isLoading: false,
+      stepData: {},
+      setStepData: vi.fn(),
+      initializeAllStepsFromDraft: vi.fn(),
+    })
+
+    const user = userEvent.setup()
+    render(<PreOfferForm />)
+
+    // We have default values, so it's valid. Click to go to step 2
+    const goBtn = screen.getByTestId("goto-step-1")
+    await user.click(goBtn)
+
+    // Step changes to 1
+    expect(screen.getByText("Current Step: 1")).toBeTruthy()
   })
 })
