@@ -845,15 +845,7 @@ describe("DynamicFieldRenderer", () => {
       expect(checkIcon).toBeTruthy()
     })
 
-    it("handles ResubmitButton workflow including error logging", async () => {
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => { })
-      const mockSubmitAll = vi.fn().mockRejectedValueOnce(new Error("Resubmit simulated failure"))
-
-      vi.mocked(useOnboarding).mockReturnValue({
-        submitAll: mockSubmitAll,
-        isSaving: false
-      } as unknown as ReturnType<typeof useOnboarding>)
-
+    it("does not render ResubmitButton when field is rejected", async () => {
       const field: FormField = {
         fieldname: "email",
         label: "Email",
@@ -864,14 +856,8 @@ describe("DynamicFieldRenderer", () => {
 
       render(<DynamicFieldRenderer field={field} value="" onChange={vi.fn()} />)
 
-      const resubmitBtn = screen.getByRole("button", { name: /Resubmit/i })
-      await user.click(resubmitBtn)
-
-      expect(mockSubmitAll).toHaveBeenCalledWith("email")
-      await waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalledWith("Resubmit failed:", expect.any(Error))
-      })
-      consoleSpy.mockRestore()
+      const resubmitBtn = screen.queryByRole("button", { name: /Resubmit/i })
+      expect(resubmitBtn).toBeNull()
     })
 
     it("handles Link component API fetch failure gracefully", async () => {
