@@ -25,21 +25,18 @@ export function PortalStepperSidebar({
       id: "survey",
       label: "Survey",
       icon: ClipboardList,
-      status:
-        currentStep === "survey"
-          ? "ONGOING"
-          : "COMPLETED",
+      status: currentStep === "survey" ? "ONGOING" : "COMPLETED",
     },
     {
       id: "offer",
-      label: "Offer Acceptance",
+      label: "Offer Preview",
       icon: ShieldCheck,
       status:
         currentStep === "survey"
           ? "PENDING"
           : currentStep === "offer"
-          ? "ONGOING"
-          : "COMPLETED",
+            ? "ONGOING"
+            : "COMPLETED",
     },
     {
       id: "onboarding",
@@ -52,16 +49,16 @@ export function PortalStepperSidebar({
   // Determine next step description for bottom card
   const nextStepText =
     currentStep === "survey"
-      ? "Offer Acceptance"
+      ? "Offer Preview"
       : currentStep === "offer"
-      ? "Background Check Verification"
-      : "Portal Completion";
+        ? "Onboarding"
+        : "Portal Completion";
 
   return (
     <div
       className={cn(
         "w-full md:w-[340px] md:self-stretch shrink-0 bg-[#f8fafc] dark:bg-[#111827] border border-border/60 rounded-2xl p-5 flex flex-col gap-6 shadow-sm",
-        className
+        className,
       )}
     >
       {/* Steps List */}
@@ -78,7 +75,7 @@ export function PortalStepperSidebar({
                 "flex items-center justify-between p-4 rounded-xl transition-all duration-300",
                 isOngoing
                   ? "bg-primary text-primary-foreground shadow-md scale-[1.02]"
-                  : "bg-white dark:bg-card border border-border/50 text-foreground"
+                  : "bg-white dark:bg-card border border-border/50 text-foreground",
               )}
             >
               {/* Left: Icon + Label */}
@@ -89,11 +86,13 @@ export function PortalStepperSidebar({
                     isOngoing
                       ? "text-primary-foreground"
                       : isCompleted
-                      ? "text-emerald-500"
-                      : "text-muted-foreground"
+                        ? "text-emerald-500"
+                        : "text-muted-foreground",
                   )}
                 />
-                <span className="font-semibold text-sm truncate">{step.label}</span>
+                <span className="font-semibold text-sm truncate">
+                  {step.label}
+                </span>
               </div>
 
               {/* Right: Status Pill */}
@@ -103,8 +102,8 @@ export function PortalStepperSidebar({
                   isOngoing
                     ? "bg-white/20 text-white"
                     : isCompleted
-                    ? "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400"
-                    : "bg-muted text-muted-foreground"
+                      ? "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400"
+                      : "bg-muted text-muted-foreground",
                 )}
               >
                 {step.status}

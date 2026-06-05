@@ -396,4 +396,12 @@ describe("PortalNavigation", () => {
     render(<PortalNavigation />)
     expect(screen.getByText("M")).toBeTruthy()
   })
+
+  it("hides navigation links and mobile menu when hideNavLinks is true", () => {
+    render(<PortalNavigation hideNavLinks={true} />)
+    expect(screen.queryByText("Home")).toBeNull()
+    expect(screen.queryByText("Open Jobs")).toBeNull()
+    expect(screen.queryByText("My Jobs")).toBeNull()
+    expect(screen.queryByRole("button", { name: /Toggle menu/i })).toBeNull()
+  })
 })
