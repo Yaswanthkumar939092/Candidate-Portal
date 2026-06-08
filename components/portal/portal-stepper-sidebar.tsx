@@ -2,12 +2,15 @@
 
 import { ClipboardList, ShieldCheck, UserCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { useSurvey } from "@/lib/hooks/useSurvey";
 
 interface Step {
-  id: "survey" | "offer" | "onboarding";
+  id: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   status: "ONGOING" | "PENDING" | "COMPLETED";
+  redirect_url?: string;
 }
 
 interface PortalStepperSidebarProps {
@@ -19,40 +22,93 @@ export function PortalStepperSidebar({
   currentStep,
   className,
 }: PortalStepperSidebarProps) {
-  // Define steps dynamically based on current page
-  const steps: Step[] = [
-    {
-      id: "survey",
-      label: "Survey",
-      icon: ClipboardList,
-      status: currentStep === "survey" ? "ONGOING" : "COMPLETED",
-    },
-    {
-      id: "offer",
-      label: "Offer Preview",
-      icon: ShieldCheck,
-      status:
-        currentStep === "survey"
-          ? "PENDING"
-          : currentStep === "offer"
-            ? "ONGOING"
-            : "COMPLETED",
-    },
-    {
-      id: "onboarding",
-      label: "Onboarding",
-      icon: UserCheck,
-      status: currentStep === "onboarding" ? "ONGOING" : "PENDING",
-    },
-  ];
+  const { data } = useSurvey();
+  const hasDynamicSteps = data?.steps && data.steps.length > 0;
+
+  // Define steps dynamically
+  let steps: Step[] = [];
+
+  if (hasDynamicSteps) {
+    steps = data.steps.map((apiStep) => {
+      let Icon = ClipboardList;
+      const keyLower = apiStep.key.toLowerCase();
+      if (keyLower.includes("offer")) {
+        Icon = ShieldCheck;
+      } else if (keyLower.includes("onboarding")) {
+        Icon = UserCheck;
+      } else if (keyLower.includes("survey")) {
+        Icon = ClipboardList;
+      }
+
+      // Check ongoing
+      const isCurrentStepPage =
+        (currentStep === "survey" && keyLower.includes("survey")) ||
+        (currentStep === "offer" && keyLower.includes("offer")) ||
+        (currentStep === "onboarding" && keyLower.includes("onboarding"));
+
+      const isOngoing =
+        isCurrentStepPage ||
+        apiStep.status.toLowerCase() === "ongoing" ||
+        apiStep.key === data.current_step;
+
+      const isCompleted = !isOngoing && apiStep.status.toLowerCase() === "completed";
+
+      const statusUpper = isOngoing
+        ? "ONGOING"
+        : isCompleted
+          ? "COMPLETED"
+          : "PENDING";
+
+      return {
+        id: apiStep.key,
+        label: apiStep.label,
+        icon: Icon,
+        status: statusUpper,
+        redirect_url: apiStep.redirect_url,
+      };
+    });
+  } else {
+    // Fallback static steps
+    steps = [
+      {
+        id: "survey",
+        label: "Survey",
+        icon: ClipboardList,
+        status: currentStep === "survey" ? "ONGOING" : "COMPLETED",
+      },
+      {
+        id: "offer",
+        label: "Offer Preview",
+        icon: ShieldCheck,
+        status:
+          currentStep === "survey"
+            ? "PENDING"
+            : currentStep === "offer"
+              ? "ONGOING"
+              : "COMPLETED",
+      },
+      {
+        id: "onboarding",
+        label: "Onboarding",
+        icon: UserCheck,
+        status: currentStep === "onboarding" ? "ONGOING" : "PENDING",
+      },
+    ];
+  }
 
   // Determine next step description for bottom card
-  const nextStepText =
-    currentStep === "survey"
-      ? "Offer Preview"
-      : currentStep === "offer"
-        ? "Onboarding"
-        : "Portal Completion";
+  let nextStepText = "";
+  if (hasDynamicSteps && data.next_step) {
+    const nextStepObj = data.steps.find((s) => s.key === data.next_step);
+    nextStepText = nextStepObj ? nextStepObj.label : data.next_step;
+  } else {
+    nextStepText =
+      currentStep === "survey"
+        ? "Offer Preview"
+        : currentStep === "offer"
+          ? "Onboarding"
+          : "Portal Completion";
+  }
 
   return (
     <div
@@ -68,16 +124,8 @@ export function PortalStepperSidebar({
           const isCompleted = step.status === "COMPLETED";
           const Icon = step.icon;
 
-          return (
-            <div
-              key={step.id}
-              className={cn(
-                "flex items-center justify-between p-4 rounded-xl transition-all duration-300",
-                isOngoing
-                  ? "bg-primary text-primary-foreground shadow-md scale-[1.02]"
-                  : "bg-white dark:bg-card border border-border/50 text-foreground",
-              )}
-            >
+          const content = (
+            <>
               {/* Left: Icon + Label */}
               <div className="flex items-center gap-3 min-w-0">
                 <Icon
@@ -108,6 +156,35 @@ export function PortalStepperSidebar({
               >
                 {step.status}
               </span>
+            </>
+          );
+
+          const classNameStr = cn(
+            "flex items-center justify-between p-4 rounded-xl transition-all duration-300",
+            isOngoing
+              ? "bg-primary text-primary-foreground shadow-md scale-[1.02]"
+              : "bg-white dark:bg-card border border-border/50 text-foreground",
+            step.redirect_url && !isOngoing && "hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer"
+          );
+
+          if (step.redirect_url) {
+            return (
+              <Link
+                key={step.id}
+                href={step.redirect_url}
+                className={classNameStr}
+              >
+                {content}
+              </Link>
+            );
+          }
+
+          return (
+            <div
+              key={step.id}
+              className={classNameStr}
+            >
+              {content}
             </div>
           );
         })}
