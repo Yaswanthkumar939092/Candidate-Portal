@@ -1,4 +1,17 @@
-export interface SurveyRequiredResponse {
+export interface PostLoginRouteStep {
+  key: string;
+  label: string;
+  status: string;
+  redirect_url: string;
+}
+
+export interface BasePostLoginRouteResponse {
+  current_step: string | null;
+  steps: PostLoginRouteStep[];
+  next_step: string | null;
+}
+
+export interface SurveyRequiredResponse extends BasePostLoginRouteResponse {
   survey_required: true;
   form_name: string;
   form_schema: Record<string, any>;
@@ -6,7 +19,7 @@ export interface SurveyRequiredResponse {
   job_opening: string;
 }
 
-export interface SurveyNotRequiredResponse {
+export interface SurveyNotRequiredResponse extends BasePostLoginRouteResponse {
   survey_required: false;
   redirect_url: string;
 }

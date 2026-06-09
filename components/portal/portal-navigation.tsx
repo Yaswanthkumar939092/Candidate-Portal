@@ -58,6 +58,7 @@ interface NavItem {
  */
 interface PortalNavigationProps {
   className?: string;
+  hideNavLinks?: boolean;
 }
 
 const navItems: NavItem[] = [
@@ -111,7 +112,7 @@ function formatRole(role: string): string {
  * Matches the Physics Wallah design with dark pill active states,
  * green pill for Action Center, badge counts, and user avatar dropdown.
  */
-export function PortalNavigation({ className }: PortalNavigationProps) {
+export function PortalNavigation({ className, hideNavLinks = false }: PortalNavigationProps) {
   const { user, profile } = useAuth();
   const { isEnabled } = useFeatureFlags();
   const { data: branding } = useCandidateBranding();
@@ -176,56 +177,58 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
         {/* Left side: Mobile Menu + PW Logo */}
         <div className="flex items-center gap-2 md:gap-4">
           {/* Mobile Hamburger Menu */}
-          <div className="md:hidden">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="-ml-3 shrink-0">
-                  <Menu className="h-5 w-5" />
-                  <span className="sr-only">Toggle menu</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-[80vw] sm:w-[350px]">
-                <SheetHeader>
-                  <SheetTitle className="text-left font-bold text-lg">
-                    Navigation
-                  </SheetTitle>
-                </SheetHeader>
-                <div className="flex flex-col gap-2 py-6">
-                  {filteredNavItems.map((item) => {
-                    const active = isActive(item.href);
-                    const badgeCount = getBadgeCount(item);
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className={cn(
-                          "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                          active
-                            ? "bg-[var(--nav-active-bg)] text-[var(--nav-active-text)]"
-                            : "hover:bg-muted text-muted-foreground",
-                        )}
-                      >
-                        <item.icon className="h-5 w-5" />
-                        <span className="flex-1">{item.label}</span>
-                        {badgeCount > 0 && (
-                          <Badge
-                            className={cn(
-                              "flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-semibold border-none",
-                              active
-                                ? "bg-[var(--nav-active-text)]/20 text-[var(--nav-active-text)]"
-                                : "bg-muted text-muted-foreground",
-                            )}
-                          >
-                            {badgeCount}
-                          </Badge>
-                        )}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </SheetContent>
-            </Sheet>
-          </div>
+          {!hideNavLinks && (
+            <div className="md:hidden">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="-ml-3 shrink-0">
+                    <Menu className="h-5 w-5" />
+                    <span className="sr-only">Toggle menu</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-[80vw] sm:w-[350px]">
+                  <SheetHeader>
+                    <SheetTitle className="text-left font-bold text-lg">
+                      Navigation
+                    </SheetTitle>
+                  </SheetHeader>
+                  <div className="flex flex-col gap-2 py-6">
+                    {filteredNavItems.map((item) => {
+                      const active = isActive(item.href);
+                      const badgeCount = getBadgeCount(item);
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          className={cn(
+                            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                            active
+                              ? "bg-[var(--nav-active-bg)] text-[var(--nav-active-text)]"
+                              : "hover:bg-muted text-muted-foreground",
+                          )}
+                        >
+                          <item.icon className="h-5 w-5" />
+                          <span className="flex-1">{item.label}</span>
+                          {badgeCount > 0 && (
+                            <Badge
+                              className={cn(
+                                "flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-semibold border-none",
+                                active
+                                  ? "bg-[var(--nav-active-text)]/20 text-[var(--nav-active-text)]"
+                                  : "bg-muted text-muted-foreground",
+                              )}
+                            >
+                              {badgeCount}
+                            </Badge>
+                          )}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
+          )}
 
           {/* Desktop/Mobile PW Logo */}
           <Link href="/dashboard" className="flex shrink-0 items-center gap-2">
@@ -250,40 +253,42 @@ export function PortalNavigation({ className }: PortalNavigationProps) {
         </div>
 
         {/* Center: Nav links with pill-style active states (Hidden on Mobile) */}
-        <nav className="hidden md:flex items-center gap-1">
-          {filteredNavItems.map((item) => {
-            const active = isActive(item.href);
-            const badgeCount = getBadgeCount(item);
+        {!hideNavLinks && (
+          <nav className="hidden md:flex items-center gap-1">
+            {filteredNavItems.map((item) => {
+              const active = isActive(item.href);
+              const badgeCount = getBadgeCount(item);
 
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "relative flex items-center gap-2 text-sm font-medium px-4 py-1.5 rounded-full transition-all duration-300 ease-in-out",
-                  active
-                    ? "bg-[var(--nav-active-bg)] text-[var(--nav-active-text)]"
-                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
-                )}
-              >
-                <span>{item.label}</span>
-                {/* Badge count for My Jobs */}
-                {badgeCount > 0 && (
-                  <Badge
-                    className={cn(
-                      "ml-0.5 flex items-center justify-center rounded-full px-1.5 py-1 text-[10px] font-semibold border-none",
-                      active
-                        ? "bg-[var(--nav-active-text)]/20 text-[var(--nav-active-text)]"
-                        : "bg-muted text-muted-foreground",
-                    )}
-                  >
-                    {badgeCount}
-                  </Badge>
-                )}
-              </Link>
-            );
-          })}
-        </nav>
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "relative flex items-center gap-2 text-sm font-medium px-4 py-1.5 rounded-full transition-all duration-300 ease-in-out",
+                    active
+                      ? "bg-[var(--nav-active-bg)] text-[var(--nav-active-text)]"
+                      : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+                  )}
+                >
+                  <span>{item.label}</span>
+                  {/* Badge count for My Jobs */}
+                  {badgeCount > 0 && (
+                    <Badge
+                      className={cn(
+                        "ml-0.5 flex items-center justify-center rounded-full px-1.5 py-1 text-[10px] font-semibold border-none",
+                        active
+                          ? "bg-[var(--nav-active-text)]/20 text-[var(--nav-active-text)]"
+                          : "bg-muted text-muted-foreground",
+                      )}
+                    >
+                      {badgeCount}
+                    </Badge>
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+        )}
 
         {/* Right side: Language selector + User dropdown */}
         <div className="flex items-center gap-3">

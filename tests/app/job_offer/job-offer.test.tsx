@@ -66,6 +66,13 @@ vi.mock("@/lib/hooks/useCompanyLogo", () => ({
   useCompanyLogo: (...args: unknown[]) => mockUseCompanyLogo(...args),
 }));
 
+vi.mock("@/lib/hooks/useSurvey", () => ({
+  useSurvey: () => ({
+    data: null,
+    isLoading: false,
+    error: null,
+  }),
+}));
 
 // Mock window.scrollTo and window.location.reload
 window.scrollTo = vi.fn();
