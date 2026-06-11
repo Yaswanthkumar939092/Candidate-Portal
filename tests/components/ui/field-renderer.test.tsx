@@ -381,6 +381,33 @@ describe("DynamicFieldRenderer", () => {
 
       expect(screen.getByRole("checkbox")).toBeChecked()
     })
+
+    it("renders disabled checkbox when read_only is true or disabled prop is true", () => {
+      const field: FormField = {
+        fieldname: "agree",
+        label: "I agree",
+        fieldtype: "Check",
+        read_only: 1,
+      }
+
+      const { rerender } = render(
+        <DynamicFieldRenderer field={field} value={false} onChange={vi.fn()} />
+      )
+
+      expect(screen.getByRole("checkbox")).toBeDisabled()
+
+      // Render with disabled prop
+      const activeField: FormField = {
+        fieldname: "agree",
+        label: "I agree",
+        fieldtype: "Check",
+        read_only: 0,
+      }
+      rerender(
+        <DynamicFieldRenderer field={activeField} value={false} onChange={vi.fn()} disabled={true} />
+      )
+      expect(screen.getByRole("checkbox")).toBeDisabled()
+    })
   })
 
   describe("Select Field Type", () => {

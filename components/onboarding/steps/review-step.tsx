@@ -107,7 +107,7 @@ export function ReviewStep() {
     }
     try {
       setSubmitError(null)
-      await submitAll()
+      await submitAll("submit")
     } catch (error) {
       setSubmitError(
         error instanceof Error ? error.message : 'Failed to submit. Please try again.'
@@ -129,10 +129,13 @@ export function ReviewStep() {
         <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
           <CheckCircle2 className="h-8 w-8 text-green-600 dark:text-green-400" />
         </div>
-        <h2 className="text-2xl font-bold text-foreground">Onboarding Submitted!</h2>
+        <h2 className="text-2xl font-bold text-foreground">
+          {formConfig?.status === 'Completed' ? 'Onboarding already submitted' : 'Onboarding Submitted!'}
+        </h2>
         <p className="mt-2 max-w-md text-muted-foreground">
-          Your onboarding information has been submitted successfully. Our HR team will review your
-          details and get back to you shortly.
+          {formConfig?.status === 'Completed'
+            ? 'Your onboarding details have already been submitted and completed.'
+            : 'Your onboarding information has been submitted successfully. Our HR team will review your details and get back to you shortly.'}
         </p>
         <Button
           className="mt-8"
@@ -167,7 +170,7 @@ export function ReviewStep() {
 
         // Standard flat fields summary
         const values = Object.values(data).filter(v => v && typeof v === 'string').slice(0, 2)
-        return values.join(', ')
+        return values.join(' ')
       }
     }
   })
@@ -277,7 +280,7 @@ export function ReviewStep() {
                                             if (!cVal || !isChildVisible) return null
                                             return (
                                               <p key={cf.fieldname} className="text-xs">
-                                                <span className="font-medium">{cf.label}:</span> {String(cVal)}
+                                                <span className="font-medium text-foreground">{cf.label}:</span> {String(cVal)}
                                               </p>
                                             )
                                           })}
@@ -290,7 +293,7 @@ export function ReviewStep() {
                                 if (!val) return null
                                 return (
                                   <p key={f.fieldname} className="text-xs">
-                                    <span className="font-medium">{f.label}:</span> {String(val)}
+                                    <span className="font-medium text-foreground">{f.label}:</span> {String(val)}
                                   </p>
                                 )
                               })}

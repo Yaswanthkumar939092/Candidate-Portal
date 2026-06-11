@@ -77,7 +77,10 @@ function OnboardingContent() {
   let stepTitle = ''
   let StepComponent: React.ReactNode = null
 
-  if (currentStep < tabs.length) {
+  if (status === 'submitted') {
+    stepTitle = 'Review'
+    StepComponent = <ReviewStep />
+  } else if (currentStep < tabs.length) {
     const currentTab = tabs[currentStep]
     stepTitle = currentTab.tab
     StepComponent = (

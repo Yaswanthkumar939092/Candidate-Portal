@@ -9,6 +9,7 @@ interface FileUploadFieldProps {
   label: string;
   onChange: (value: string) => void;
   error?: string;
+  isRejected?: boolean;
 }
 
 interface DynamicTableFieldProps {
@@ -35,8 +36,8 @@ interface DynamicFieldRendererProps {
 
 // Hoist the mock component so it can be used in vi.mock
 const { FileUploadFieldMock } = vi.hoisted(() => ({
-  FileUploadFieldMock: ({ label, onChange, error }: FileUploadFieldProps) => (
-    <div data-testid="file-upload">
+  FileUploadFieldMock: ({ label, onChange, error, isRejected }: FileUploadFieldProps) => (
+    <div data-testid="file-upload" data-isrejected={isRejected !== undefined ? String(isRejected) : undefined}>
       <label>{label}</label>
       <button type="button" onClick={() => onChange("uploaded-file-url")}>Upload</button>
       {error && <span data-testid="error-message">{error}</span>}
@@ -46,6 +47,13 @@ const { FileUploadFieldMock } = vi.hoisted(() => ({
 
 vi.mock("@/lib/contexts/onboarding-context", () => ({
   useOnboarding: vi.fn(),
+}));
+
+vi.mock("sonner", () => ({
+  toast: {
+    error: vi.fn(),
+    success: vi.fn(),
+  },
 }));
 
 // Mock child components
@@ -175,7 +183,7 @@ describe("OnboardingFormStep", () => {
     vi.mocked(useOnboarding).mockReturnValue(defaultContext);
     render(<OnboardingFormStep tab={mockTab} stepKey="personal_info" />);
     
-    const nextBtn = screen.getByText("Next Step");
+    const nextBtn = screen.getByText("Save & Next");
     fireEvent.click(nextBtn);
     
     await waitFor(() => {
@@ -191,11 +199,15 @@ describe("OnboardingFormStep", () => {
     fireEvent.change(screen.getByTestId("input-first_name"), { target: { value: "Clark" } });
     fireEvent.click(screen.getByText("Upload"));
     
-    const nextBtn = screen.getByText("Next Step");
+    const nextBtn = screen.getByText("Save & Next");
     fireEvent.click(nextBtn);
     
     await waitFor(() => {
       expect(mockSetStepData).toHaveBeenCalledWith("personal_info", expect.objectContaining({ 
+        first_name: "Clark",
+        profile_pic: "uploaded-file-url"
+      }));
+      expect(defaultContext.submitAll).toHaveBeenCalledWith("save", "personal_info", expect.objectContaining({ 
         first_name: "Clark",
         profile_pic: "uploaded-file-url"
       }));
@@ -235,7 +247,7 @@ describe("OnboardingFormStep", () => {
     render(<OnboardingFormStep tab={mockTab} stepKey="personal_info" />);
     
     expect(screen.getByText("Previous")).toBeDisabled();
-    expect(screen.getByText("Next Step")).toBeDisabled();
+    expect(screen.getByText("Saving...")).toBeDisabled();
   });
 
   it("disables 'Previous' button on the first step", () => {
@@ -284,7 +296,7 @@ describe("OnboardingFormStep", () => {
        vi.mocked(useOnboarding).mockReturnValue(defaultContext);
        render(<OnboardingFormStep tab={strictTab} stepKey="strict_test" />);
        
-       fireEvent.click(screen.getByText("Next Step"));
+       fireEvent.click(screen.getByText("Save & Next"));
        
        await waitFor(() => {
           expect(screen.getByText("Mandatory Table is required")).toBeTruthy();
@@ -314,7 +326,7 @@ describe("OnboardingFormStep", () => {
        // Trigger blur logic to initiate resolver run
        fireEvent.blur(screen.getByTestId("input-email_addr"));
        fireEvent.blur(screen.getByTestId("input-phone_num"));
-       fireEvent.click(screen.getByText("Next Step")); // Force immediate resolver sync check
+       fireEvent.click(screen.getByText("Save & Next")); // Force immediate resolver sync check
        
        await waitFor(() => {
           expect(screen.getByText("Please enter a valid email address")).toBeTruthy();
@@ -388,12 +400,13 @@ describe("OnboardingFormStep", () => {
         
         render(<OnboardingFormStep tab={odditiesTab} stepKey="oddities" />);
         
-        fireEvent.click(screen.getByText("Next Step"));
+        fireEvent.click(screen.getByText("Save & Next"));
         
         await waitFor(() => {
            expect(screen.getByText("This field is required")).toBeTruthy(); // Line 199 fallback
            expect(screen.getByText("Blank Table is required")).toBeTruthy(); // Line 178-181 block
            expect(screen.getByText("False Check is required")).toBeTruthy(); // Line 185-188 block
+           expect(defaultContext.submitAll).not.toHaveBeenCalled();
         });
      });
 
@@ -435,5 +448,219 @@ describe("OnboardingFormStep", () => {
         // Our earlier SectionCard tests indicated header presence implies .pt-2.px-6 selectors
         expect(container.querySelector(".pt-2.px-6")).toBeNull();
      });
-  });
+
+      it("bypasses validation for hidden fields or fields whose depends_on evaluates to false", async () => {
+         const hiddenTab: OnboardingTab = {
+            tab: "Hidden Tab",
+            sections: [{
+               section: "Section 1",
+               fields: [
+                  { fieldname: "visible_field", label: "Visible Field", fieldtype: "Data", is_mandatory: 1, read_only: 0, hidden: 0 },
+                  { fieldname: "hidden_field", label: "Hidden Field", fieldtype: "Data", is_mandatory: 1, read_only: 0, hidden: 1 },
+                  { fieldname: "dependent_field", label: "Dependent Field", fieldtype: "Data", is_mandatory: 1, read_only: 0, hidden: 0, depends_on: "eval:doc.visible_field == 'show'" }
+               ]
+            }]
+         };
+
+         vi.mocked(useOnboarding).mockReturnValue(defaultContext);
+         render(<OnboardingFormStep tab={hiddenTab} stepKey="hidden_test" />);
+
+         fireEvent.change(screen.getByTestId("input-visible_field"), { target: { value: "dont_show" } });
+         fireEvent.click(screen.getByText("Save & Next"));
+
+         await waitFor(() => {
+            // visible_field has value, so no error for it
+            expect(screen.queryByTestId("error-visible_field")).toBeNull();
+            // hidden_field is hidden, so its validation (required) is skipped and line 169 is hit
+            expect(screen.queryByTestId("error-hidden_field")).toBeNull();
+            // dependent_field depends on visible_field being 'show', which is false, so it is hidden and skipped
+            expect(screen.queryByTestId("error-dependent_field")).toBeNull();
+         });
+      });
+
+      it("evaluates table field row validation for completeness and validity", async () => {
+         const tableTab: OnboardingTab = {
+            tab: "Table Tab",
+            sections: [{
+               section: "Work History",
+               fields: [
+                  {
+                     fieldname: "experience",
+                     label: "Experience Table",
+                     fieldtype: "Table",
+                     is_mandatory: 0,
+                     read_only: 0,
+                     hidden: 0,
+                     child_fields: [
+                        { fieldname: "company", label: "Company", fieldtype: "Data", is_mandatory: 1, read_only: 0, hidden: 0 },
+                        { fieldname: "role", label: "Role", fieldtype: "Data", is_mandatory: 0, read_only: 0, hidden: 0 }
+                     ]
+                  }
+               ]
+            }]
+         };
+
+         vi.mocked(useOnboarding).mockReturnValue({
+            ...defaultContext,
+            stepData: {
+               table_test: {
+                  experience: [
+                     { company: "", role: "Developer" } // non-empty (covers 201-203) but invalid (covers 208-210)
+                  ]
+               }
+            }
+         });
+
+         render(<OnboardingFormStep tab={tableTab} stepKey="table_test" />);
+
+         fireEvent.click(screen.getByText("Save & Next"));
+
+         await waitFor(() => {
+            // covers line 222
+            expect(screen.getByTestId("error-message")).toHaveTextContent("Please complete all required fields in Experience Table");
+         });
+      });
+      it("automatically clears dependent fields when their visibility condition evaluates to false", async () => {
+         const depTab: OnboardingTab = {
+            tab: "Depends Tab",
+            sections: [{
+               section: "Section",
+               fields: [
+                  { fieldname: "show_more", label: "Show More", fieldtype: "Data", is_mandatory: 0, read_only: 0, hidden: 0 },
+                  { fieldname: "extra_info", label: "Extra Info", fieldtype: "Data", is_mandatory: 0, read_only: 0, hidden: 0, depends_on: "eval:doc.show_more == 'Yes'" }
+               ]
+            }]
+         };
+
+         vi.mocked(useOnboarding).mockReturnValue(defaultContext);
+         render(<OnboardingFormStep tab={depTab} stepKey="dep_test" />);
+
+         const showMoreInput = screen.getByTestId("input-show_more") as HTMLInputElement;
+
+         // Verify initial state
+         expect(showMoreInput.value).toBe("");
+
+         // Change show_more to "Yes" to make extra_info visible, and set value for extra_info
+         fireEvent.change(showMoreInput, { target: { value: "Yes" } });
+         
+         const extraInfoInput = screen.getByTestId("input-extra_info") as HTMLInputElement;
+         fireEvent.change(extraInfoInput, { target: { value: "Some Info" } });
+
+         // Now change show_more to "No" to make extra_info invisible (should trigger auto-clear)
+         fireEvent.change(showMoreInput, { target: { value: "No" } });
+
+         // Submit the form
+         fireEvent.click(screen.getByText("Save & Next"));
+
+         // Because the visibility evaluated to false, extra_info should have been cleared to ""
+         await waitFor(() => {
+            expect(mockSetStepData).toHaveBeenCalledWith(
+               "dep_test",
+               expect.objectContaining({
+                  show_more: "No",
+                  extra_info: ""
+               })
+            );
+         });
+      });
+
+
+      it("blocks submission and shows error toast if a rejected field is not corrected", async () => {
+         const rejectTab: OnboardingTab = {
+            tab: "Reject Tab",
+            sections: [{
+               section: "Verification",
+               fields: [
+                  {
+                     fieldname: "rejected_field",
+                     label: "Rejected Document",
+                     fieldtype: "Data",
+                     is_mandatory: 1,
+                     read_only: 0,
+                     hidden: 0,
+                     approval_status: "Rejected",
+                     value: "old_rejected_value",
+                     hr_comment: "Invalid input"
+                  }
+               ]
+            }]
+         };
+
+         vi.mocked(useOnboarding).mockReturnValue({
+            ...defaultContext,
+            stepData: {
+               reject_test: {
+                  rejected_field: "old_rejected_value"
+               }
+            }
+         });
+
+         render(<OnboardingFormStep tab={rejectTab} stepKey="reject_test" />);
+
+         // Try to submit the form without changing the value (covers 358-361)
+         fireEvent.click(screen.getByText("Save & Next"));
+
+         const { toast } = await import("sonner");
+
+         await waitFor(() => {
+            // covers 367-368
+            expect(toast.error).toHaveBeenCalledWith(
+               expect.stringContaining("Please correct all rejected fields before proceeding: Rejected Document")
+            );
+            expect(mockNextStep).not.toHaveBeenCalled();
+         });
+      });
+
+      it("computes the isRejected property for Attach and Attach Image fields correctly based on original value", () => {
+         const attachTab: OnboardingTab = {
+            tab: "Attachment Tab",
+            sections: [{
+               section: "Uploads",
+               fields: [
+                  {
+                     fieldname: "rejected_attach",
+                     label: "Rejected Attach",
+                     fieldtype: "Attach",
+                     is_mandatory: 0,
+                     read_only: 0,
+                     hidden: 0,
+                     approval_status: "Rejected",
+                     value: "file1.pdf",
+                     hr_comment: "Invalid file"
+                  },
+                  {
+                     fieldname: "rejected_image",
+                     label: "Rejected Image",
+                     fieldtype: "Attach Image",
+                     is_mandatory: 0,
+                     read_only: 0,
+                     hidden: 0,
+                     approval_status: "Rejected",
+                     value: "image1.jpg",
+                     hr_comment: "Blurry picture"
+                  }
+               ]
+            }]
+         };
+
+         vi.mocked(useOnboarding).mockReturnValue({
+            ...defaultContext,
+            stepData: {
+               attach_test: {
+                  rejected_attach: "file1.pdf",
+                  rejected_image: "image1.jpg"
+               }
+            }
+         });
+
+         render(<OnboardingFormStep tab={attachTab} stepKey="attach_test" />);
+
+         const fileUploads = screen.getAllByTestId("file-upload");
+         expect(fileUploads).toHaveLength(2);
+
+         // Verify that isRejected is computed as true for both (covers 410-412 and 441-443)
+         expect(fileUploads[0].getAttribute("data-isrejected")).toBe("true");
+         expect(fileUploads[1].getAttribute("data-isrejected")).toBe("true");
+      });
+   });
 });

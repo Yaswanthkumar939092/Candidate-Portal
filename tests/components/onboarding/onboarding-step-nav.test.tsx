@@ -34,7 +34,24 @@ describe("OnboardingStepNav", () => {
       applicantId: "test-id",
       status: "Pending",
       tabs: [
-        { tab: "Personal Information", sections: [] },
+        {
+          tab: "Personal Information",
+          sections: [
+            {
+              section: "General Info",
+              fields: [
+                {
+                  fieldname: "first_name",
+                  label: "First Name",
+                  fieldtype: "Data",
+                  is_mandatory: 1,
+                  read_only: 0,
+                  hidden: 0,
+                }
+              ]
+            }
+          ]
+        },
         { tab: "Education Details", sections: [] }
       ]
     }
@@ -108,6 +125,87 @@ describe("OnboardingStepNav", () => {
     expect(mockGoToStep).not.toHaveBeenCalled();
   });
 
+  it("allows clicking the next step if the current step has no mandatory fields", () => {
+    vi.mocked(useOnboarding).mockReturnValue({
+      ...defaultProps,
+      formConfig: {
+        applicantId: "test-id",
+        status: "Pending",
+        tabs: [
+          {
+            tab: "Personal Information",
+            sections: [
+              {
+                section: "General Info",
+                fields: [
+                  {
+                    fieldname: "optional_field",
+                    label: "Optional Field",
+                    fieldtype: "Data",
+                    is_mandatory: 0,
+                    read_only: 0,
+                    hidden: 0,
+                  }
+                ]
+              }
+            ]
+          },
+          { tab: "Education Details", sections: [] }
+        ]
+      }
+    });
+    render(<OnboardingStepNav />);
+
+    const futureStep = screen.getByText("Education Details").parentElement;
+    expect(futureStep).not.toBeDisabled();
+
+    fireEvent.click(futureStep!);
+    expect(mockGoToStep).toHaveBeenCalledWith(1);
+  });
+
+  it("allows clicking the next step if the current step has mandatory fields and they are filled", () => {
+    vi.mocked(useOnboarding).mockReturnValue({
+      ...defaultProps,
+      stepData: {
+        personal_information: {
+          first_name: "John",
+        }
+      },
+      formConfig: {
+        applicantId: "test-id",
+        status: "Pending",
+        tabs: [
+          {
+            tab: "Personal Information",
+            sections: [
+              {
+                section: "General Info",
+                fields: [
+                  {
+                    fieldname: "first_name",
+                    label: "First Name",
+                    fieldtype: "Data",
+                    is_mandatory: 1,
+                    read_only: 0,
+                    hidden: 0,
+                  }
+                ]
+              }
+            ]
+          },
+          { tab: "Education Details", sections: [] }
+        ]
+      }
+    });
+    render(<OnboardingStepNav />);
+
+    const futureStep = screen.getByText("Education Details").parentElement;
+    expect(futureStep).not.toBeDisabled();
+
+    fireEvent.click(futureStep!);
+    expect(mockGoToStep).toHaveBeenCalledWith(1);
+  });
+
   it("renders back to dashboard link", () => {
     vi.mocked(useOnboarding).mockReturnValue(defaultProps);
     render(<OnboardingStepNav />);
@@ -166,6 +264,28 @@ describe("OnboardingStepNav", () => {
        
        render(<OnboardingStepNav />);
        expect(screen.getByText("4/10")).toBeTruthy();
+    });
+
+    it("renders green check and label when total equals filled + approved", () => {
+       vi.mocked(useOnboarding).mockReturnValue({
+          ...defaultProps,
+          formConfig: {
+             applicantId: "v2-id",
+             status: "Pending",
+             tabs: [
+                { 
+                  tab: "Counted Set", 
+                  sections: [], 
+                  field_counts: { filled: 4, total: 10, approved: 6, rejected: 0, pending: 0 } 
+                }
+             ]
+          }
+       });
+       
+       render(<OnboardingStepNav />);
+       expect(screen.getByText("10/10")).toBeTruthy();
+       const stepButton = screen.getByText("Counted Set").closest("button");
+       expect(stepButton?.querySelector("svg")).toBeTruthy();
     });
   });
 });

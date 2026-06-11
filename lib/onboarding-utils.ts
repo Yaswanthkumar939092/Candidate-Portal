@@ -12,6 +12,17 @@ export function evaluateDependsOn(expression: string | undefined, doc: Record<st
 
   if (!jsExpr) return true;
 
+  // Check if expression is a simple fieldname (e.g. "custom_is_rehire")
+  if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(jsExpr)) {
+    return Boolean(doc[jsExpr]);
+  }
+
+  // Check if expression is a simple negated fieldname (e.g. "!custom_is_rehire")
+  if (/^![a-zA-Z_][a-zA-Z0-9_]*$/.test(jsExpr)) {
+    const fieldName = jsExpr.substring(1);
+    return !doc[fieldName];
+  }
+
   try {
     // Evaluate the expression with doc as the parameter.
     const fn = new Function("doc", `

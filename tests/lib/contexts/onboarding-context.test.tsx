@@ -179,16 +179,24 @@ describe('OnboardingContext', () => {
       })
     })
 
-    it('status is submitted when formConfig status is Pending', async () => {
+    it('status is draft when formConfig status is Pending', async () => {
       setupMocks({ ...sampleFormConfig, status: 'Pending' })
+      render(<OnboardingProvider><ConsumerComponent /></OnboardingProvider>)
+      await waitFor(() => {
+        expect(screen.getByTestId('status').textContent).toBe('draft')
+      })
+    })
+
+    it('status is submitted when formConfig status is Completed', async () => {
+      setupMocks({ ...sampleFormConfig, status: 'Completed' })
       render(<OnboardingProvider><ConsumerComponent /></OnboardingProvider>)
       await waitFor(() => {
         expect(screen.getByTestId('status').textContent).toBe('submitted')
       })
     })
 
-    it('marks all steps complete when status is Pending', async () => {
-      setupMocks({ ...sampleFormConfig, status: 'Pending' })
+    it('marks all steps complete when status is Completed', async () => {
+      setupMocks({ ...sampleFormConfig, status: 'Completed' })
       render(<OnboardingProvider><ConsumerComponent /></OnboardingProvider>)
       await waitFor(() => {
         expect(Number(screen.getByTestId('completed').textContent)).toBeGreaterThan(0)
@@ -232,20 +240,6 @@ describe('OnboardingContext', () => {
       render(<OnboardingProvider><ConsumerComponent /></OnboardingProvider>)
       await waitFor(() => {
         expect(screen.getByTestId('loading').textContent).toBe('false')
-      })
-    })
-
-    it('reads step from localStorage if available', async () => {
-      localStorage.setItem('onboarding_draft:test@example.com', JSON.stringify({
-        stepData: {},
-        currentStep: 1,
-        completedSteps: [],
-        applicantId: "test-applicant",
-      }))
-
-      render(<OnboardingProvider><ConsumerComponent /></OnboardingProvider>)
-      await waitFor(() => {
-        expect(screen.getByTestId('step').textContent).toBe('1')
       })
     })
   })
@@ -340,6 +334,23 @@ describe('OnboardingContext', () => {
     }
 
     it('adds step key to completedSteps', async () => {
+      setupMocks({
+        applicantId: "test-applicant",
+        status: 'Draft',
+        tabs: [
+          {
+            tab: 'Personal Info',
+            sections: [
+              {
+                fields: [
+                  { fieldname: 'first_name', fieldtype: 'Data', value: '', default: '', is_mandatory: 1 },
+                ],
+              },
+            ],
+          },
+        ],
+      })
+
       render(<OnboardingProvider><MarkCompleteTest /></OnboardingProvider>)
       await waitFor(() => expect(screen.getByTestId('completed').textContent).toBe('0'))
 
@@ -385,12 +396,12 @@ describe('OnboardingContext', () => {
         <div>
           <span data-testid="saving">{String(isSaving)}</span>
           <span data-testid="status">{status}</span>
-          <button onClick={() => submitAll()}>Submit</button>
+          <button onClick={() => submitAll("submit")}>Submit</button>
         </div>
       )
     }
 
-    it('calls mutateAsync with step data and user email', async () => {
+    it('calls mutateAsync with step data, user email, and action', async () => {
       mockMutateAsync.mockResolvedValue(undefined)
       mockInvalidateQueries.mockResolvedValue(undefined)
 
@@ -400,7 +411,7 @@ describe('OnboardingContext', () => {
       await user.click(screen.getByText('Submit'))
       await waitFor(() => {
         expect(mockMutateAsync).toHaveBeenCalledWith(
-          expect.objectContaining({ userEmail: 'test@example.com' })
+          expect.objectContaining({ userEmail: 'test@example.com', action: 'submit' })
         )
       })
     })
@@ -428,20 +439,6 @@ describe('OnboardingContext', () => {
       await user.click(screen.getByText('Submit'))
       await waitFor(() => {
         expect(toast.success).toHaveBeenCalledWith('Onboarding submitted successfully!')
-      })
-    })
-
-    it('clears localStorage after successful submit', async () => {
-      localStorage.setItem('onboarding_draft:test@example.com', JSON.stringify({ stepData: {}, currentStep: 0, applicantId: "test-applicant" }))
-      mockMutateAsync.mockResolvedValue(undefined)
-      mockInvalidateQueries.mockResolvedValue(undefined)
-
-      render(<OnboardingProvider><SubmitTest /></OnboardingProvider>)
-      await waitFor(() => expect(screen.getByTestId('status').textContent).toBe('draft'))
-
-      await user.click(screen.getByText('Submit'))
-      await waitFor(() => {
-        expect(localStorage.getItem('onboarding_draft:test@example.com')).toBeNull()
       })
     })
   })
