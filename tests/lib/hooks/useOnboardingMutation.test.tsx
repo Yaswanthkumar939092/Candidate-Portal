@@ -50,11 +50,13 @@ describe("useOnboardingSubmit", () => {
     await result.current.mutateAsync({
       stepData,
       userEmail: "ava@example.com",
+      action: "save",
     });
 
     expect(candidateOnboardingService.submitOnboarding).toHaveBeenCalledWith(
       stepData,
-      "ava@example.com"
+      "ava@example.com",
+      "save"
     );
   });
 });

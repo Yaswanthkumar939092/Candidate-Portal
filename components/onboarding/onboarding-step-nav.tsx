@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useOnboarding } from '@/lib/contexts/onboarding-context'
+import { evaluateDependsOn } from '@/lib/onboarding-utils'
 
 interface OnboardingStepNavProps {
   className?: string
@@ -20,7 +21,7 @@ interface OnboardingStepNavProps {
  * (active/completed/pending), and a "Back to Dashboard" link at the bottom.
  */
 export function OnboardingStepNav({ className }: OnboardingStepNavProps) {
-  const { currentStep, completedSteps, goToStep, formConfig, status } = useOnboarding()
+  const { currentStep, completedSteps, goToStep, formConfig, status, stepData } = useOnboarding()
 
   const tabs = formConfig?.tabs || []
   const steps = [
@@ -69,10 +70,91 @@ export function OnboardingStepNav({ className }: OnboardingStepNavProps) {
         <div className="flex flex-col gap-0.5">
           {steps.map((step, index) => {
             const isSubmitted = status !== 'draft'
-            const isCompleted = isSubmitted || completedSteps.has(step.key)
+            const isTabCompleted = step.counts
+              ? (step.counts.total === (step.counts.filled + step.counts.approved))
+              : completedSteps.has(step.key)
+            const isCompleted = isSubmitted || isTabCompleted
             const isCurrent = index === currentStep
             const isPast = index < currentStep
-            const isClickable = isCompleted || isCurrent || isPast
+            const isNextStep = index === currentStep + 1
+
+            const doc: Record<string, any> = {}
+            if (stepData) {
+              Object.keys(stepData).forEach((key) => {
+                Object.assign(doc, stepData[key])
+              })
+            }
+
+            const currentTabMandatoryFieldsAreFilled = (() => {
+              if (currentStep >= tabs.length) return false
+              const currentTab = tabs[currentStep]
+              if (!currentTab) return false
+
+              let allFilled = true
+              currentTab.sections.forEach(section => {
+                section.fields.forEach(field => {
+                  const isVisible = !field.hidden && (!field.depends_on || evaluateDependsOn(field.depends_on, doc))
+                  if (!isVisible) return
+
+                  const isMandatory =
+                    field.is_mandatory ||
+                    field.reqd ||
+                    (field.mandatory_depends_on && evaluateDependsOn(field.mandatory_depends_on, doc))
+
+                  if (!isMandatory) return
+
+                  const fieldValue = doc[field.fieldname]
+                  const normalizedValue =
+                    typeof fieldValue === "string" ? fieldValue.trim() : fieldValue
+
+                  const isTable = field.fieldtype === "Table"
+                  if (isTable) {
+                    const rows = Array.isArray(normalizedValue) ? (normalizedValue as Record<string, unknown>[]) : []
+                    const visibleChildFields = field.child_fields?.filter(f => !f.hidden) || []
+                    const mandatoryChildFields = visibleChildFields.filter(f => f.is_mandatory || f.reqd)
+
+                    const isRowEmpty = (row: Record<string, unknown>) => {
+                      return !visibleChildFields.some(cf => {
+                        const val = row[cf.fieldname]
+                        return val !== undefined && val !== null && String(val).trim() !== ""
+                      })
+                    }
+
+                    const isRowValid = (row: Record<string, unknown>) => {
+                      return mandatoryChildFields.every(cf => {
+                        const val = row[cf.fieldname]
+                        return val !== undefined && val !== null && String(val).trim() !== ""
+                      })
+                    }
+
+                    const nonEmptyRows = rows.filter(row => !isRowEmpty(row))
+                    if (nonEmptyRows.length === 0) {
+                      allFilled = false
+                    } else if (!nonEmptyRows.every(isRowValid)) {
+                      allFilled = false
+                    }
+                  } else {
+                    const isCheck = field.fieldtype === "Check"
+                    if (isCheck) {
+                      if (!Boolean(normalizedValue)) {
+                        allFilled = false
+                      }
+                    } else {
+                      if (
+                        normalizedValue === undefined ||
+                        normalizedValue === null ||
+                        normalizedValue === ""
+                      ) {
+                        allFilled = false
+                      }
+                    }
+                  }
+                })
+              })
+              return allFilled
+            })()
+
+            const isClickable = isCompleted || isCurrent || isPast || (isNextStep && currentTabMandatoryFieldsAreFilled)
 
             return (
               <button
@@ -113,7 +195,7 @@ export function OnboardingStepNav({ className }: OnboardingStepNavProps) {
                 <span className="truncate flex-1">{step.label}</span>
                 {step.counts && (
                   <span className="text-xs font-medium tabular-nums opacity-60">
-                    {step.counts.filled}/{step.counts.total}
+                    {step.counts.filled + step.counts.approved}/{step.counts.total}
                   </span>
                 )}
               </button>

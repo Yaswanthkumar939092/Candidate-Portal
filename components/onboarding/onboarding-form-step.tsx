@@ -121,6 +121,7 @@ export function OnboardingFormStep({
     markStepComplete,
     isSaving,
     currentStep,
+    submitAll,
   } = useOnboarding();
   const existingData = useMemo(
     () => (stepData[stepKey] ?? {}) as Record<string, unknown>,
@@ -367,9 +368,14 @@ export function OnboardingFormStep({
       return;
     }
 
-    setStepData(stepKey, data);
-    markStepComplete(stepKey);
-    nextStep();
+    try {
+      setStepData(stepKey, data);
+      await submitAll("save", stepKey, data);
+      markStepComplete(stepKey);
+      nextStep();
+    } catch {
+      // Error is handled in submitAll
+    }
   });
 
   const handleFileUpload = useCallback(
@@ -539,7 +545,7 @@ export function OnboardingFormStep({
           Previous
         </Button>
         <Button type="submit" disabled={isSaving}>
-          Next Step
+          {isSaving ? "Saving..." : "Save & Next"}
           <ChevronRight className="ml-1 h-4 w-4" />
         </Button>
       </div>

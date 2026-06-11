@@ -506,35 +506,40 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
     ),
   },
   Check: {
-    component: ({ field, value, onChange, error, className }) => (
-      <div className={cn("space-y-1.5", className)}>
-        <Label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={Boolean(value)}
-            onChange={(e) => onChange(e.target.checked)}
-            className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
-          />
-          <span className="text-sm font-medium text-foreground">
-            {field.label}{" "}
-            {!!(field.is_mandatory || field.reqd) && (
-              <span className="text-destructive">*</span>
-            )}
-          </span>
-        </Label>
-        {error && <p className="text-xs text-destructive">{error}</p>}
-      </div>
-    ),
+    component: ({ field, value, onChange, error, disabled, className }) => {
+      const isDisabled = disabled || !!field.read_only;
+      return (
+        <div className={cn("space-y-1.5", className)}>
+          <Label className={cn("flex items-center gap-2", isDisabled ? "cursor-not-allowed opacity-70" : "cursor-pointer")}>
+            <input
+              type="checkbox"
+              checked={Boolean(value)}
+              onChange={(e) => onChange(e.target.checked)}
+              disabled={isDisabled}
+              className="h-4 w-4 rounded border-input text-primary focus:ring-primary disabled:opacity-50"
+            />
+            <span className="text-sm font-medium text-foreground">
+              {field.label}{" "}
+              {!!(field.is_mandatory || field.reqd) && (
+                <span className="text-destructive">*</span>
+              )}
+            </span>
+          </Label>
+          {error && <p className="text-xs text-destructive">{error}</p>}
+        </div>
+      );
+    },
   },
 };
 
 function parseOptions(options?: string): string[] {
   if (!options) return [];
-  const byNewline = options
-    .split("\n")
-    .map((opt) => opt.trim())
-    .filter(Boolean);
-  if (byNewline.length > 1) return byNewline;
+  if (options.includes("\n")) {
+    return options
+      .split("\n")
+      .map((opt) => opt.trim())
+      .filter(Boolean);
+  }
   return options
     .split(" ")
     .map((opt) => opt.trim())

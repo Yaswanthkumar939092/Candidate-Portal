@@ -24,6 +24,13 @@ describe("evaluateDependsOn", () => {
     expect(evaluateDependsOn("eval:!doc.custom_passport_number", doc)).toBe(true);
   });
 
+  it("should evaluate expression with simple fieldname", () => {
+    const doc = { custom_is_rehire: 1, custom_another_field: 0 };
+    expect(evaluateDependsOn("custom_is_rehire", doc)).toBe(true);
+    expect(evaluateDependsOn("custom_another_field", doc)).toBe(false);
+    expect(evaluateDependsOn("non_existent_field", doc)).toBe(false);
+  });
+
   it("should handle error cases gracefully by returning false", () => {
     const doc = {};
     // Invalid javascript syntax should fail evaluation gracefully
