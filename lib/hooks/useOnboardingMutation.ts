@@ -9,9 +9,11 @@ export const useOnboardingSubmit = () => {
     mutationFn: ({
       stepData,
       userEmail,
+      action,
     }: {
       stepData: Record<string, Record<string, unknown>>;
       userEmail: string;
-    }) => candidateOnboardingService.submitOnboarding(stepData, userEmail),
+      action: "save" | "submit";
+    }) => candidateOnboardingService.submitOnboarding(stepData, userEmail, action),
   });
 };

@@ -50,7 +50,11 @@ export interface OnboardingContextType {
   markStepComplete: (stepKey: string) => void;
 
   /** Submit all onboarding data */
-  submitAll: (specificField?: string) => Promise<void>;
+  submitAll: (
+    action: "save" | "submit",
+    updatedStepKey?: string,
+    updatedData?: Record<string, unknown>,
+  ) => Promise<void>;
   /** Dynamic form configuration */
   formConfig?: OnboardingForm;
   /** Helper to get current value of a field across all steps */
@@ -123,27 +127,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     if (initialLoadDone.current) return;
 
     const loadData = () => {
-      const storageKey = userEmail ? `onboarding_draft:${userEmail}` : "onboarding_draft";
       try {
-        const localData = localStorage.getItem(storageKey);
-        let localParsed: {
-          stepData?: Record<string, Record<string, unknown>>;
-          currentStep?: number;
-          completedSteps?: string[];
-          applicantId?: string;
-        } | null = null;
-        if (localData) {
-          try {
-            localParsed = JSON.parse(localData);
-            if (localParsed && localParsed.applicantId && localParsed.applicantId !== formConfig.applicantId) {
-              localParsed = null;
-              localStorage.removeItem(storageKey);
-            }
-          } catch {
-            localStorage.removeItem(storageKey);
-          }
-        }
-
         const loadedStepData: Record<string, Record<string, unknown>> = {};
 
         // Initialize from formConfig tabs
@@ -166,48 +150,9 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
           });
         });
 
-        // Merge local data on top, but prefer API values if local is empty
-        if (localParsed?.stepData) {
-          const localStepData = localParsed.stepData;
-          Object.keys(localStepData).forEach((key) => {
-            if (loadedStepData[key]) {
-              Object.keys(localStepData[key]).forEach((fieldName) => {
-                const localVal = localStepData[key][fieldName];
-                const loadedVal = loadedStepData[key][fieldName];
-                // Overwrite with local data if it's truthy, or if both are falsy
-                if (localVal || (!loadedVal && localVal !== undefined)) {
-                  loadedStepData[key][fieldName] = localVal;
-                }
-              });
-            }
-          });
-        }
-
         setStepDataState(loadedStepData);
 
-        const isApplicantMatch = localParsed?.applicantId === formConfig.applicantId;
-
-        if (localParsed?.currentStep !== undefined && isApplicantMatch) {
-          setCurrentStep(localParsed.currentStep);
-        }
-
-        let hasRejectedFields = false;
-        formConfig.tabs.forEach((tab) => {
-          tab.sections.forEach((section) => {
-            section.fields.forEach((field) => {
-              if (field.approval_status === "Rejected") {
-                hasRejectedFields = true;
-              }
-            });
-          });
-        });
-
-        const isSubmitted =
-          !hasRejectedFields && (
-            formConfig.status === "Pending" ||
-            formConfig.status === "Submitted" ||
-            formConfig.status === "Completed"
-          );
+        const isSubmitted = formConfig.status === "Completed";
         setStatus(isSubmitted ? "submitted" : "draft");
 
         if (isSubmitted) {
@@ -216,8 +161,31 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
             t.tab.toLowerCase().replace(/\s+/g, "_")
           );
           setCompletedSteps(new Set(allStepKeys));
-        } else if (localParsed?.completedSteps && isApplicantMatch) {
-          setCompletedSteps(new Set(localParsed.completedSteps));
+        } else {
+          // Initialize completed steps based on fields that already have values in formConfig
+          const initialCompleted = new Set<string>();
+          formConfig.tabs.forEach((tab) => {
+            const key = tab.tab.toLowerCase().replace(/\s+/g, "_");
+            let hasMandatory = false;
+            let allMandatoryFilled = true;
+            tab.sections.forEach((section) => {
+              section.fields.forEach((field) => {
+                const isMandatory = field.is_mandatory || field.reqd;
+                if (isMandatory && !field.hidden) {
+                  hasMandatory = true;
+                  const val = loadedStepData[key]?.[field.fieldname];
+                  if (val === undefined || val === null || val === "") {
+                    allMandatoryFilled = false;
+                  }
+                }
+              });
+            });
+            const hasAnyValue = Object.values(loadedStepData[key] || {}).some(v => v !== undefined && v !== null && v !== "");
+            if ((hasMandatory && allMandatoryFilled) || (!hasMandatory && hasAnyValue)) {
+              initialCompleted.add(key);
+            }
+          });
+          setCompletedSteps(initialCompleted);
         }
       } catch (error) {
         console.error("Error initializing onboarding data:", error);
@@ -242,35 +210,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     }
   }, [searchParams, totalSteps]);
 
-  // Auto-save to localStorage on change (debounced)
-  useEffect(() => {
-    if (!isDirty || isLoading) return;
-
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-
-    debounceTimerRef.current = setTimeout(() => {
-      const storageKey = userEmail ? `onboarding_draft:${userEmail}` : "onboarding_draft";
-      try {
-        const toSave = {
-          stepData,
-          completedSteps: Array.from(completedSteps),
-          currentStep,
-          applicantId: formConfig?.applicantId,
-        };
-        localStorage.setItem(storageKey, JSON.stringify(toSave));
-      } catch (error) {
-        console.error("Error saving to localStorage:", error);
-      }
-    }, DEBOUNCE_MS);
-
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-    };
-  }, [stepData, completedSteps, currentStep, isDirty, isLoading]);
+  // Auto-save to localStorage is disabled; saving happens on clicking "Save & Next"
 
   // Update data for a specific step
   const setStepData = useCallback(
@@ -322,11 +262,21 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     }
   }, [currentStep, router]);
 
-  const submitAll = useCallback(async (specificField?: string) => {
+  const submitAll = useCallback(async (
+    action: "save" | "submit",
+    updatedStepKey?: string,
+    updatedData?: Record<string, unknown>,
+  ) => {
     try {
       // Get correct user email
       const email =
         user?.email || user?.user_metadata?.email || "unknown@example.com";
+
+      // Build the latest stepData by merging the updatedData if provided
+      const currentStepData = { ...stepData };
+      if (updatedStepKey && updatedData) {
+        currentStepData[updatedStepKey] = updatedData;
+      }
 
       // Find all rejected fields from formConfig
       const rejectedFields = new Set<string>();
@@ -344,21 +294,12 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
 
       // Prepare filtered stepData
       const filteredStepData: Record<string, Record<string, unknown>> = {};
-      for (const [stepKey, fields] of Object.entries(stepData)) {
+      for (const [stepKey, fields] of Object.entries(currentStepData)) {
         const filteredFields: Record<string, unknown> = {};
         let hasFields = false;
         for (const [fieldname, val] of Object.entries(fields)) {
-          if (specificField) {
-            // If a specific field is resubmitted, ONLY send that specific field!
-            if (fieldname === specificField) {
-              filteredFields[fieldname] = val;
-              hasFields = true;
-            }
-          } else {
-            // General submission (Review page / Full submit): send all fields unconditionally!
-            filteredFields[fieldname] = val;
-            hasFields = true;
-          }
+          filteredFields[fieldname] = val;
+          hasFields = true;
         }
         if (hasFields) {
           filteredStepData[stepKey] = filteredFields;
@@ -368,23 +309,17 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
       await submitMutation.mutateAsync({
         stepData: filteredStepData,
         userEmail: email,
+        action,
       });
 
-      // Only set status to "submitted" if there are no other rejected fields left, 
-      // or if we are doing a general full submit (no specificField)
-      const hasOtherRejectedFields = Array.from(rejectedFields).some(
-        (f) => f !== specificField
-      );
-      if (!specificField || !hasOtherRejectedFields) {
+      if (action === "submit") {
         setStatus("submitted");
-        const storageKey = userEmail ? `onboarding_draft:${userEmail}` : "onboarding_draft";
-        localStorage.removeItem(storageKey);
       }
 
       toast.success(
-        specificField
-          ? "Field resubmitted successfully!"
-          : "Onboarding submitted successfully!"
+        action === "submit"
+          ? "Onboarding submitted successfully!"
+          : "Progress saved successfully!"
       );
 
       // Invalidate the onboarding form query to fetch the latest status
@@ -392,8 +327,8 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
         queryKey: ["onboarding-form", { userEmail: email }]
       });
     } catch (error) {
-      console.error("Error submitting onboarding:", error);
-      toast.error("Failed to submit onboarding. Please try again.");
+      console.error(`Error during onboarding ${action}:`, error);
+      toast.error(`Failed to ${action} onboarding. Please try again.`);
       throw error;
     }
   }, [stepData, user, submitMutation, formConfig, queryClient]);

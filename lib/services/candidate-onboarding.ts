@@ -26,10 +26,11 @@ export const candidateOnboardingService = {
   submitOnboarding: async (
     stepData: Record<string, Record<string, unknown>>,
     userEmail: string,
+    action: "save" | "submit",
   ): Promise<{ success: boolean; message: string }> => {
     if (!userEmail) throw new Error("User email is required");
 
-    const payload = mapOnboardingDataToFrappe(stepData, userEmail);
+    const payload = mapOnboardingDataToFrappe(stepData, userEmail, action);
 
     const res = await FrappeAPI.post(API_METHODS.SUBMIT_ONBOARDING, payload);
 
@@ -61,6 +62,7 @@ const getToday = () => new Date().toISOString().split("T")[0];
 function mapOnboardingDataToFrappe(
   onboardingData: Record<string, Record<string, unknown>>,
   userEmail: string,
+  action: "save" | "submit",
 ) {
   if (!userEmail) throw new Error("User email is required");
 
@@ -89,5 +91,6 @@ function mapOnboardingDataToFrappe(
   return {
     email: userEmail,
     data: mappedData,
+    action,
   };
 }

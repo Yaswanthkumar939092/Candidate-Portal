@@ -51,18 +51,19 @@ describe("candidateOnboardingService", () => {
       (FrappeAPI.post as any).mockResolvedValue(mockRes);
 
       const stepData = { personal: { first_name: "John" } };
-      const result = await candidateOnboardingService.submitOnboarding(stepData, "test@example.com");
+      const result = await candidateOnboardingService.submitOnboarding(stepData, "test@example.com", "submit");
 
       expect(result).toEqual({ success: true, message: "Success" });
-      expect(FrappeAPI.post).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({
+      expect(FrappeAPI.post).toHaveBeenCalledWith(expect.any(String), {
         email: "test@example.com",
-        data: expect.objectContaining({ first_name: "John" })
-      }));
+        data: expect.objectContaining({ first_name: "John" }),
+        action: "submit"
+      });
     });
 
     it("throws error if submission fails", async () => {
       (FrappeAPI.post as any).mockResolvedValue({ status: "error", message: "Error" });
-      await expect(candidateOnboardingService.submitOnboarding({}, "test@example.com")).rejects.toThrow("Error");
+      await expect(candidateOnboardingService.submitOnboarding({}, "test@example.com", "submit")).rejects.toThrow("Error");
     });
   });
 
