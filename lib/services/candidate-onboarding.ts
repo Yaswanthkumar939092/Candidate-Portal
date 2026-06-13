@@ -53,6 +53,7 @@ export function transformOnboardingForm(
     applicantId: data.job_applicant,
     status: data.boarding_status,
     tabs: data.tabs,
+    field_status_counts: data.field_status_counts,
   };
 }
 

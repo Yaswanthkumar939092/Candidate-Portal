@@ -78,6 +78,27 @@ describe("OnboardingStepNav", () => {
     expect(progressBar).toHaveStyle("width: 33%");
   });
 
+  it("calculates progress percentage correctly using field_status_counts when present", () => {
+    vi.mocked(useOnboarding).mockReturnValue({
+      ...defaultProps,
+      formConfig: {
+        ...defaultProps.formConfig!,
+        field_status_counts: {
+          total: 10,
+          pending: 5,
+          filled: 3,
+          approved: 2,
+          rejected: 0
+        }
+      }
+    });
+
+    const { container } = render(<OnboardingStepNav />);
+    const progressBar = container.querySelector(".bg-primary-foreground.transition-all");
+    // (filled: 3 + approved: 2) / total: 10 * 100 = 50%
+    expect(progressBar).toHaveStyle("width: 50%");
+  });
+
   it("renders steps with correct status indicators", () => {
     vi.mocked(useOnboarding).mockReturnValue({
       ...defaultProps,

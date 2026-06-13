@@ -293,10 +293,10 @@ export function PortalNavigation({ className, hideNavLinks = false }: PortalNavi
         {/* Right side: Language selector + User dropdown */}
         <div className="flex items-center gap-3">
           {/* Language selector (non-functional) */}
-          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          {/* <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <Globe className="h-4 w-4" />
             <span className="font-medium">EN</span>
-          </div>
+          </div> */}
 
           {/* User dropdown */}
           <DropdownMenu>

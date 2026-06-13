@@ -71,7 +71,13 @@ function JobOfferContent() {
   const statusNormalized = statusData?.status?.toLowerCase();
 
   const [gameState, setGameState] = useState<
-    "loading" | "main" | "rejection" | "accepted" | "processed" | "expired" | "rejected"
+    | "loading"
+    | "main"
+    | "rejection"
+    | "accepted"
+    | "processed"
+    | "expired"
+    | "rejected"
   >("main");
   const [justAccepted, setJustAccepted] = useState(false);
   const [justRejected, setJustRejected] = useState(false);
@@ -261,7 +267,10 @@ function JobOfferContent() {
                 {/* Left Side: Stepper + Offer Summary Column */}
                 <div className="w-full lg:w-[340px] shrink-0 flex flex-col gap-6 lg:sticky lg:top-[88px]">
                   {/* Stepper Sidebar */}
-                  <PortalStepperSidebar currentStep="offer" className="w-full md:w-full lg:w-[340px] lg:self-start" />
+                  <PortalStepperSidebar
+                    currentStep="offer"
+                    className="w-full md:w-full lg:w-[340px] lg:self-start"
+                  />
 
                   {/* Offer Summary Card */}
                   <div className="bg-white border border-[#e2e8f0] rounded-xl overflow-hidden shadow-sm">
@@ -550,9 +559,13 @@ function JobOfferContent() {
             successfully accepted.
           </p>
           <div className="bg-white border border-[#e2e8f0] rounded-xl p-6 max-w-[520px] mx-auto mb-5 text-left shadow-sm">
-            <div className="text-[0.95rem] text-[#334155] leading-[1.6]">
+            {/* <div className="text-[0.95rem] text-[#334155] leading-[1.6]">
               Keep checking your email for further updates on your onboarding
               and LMS journey.
+            </div> */}
+            <div className="text-[0.95rem] text-[#334155] leading-[1.6]">
+              Please click below &quot;Go to Dashboard&quot; to complete your
+              employee onboarding formalities
             </div>
           </div>
           <div className="mt-7 flex flex-col items-center gap-3">
@@ -608,16 +621,24 @@ function JobOfferContent() {
             Offer Letter Declined
           </h1>
           <p className="text-[1rem] text-[#64748b] max-w-[500px] mx-auto mb-8 leading-[1.6]">
-            You have declined the offer letter. If this was a mistake or you wish to raise a request regarding your decision, please proceed below.
+            You have declined the offer letter. If this was a mistake or you
+            wish to raise a request regarding your decision, please proceed
+            below.
           </p>
           <div className="bg-white border border-[#e2e8f0] rounded-xl p-6 max-w-[520px] mx-auto mb-5 text-left shadow-sm">
             <div className="text-[0.95rem] text-[#334155] leading-[1.6]">
-              <div className="font-semibold text-[#1a2332] mb-1">Reason for Rejection:</div>
+              <div className="font-semibold text-[#1a2332] mb-1">
+                Reason for Rejection:
+              </div>
               <div className="text-[#64748b] mb-3">{rejectionReason}</div>
               {rejectionMessage && (
                 <>
-                  <div className="font-semibold text-[#1a2332] mb-1">Additional Message:</div>
-                  <div className="text-[#64748b] italic">&ldquo;{rejectionMessage}&rdquo;</div>
+                  <div className="font-semibold text-[#1a2332] mb-1">
+                    Additional Message:
+                  </div>
+                  <div className="text-[#64748b] italic">
+                    &ldquo;{rejectionMessage}&rdquo;
+                  </div>
                 </>
               )}
             </div>
