@@ -72,18 +72,22 @@ vi.mock("@/components/onboarding/dynamic-table-field", () => ({
 
 // Mock DynamicFieldRenderer to avoid deep UI rendering issues and focus on props
 vi.mock("@/components/ui/field-renderer", () => ({
-    DynamicFieldRenderer: ({ field, value, onChange, error, overrides }: DynamicFieldRendererProps) => {
+    DynamicFieldRenderer: ({ field, value, onChange, error, overrides, className }: DynamicFieldRendererProps) => {
         if (field.fieldtype === "Attach" || field.fieldtype === "Attach Image") {
             // In OnboardingFormStep, overrides for Attach are provided
             if (overrides && overrides[field.fieldtype]) {
                 const Component = overrides[field.fieldtype].component;
-                return <Component field={field} value={value} onChange={onChange} error={error} disabled={false} className="test-override-cls" />;
+                return (
+                    <div id={`field-${field.fieldname}`} className={className}>
+                        <Component field={field} value={value} onChange={onChange} error={error} disabled={false} className="test-override-cls" />
+                    </div>
+                );
             }
             // Fallback (though OnboardingFormStep always provides overrides for Attach)
-            return <div data-testid="file-upload-fallback">{field.label}</div>;
+            return <div id={`field-${field.fieldname}`} data-testid="file-upload-fallback" className={className}>{field.label}</div>;
         }
         return (
-            <div data-testid={`field-${field.fieldname}`}>
+            <div id={`field-${field.fieldname}`} data-testid={`field-${field.fieldname}`} className={className}>
                 <label>{field.label}</label>
                 <input 
                     data-testid={`input-${field.fieldname}`}
@@ -180,16 +184,25 @@ describe("OnboardingFormStep", () => {
   });
 
   it("validates mandatory fields and prevents submission", async () => {
-    vi.mocked(useOnboarding).mockReturnValue(defaultContext);
-    render(<OnboardingFormStep tab={mockTab} stepKey="personal_info" />);
-    
-    const nextBtn = screen.getByText("Save & Next");
-    fireEvent.click(nextBtn);
-    
-    await waitFor(() => {
-      expect(screen.getByTestId("error-first_name")).toBeTruthy();
-      expect(mockNextStep).not.toHaveBeenCalled();
-    });
+    const scrollMock = vi.fn();
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    HTMLElement.prototype.scrollIntoView = scrollMock;
+
+    try {
+      vi.mocked(useOnboarding).mockReturnValue(defaultContext);
+      render(<OnboardingFormStep tab={mockTab} stepKey="personal_info" />);
+      
+      const nextBtn = screen.getByText("Save & Next");
+      fireEvent.click(nextBtn);
+      
+      await waitFor(() => {
+        expect(screen.getByTestId("error-first_name")).toBeTruthy();
+        expect(mockNextStep).not.toHaveBeenCalled();
+        expect(scrollMock).toHaveBeenCalledWith(expect.objectContaining({ behavior: "smooth", block: "center" }));
+      });
+    } finally {
+      HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    }
   });
 
   it("calls setStepData and nextStep on successful form submission", async () => {
@@ -216,26 +229,52 @@ describe("OnboardingFormStep", () => {
     });
   });
 
-  it("enables 'Same as Current Address' logic when Permanent Address section exists", () => {
-    const tabWithAddress: OnboardingTab = {
+
+
+  it("handles custom_same_as_permanent logic by copying and syncing permanent to communication address fields, and renders on its own row", () => {
+    const addressTab: OnboardingTab = {
       tab: "Address",
       sections: [
-        { section: "Current Address", fields: [{ fieldname: "current_city", label: "Current City", fieldtype: "Data", is_mandatory: 0, read_only: 0, hidden: 0 }] },
-        { section: "Permanent Address", fields: [{ fieldname: "permanent_city", label: "Permanent City", fieldtype: "Data", is_mandatory: 0, read_only: 0, hidden: 0 }] }
+        {
+          section: "Addresses",
+          fields: [
+            { fieldname: "custom_same_as_permanent", label: "Same as Permanent", fieldtype: "Check", is_mandatory: 0, read_only: 0, hidden: 0 },
+            { fieldname: "custom_permanent_address", label: "Permanent Address", fieldtype: "Data", is_mandatory: 0, read_only: 0, hidden: 0 },
+            { fieldname: "custom_communication_address", label: "Communication Address", fieldtype: "Data", is_mandatory: 0, read_only: 0, hidden: 0 },
+            { fieldname: "custom_permananent_city", label: "Permanent City", fieldtype: "Data", is_mandatory: 0, read_only: 0, hidden: 0 },
+            { fieldname: "custom_communication_city", label: "Communication City", fieldtype: "Data", is_mandatory: 0, read_only: 0, hidden: 0 }
+          ]
+        }
       ]
     };
-    
+
     vi.mocked(useOnboarding).mockReturnValue(defaultContext);
-    render(<OnboardingFormStep tab={tabWithAddress} stepKey="address" />);
-    
-    const sameAsBtn = screen.getByText("Same as Current Address");
-    expect(sameAsBtn).toBeTruthy();
-    
-    fireEvent.change(screen.getByTestId("input-current_city"), { target: { value: "Gotham" } });
-    fireEvent.click(sameAsBtn);
-    
-    const permInput = screen.getByTestId("input-permanent_city") as HTMLInputElement;
-    expect(permInput.value).toBe("Gotham");
+    render(<OnboardingFormStep tab={addressTab} stepKey="address_sync" />);
+
+    // 1. Verify custom_same_as_permanent occupies its own row (spans full width)
+    const checkboxFieldDiv = screen.getByTestId("field-custom_same_as_permanent");
+    expect(checkboxFieldDiv.className).toContain("md:col-span-full");
+
+    // 2. Change permanent address and city
+    fireEvent.change(screen.getByTestId("input-custom_permanent_address"), { target: { value: "123 Permanent Rd" } });
+    fireEvent.change(screen.getByTestId("input-custom_permananent_city"), { target: { value: "Permanent City" } });
+
+    // Ensure they are not copied yet because checkbox is unchecked
+    const commAddressInput = screen.getByTestId("input-custom_communication_address") as HTMLInputElement;
+    const commCityInput = screen.getByTestId("input-custom_communication_city") as HTMLInputElement;
+    expect(commAddressInput.value).toBe("");
+    expect(commCityInput.value).toBe("");
+
+    // 3. Check custom_same_as_permanent (simulate check in mock input)
+    fireEvent.change(screen.getByTestId("input-custom_same_as_permanent"), { target: { value: "true" } });
+
+    // Expect permanent address fields to be copied to communication address fields
+    expect(commAddressInput.value).toBe("123 Permanent Rd");
+    expect(commCityInput.value).toBe("Permanent City");
+
+    // 4. Update permanent address field while checkbox is checked, expect automatic sync
+    fireEvent.change(screen.getByTestId("input-custom_permanent_address"), { target: { value: "456 New Permanent Rd" } });
+    expect(commAddressInput.value).toBe("456 New Permanent Rd");
   });
 
   it("disables buttons when isSaving is true", () => {
@@ -333,6 +372,273 @@ describe("OnboardingFormStep", () => {
           expect(screen.getByText("Please enter a valid 10-digit mobile number")).toBeTruthy();
        });
     });
+
+     it("prevents custom_emergency_contact_number from being the same as custom_mobile_number", async () => {
+        const contactTab: OnboardingTab = {
+           tab: "Contacts",
+           sections: [{
+              section: "Direct Contact Info",
+              fields: [
+                 { fieldname: "custom_mobile_number", label: "Mobile Number", fieldtype: "Data", is_mandatory: 0, read_only: 0, hidden: 0 },
+                 { fieldname: "custom_emergency_contact_number", label: "Emergency Contact", fieldtype: "Data", is_mandatory: 0, read_only: 0, hidden: 0 }
+              ]
+           }]
+        };
+        
+        vi.mocked(useOnboarding).mockReturnValue(defaultContext);
+        render(<OnboardingFormStep tab={contactTab} stepKey="contact_test" />);
+        
+        fireEvent.change(screen.getByTestId("input-custom_mobile_number"), { target: { value: "9876543210" } });
+        fireEvent.change(screen.getByTestId("input-custom_emergency_contact_number"), { target: { value: "9876543210" } });
+        
+        fireEvent.blur(screen.getByTestId("input-custom_mobile_number"));
+        fireEvent.blur(screen.getByTestId("input-custom_emergency_contact_number"));
+        fireEvent.click(screen.getByText("Save & Next"));
+        
+        await waitFor(() => {
+           expect(screen.getByText("Emergency contact number cannot be the same as mobile number")).toBeTruthy();
+           expect(screen.getByText("Mobile number cannot be the same as emergency contact number")).toBeTruthy();
+        });
+     });
+
+     it("validates same number constraint even if fields are on different steps (using stepData)", async () => {
+        const contactTab: OnboardingTab = {
+           tab: "Contacts",
+           sections: [{
+              section: "Direct Contact Info",
+              fields: [
+                 { fieldname: "custom_emergency_contact_number", label: "Emergency Contact", fieldtype: "Data", is_mandatory: 0, read_only: 0, hidden: 0 }
+              ]
+           }]
+        };
+        
+        vi.mocked(useOnboarding).mockReturnValue({
+           ...defaultContext,
+           stepData: {
+              personal_info: {
+                 custom_mobile_number: "9876543210"
+              }
+           }
+        });
+        render(<OnboardingFormStep tab={contactTab} stepKey="contact_test" />);
+        
+        fireEvent.change(screen.getByTestId("input-custom_emergency_contact_number"), { target: { value: "9876543210" } });
+        fireEvent.blur(screen.getByTestId("input-custom_emergency_contact_number"));
+        fireEvent.click(screen.getByText("Save & Next"));
+        
+        await waitFor(() => {
+           expect(screen.getByText("Emergency contact number cannot be the same as mobile number")).toBeTruthy();
+        });
+     });
+
+     it("validates custom_aadhaar_number ensuring exactly 12 digits", async () => {
+        const aadhaarTab: OnboardingTab = {
+           tab: "Identity",
+           sections: [{
+              section: "Government IDs",
+              fields: [
+                 { fieldname: "custom_aadhaar_number", label: "Aadhaar", fieldtype: "Data", is_mandatory: 0, read_only: 0, hidden: 0 }
+              ]
+           }]
+        };
+        
+        vi.mocked(useOnboarding).mockReturnValue(defaultContext);
+        render(<OnboardingFormStep tab={aadhaarTab} stepKey="identity_test" />);
+        
+        fireEvent.change(screen.getByTestId("input-custom_aadhaar_number"), { target: { value: "123456" } });
+        fireEvent.blur(screen.getByTestId("input-custom_aadhaar_number"));
+        fireEvent.click(screen.getByText("Save & Next"));
+        
+        await waitFor(() => {
+           expect(screen.getByText("Please enter a valid 12-digit Aadhaar number")).toBeTruthy();
+        });
+     });
+
+     it("validates custom_pan_number format AAAAA1111A", async () => {
+        const panTab: OnboardingTab = {
+           tab: "Identity",
+           sections: [{
+              section: "Government IDs",
+              fields: [
+                 { fieldname: "custom_pan_number", label: "PAN", fieldtype: "Data", is_mandatory: 0, read_only: 0, hidden: 0 }
+              ]
+           }]
+        };
+        
+        vi.mocked(useOnboarding).mockReturnValue(defaultContext);
+        render(<OnboardingFormStep tab={panTab} stepKey="identity_test" />);
+        
+        // Invalid formats: too short, incorrect positions
+        fireEvent.change(screen.getByTestId("input-custom_pan_number"), { target: { value: "ABC1234A" } });
+        fireEvent.blur(screen.getByTestId("input-custom_pan_number"));
+        fireEvent.click(screen.getByText("Save & Next"));
+        
+        await waitFor(() => {
+           expect(screen.getByText("Please enter a valid 10-character PAN number (e.g. AAAAA1111A)")).toBeTruthy();
+        });
+
+        // Valid format: AAAAA1111A
+        fireEvent.change(screen.getByTestId("input-custom_pan_number"), { target: { value: "ABCDE1234F" } });
+        fireEvent.blur(screen.getByTestId("input-custom_pan_number"));
+        fireEvent.click(screen.getByText("Save & Next"));
+        
+        await waitFor(() => {
+           expect(screen.queryByText("Please enter a valid 10-character PAN number (e.g. AAAAA1111A)")).toBeNull();
+        });
+     });
+
+     it("validates custom_permanent_postal_code ensuring exactly 6 digits not starting with 0", async () => {
+        const postalTab: OnboardingTab = {
+           tab: "Address",
+           sections: [{
+              section: "Permanent Address",
+              fields: [
+                 { fieldname: "custom_permanent_postal_code", label: "Postal Code", fieldtype: "Data", is_mandatory: 0, read_only: 0, hidden: 0 }
+              ]
+           }]
+        };
+        
+        vi.mocked(useOnboarding).mockReturnValue(defaultContext);
+        render(<OnboardingFormStep tab={postalTab} stepKey="address_test" />);
+        
+        // Invalid format: starts with 0
+        fireEvent.change(screen.getByTestId("input-custom_permanent_postal_code"), { target: { value: "012345" } });
+        fireEvent.blur(screen.getByTestId("input-custom_permanent_postal_code"));
+        fireEvent.click(screen.getByText("Save & Next"));
+        
+        await waitFor(() => {
+           expect(screen.getByText("Please enter a valid 6-digit postal code (cannot start with 0)")).toBeTruthy();
+        });
+
+        // Invalid format: too short
+        fireEvent.change(screen.getByTestId("input-custom_permanent_postal_code"), { target: { value: "12345" } });
+        fireEvent.blur(screen.getByTestId("input-custom_permanent_postal_code"));
+        fireEvent.click(screen.getByText("Save & Next"));
+        
+        await waitFor(() => {
+           expect(screen.getByText("Please enter a valid 6-digit postal code (cannot start with 0)")).toBeTruthy();
+        });
+
+        // Valid format: 110001
+        fireEvent.change(screen.getByTestId("input-custom_permanent_postal_code"), { target: { value: "110001" } });
+        fireEvent.blur(screen.getByTestId("input-custom_permanent_postal_code"));
+        fireEvent.click(screen.getByText("Save & Next"));
+        
+        await waitFor(() => {
+           expect(screen.queryByText("Please enter a valid 6-digit postal code (cannot start with 0)")).toBeNull();
+        });
+     });
+
+      it("validates custom_ifsc_code format", async () => {
+         const ifscTab: OnboardingTab = {
+            tab: "Bank Details",
+            sections: [{
+               section: "Bank Information",
+               fields: [
+                  { fieldname: "custom_ifsc_code", label: "IFSC Code", fieldtype: "Data", is_mandatory: 0, read_only: 0, hidden: 0 }
+               ]
+            }]
+         };
+         
+         vi.mocked(useOnboarding).mockReturnValue(defaultContext);
+         render(<OnboardingFormStep tab={ifscTab} stepKey="bank_test" />);
+         
+         // Invalid format: too long / wrong character pattern
+         fireEvent.change(screen.getByTestId("input-custom_ifsc_code"), { target: { value: "SBIN00000000" } });
+         fireEvent.blur(screen.getByTestId("input-custom_ifsc_code"));
+         fireEvent.click(screen.getByText("Save & Next"));
+         
+         await waitFor(() => {
+            expect(screen.getByText("Please enter a valid 11-character IFSC code (e.g. SBIN0123456)")).toBeTruthy();
+         });
+
+         // Invalid format: missing 0 at 5th character
+         fireEvent.change(screen.getByTestId("input-custom_ifsc_code"), { target: { value: "SBIN1123456" } });
+         fireEvent.blur(screen.getByTestId("input-custom_ifsc_code"));
+         fireEvent.click(screen.getByText("Save & Next"));
+         
+         await waitFor(() => {
+            expect(screen.getByText("Please enter a valid 11-character IFSC code (e.g. SBIN0123456)")).toBeTruthy();
+         });
+
+         // Valid format: SBIN0123456
+         fireEvent.change(screen.getByTestId("input-custom_ifsc_code"), { target: { value: "SBIN0123456" } });
+         fireEvent.blur(screen.getByTestId("input-custom_ifsc_code"));
+         fireEvent.click(screen.getByText("Save & Next"));
+         
+         await waitFor(() => {
+            expect(screen.queryByText("Please enter a valid 11-character IFSC code (e.g. SBIN0123456)")).toBeNull();
+         });
+      });
+
+     it("validates custom_date_of_birth ensuring age is at least 18", async () => {
+        const dobTab: OnboardingTab = {
+           tab: "Personal Info",
+           sections: [{
+              section: "General Info",
+              fields: [
+                 { fieldname: "custom_date_of_birth", label: "Date of Birth", fieldtype: "Date", is_mandatory: 0, read_only: 0, hidden: 0 }
+              ]
+           }]
+        };
+        
+        vi.mocked(useOnboarding).mockReturnValue(defaultContext);
+        render(<OnboardingFormStep tab={dobTab} stepKey="personal_test" />);
+        
+        // Calculate a date that is 10 years ago (under 18)
+        const today = new Date();
+        const tenYearsAgo = new Date(today.getFullYear() - 10, today.getMonth(), today.getDate());
+        const tenYearsAgoStr = tenYearsAgo.toISOString().split("T")[0];
+
+        fireEvent.change(screen.getByTestId("input-custom_date_of_birth"), { target: { value: tenYearsAgoStr } });
+        fireEvent.blur(screen.getByTestId("input-custom_date_of_birth"));
+        fireEvent.click(screen.getByText("Save & Next"));
+        
+        await waitFor(() => {
+           expect(screen.getByText("You must be at least 18 years old")).toBeTruthy();
+        });
+
+        // Calculate a date that is 20 years ago (over 18)
+        const twentyYearsAgo = new Date(today.getFullYear() - 20, today.getMonth(), today.getDate());
+        const twentyYearsAgoStr = twentyYearsAgo.toISOString().split("T")[0];
+
+        fireEvent.change(screen.getByTestId("input-custom_date_of_birth"), { target: { value: twentyYearsAgoStr } });
+        fireEvent.blur(screen.getByTestId("input-custom_date_of_birth"));
+        fireEvent.click(screen.getByText("Save & Next"));
+        
+        await waitFor(() => {
+           expect(screen.queryByText("You must be at least 18 years old")).toBeNull();
+        });
+     });
+
+     it("automatically calculates and populates custom_age based on custom_date_of_birth change", async () => {
+        const dobAgeTab: OnboardingTab = {
+           tab: "Personal Info",
+           sections: [{
+              section: "General Info",
+              fields: [
+                 { fieldname: "custom_date_of_birth", label: "Date of Birth", fieldtype: "Date", is_mandatory: 0, read_only: 0, hidden: 0 },
+                 { fieldname: "custom_age", label: "Age", fieldtype: "Int", is_mandatory: 0, read_only: 0, hidden: 0 }
+              ]
+           }]
+        };
+        
+        vi.mocked(useOnboarding).mockReturnValue(defaultContext);
+        render(<OnboardingFormStep tab={dobAgeTab} stepKey="personal_test" />);
+        
+        // Calculate a date that is exactly 25 years ago
+        const today = new Date();
+        const twentyFiveYearsAgo = new Date(today.getFullYear() - 25, today.getMonth(), today.getDate());
+        const twentyFiveYearsAgoStr = twentyFiveYearsAgo.toISOString().split("T")[0];
+
+        fireEvent.change(screen.getByTestId("input-custom_date_of_birth"), { target: { value: twentyFiveYearsAgoStr } });
+        fireEvent.blur(screen.getByTestId("input-custom_date_of_birth"));
+        
+        await waitFor(() => {
+           const ageInput = screen.getByTestId("input-custom_age") as HTMLInputElement;
+           expect(ageInput.value).toBe("25");
+        });
+     });
 
     it("triggers background state replication on throttle loop completion", () => {
        // Exercises Line 273-274 Auto-save logic
@@ -662,5 +968,96 @@ describe("OnboardingFormStep", () => {
          expect(fileUploads[0].getAttribute("data-isrejected")).toBe("true");
          expect(fileUploads[1].getAttribute("data-isrejected")).toBe("true");
       });
-   });
+
+      it("validates that year of passing does not decrease as education level progresses", async () => {
+         const eduTab: OnboardingTab = {
+            tab: "Education Tab",
+            sections: [{
+               section: "Education Details",
+               fields: [
+                  {
+                     fieldname: "custom_education_details",
+                     label: "Education Details",
+                     fieldtype: "Table",
+                     is_mandatory: 1,
+                     read_only: 0,
+                     hidden: 0,
+                     child_fields: [
+                        { fieldname: "education_level", label: "Education Level", fieldtype: "Select", reqd: 1, read_only: 0, hidden: 0 },
+                        { fieldname: "year_of_passing", label: "Year of Passing", fieldtype: "Link", reqd: 1, read_only: 0, hidden: 0 }
+                     ]
+                  }
+               ]
+            }]
+         };
+
+         vi.mocked(useOnboarding).mockReturnValue({
+            ...defaultContext,
+            stepData: {
+               edu_test: {
+                  custom_education_details: [
+                     { education_level: "10th", year_of_passing: "2021" },
+                     { education_level: "12th", year_of_passing: "2020" }
+                  ]
+               }
+             }
+         });
+
+         render(<OnboardingFormStep tab={eduTab} stepKey="edu_test" />);
+
+         fireEvent.click(screen.getByText("Save & Next"));
+
+         await waitFor(() => {
+            expect(screen.getByTestId("error-message")).toHaveTextContent(
+               "Year of passing for 12th must be after 10th (2021)"
+            );
+         });
+      });
+
+      it("validates that total percentage for each nomination type is exactly 100%", async () => {
+         const nomTab: OnboardingTab = {
+            tab: "Nomination Tab",
+            sections: [{
+               section: "Nominations",
+               fields: [
+                  {
+                     fieldname: "custom_nomination_details",
+                     label: "Nomination Details",
+                     fieldtype: "Table",
+                     is_mandatory: 1,
+                     read_only: 0,
+                     hidden: 0,
+                     child_fields: [
+                        { fieldname: "nomination_type", label: "Nomination Type", fieldtype: "Select", reqd: 1, read_only: 0, hidden: 0 },
+                        { fieldname: "nominee_name", label: "Name", fieldtype: "Data", reqd: 1, read_only: 0, hidden: 0 },
+                        { fieldname: "percentage", label: "Percentage", fieldtype: "Float", reqd: 1, read_only: 0, hidden: 0 }
+                     ]
+                  }
+               ]
+            }]
+         };
+
+         vi.mocked(useOnboarding).mockReturnValue({
+            ...defaultContext,
+            stepData: {
+               nom_test: {
+                  custom_nomination_details: [
+                     { nomination_type: "Gratuity", nominee_name: "Nominee 1", percentage: "60" },
+                     { nomination_type: "Gratuity", nominee_name: "Nominee 2", percentage: "30" }
+                  ]
+               }
+            }
+         });
+
+         render(<OnboardingFormStep tab={nomTab} stepKey="nom_test" />);
+
+         fireEvent.click(screen.getByText("Save & Next"));
+
+         await waitFor(() => {
+            expect(screen.getByTestId("error-message")).toHaveTextContent(
+               "Total percentage for Gratuity nomination must be exactly 100% (currently 90%)"
+            );
+         });
+      });
+    });
 });

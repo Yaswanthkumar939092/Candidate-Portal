@@ -11,6 +11,7 @@ import {
   useForm,
   useWatch,
   Controller,
+  FormProvider,
 } from "react-hook-form";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useOnboarding } from "@/lib/contexts/onboarding-context";
@@ -24,6 +25,7 @@ import { SectionCard } from "@/components/onboarding/section-card";
 import { DynamicFieldRenderer } from "@/components/ui/field-renderer";
 import { DynamicTableField } from "@/components/onboarding/dynamic-table-field";
 import { evaluateDependsOn } from "@/lib/onboarding-utils";
+import { validateOnboardingStep } from "@/lib/validation/onboarding-validation";
 interface OnboardingFormStepProps {
   tab: OnboardingTab;
   stepKey: string;
@@ -48,6 +50,7 @@ interface FormStepFieldProps {
   setValue: UseFormSetValue<OnboardingFormValues>;
   trigger: UseFormTrigger<OnboardingFormValues>;
   error?: string;
+  doc?: Record<string, unknown>;
   handleFileUpload: (fieldname: string) => (url: string | null) => void;
   overrides: {
     Attach: {
@@ -63,13 +66,15 @@ const FormStepField = React.memo(function FormStepField({
   field,
   control,
   // setValue,
-  // trigger,
+  trigger,
   error,
+  doc,
   handleFileUpload,
   overrides,
 }: FormStepFieldProps) {
   // Determine grid classes
   const isFullWidthByLabel =
+    field.fieldname === "custom_same_as_permanent" ||
     field.label.toLowerCase().includes("address proof") ||
     field.fieldname.toLowerCase().includes("custom_upload_pan_card") ||
     field.fieldname
@@ -94,14 +99,16 @@ const FormStepField = React.memo(function FormStepField({
           value={rhfField.value}
           onChange={(val) => {
             rhfField.onChange(val);
-            // Optionally trigger validation immediately
-            // void trigger(field.fieldname);
+            if (error) {
+              void trigger(field.fieldname);
+            }
           }}
           onBlur={rhfField.onBlur}
           error={error}
           className={fieldClassName}
           onAttachChange={handleFileUpload}
           overrides={overrides}
+          document={doc}
         />
       )}
     />
@@ -151,129 +158,7 @@ export function OnboardingFormStep({
 
   const validationResolver = useCallback<Resolver<OnboardingFormValues>>(
     (values) => {
-      const errorList: FieldErrors<OnboardingFormValues> = {};
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      const phoneRegex = /^\d{10}$/;
-
-      // Build doc object for evaluating depends_on in validation
-      const doc: Record<string, any> = {};
-      Object.keys(stepData).forEach((key) => {
-        Object.assign(doc, stepData[key]);
-      });
-      Object.assign(doc, values);
-
-      tab.sections.forEach((section) => {
-        section.fields.forEach((field) => {
-          const isFieldVisible = !field.hidden && (!field.depends_on || evaluateDependsOn(field.depends_on, doc));
-          if (!isFieldVisible) {
-            return;
-          }
-
-          const fieldValue = values[field.fieldname];
-          const normalizedValue =
-            typeof fieldValue === "string" ? fieldValue.trim() : fieldValue;
-          const isEmailField =
-            field.fieldtype.toLowerCase() === "email" ||
-            field.label.toLowerCase().includes("email") ||
-            field.fieldname.toLowerCase().includes("email");
-          const isPhoneField =
-            field.label.toLowerCase().includes("mobile") ||
-            field.label.toLowerCase().includes("contact number") ||
-            field.label.toLowerCase().includes("contact no") ||
-            field.label.toLowerCase().includes("phone") ||
-            field.fieldname.toLowerCase().includes("mobile") ||
-            field.fieldname.toLowerCase().includes("phone") ||
-            field.fieldname.toLowerCase().includes("contact_no") ||
-            field.fieldname.toLowerCase().includes("contactnumber");
-
-          const isTable = field.fieldtype === "Table";
-          const isMandatory =
-            field.is_mandatory ||
-            field.reqd ||
-            (field.mandatory_depends_on && evaluateDependsOn(field.mandatory_depends_on, doc));
-
-          if (isTable) {
-            const rows = Array.isArray(normalizedValue) ? (normalizedValue as Record<string, unknown>[]) : [];
-            const visibleChildFields = field.child_fields?.filter(f => !f.hidden) || [];
-            const mandatoryChildFields = visibleChildFields.filter(f => f.is_mandatory || f.reqd);
-
-            const isRowEmpty = (row: Record<string, unknown>) => {
-              return !visibleChildFields.some(cf => {
-                const val = row[cf.fieldname];
-                return val !== undefined && val !== null && String(val).trim() !== "";
-              });
-            };
-
-            const isRowValid = (row: Record<string, unknown>) => {
-              return mandatoryChildFields.every(cf => {
-                const val = row[cf.fieldname];
-                return val !== undefined && val !== null && String(val).trim() !== "";
-              });
-            };
-
-            const nonEmptyRows = rows.filter(row => !isRowEmpty(row));
-
-            if (isMandatory && nonEmptyRows.length === 0) {
-              errorList[field.fieldname] = {
-                type: "required",
-                message: `${field.label || "This field"} is required`,
-              };
-            } else if (nonEmptyRows.length > 0 && !nonEmptyRows.every(isRowValid)) {
-              errorList[field.fieldname] = {
-                type: "required",
-                message: `Please complete all required fields in ${field.label}`,
-              };
-            }
-          } else if (isMandatory) {
-            const isCheck = field.fieldtype === "Check";
-
-            if (isCheck) {
-              if (!Boolean(normalizedValue)) {
-                errorList[field.fieldname] = {
-                  type: "required",
-                  message: `${field.label || "This field"} is required`,
-                };
-              }
-            } else {
-              if (
-                normalizedValue === undefined ||
-                normalizedValue === null ||
-                normalizedValue === ""
-              ) {
-                errorList[field.fieldname] = {
-                  type: "required",
-                  message: `${field.label || "This field"} is required`,
-                };
-                return;
-              }
-            }
-          }
-
-          if (
-            isEmailField &&
-            typeof normalizedValue === "string" &&
-            normalizedValue !== "" &&
-            !emailRegex.test(normalizedValue)
-          ) {
-            errorList[field.fieldname] = {
-              type: "pattern",
-              message: "Please enter a valid email address",
-            };
-          }
-
-          if (
-            isPhoneField &&
-            typeof normalizedValue === "string" &&
-            normalizedValue !== "" &&
-            !phoneRegex.test(normalizedValue)
-          ) {
-            errorList[field.fieldname] = {
-              type: "pattern",
-              message: "Please enter a valid 10-digit mobile number",
-            };
-          }
-        });
-      });
+      const errorList = validateOnboardingStep(tab, values, stepData);
 
       if (Object.keys(errorList).length) {
         return {
@@ -290,6 +175,13 @@ export function OnboardingFormStep({
     [tab, stepData],
   );
 
+  const formMethods = useForm<OnboardingFormValues>({
+    defaultValues,
+    resolver: validationResolver,
+    mode: "onBlur",
+    reValidateMode: "onBlur",
+  });
+
   const {
     handleSubmit,
     setValue,
@@ -298,12 +190,7 @@ export function OnboardingFormStep({
     formState: { errors },
     // reset,
     getValues,
-  } = useForm<OnboardingFormValues>({
-    defaultValues,
-    resolver: validationResolver,
-    mode: "onBlur",
-    reValidateMode: "onBlur",
-  });
+  } = formMethods;
 
   // defaultValues is passed directly to useForm, so it is initialized on mount.
   // We do NOT call reset(defaultValues) here because it causes an infinite loop 
@@ -320,6 +207,53 @@ export function OnboardingFormStep({
     return merged;
   }, [stepData, currentFormValues]);
 
+  // Automatically populate custom_age based on custom_date_of_birth
+  const dobValue = currentFormValues.custom_date_of_birth;
+  useEffect(() => {
+    if (typeof dobValue === "string" && dobValue !== "") {
+      const birthDate = new Date(dobValue);
+      if (!isNaN(birthDate.getTime())) {
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+        if (!isNaN(age) && age >= 0) {
+          const currentAge = getValues("custom_age");
+          if (String(currentAge) !== String(age)) {
+            setValue("custom_age", age, {
+              shouldValidate: true,
+              shouldDirty: true,
+            });
+          }
+        }
+      }
+    }
+  }, [dobValue, setValue, getValues]);
+
+  // Automatically sync permanent address to communication address if custom_same_as_permanent is checked
+  const sameAsPermanentChecked = !!currentFormValues.custom_same_as_permanent;
+  useEffect(() => {
+    if (sameAsPermanentChecked) {
+      const values = getValues();
+      Object.keys(values).forEach((key) => {
+        if (key.toLowerCase().includes("permanent") || key.toLowerCase().includes("permananent")) {
+          const commKey = key
+            .replace(/permananent/i, "communication")
+            .replace(/permanent/i, "communication");
+          
+          if (values[commKey] !== undefined && values[commKey] !== values[key]) {
+            setValue(commKey, values[key], {
+              shouldValidate: true,
+              shouldDirty: true,
+            });
+          }
+        }
+      });
+    }
+  }, [sameAsPermanentChecked, currentFormValues, getValues, setValue]);
+
   // Automatically clear fields when they become hidden
   useEffect(() => {
     tab.sections.forEach((section) => {
@@ -330,7 +264,7 @@ export function OnboardingFormStep({
             const val = getValues(field.fieldname);
             if (val !== undefined && val !== "" && val !== null && (Array.isArray(val) ? val.length > 0 : true)) {
               setValue(field.fieldname, field.fieldtype === "Table" ? [] : "", {
-                shouldValidate: true,
+                shouldValidate: false,
                 shouldDirty: true,
               });
             }
@@ -348,6 +282,21 @@ export function OnboardingFormStep({
     }, 500);
     return () => clearTimeout(timer);
   }, [currentFormValues, getValues, setStepData, stepKey]);
+
+  const onInvalid = useCallback((errors: FieldErrors<OnboardingFormValues>) => {
+    const errorFieldNames = Object.keys(errors);
+    if (errorFieldNames.length > 0) {
+      const firstErrorFieldName = errorFieldNames[0];
+      const element = document.getElementById(`field-${firstErrorFieldName}`);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+        const input = element.querySelector("input, select, textarea, button");
+        if (input instanceof HTMLElement) {
+          input.focus();
+        }
+      }
+    }
+  }, []);
 
   const onNext = handleSubmit(async (data) => {
     const unresolvedRejectedFields = tab.sections.flatMap((s) => s.fields).filter((field) => {
@@ -376,7 +325,7 @@ export function OnboardingFormStep({
     } catch {
       // Error is handled in submitAll
     }
-  });
+  }, onInvalid);
 
   const handleFileUpload = useCallback(
     (fieldname: string) => (url: string | null) => {
@@ -394,12 +343,13 @@ export function OnboardingFormStep({
           error,
           disabled,
           className,
+          onChange,
         }: OverrideComponentProps) => (
           <FileUploadField
             label={field.label}
             required={!!(field.is_mandatory || field.reqd)}
             value={value as string}
-            onChange={handleFileUpload(field.fieldname)}
+            onChange={(url) => onChange(url || "")}
             disabled={disabled || !!field.read_only}
             error={error}
             className={className}
@@ -425,12 +375,13 @@ export function OnboardingFormStep({
           error,
           disabled,
           className,
+          onChange,
         }: OverrideComponentProps) => (
           <FileUploadField
             label={field.label}
             required={!!(field.is_mandatory || field.reqd)}
             value={value as string}
-            onChange={handleFileUpload(field.fieldname)}
+            onChange={(url) => onChange(url || "")}
             disabled={disabled || !!field.read_only}
             error={error}
             className={className}
@@ -450,11 +401,12 @@ export function OnboardingFormStep({
         ),
       },
     }),
-    [handleFileUpload],
+    [],
   );
 
   return (
-    <form onSubmit={onNext} className={cn("space-y-8", className)}>
+    <FormProvider {...formMethods}>
+      <form onSubmit={onNext} className={cn("space-y-8", className)}>
       {tab.sections.map((section, idx) => {
         // Check if there is at least one visible field in this section
         const hasVisibleFields = section.fields.some((field) => {
@@ -465,29 +417,6 @@ export function OnboardingFormStep({
 
         return (
           <React.Fragment key={idx}>
-            {section.section.toLowerCase().includes("permanent address") && (
-              <div className="flex justify-start mb-2 px-2">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => {
-                    const values = getValues();
-                    Object.keys(values).forEach((key) => {
-                      if (key.toLowerCase().includes("current")) {
-                        const permKey = key.replace(/current/i, "permanent");
-                        setValue(permKey, values[key], {
-                          shouldValidate: true,
-                          shouldDirty: true,
-                        });
-                      }
-                    });
-                  }}
-                >
-                  Same as Current Address
-                </Button>
-              </div>
-            )}
             <SectionCard
               title={section.section === tab.tab ? undefined : section.section}
             >
@@ -509,7 +438,9 @@ export function OnboardingFormStep({
                       field={field}
                       control={control}
                       setValue={setValue as UseFormSetValue<FieldValues>}
+                      trigger={trigger as UseFormTrigger<FieldValues>}
                       errors={errors as FieldErrors<FieldValues>}
+                      document={doc}
                       onAttachChange={handleFileUpload}
                       overrides={fieldOverrides}
                     />
@@ -521,6 +452,7 @@ export function OnboardingFormStep({
                       setValue={setValue}
                       trigger={trigger}
                       error={errors[field.fieldname]?.message as string}
+                      doc={doc}
                       handleFileUpload={handleFileUpload}
                       overrides={fieldOverrides}
                     />
@@ -549,6 +481,7 @@ export function OnboardingFormStep({
           <ChevronRight className="ml-1 h-4 w-4" />
         </Button>
       </div>
-    </form>
+      </form>
+    </FormProvider>
   );
 }

@@ -14,7 +14,11 @@ export interface LinkFieldOptionsResponse {
 }
 
 export const linkFieldService = {
-  getLinkFieldOptions: async (doctype: string, searchText?: string): Promise<LinkFieldOptionsResponse> => {
+  getLinkFieldOptions: async (
+    doctype: string,
+    searchText?: string,
+    filters?: Record<string, any>
+  ): Promise<LinkFieldOptionsResponse> => {
     if (!doctype) throw new Error("Doctype is required");
 
     const params: Record<string, string> = {
@@ -22,6 +26,9 @@ export const linkFieldService = {
     };
     if (searchText) {
       params.search_text = searchText;
+    }
+    if (filters) {
+      params.filters = JSON.stringify(filters);
     }
 
     const res = await FrappeAPI.get("recruitment.api.candidate_portal.get_link_field_options", params);

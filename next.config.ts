@@ -4,7 +4,8 @@ function getRemoteImagePatterns() {
   const configuredFrappeUrl =
     process.env.NEXT_PUBLIC_FRAPPE_URL ||
     (process.env.NODE_ENV === "development"
-      ? "http://localhost:8000"
+      ? // ? "http://localhost:8000"
+        "http://localhost:8001"
       : undefined);
 
   if (!configuredFrappeUrl) {
@@ -50,7 +51,7 @@ const nextConfig: NextConfig = {
   },
   images: {
     remotePatterns: getRemoteImagePatterns(),
-    domains: ['upload.wikimedia.org'],
+    domains: ["upload.wikimedia.org"],
   },
   webpack: (config, { dev }) => {
     config.resolve.alias.canvas = false;

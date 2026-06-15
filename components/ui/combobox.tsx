@@ -27,6 +27,7 @@ interface ComboboxProps {
   disabled?: boolean;
   className?: string;
   loading?: boolean;
+  onBlur?: () => void;
   // For server side search
   searchValue?: string;
   onSearchValueChange?: (search: string) => void;
@@ -42,6 +43,7 @@ export function Combobox({
   disabled = false,
   className,
   loading = false,
+  onBlur,
   searchValue,
   onSearchValueChange,
 }: ComboboxProps) {
@@ -92,13 +94,26 @@ export function Combobox({
   }, [filteredOptions]);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen);
+        if (open && !nextOpen) {
+          onBlur?.();
+        }
+      }}
+    >
       <PopoverTrigger asChild>
         <Button
           variant="outline"
           role="combobox"
           aria-expanded={open}
           disabled={disabled}
+          onBlur={() => {
+            if (!open) {
+              onBlur?.();
+            }
+          }}
           className={cn(
             "w-full justify-between font-normal bg-muted text-left border-input text-sm relative h-9 px-3 py-2 shadow-xs disabled:cursor-not-allowed disabled:opacity-50",
             !value && "text-muted-foreground",

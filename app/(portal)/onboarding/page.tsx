@@ -72,7 +72,9 @@ function OnboardingContent() {
 
   // Total steps: one for each tab + one final review step
   const totalSteps = tabs.length + 1
-  const progressPercentage = (completedSteps.size / totalSteps) * 100
+  const progressPercentage = formConfig?.field_status_counts && formConfig.field_status_counts.total > 0
+    ? ((formConfig.field_status_counts.filled + formConfig.field_status_counts.approved) / formConfig.field_status_counts.total) * 100
+    : (completedSteps.size / totalSteps) * 100
 
   let stepTitle = ''
   let StepComponent: React.ReactNode = null

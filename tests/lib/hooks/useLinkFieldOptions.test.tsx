@@ -47,7 +47,7 @@ describe("useLinkFieldOptions", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual(mockRes);
-    expect(linkFieldService.getLinkFieldOptions).toHaveBeenCalledWith("Designation", "searchQuery");
+    expect(linkFieldService.getLinkFieldOptions).toHaveBeenCalledWith("Designation", "searchQuery", undefined);
   });
 
   it("does not fetch if doctype is missing", () => {

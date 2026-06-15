@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, waitFor, fireEvent } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
+import { useForm, FormProvider } from "react-hook-form"
 import { DynamicFieldRenderer, FormField } from "@/components/ui/field-renderer"
 
 vi.mock("@/lib/frappe-api", () => ({
@@ -85,6 +86,26 @@ describe("DynamicFieldRenderer", () => {
 
       render(
         <DynamicFieldRenderer field={field} value="" onChange={vi.fn()} />
+      )
+
+      expect(screen.getByText("*")).toBeTruthy()
+    })
+
+    it("shows required indicator when mandatory_depends_on evaluates to true", () => {
+      const field: FormField = {
+        fieldname: "previous_name",
+        label: "Previous Name",
+        fieldtype: "Data",
+        mandatory_depends_on: "eval:doc.name_changed == 'Yes'",
+      }
+
+      render(
+        <DynamicFieldRenderer
+          field={field}
+          value=""
+          onChange={vi.fn()}
+          document={{ name_changed: "Yes" }}
+        />
       )
 
       expect(screen.getByText("*")).toBeTruthy()
@@ -183,6 +204,25 @@ describe("DynamicFieldRenderer", () => {
       expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("9876543210")
     })
 
+    it("accepts only digits for custom_account_number", async () => {
+      const field: FormField = {
+        fieldname: "custom_account_number",
+        label: "Account Number",
+        fieldtype: "Data",
+      }
+      const onChange = vi.fn()
+
+      render(
+        <DynamicFieldRenderer field={field} value="" onChange={onChange} />
+      )
+
+      const input = screen.getByRole("textbox") as HTMLInputElement
+      fireEvent.change(input, { target: { value: "12AB-34 56" } })
+
+      expect(onChange).toHaveBeenCalledWith("123456")
+      expect(input.inputMode).toBe("numeric")
+    })
+
     it("normalizes pincode input to 6 digits", async () => {
       const field: FormField = {
         fieldname: "pincode",
@@ -196,6 +236,70 @@ describe("DynamicFieldRenderer", () => {
 
       const input = screen.getByRole("textbox") as HTMLInputElement
       expect(input.maxLength).toBe(6)
+
+      rerender(
+        <DynamicFieldRenderer field={field} value="123456" onChange={vi.fn()} />
+      )
+
+      expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("123456")
+    })
+
+    it("normalizes custom_ifsc_code input to 11 uppercase characters and caps maxLength", async () => {
+      const field: FormField = {
+        fieldname: "custom_ifsc_code",
+        label: "IFSC Code",
+        fieldtype: "Data",
+      }
+
+      const { rerender } = render(
+        <DynamicFieldRenderer field={field} value="" onChange={vi.fn()} />
+      )
+
+      const input = screen.getByRole("textbox") as HTMLInputElement
+      expect(input.maxLength).toBe(11)
+
+      rerender(
+        <DynamicFieldRenderer field={field} value="sbin0123456" onChange={vi.fn()} />
+      )
+
+      expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("SBIN0123456")
+    })
+
+    it("normalizes custom_pan_number input to 10 uppercase characters and caps maxLength", async () => {
+      const field: FormField = {
+        fieldname: "custom_pan_number",
+        label: "PAN",
+        fieldtype: "Data",
+      }
+
+      const { rerender } = render(
+        <DynamicFieldRenderer field={field} value="" onChange={vi.fn()} />
+      )
+
+      const input = screen.getByRole("textbox") as HTMLInputElement
+      expect(input.maxLength).toBe(10)
+
+      rerender(
+        <DynamicFieldRenderer field={field} value="abcde1234f" onChange={vi.fn()} />
+      )
+
+      expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("ABCDE1234F")
+    })
+
+    it("normalizes custom_permanent_postal_code input to 6 digits and numeric input mode", async () => {
+      const field: FormField = {
+        fieldname: "custom_permanent_postal_code",
+        label: "Postal Code",
+        fieldtype: "Data",
+      }
+
+      const { rerender } = render(
+        <DynamicFieldRenderer field={field} value="" onChange={vi.fn()} />
+      )
+
+      const input = screen.getByRole("textbox") as HTMLInputElement
+      expect(input.maxLength).toBe(6)
+      expect(input.inputMode).toBe("numeric")
 
       rerender(
         <DynamicFieldRenderer field={field} value="123456" onChange={vi.fn()} />
@@ -223,6 +327,22 @@ describe("DynamicFieldRenderer", () => {
       )
 
       expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("123456789012")
+    })
+
+    it("does not normalize fields with 'name' in fieldname or label as Aadhaar fields", async () => {
+      const field: FormField = {
+        fieldname: "custom_name_as_per_aadhaar",
+        label: "Name as per Aadhaar",
+        fieldtype: "Data",
+      }
+
+      render(
+        <DynamicFieldRenderer field={field} value="" onChange={vi.fn()} />
+      )
+
+      const input = screen.getByRole("textbox") as HTMLInputElement
+      expect(input.maxLength).not.toBe(12)
+      expect(input.inputMode).not.toBe("numeric")
     })
   })
 
@@ -498,7 +618,7 @@ describe("DynamicFieldRenderer", () => {
       )
 
       await waitFor(() => {
-        expect(useLinkFieldOptions).toHaveBeenCalledWith("User", "")
+        expect(useLinkFieldOptions).toHaveBeenCalledWith("User", "", undefined)
       })
     })
 
@@ -1064,5 +1184,59 @@ describe("DynamicFieldRenderer", () => {
       )
       expect(cont3.textContent).toContain("File upload handler not provided")
     })
+
+    it("filters year_of_passing options chronologically based on lower/higher education levels", async () => {
+      vi.mocked(useLinkFieldOptions).mockReturnValue({
+        data: {
+          results: [
+            { id: "2020", label: "2020" },
+            { id: "2021", label: "2021" },
+            { id: "2022", label: "2022" },
+            { id: "2023", label: "2023" },
+          ],
+        },
+        isLoading: false,
+      } as any);
+
+      const field = {
+        fieldname: "year_of_passing",
+        label: "Year of Passing",
+        fieldtype: "Link",
+        options: "Years",
+      };
+
+      const Wrapper = ({ children }: { children: React.ReactNode }) => {
+        const methods = useForm({
+          defaultValues: {
+            custom_education_details: [
+              { education_level: "10th", year_of_passing: "2021" },
+              { education_level: "12th", year_of_passing: "" },
+              { education_level: "Graduation", year_of_passing: "2023" },
+            ],
+          },
+        });
+        return <FormProvider {...methods}>{children}</FormProvider>;
+      };
+
+      render(
+        <Wrapper>
+          <DynamicFieldRenderer
+            field={field}
+            value=""
+            onChange={vi.fn()}
+            tableFieldname="custom_education_details"
+            rowIndex={1}
+          />
+        </Wrapper>
+      );
+
+      const trigger = screen.getByRole("combobox");
+      await user.click(trigger);
+
+      expect(screen.queryByText("2020")).toBeNull();
+      expect(screen.queryByText("2021")).toBeNull();
+      expect(screen.getByText("2022")).toBeTruthy();
+      expect(screen.queryByText("2023")).toBeNull();
+    });
   })
 })

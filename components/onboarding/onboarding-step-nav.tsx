@@ -34,9 +34,11 @@ export function OnboardingStepNav({ className }: OnboardingStepNavProps) {
   ]
 
   const totalSteps = steps.length
-  const progressPercentage = totalSteps > 0
-    ? Math.round((completedSteps.size / totalSteps) * 100)
-    : 0
+  const progressPercentage = formConfig?.field_status_counts && formConfig.field_status_counts.total > 0
+    ? Math.round(((formConfig.field_status_counts.filled + formConfig.field_status_counts.approved) / formConfig.field_status_counts.total) * 100)
+    : (totalSteps > 0
+      ? Math.round((completedSteps.size / totalSteps) * 100)
+      : 0)
 
   return (
     <nav

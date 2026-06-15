@@ -25,6 +25,8 @@ import { useOptionalOnboarding } from "@/lib/contexts/onboarding-context";
 import { Combobox } from "@/components/ui/combobox";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { useLinkFieldOptions } from "@/lib/hooks/useLinkFieldOptions";
+import { useFormContext } from "react-hook-form";
+import { evaluateDependsOn } from "@/lib/onboarding-utils";
 
 export interface FormField {
   fieldname: string;
@@ -74,6 +76,8 @@ interface FieldComponentProps<T extends FormField> {
   error?: string;
   disabled?: boolean;
   className?: string;
+  tableFieldname?: string;
+  rowIndex?: number;
 }
 
 type FieldComponent<T extends FormField> = React.ComponentType<
@@ -131,16 +135,59 @@ function isPhoneField(field: FormField) {
 function isPincodeField(field: FormField) {
   const label = field.label.toLowerCase();
   const fieldname = field.fieldname.toLowerCase();
-  return label.includes("pincode") || label.includes("pin code") || fieldname.includes("pincode") || fieldname.includes("pin_code");
+  return (
+    label.includes("pincode") ||
+    label.includes("pin code") ||
+    label.includes("postalcode") ||
+    label.includes("postal code") ||
+    fieldname.includes("pincode") ||
+    fieldname.includes("pin_code") ||
+    fieldname.includes("postalcode") ||
+    fieldname.includes("postal_code")
+  );
 }
 
 function isAadhaarField(field: FormField) {
   const label = field.label.toLowerCase();
   const fieldname = field.fieldname.toLowerCase();
+  if (
+    fieldname.includes("name") ||
+    fieldname.includes("upload") ||
+    fieldname.includes("proof") ||
+    fieldname.includes("file") ||
+    fieldname.includes("attach") ||
+    label.includes("name") ||
+    label.includes("upload") ||
+    label.includes("proof") ||
+    label.includes("file") ||
+    label.includes("attach")
+  ) {
+    return false;
+  }
   return label.includes("aadhaar") || label.includes("aadhar") || label.includes("uid") || fieldname.includes("aadhaar") || fieldname.includes("aadhar") || fieldname.includes("uid");
 }
 
+function isPanField(field: FormField) {
+  return field.fieldname === "custom_pan_number";
+}
+
+function isAccountNumberField(field: FormField) {
+  return field.fieldname === "custom_account_number";
+}
+
+function isFieldRequired(field: FormField, doc: Record<string, unknown> = {}) {
+  return Boolean(
+    field.is_mandatory ||
+      field.reqd ||
+      (field.mandatory_depends_on && evaluateDependsOn(field.mandatory_depends_on, doc)),
+  );
+}
+
 function normalizeInputValue(field: FormField, rawValue: string) {
+  if (field.fieldname === "custom_ifsc_code") {
+    return rawValue.toUpperCase().slice(0, 11);
+  }
+
   if (isPhoneField(field)) {
     return rawValue.replace(/\D/g, "").slice(0, 10);
   }
@@ -151,6 +198,14 @@ function normalizeInputValue(field: FormField, rawValue: string) {
 
   if (isAadhaarField(field)) {
     return rawValue.replace(/\D/g, "").slice(0, 12);
+  }
+
+  if (isAccountNumberField(field)) {
+    return rawValue.replace(/\D/g, "");
+  }
+
+  if (isPanField(field)) {
+    return rawValue.toUpperCase().slice(0, 10);
   }
 
   return rawValue;
@@ -235,14 +290,14 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
         <div className="relative">
           <Input
             type={isEmailField(field) ? "email" : "text"}
-            value={(value as string) || ""}
+            value={typeof value === "string" ? normalizeInputValue(field, value) : (value as string) || ""}
             onChange={(e) => onChange(normalizeInputValue(field, e.target.value))}
             onBlur={onBlur}
             placeholder={field.label}
             disabled={disabled || !!field.read_only}
             className={cn("bg-muted", getValidationClass(field, value))}
-            inputMode={isPhoneField(field) || isPincodeField(field) || isAadhaarField(field) ? "numeric" : undefined}
-            maxLength={isPhoneField(field) ? 10 : isPincodeField(field) ? 6 : isAadhaarField(field) ? 12 : undefined}
+            inputMode={isPhoneField(field) || isPincodeField(field) || isAadhaarField(field) || isAccountNumberField(field) ? "numeric" : undefined}
+            maxLength={isPhoneField(field) ? 10 : isPincodeField(field) ? 6 : isAadhaarField(field) ? 12 : isPanField(field) ? 10 : field.fieldname === "custom_ifsc_code" ? 11 : undefined}
           />
           <FieldStatusTooltip field={field} value={value} />
         </div>
@@ -303,6 +358,12 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
   },
   Date: {
     component: ({ field, value, onChange, onBlur, error, disabled, className }) => {
+      let maxDateAttr: string | undefined = undefined;
+      if (field.fieldname === "custom_date_of_birth") {
+        const today = new Date();
+        const eighteenYearsAgo = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+        maxDateAttr = eighteenYearsAgo.toISOString().split("T")[0];
+      }
       return (
         <div className={cn("space-y-1.5", className)}>
           <Label className="text-sm font-medium text-foreground">
@@ -319,6 +380,7 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
               onBlur={onBlur}
               disabled={disabled || !!field.read_only}
               className={cn("bg-muted", getValidationClass(field, value))}
+              max={maxDateAttr}
             />
             <FieldStatusTooltip field={field} value={value} />
           </div>
@@ -328,12 +390,46 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
     },
   },
   Link: {
-    component: ({ field, value, onChange, error, disabled, className }) => {
+    component: ({
+      field,
+      value,
+      onChange,
+      onBlur,
+      error,
+      disabled,
+      className,
+      tableFieldname,
+      rowIndex,
+    }) => {
       const [search, setSearch] = React.useState("");
       const debouncedSearch = useDebounce(search, 300);
 
+      const formContext = useFormContext();
+      let dependentValue = "";
+      if (formContext) {
+        if (field.fieldname === "custom_permanent_city") {
+          dependentValue = formContext.watch("custom_permanent_state");
+        } else if (field.fieldname === "custom_communication_city") {
+          dependentValue = formContext.watch("custom_communication_state");
+        }
+      }
+
+      const stateName = (dependentValue && typeof dependentValue === "object")
+        ? ((dependentValue as any).id || (dependentValue as any).name || (dependentValue as any).value || "")
+        : String(dependentValue || "");
+
+      // Clear the selected city if the state changes
+      const prevStateNameRef = React.useRef(stateName);
+      React.useEffect(() => {
+        if (prevStateNameRef.current && prevStateNameRef.current !== stateName) {
+          onChange("");
+        }
+        prevStateNameRef.current = stateName;
+      }, [stateName, onChange]);
+
       const doctype = field.options || "";
-      const { data, isLoading } = useLinkFieldOptions(doctype, debouncedSearch);
+      const filters = stateName ? { state: stateName } : undefined;
+      const { data, isLoading } = useLinkFieldOptions(doctype, debouncedSearch, filters);
       const results = data?.results ?? [];
 
       let displayValue = "";
@@ -345,6 +441,48 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
         }
       }
 
+      let minYear: number | null = null;
+      let maxYear: number | null = null;
+      if (
+        formContext &&
+        tableFieldname === "custom_education_details" &&
+        field.fieldname === "year_of_passing" &&
+        rowIndex !== undefined
+      ) {
+        const EDUCATION_LEVEL_ORDER: Record<string, number> = {
+          "10th": 1,
+          "12th": 2,
+          "Graduation": 3,
+          "Post Graduation": 4,
+        };
+        const currentLevel = formContext.watch(
+          `${tableFieldname}.${rowIndex}.education_level`
+        );
+        const currentRank = EDUCATION_LEVEL_ORDER[currentLevel];
+        if (currentRank) {
+          const rows = formContext.watch(tableFieldname) || [];
+          rows.forEach((row: any, idx: number) => {
+            if (idx === rowIndex) return;
+            const level = String(row.education_level || "").trim();
+            const rank = EDUCATION_LEVEL_ORDER[level];
+            if (rank) {
+              const yearVal = parseInt(row.year_of_passing, 10);
+              if (!isNaN(yearVal)) {
+                if (rank < currentRank) {
+                  if (minYear === null || yearVal > minYear) {
+                    minYear = yearVal;
+                  }
+                } else if (rank > currentRank) {
+                  if (maxYear === null || yearVal < maxYear) {
+                    maxYear = yearVal;
+                  }
+                }
+              }
+            }
+          });
+        }
+      }
+
       const comboboxOptions = React.useMemo(() => {
         const finalOptions: Array<{ value: string; label: string }> = [];
         const seen = new Set<string>();
@@ -352,14 +490,27 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
         const matchingResult = results.find((r) => r.id === displayValue);
 
         if (displayValue) {
-          finalOptions.push({
-            value: displayValue,
-            label: matchingResult ? matchingResult.label : displayValue,
-          });
-          seen.add(displayValue);
+          const displayYear = parseInt(displayValue, 10);
+          let displayIsValid = true;
+          if (!isNaN(displayYear)) {
+            if (minYear !== null && displayYear <= minYear) displayIsValid = false;
+            if (maxYear !== null && displayYear >= maxYear) displayIsValid = false;
+          }
+          if (displayIsValid) {
+            finalOptions.push({
+              value: displayValue,
+              label: matchingResult ? matchingResult.label : displayValue,
+            });
+            seen.add(displayValue);
+          }
         }
 
         results.forEach((opt) => {
+          const optYear = parseInt(opt.id, 10);
+          if (!isNaN(optYear)) {
+            if (minYear !== null && optYear <= minYear) return;
+            if (maxYear !== null && optYear >= maxYear) return;
+          }
           if (!seen.has(opt.id)) {
             finalOptions.push({ value: opt.id, label: opt.label });
             seen.add(opt.id);
@@ -367,7 +518,7 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
         });
 
         return finalOptions;
-      }, [results, displayValue]);
+      }, [results, displayValue, minYear, maxYear]);
 
       return (
         <div className={cn("space-y-1.5", className)}>
@@ -389,6 +540,7 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
               loading={isLoading}
               searchValue={search}
               onSearchValueChange={setSearch}
+              onBlur={onBlur}
               className={getValidationClass(field, displayValue)}
             />
             <FieldStatusTooltip field={field} value={displayValue} rightOffset="right-8" />
@@ -400,7 +552,7 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
     },
   },
   Select: {
-    component: ({ field, value, onChange, error, disabled, className }) => {
+    component: ({ field, value, onChange, onBlur, error, disabled, className }) => {
       const options = parseOptions(field.options);
 
       let displayValue = "";
@@ -440,6 +592,7 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
               options={comboboxOptions}
               placeholder={`Select ${field.label}`}
               searchPlaceholder={`Search ${field.label}...`}
+              onBlur={onBlur}
               className={getValidationClass(field, displayValue)}
             />
             <FieldStatusTooltip field={field} value={displayValue} rightOffset="right-8" />
@@ -463,14 +616,14 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
         <div className="relative">
           <Input
             type={isEmailField(field) ? "email" : "text"}
-            value={(value as string) || ""}
+            value={typeof value === "string" ? normalizeInputValue(field, value) : (value as string) || ""}
             onChange={(e) => onChange(normalizeInputValue(field, e.target.value))}
             onBlur={onBlur}
             placeholder={field.label}
             disabled={disabled || !!field.read_only}
             className={cn("bg-muted", getValidationClass(field, value))}
-            inputMode={isPhoneField(field) || isPincodeField(field) || isAadhaarField(field) ? "numeric" : undefined}
-            maxLength={isPhoneField(field) ? 10 : isPincodeField(field) ? 6 : isAadhaarField(field) ? 12 : undefined}
+            inputMode={isPhoneField(field) || isPincodeField(field) || isAadhaarField(field) || isAccountNumberField(field) ? "numeric" : undefined}
+            maxLength={isPhoneField(field) ? 10 : isPincodeField(field) ? 6 : isAadhaarField(field) ? 12 : isPanField(field) ? 10 : undefined}
           />
           <FieldStatusTooltip field={field} value={value} />
         </div>
@@ -490,14 +643,14 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
         <div className="relative">
           <Input
             type={isEmailField(field) ? "email" : "text"}
-            value={(value as string) || ""}
+            value={typeof value === "string" ? normalizeInputValue(field, value) : (value as string) || ""}
             onChange={(e) => onChange(normalizeInputValue(field, e.target.value))}
             onBlur={onBlur}
             placeholder={field.label}
             disabled={disabled || !!field.read_only}
             className={cn("bg-muted", getValidationClass(field, value))}
-            inputMode={isPhoneField(field) || isPincodeField(field) || isAadhaarField(field) ? "numeric" : undefined}
-            maxLength={isPhoneField(field) ? 10 : isPincodeField(field) ? 6 : isAadhaarField(field) ? 12 : undefined}
+            inputMode={isPhoneField(field) || isPincodeField(field) || isAadhaarField(field) || isAccountNumberField(field) ? "numeric" : undefined}
+            maxLength={isPhoneField(field) ? 10 : isPincodeField(field) ? 6 : isAadhaarField(field) ? 12 : isPanField(field) ? 10 : field.fieldname === "custom_ifsc_code" ? 11 : undefined}
           />
           <FieldStatusTooltip field={field} value={value} />
         </div>
@@ -556,6 +709,9 @@ export interface DynamicFieldRendererProps<T extends FormField> {
   className?: string;
   overrides?: Partial<Record<FieldType, FieldConfig<T>>>;
   onAttachChange?: (fieldname: string) => (url: string | null) => void;
+  tableFieldname?: string;
+  rowIndex?: number;
+  document?: Record<string, unknown>;
 }
 
 export function DynamicFieldRenderer<T extends FormField>({
@@ -568,93 +724,110 @@ export function DynamicFieldRenderer<T extends FormField>({
   className,
   overrides,
   onAttachChange,
+  tableFieldname,
+  rowIndex,
+  document,
 }: DynamicFieldRendererProps<T>) {
   if (field.hidden) return null;
 
   const isReadOnly = !!field.read_only;
+  const required = isFieldRequired(field, document);
+  const fieldForRender = {
+    ...field,
+    is_mandatory: required ? 1 : 0,
+  } as T;
 
   const allFields = { ...defaultFields, ...overrides } as Record<
     FieldType,
     FieldConfig<T> | null
   >;
-  const fieldConfig = allFields[field.fieldtype as FieldType];
+  const fieldConfig = allFields[fieldForRender.fieldtype as FieldType];
+
+  let element: React.ReactNode;
 
   if (!fieldConfig) {
-    return (
-      <div className={cn("space-y-1.5", className)}>
+    element = (
+      <div className="space-y-1.5">
         <Label className="text-sm font-medium text-foreground">
-          {field.label}{" "}
-          {!!(field.is_mandatory || field.reqd) && (
+          {fieldForRender.label}{" "}
+          {required && (
             <span className="text-destructive">*</span>
           )}
         </Label>
         <div className="relative">
           <Input
-            value={(value as string) || ""}
-            onChange={(e) => onChange(normalizeInputValue(field, e.target.value))}
+            value={typeof value === "string" ? normalizeInputValue(fieldForRender, value) : (value as string) || ""}
+            onChange={(e) => onChange(normalizeInputValue(fieldForRender, e.target.value))}
             onBlur={onBlur}
-            placeholder={field.label}
+            placeholder={fieldForRender.label}
             disabled={disabled || isReadOnly}
-            className={cn(className, getValidationClass(field, value))}
-            inputMode={isPhoneField(field) ? "numeric" : undefined}
-            maxLength={isPhoneField(field) ? 10 : undefined}
+            className={cn("bg-muted", getValidationClass(fieldForRender, value))}
+            inputMode={isPhoneField(fieldForRender) || isAccountNumberField(fieldForRender) ? "numeric" : undefined}
+            maxLength={isPhoneField(fieldForRender) ? 10 : isPanField(fieldForRender) ? 10 : fieldForRender.fieldname === "custom_ifsc_code" ? 11 : undefined}
           />
-          <FieldStatusTooltip field={field} value={value} />
+          <FieldStatusTooltip field={fieldForRender} value={value} />
         </div>
         {error && <p className="text-xs text-destructive">{error}</p>}
       </div>
     );
-  }
-
-  const { component: FieldComponent } = fieldConfig;
-
-  if (field.fieldtype === "Attach Image" || field.fieldtype === "Attach") {
+  } else if (fieldForRender.fieldtype === "Attach Image" || fieldForRender.fieldtype === "Attach") {
     if (!onAttachChange) {
-      return (
-        <div className={cn("space-y-1.5", className)}>
+      element = (
+        <div className="space-y-1.5">
           <p className="text-sm text-muted-foreground">
             File upload not configured
           </p>
         </div>
       );
+    } else {
+      const FileUploadComponent = overrides?.[fieldForRender.fieldtype as FieldType]
+        ?.component as FieldComponent<T> | undefined;
+
+      if (FileUploadComponent) {
+        element = (
+          <FileUploadComponent
+            field={fieldForRender}
+            value={value}
+            onChange={onChange}
+            onBlur={onBlur}
+            error={error}
+            disabled={disabled}
+          />
+        );
+      } else {
+        element = (
+          <div className="space-y-1.5">
+            <p className="text-sm text-muted-foreground">
+              File upload handler not provided
+            </p>
+          </div>
+        );
+      }
     }
-
-    const FileUploadComponent = overrides?.[field.fieldtype as FieldType]
-      ?.component as FieldComponent<T> | undefined;
-
-    if (FileUploadComponent) {
-      return (
-        <FileUploadComponent
-          field={field}
-          value={value}
-          onChange={onChange}
-          onBlur={onBlur}
-          error={error}
-          disabled={disabled}
-          className={className}
-        />
-      );
-    }
-
-    return (
-      <div className={cn("space-y-1.5", className)}>
-        <p className="text-sm text-muted-foreground">
-          File upload handler not provided
-        </p>
-      </div>
+  } else {
+    const { component: FieldComponent } = fieldConfig;
+    element = (
+      <FieldComponent
+        field={fieldForRender}
+        value={value}
+        onChange={onChange}
+        onBlur={onBlur}
+        error={error}
+        disabled={disabled}
+        tableFieldname={tableFieldname}
+        rowIndex={rowIndex}
+      />
     );
   }
 
   return (
-    <FieldComponent
-      field={field}
-      value={value}
-      onChange={onChange}
-      onBlur={onBlur}
-      error={error}
-      disabled={disabled}
+    <div
+      id={`field-${field.fieldname}`}
+      data-fieldname={field.fieldname}
       className={className}
-    />
+    >
+      {element}
+    </div>
   );
 }
 
