@@ -47,14 +47,8 @@ function mapApiItemsToTasks(items: any[]): Task[] {
     const status = mapApiStatusToTaskStatus(item.status)
     const isCompleted = status === "completed" || status === "approved"
 
-    // Derive a human-readable title from the name field (strip the email prefix)
-    const rawName: string = item.name ?? ""
-    const titleFromName = rawName.includes(" - ")
-      ? rawName.split(" - ").slice(1).join(" - ").trim()
-      : rawName
-
-    // Use description as a fallback title if name parsing yields nothing useful
-    const title = titleFromName || item.description?.split("\n")[0] || "Task"
+    // Use title from item
+    const title = item.title || "Task"
 
     // Derive a category from reference_doctype
     const category = item.reference_doctype
@@ -114,16 +108,8 @@ function mapApiItemsToRequests(items: any[]): Request[] {
   return items.map((item, index) => {
     const status = mapApiStatusToRequestStatus(item.status)
 
-    // Derive a human-readable title from the name field (strip the ID prefix)
-    const rawName: string = item.name ?? ""
-    const titleFromName = rawName.includes(" - ")
-      ? rawName.split(" - ").slice(1).join(" - ").trim()
-      : rawName
-
-    const title =
-      titleFromName ||
-      item.description?.split("\n")[0] ||
-      "Request"
+    // Use title from item
+    const title = item.title || "Request"
 
     // Category
     const category = item.request_type

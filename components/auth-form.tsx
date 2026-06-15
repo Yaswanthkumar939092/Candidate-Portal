@@ -211,9 +211,13 @@ export function AuthForm({
               {type === "login" && loginStep === "otp"
                 ? "Check your email"
                 : type === "login" && loginStep === "setPassword"
-                  ? (purpose === "Password Reset" ? "Reset your password" : "Set your password")
+                  ? purpose === "Password Reset"
+                    ? "Reset your password"
+                    : "Set your password"
                   : type === "login" && isPasswordless
-                    ? (purpose === "Password Reset" ? "Reset your password" : "Verify your email")
+                    ? purpose === "Password Reset"
+                      ? "Reset your password"
+                      : "Verify your email"
                     : type === "login"
                       ? "Welcome! 👋"
                       : "Create your account"}
@@ -222,13 +226,13 @@ export function AuthForm({
               {type === "login" && loginStep === "otp"
                 ? `Enter the OTP sent to ${otpEmail || "your email"}`
                 : type === "login" && loginStep === "setPassword"
-                  ? (purpose === "Password Reset"
+                  ? purpose === "Password Reset"
                     ? "Create a new password for your account."
-                    : "Create a password for your account to ensure secure access in the future.")
+                    : "Create a password for your account to ensure secure access in the future."
                   : type === "login" && isPasswordless
-                    ? (purpose === "Password Reset"
+                    ? purpose === "Password Reset"
                       ? "We'll send a 6-digit verification code to your email address to reset your password."
-                      : "We'll send a 6-digit verification code to your email address to confirm your account.")
+                      : "We'll send a 6-digit verification code to your email address to confirm your account."
                     : type === "login"
                       ? "Please enter your credentials to access your account"
                       : "Start your journey with us today"}
@@ -610,16 +614,17 @@ export function AuthForm({
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Please wait...
                 </>
-              ) : type === "login" && loginStep === "otp"
-                  ? "Verify and continue"
-                  : type === "login" && loginStep === "setPassword"
-                    ? "Set password"
-                    : type === "login" && isPasswordless
-                      ? "Send verification code"
-                      : type === "login"
-                        ? "Sign in to your account"
-                        : "Create your account"}
-              {!isLoading && <ArrowRight className="w-4 h-4" />}
+              ) : type === "login" && loginStep === "otp" ? (
+                "Verify and continue"
+              ) : type === "login" && loginStep === "setPassword" ? (
+                "Set password"
+              ) : type === "login" && isPasswordless ? (
+                "Send verification code"
+              ) : type === "login" ? (
+                "Sign in to your account"
+              ) : (
+                "Create your account"
+              )}
             </Button>
 
             {type === "login" && loginStep === "otp" && onBackToCredentials && (

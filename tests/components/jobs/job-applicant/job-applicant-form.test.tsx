@@ -435,7 +435,7 @@ describe("JobApplicantForm", () => {
   })
 
   describe("Draft Data Restoration Options", () => {
-    it("restores draft data successfully when data is an array and form_data is an object", async () => {
+    it("does not restore draft data from the get_draft API (draft restoration removed)", async () => {
       const initializeMock = vi.fn()
       mockUseJobApp.mockReturnValue({
         initializeAllStepsFromDraft: initializeMock,
@@ -457,10 +457,9 @@ describe("JobApplicantForm", () => {
 
       render(<JobApplicationPage jobID="job-123" />)
 
-      await waitFor(() => {
-        expect(initializeMock).toHaveBeenCalledWith({ name: "Jane Doe", email: "jane@example.com" })
-        expect(toast.info).toHaveBeenCalledWith("Draft data restored successfully.")
-      })
+      await new Promise((resolve) => setTimeout(resolve, 50))
+      expect(initializeMock).not.toHaveBeenCalledWith({ name: "Jane Doe", email: "jane@example.com" })
+      expect(toast.info).not.toHaveBeenCalledWith("Draft data restored successfully.")
     })
 
     it("does not restore draft if draft data success is false", async () => {

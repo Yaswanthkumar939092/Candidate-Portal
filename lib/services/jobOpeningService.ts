@@ -126,6 +126,7 @@ export const jobApplicationService = {
         is_mandatory: field.reqd,
         tab_label: field.section,
         section_label: "Details",
+        child_fields: field.table_fields,
       }));
 
       return { fields };
