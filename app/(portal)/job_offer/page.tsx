@@ -306,15 +306,54 @@ function JobOfferContent() {
                           </span>
                         </div>
                       )}
-                      {offerData.stipend_display && (
+                      {offerData.stipend_formatted ||
+                      offerData.stipend ||
+                      offerData.stipend_display ? (
                         <div className="flex justify-between items-center py-1.5">
                           <span className="text-[0.85rem] text-[#64748b]">
-                            Amount
+                            Stipend
                           </span>
                           <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right">
-                            {offerData.stipend_display}
+                            {offerData.stipend_formatted ||
+                              offerData.stipend_display}
                           </span>
                         </div>
+                      ) : (
+                        <>
+                          {offerData.fixed_formatted !== undefined &&
+                            offerData.fixed_formatted !== null && (
+                              <div className="flex justify-between items-center py-1.5">
+                                <span className="text-[0.85rem] text-[#64748b]">
+                                  Fixed Pay
+                                </span>
+                                <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right">
+                                  {offerData.fixed_formatted}
+                                </span>
+                              </div>
+                            )}
+                          {offerData.variable_formatted !== undefined &&
+                            offerData.variable_formatted !== null && (
+                              <div className="flex justify-between items-center py-1.5">
+                                <span className="text-[0.85rem] text-[#64748b]">
+                                  Variable Pay
+                                </span>
+                                <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right">
+                                  {offerData.variable_formatted}
+                                </span>
+                              </div>
+                            )}
+                          {offerData.total_formatted !== undefined &&
+                            offerData.total_formatted !== null && (
+                              <div className="flex justify-between items-center py-1.5">
+                                <span className="text-[0.85rem] text-[#64748b]">
+                                  Total
+                                </span>
+                                <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right">
+                                  {offerData.total_formatted}
+                                </span>
+                              </div>
+                            )}
+                        </>
                       )}
                     </div>
 

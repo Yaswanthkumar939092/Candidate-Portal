@@ -1,12 +1,22 @@
 import { FrappeAPI } from "../frappe-api";
 
 export interface JobOfferSummary {
-  expiry_display:string;
+  expiry_display: string | null;
   applicant_name: string;
   designation: string;
-  duration_display: string;
-  expected_doj_display: string;
-  stipend_display: string;
+  duration_display: string | null;
+  expected_doj_display: string | null;
+  stipend_display: string | null;
+  employment_type?: string | null;
+  compensation_type?: string | null;
+  stipend?: number | null;
+  fixed?: number | null;
+  variable?: number | null;
+  total?: number | null;
+  stipend_formatted?: string | null;
+  fixed_formatted?: string | null;
+  variable_formatted?: string | null;
+  total_formatted?: string | null;
 }
 
 export interface UpdateJobOfferStatusParams {
