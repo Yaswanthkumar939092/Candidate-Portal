@@ -33,6 +33,7 @@ export interface ApplicationField {
   ctq: number;
   visibility: string;
   editability: string;
+  table_fields?: any[];
 }
 
 export interface SubmitApplicationPayload {
