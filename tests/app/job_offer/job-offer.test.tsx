@@ -6,14 +6,18 @@ import { toast } from "sonner";
 // Mocks
 vi.mock("next/dynamic", () => ({
   default: () => {
-    const DynamicComponent = () => <div data-testid="pdf-viewer">PDF Viewer Form Mock</div>;
+    const DynamicComponent = () => (
+      <div data-testid="pdf-viewer">PDF Viewer Form Mock</div>
+    );
     return DynamicComponent;
   },
 }));
 
 vi.mock("next/image", () => ({
   __esModule: true,
-  default: (props: React.ImgHTMLAttributes<HTMLImageElement>) => <img {...props} />,
+  default: (props: React.ImgHTMLAttributes<HTMLImageElement>) => (
+    <img {...props} />
+  ),
 }));
 
 vi.mock("sonner", () => ({
@@ -76,11 +80,11 @@ vi.mock("@/lib/hooks/useSurvey", () => ({
 
 // Mock window.scrollTo and window.location.reload
 window.scrollTo = vi.fn();
-Object.defineProperty(window, 'location', {
+Object.defineProperty(window, "location", {
   value: {
     reload: vi.fn(),
   },
-  writable: true
+  writable: true,
 });
 
 describe("JobOfferPage", () => {
@@ -90,16 +94,37 @@ describe("JobOfferPage", () => {
     vi.clearAllMocks();
 
     // Default mocks for loading state
-    mockUseCurrentUser.mockReturnValue({ userEmail: DEFAULT_EMAIL, isLoading: false });
-    mockUseJobOfferStatus.mockReturnValue({ data: { status: "Awaiting Response" }, isLoading: false });
-    mockUseJobOfferSummary.mockReturnValue({
-      data: { applicant_name: "Test User", designation: "Software Engineer", duration_display: "6 Months", stipend_display: "$5000", expiry_display: "48 HOURS" },
-      isLoading: false
+    mockUseCurrentUser.mockReturnValue({
+      userEmail: DEFAULT_EMAIL,
+      isLoading: false,
     });
-    mockUseJobOfferPdf.mockReturnValue({ pdfUrl: "http://test.com/pdf", isLoading: false });
+    mockUseJobOfferStatus.mockReturnValue({
+      data: { status: "Awaiting Response" },
+      isLoading: false,
+    });
+    mockUseJobOfferSummary.mockReturnValue({
+      data: {
+        applicant_name: "Test User",
+        designation: "Software Engineer",
+        duration_display: "6 Months",
+        stipend_display: "$5000",
+        expiry_display: "48 HOURS",
+      },
+      isLoading: false,
+    });
+    mockUseJobOfferPdf.mockReturnValue({
+      pdfUrl: "http://test.com/pdf",
+      isLoading: false,
+    });
     mockUseUpdateJobOfferStatus.mockReturnValue({ mutateAsync: vi.fn() });
-    mockUseRejectionReasons.mockReturnValue({ data: [{ reason: "Salary", name: "Salary too low" }], isLoading: false });
-    mockUseCompanyLogo.mockReturnValue({ data: { logo_url: "/logo.png" }, isLoading: false });
+    mockUseRejectionReasons.mockReturnValue({
+      data: [{ reason: "Salary", name: "Salary too low" }],
+      isLoading: false,
+    });
+    mockUseCompanyLogo.mockReturnValue({
+      data: { logo_url: "/logo.png" },
+      isLoading: false,
+    });
     mockGet.mockReturnValue(null); // No ?appl= param by default
   });
 
@@ -115,6 +140,37 @@ describe("JobOfferPage", () => {
     expect(screen.getByText("Software Engineer")).toBeTruthy();
     expect(screen.getByText("$5000")).toBeTruthy();
     expect(screen.getByText(/OFFER EXPIRES IN 48 HOURS/)).toBeTruthy();
+  });
+
+  it("renders fixed, variable, and total if stipend is not available", () => {
+    mockUseJobOfferSummary.mockReturnValue({
+      data: {
+        applicant_name: "Deepak Rajput",
+        designation: "DSSS",
+        duration_display: null,
+        expected_doj_display: "30-06-2026",
+        expiry_display: null,
+        stipend: null,
+        fixed: 0,
+        variable: 0,
+        total: 0,
+        stipend_formatted: null,
+        fixed_formatted: "$10000",
+        variable_formatted: "$2000",
+        total_formatted: "$12000",
+      },
+      isLoading: false,
+    });
+
+    render(<JobOfferPage />);
+
+    expect(screen.getByText("Fixed Pay")).toBeTruthy();
+    expect(screen.getByText("$10000")).toBeTruthy();
+    expect(screen.getByText("Variable Pay")).toBeTruthy();
+    expect(screen.getByText("$2000")).toBeTruthy();
+    expect(screen.getByText("Total")).toBeTruthy();
+    expect(screen.getByText("$12000")).toBeTruthy();
+    expect(screen.queryByText("Stipend")).toBeNull();
   });
 
   it("renders the offer details loading state while summary data is being fetched", () => {
@@ -162,7 +218,9 @@ describe("JobOfferPage", () => {
     expect(screen.getByText(/Welcome to the team/)).toBeTruthy();
     expect(window.scrollTo).toHaveBeenCalled();
 
-    const dashboardBtn = screen.getByRole("button", { name: /Go to Dashboard/i });
+    const dashboardBtn = screen.getByRole("button", {
+      name: /Go to Dashboard/i,
+    });
     fireEvent.click(dashboardBtn);
     expect(mockPush).toHaveBeenCalledWith("/dashboard");
   });
@@ -188,7 +246,9 @@ describe("JobOfferPage", () => {
 
     expect(screen.getByText("Reject Offer")).toBeTruthy();
 
-    const confirmRejectBtn = screen.getByRole("button", { name: /Confirm Rejection/i });
+    const confirmRejectBtn = screen.getByRole("button", {
+      name: /Confirm Rejection/i,
+    });
 
     // Select reason
     const select = screen.getByRole("combobox");
@@ -215,7 +275,9 @@ describe("JobOfferPage", () => {
     expect(screen.getByText("Salary")).toBeTruthy();
 
     // Verify "Raise Request" button navigates to /action-center
-    const raiseRequestBtn = screen.getByRole("button", { name: /Raise Request/i });
+    const raiseRequestBtn = screen.getByRole("button", {
+      name: /Raise Request/i,
+    });
     fireEvent.click(raiseRequestBtn);
     expect(mockPush).toHaveBeenCalledWith("/action-center?tab=requests");
 
@@ -233,8 +295,12 @@ describe("JobOfferPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Reject Offer/i }));
 
-    const comments = screen.getByPlaceholderText("Share any additional feedback...");
-    fireEvent.change(comments, { target: { value: "I accepted another role." } });
+    const comments = screen.getByPlaceholderText(
+      "Share any additional feedback...",
+    );
+    fireEvent.change(comments, {
+      target: { value: "I accepted another role." },
+    });
     expect(comments).toHaveValue("I accepted another role.");
 
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
@@ -259,10 +325,15 @@ describe("JobOfferPage", () => {
     render(<JobOfferPage />);
 
     fireEvent.click(screen.getByRole("button", { name: /Reject Offer/i }));
-    fireEvent.change(screen.getByRole("combobox"), { target: { value: "Salary" } });
-    fireEvent.change(screen.getByPlaceholderText("Share any additional feedback..."), {
-      target: { value: "This package does not work for me." },
+    fireEvent.change(screen.getByRole("combobox"), {
+      target: { value: "Salary" },
     });
+    fireEvent.change(
+      screen.getByPlaceholderText("Share any additional feedback..."),
+      {
+        target: { value: "This package does not work for me." },
+      },
+    );
     fireEvent.click(screen.getByRole("button", { name: /Confirm Rejection/i }));
 
     await waitFor(() => {
@@ -277,20 +348,32 @@ describe("JobOfferPage", () => {
   });
 
   it("renders processed state if offer was already accepted", () => {
-    mockUseJobOfferStatus.mockReturnValue({ data: { status: "Accepted" }, isLoading: false });
+    mockUseJobOfferStatus.mockReturnValue({
+      data: { status: "Accepted" },
+      isLoading: false,
+    });
     mockUseJobOfferSummary.mockReturnValue({ data: null, isLoading: false });
 
     render(<JobOfferPage />);
 
-    expect(screen.getByText(/You have already accepted or rejected the Offer Letter/)).toBeTruthy();
-    
-    const dashboardBtn = screen.getByRole("button", { name: /Go to Dashboard/i });
+    expect(
+      screen.getByText(
+        /You have already accepted or rejected the Offer Letter/,
+      ),
+    ).toBeTruthy();
+
+    const dashboardBtn = screen.getByRole("button", {
+      name: /Go to Dashboard/i,
+    });
     fireEvent.click(dashboardBtn);
     expect(mockPush).toHaveBeenCalledWith("/dashboard");
   });
 
   it("renders expired state if offer has expired", () => {
-    mockUseJobOfferStatus.mockReturnValue({ data: { status: "Expired" }, isLoading: false });
+    mockUseJobOfferStatus.mockReturnValue({
+      data: { status: "Expired" },
+      isLoading: false,
+    });
 
     render(<JobOfferPage />);
 
@@ -298,7 +381,11 @@ describe("JobOfferPage", () => {
   });
 
   it("renders error state if status fetch fails and allows retry", () => {
-    mockUseJobOfferStatus.mockReturnValue({ isError: true, error: new Error("Fetch failed"), isLoading: false });
+    mockUseJobOfferStatus.mockReturnValue({
+      isError: true,
+      error: new Error("Fetch failed"),
+      isLoading: false,
+    });
 
     render(<JobOfferPage />);
 

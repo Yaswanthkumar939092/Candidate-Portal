@@ -16,11 +16,13 @@ interface Step {
 interface PortalStepperSidebarProps {
   currentStep: "survey" | "offer" | "onboarding";
   className?: string;
+  isViewOnly?: boolean;
 }
 
 export function PortalStepperSidebar({
   currentStep,
   className,
+  isViewOnly = true,
 }: PortalStepperSidebarProps) {
   const { data } = useSurvey();
   const hasDynamicSteps = data?.steps && data.steps.length > 0;
@@ -164,10 +166,10 @@ export function PortalStepperSidebar({
             isOngoing
               ? "bg-primary text-primary-foreground shadow-md scale-[1.02]"
               : "bg-white dark:bg-card border border-border/50 text-foreground",
-            step.redirect_url && !isOngoing && "hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer"
+            !isViewOnly && step.redirect_url && !isOngoing && "hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer"
           );
 
-          if (step.redirect_url) {
+          if (step.redirect_url && !isViewOnly) {
             return (
               <Link
                 key={step.id}

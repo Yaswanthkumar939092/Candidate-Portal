@@ -71,6 +71,7 @@ vi.mock("@/lib/hooks/useAcationCenter", () => ({
       items: [
         {
           name: "TASK-001 - PF Form",
+          title: "PF Form",
           status: "Action Required",
           reference_doctype: "Onboarding",
           modified: "2025-05-15",
@@ -78,24 +79,28 @@ vi.mock("@/lib/hooks/useAcationCenter", () => ({
         },
         {
           name: "TASK-002 - Offer Letter Released",
+          title: "Offer Letter Released",
           status: "Completed",
           reference_doctype: "Recruitment",
           modified: "2025-09-04",
         },
         {
           name: "TASK-003 - Pre-Offer Submission",
+          title: "Pre-Offer Submission",
           status: "Approved",
           reference_doctype: "Recruitment",
           modified: "2025-09-04",
         },
         {
           name: "TASK-004 - Onboarding Journey",
+          title: "Onboarding Journey",
           status: "Completed",
           reference_doctype: "Onboarding",
           modified: "2025-09-04",
         },
         {
           name: "TASK-005 - Gratuity Form",
+          title: "Gratuity Form",
           status: "Approved",
           reference_doctype: "Onboarding",
           modified: "2025-09-04",
@@ -109,6 +114,7 @@ vi.mock("@/lib/hooks/useAcationCenter", () => ({
     data: [
       {
         name: "REQ-001 - Extension of Joining Date",
+        title: "Extension of Joining Date",
         status: "Pending",
         request_type: "Date Change",
         creation: "2025-09-12",
