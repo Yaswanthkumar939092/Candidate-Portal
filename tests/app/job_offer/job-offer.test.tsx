@@ -168,7 +168,17 @@ describe("JobOfferPage", () => {
   });
 
   it("handles rejection flow correctly and displays the Offer Declined page", async () => {
-    const mutateAsync = vi.fn().mockResolvedValue({});
+    // Status refetches to "Rejected" after the mutation (mirrors the real backend),
+    // so the page settles on the declined screen instead of reverting to "main".
+    let currentStatus = "Awaiting Response";
+    mockUseJobOfferStatus.mockImplementation(() => ({
+      data: { status: currentStatus },
+      isLoading: false,
+    }));
+    const mutateAsync = vi.fn().mockImplementation(async () => {
+      currentStatus = "Rejected";
+      return {};
+    });
     mockUseUpdateJobOfferStatus.mockReturnValue({ mutateAsync });
 
     render(<JobOfferPage />);
@@ -197,7 +207,9 @@ describe("JobOfferPage", () => {
     });
 
     // Check that we render the OFFER DECLINED page
-    expect(screen.getByText("OFFER DECLINED")).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByText("OFFER DECLINED")).toBeTruthy();
+    });
     expect(screen.getByText("Offer Letter Declined")).toBeTruthy();
     expect(screen.getByText("Reason for Rejection:")).toBeTruthy();
     expect(screen.getByText("Salary")).toBeTruthy();
