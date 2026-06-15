@@ -294,15 +294,24 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
 
       // Prepare filtered stepData
       const filteredStepData: Record<string, Record<string, unknown>> = {};
-      for (const [stepKey, fields] of Object.entries(currentStepData)) {
+      if (action === "save" && updatedStepKey) {
+        const fields = currentStepData[updatedStepKey] || {};
         const filteredFields: Record<string, unknown> = {};
-        let hasFields = false;
         for (const [fieldname, val] of Object.entries(fields)) {
           filteredFields[fieldname] = val;
-          hasFields = true;
         }
-        if (hasFields) {
-          filteredStepData[stepKey] = filteredFields;
+        filteredStepData[updatedStepKey] = filteredFields;
+      } else {
+        for (const [stepKey, fields] of Object.entries(currentStepData)) {
+          const filteredFields: Record<string, unknown> = {};
+          let hasFields = false;
+          for (const [fieldname, val] of Object.entries(fields)) {
+            filteredFields[fieldname] = val;
+            hasFields = true;
+          }
+          if (hasFields) {
+            filteredStepData[stepKey] = filteredFields;
+          }
         }
       }
 
@@ -328,7 +337,8 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
       });
     } catch (error) {
       console.error(`Error during onboarding ${action}:`, error);
-      toast.error(`Failed to ${action} onboarding. Please try again.`);
+      const errorMessage = error instanceof Error ? error.message : "";
+      toast.error(errorMessage || `Failed to ${action} onboarding. Please try again.`);
       throw error;
     }
   }, [stepData, user, submitMutation, formConfig, queryClient]);

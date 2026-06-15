@@ -8,6 +8,7 @@ interface DynamicFieldRendererProps {
   field: OnboardingField;
   value: unknown;
   onChange: (value: unknown) => void;
+  onBlur?: () => void;
   error?: string;
 }
 
@@ -18,12 +19,13 @@ interface WrapperProps {
 
 // Mocking DynamicFieldRenderer since it's used inside
 vi.mock("@/components/ui/field-renderer", () => ({
-  DynamicFieldRenderer: ({ field, value, onChange, error }: DynamicFieldRendererProps) => (
+  DynamicFieldRenderer: ({ field, value, onChange, onBlur, error }: DynamicFieldRendererProps) => (
     <div data-testid={`field-${field.fieldname}`}>
       <label>{field.label}</label>
       <input 
         value={(value as string) || ""} 
         onChange={(e) => onChange(e.target.value)} 
+        onBlur={onBlur}
         data-testid={`input-${field.fieldname}`}
       />
       {error && <span data-testid={`error-${field.fieldname}`}>{error}</span>}
@@ -94,6 +96,33 @@ describe("DynamicTableField", () => {
     expect(screen.getAllByTestId("field-year")).toHaveLength(2);
   });
 
+  it("does not show validation errors immediately for a newly added row", () => {
+    const errors = {
+      education: [
+        {},
+        { degree: { message: "Degree is required" } },
+      ],
+    };
+
+    render(
+      <Wrapper defaultValues={{ education: [{}] }}>
+        {(methods) => (
+          <DynamicTableField
+            field={mockTableField}
+            control={methods.control}
+            setValue={methods.setValue}
+            errors={errors as unknown as FieldErrors<FieldValues>}
+          />
+        )}
+      </Wrapper>
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Add Education/i }));
+
+    expect(screen.getAllByTestId("field-degree")).toHaveLength(2);
+    expect(screen.queryByTestId("error-degree")).toBeNull();
+  });
+
   it("can remove a row when more than one exists", () => {
     render(
       <Wrapper defaultValues={{ education: [{}, {}] }}>
@@ -139,6 +168,82 @@ describe("DynamicTableField", () => {
       </Wrapper>
     );
 
+    expect(screen.queryByTestId("error-degree")).toBeNull();
+
+    fireEvent.blur(screen.getAllByTestId("input-degree")[0]);
+
     expect(screen.getByTestId("error-degree")).toHaveTextContent("Degree is required");
+  });
+
+  it("renders container id and table-level validation error message", () => {
+    const errors = {
+      education: {
+        type: "validate",
+        message: "Total percentage must be 100%"
+      }
+    };
+
+    const { container } = render(
+      <Wrapper defaultValues={{ education: [{}] }}>
+        {(methods) => (
+          <DynamicTableField
+            field={mockTableField}
+            control={methods.control}
+            setValue={methods.setValue}
+            errors={errors as unknown as FieldErrors<FieldValues>}
+          />
+        )}
+      </Wrapper>
+    );
+
+    const tableContainer = container.querySelector("#field-education");
+    expect(tableContainer).toBeTruthy();
+    expect(screen.getByText("Total percentage must be 100%")).toBeTruthy();
+  });
+
+  it("automatically clears years of passing on chronological violations", () => {
+    const eduTableField: OnboardingField = {
+      fieldname: "custom_education_details",
+      label: "Education Details",
+      is_mandatory: 1,
+      read_only: 0,
+      hidden: 0,
+      fieldtype: "Table",
+      child_fields: [
+        { fieldname: "education_level", label: "Education Level", fieldtype: "Select", reqd: 1, is_mandatory: 1, read_only: 0, hidden: 0 },
+        { fieldname: "year_of_passing", label: "Year of Passing", fieldtype: "Link", reqd: 1, is_mandatory: 1, read_only: 0, hidden: 0 }
+      ]
+    };
+
+    const initialValues = {
+      custom_education_details: [
+        { education_level: "10th", year_of_passing: "2021" },
+        { education_level: "12th", year_of_passing: "2022" }
+      ]
+    };
+
+    render(
+      <Wrapper defaultValues={initialValues}>
+        {(methods) => (
+          <DynamicTableField
+            field={eduTableField}
+            control={methods.control}
+            setValue={methods.setValue}
+            errors={methods.formState.errors as unknown as FieldErrors<FieldValues>}
+          />
+        )}
+      </Wrapper>
+    );
+
+    const yearInputs = screen.getAllByTestId("input-year_of_passing") as HTMLInputElement[];
+    expect(yearInputs).toHaveLength(2);
+    expect(yearInputs[0].value).toBe("2021");
+    expect(yearInputs[1].value).toBe("2022");
+
+    // Change row 0 (10th) passing year to 2022, which is equal to row 1 (12th) passing year (2022)
+    fireEvent.change(yearInputs[0], { target: { value: "2022" } });
+
+    // Expect row 1 (12th) passing year to be automatically cleared to "" because it must be strictly after
+    expect(yearInputs[1].value).toBe("");
   });
 });

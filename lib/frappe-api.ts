@@ -12,6 +12,24 @@ function getFrappeUrl() {
   return configuredUrl;
 }
 
+async function handleResponseError(res: Response): Promise<never> {
+  try {
+    const contentType = res.headers?.get("content-type");
+    if (!contentType || contentType.includes("application/json")) {
+      const errorData = await res.json();
+      const serverError = errorData?.message?.message || errorData?.message || errorData?.exception;
+      if (serverError) {
+        throw new Error(typeof serverError === "string" ? serverError : JSON.stringify(serverError));
+      }
+    }
+  } catch (e) {
+    if (e instanceof Error && e.message !== "Unexpected end of JSON input" && !e.message.includes("is not valid JSON")) {
+      throw e;
+    }
+  }
+  throw new Error(`API request failed: ${res.statusText}`);
+}
+
 export const FrappeAPI = {
   uploadFile: async (
     file: File,
@@ -52,7 +70,7 @@ export const FrappeAPI = {
     });
 
     if (!res.ok) {
-      throw new Error(`API request failed: ${res.statusText}`);
+      await handleResponseError(res);
     }
 
     const data = await res.json();
@@ -111,7 +129,7 @@ export const FrappeAPI = {
     });
 
     if (!res.ok) {
-      throw new Error(`API request failed: ${res.statusText}`);
+      await handleResponseError(res);
     }
 
     const data = await res.json();

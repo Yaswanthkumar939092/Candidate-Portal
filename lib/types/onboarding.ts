@@ -42,6 +42,7 @@ export interface OnboardingFormMessage {
   job_applicant: string;
   boarding_status: string;
   tabs: OnboardingTab[];
+  field_status_counts?: FieldCounts;
 }
 
 export interface OnboardingFormApiResponse {
@@ -52,6 +53,7 @@ export interface OnboardingForm {
   applicantId: string;
   status: string;
   tabs: OnboardingTab[];
+  field_status_counts?: FieldCounts;
 }
 
 export type OnboardingFormResponse = OnboardingFormMessage;

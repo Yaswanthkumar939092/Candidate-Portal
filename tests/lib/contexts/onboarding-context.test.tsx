@@ -441,6 +441,32 @@ describe('OnboardingContext', () => {
         expect(toast.success).toHaveBeenCalledWith('Onboarding submitted successfully!')
       })
     })
+
+    it('calls mutateAsync with only the active step data when saving progress', async () => {
+      mockMutateAsync.mockResolvedValue(undefined)
+      mockInvalidateQueries.mockResolvedValue(undefined)
+
+      function SaveTest() {
+        const { submitAll } = useOnboarding()
+        return (
+          <button onClick={() => submitAll("save", "personal_info", { first_name: "Charlie" })}>
+            Save
+          </button>
+        )
+      }
+
+      render(<OnboardingProvider><SaveTest /></OnboardingProvider>)
+      await user.click(screen.getByText('Save'))
+      await waitFor(() => {
+        expect(mockMutateAsync).toHaveBeenCalledWith({
+          stepData: {
+            personal_info: { first_name: "Charlie" }
+          },
+          userEmail: 'test@example.com',
+          action: 'save'
+        })
+      })
+    })
   })
 
   describe('formConfig', () => {

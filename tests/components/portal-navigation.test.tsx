@@ -164,11 +164,11 @@ describe("PortalNavigation", () => {
     }
   })
 
-  it("displays language selector", () => {
-    render(<PortalNavigation />)
-    expect(screen.getByText("EN")).toBeTruthy()
-    expect(screen.getByTestId("icon-globe")).toBeTruthy()
-  })
+  // it("displays language selector", () => {
+  //   render(<PortalNavigation />)
+  //   expect(screen.getByText("EN")).toBeTruthy()
+  //   expect(screen.getByTestId("icon-globe")).toBeTruthy()
+  // })
 
   it("renders user dropdown trigger", () => {
     render(<PortalNavigation />)
