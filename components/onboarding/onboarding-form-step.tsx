@@ -199,6 +199,51 @@ export function OnboardingFormStep({
 
   const currentFormValues = useWatch({ control });
 
+  const addressSyncPairs = useMemo(() => {
+    const fieldnames = new Set(
+      tab.sections.flatMap((section) =>
+        section.fields.map((field) => field.fieldname),
+      ),
+    );
+
+    return [...fieldnames].flatMap((fieldname) => {
+      const lowerFieldname = fieldname.toLowerCase();
+      if (
+        !lowerFieldname.includes("permanent") &&
+        !lowerFieldname.includes("permananent")
+      ) {
+        return [];
+      }
+
+      const communicationFieldname = fieldname
+        .replace(/permananent/i, "communication")
+        .replace(/permanent/i, "communication");
+
+      if (
+        communicationFieldname === fieldname ||
+        !fieldnames.has(communicationFieldname)
+      ) {
+        return [];
+      }
+
+      return [{ permanentFieldname: fieldname, communicationFieldname }];
+    });
+  }, [tab]);
+
+  const addressSyncFingerprint = useMemo(
+    () =>
+      addressSyncPairs
+        .map(({ permanentFieldname, communicationFieldname }) =>
+          JSON.stringify([
+            permanentFieldname,
+            currentFormValues[permanentFieldname],
+            currentFormValues[communicationFieldname],
+          ]),
+        )
+        .join("|"),
+    [addressSyncPairs, currentFormValues],
+  );
+
   const doc = useMemo(() => {
     const merged: Record<string, any> = {};
     Object.keys(stepData).forEach((key) => {
@@ -236,24 +281,31 @@ export function OnboardingFormStep({
   // Automatically sync permanent address to communication address if custom_same_as_permanent is checked
   const sameAsPermanentChecked = !!currentFormValues.custom_same_as_permanent;
   useEffect(() => {
-    if (sameAsPermanentChecked) {
-      const values = getValues();
-      Object.keys(values).forEach((key) => {
-        if (key.toLowerCase().includes("permanent") || key.toLowerCase().includes("permananent")) {
-          const commKey = key
-            .replace(/permananent/i, "communication")
-            .replace(/permanent/i, "communication");
-          
-          if (values[commKey] !== undefined && values[commKey] !== values[key]) {
-            setValue(commKey, values[key], {
-              shouldValidate: true,
-              shouldDirty: true,
-            });
-          }
-        }
-      });
+    if (!sameAsPermanentChecked || addressSyncPairs.length === 0) {
+      return;
     }
-  }, [sameAsPermanentChecked, currentFormValues, getValues, setValue]);
+
+    const values = getValues();
+    addressSyncPairs.forEach(
+      ({ permanentFieldname, communicationFieldname }) => {
+        if (
+          values[communicationFieldname] !== undefined &&
+          values[communicationFieldname] !== values[permanentFieldname]
+        ) {
+          setValue(communicationFieldname, values[permanentFieldname], {
+            shouldValidate: true,
+            shouldDirty: true,
+          });
+        }
+      },
+    );
+  }, [
+    sameAsPermanentChecked,
+    addressSyncFingerprint,
+    addressSyncPairs,
+    getValues,
+    setValue,
+  ]);
 
   // Automatically clear fields when they become hidden
   useEffect(() => {
@@ -341,7 +393,7 @@ export function OnboardingFormStep({
                 markStepComplete(stepKey);
                 nextStep();
                 success = true;
-              } catch (e) {
+              } catch {
                 // error handled in submitAll
               }
             },
@@ -355,7 +407,7 @@ export function OnboardingFormStep({
             await submitAll("save", stepKey, data);
             window.location.assign("/dashboard");
             return true;
-          } catch (e) {
+          } catch {
             return false;
           }
         }

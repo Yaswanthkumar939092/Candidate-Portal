@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useState, useEffect } from "react";
-import { Loader2, ClipboardX, ArrowLeft } from "lucide-react";
+import { Loader2, ClipboardX, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   OnboardingProvider,
   useOnboarding,
@@ -80,6 +80,8 @@ function OnboardingContent() {
     isError,
     stepData,
     isSaving,
+    prevStep,
+    triggerSubmit,
   } = useOnboarding();
   const [focusedFieldname, setFocusedFieldname] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<string>("");
@@ -348,7 +350,7 @@ function OnboardingContent() {
         </div>
       )}
       {/* 3-Column Responsive Grid Layout */}
-      <div className="w-full max-w-[1700px] mx-auto px-4 md:px-6 lg:px-8 py-8 pt-24 lg:pt-3 lg:pb-3 lg:h-[calc(100vh-4rem)] flex-1">
+      <div className="w-full max-w-[1700px] mx-auto px-4 md:px-6 lg:px-8 py-8 pt-24 pb-28 lg:pt-3 lg:pb-3 lg:h-[calc(100vh-4rem)] flex-1">
         <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] xl:grid-cols-[280px_1fr_340px] gap-8 items-start">
           {/* Column 1: Desktop sidebar */}
           <aside className="hidden lg:block lg:sticky lg:top-16 self-start h-[calc(100vh-5.5rem)] overflow-y-auto pr-1 scrollbar-thin">
@@ -388,6 +390,34 @@ function OnboardingContent() {
           )}
         </div>
       </div>
+
+      {status !== "submitted" && currentStep < tabs.length && (
+        <div className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card/95 px-4 py-3 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden">
+          <div className="mx-auto flex max-w-[1700px] items-center gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 flex-1"
+              onClick={prevStep}
+              disabled={currentStep === 0 || isSaving}
+            >
+              <ChevronLeft className="mr-1 h-4 w-4" />
+              Previous
+            </Button>
+            <Button
+              type="button"
+              className="h-11 flex-1"
+              onClick={() => {
+                void triggerSubmit?.("save_continue");
+              }}
+              disabled={isSaving}
+            >
+              {isSaving ? "Saving..." : "Save & Next"}
+              <ChevronRight className="ml-1 h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
