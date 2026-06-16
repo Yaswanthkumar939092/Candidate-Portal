@@ -61,6 +61,14 @@ export interface OnboardingContextType {
   getFieldValue: (
     fieldname: string,
   ) => string | number | boolean | null | undefined | unknown;
+  /** Register form submit handler */
+  registerSubmitTrigger?: (
+    trigger: (action: "save_continue" | "save_draft") => Promise<boolean | void>
+  ) => () => void;
+  /** Trigger form submission programmatically */
+  triggerSubmit?: (
+    action: "save_continue" | "save_draft"
+  ) => Promise<boolean | void>;
 }
 
 const OnboardingContext = createContext<OnboardingContextType | undefined>(
@@ -343,6 +351,24 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     }
   }, [stepData, user, submitMutation, formConfig, queryClient]);
 
+  const submitTriggerRef = useRef<((action: "save_continue" | "save_draft") => Promise<boolean | void>) | null>(null);
+
+  const registerSubmitTrigger = useCallback((trigger: (action: "save_continue" | "save_draft") => Promise<boolean | void>) => {
+    submitTriggerRef.current = trigger;
+    return () => {
+      if (submitTriggerRef.current === trigger) {
+        submitTriggerRef.current = null;
+      }
+    };
+  }, []);
+
+  const triggerSubmit = useCallback(async (action: "save_continue" | "save_draft") => {
+    if (submitTriggerRef.current) {
+      return await submitTriggerRef.current(action);
+    }
+    return false;
+  }, []);
+
   const getFieldValue = useCallback(
     (fieldname: string) => {
       for (const key in stepData) {
@@ -373,6 +399,8 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     submitAll,
     formConfig,
     getFieldValue,
+    registerSubmitTrigger,
+    triggerSubmit,
   };
 
   return (

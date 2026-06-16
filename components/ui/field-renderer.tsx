@@ -89,11 +89,13 @@ interface FieldConfig<T extends FormField> {
   props?: (field: T) => Record<string, unknown>;
 }
 
-function getValidationClass(field: FormField, value?: unknown) {
+function getFieldClass(field: FormField, value: unknown, error?: string, disabled?: boolean) {
+  const isReadOnly = !!field.read_only;
+  if (isReadOnly) return "bg-muted";
+
   if (field.approval_status === "Approved") {
-    return "border-success outline-success focus-visible:ring-success border-2 pr-10";
+    return "bg-field-success-bg border-field-success border-2 focus-visible:bg-field-success-bg focus-visible:border-field-success focus-visible:ring-field-success/8 dark:bg-emerald-950/10 dark:border-emerald-600 dark:focus-visible:ring-emerald-600/20 pr-10";
   }
-  if (field.read_only) return "";
 
   const isValueChanged = (curr: unknown, orig: unknown) => {
     const normCurr = curr === undefined || curr === null ? "" : String(curr).trim();
@@ -104,7 +106,15 @@ function getValidationClass(field: FormField, value?: unknown) {
   if (field.approval_status === "Rejected" && !isValueChanged(value, field.value)) {
     return "border-destructive outline-destructive focus-visible:ring-destructive border-2 pr-24";
   }
-  return "";
+
+  const isFilled = value !== undefined && value !== null && String(value).trim() !== "";
+  const isValid = isFilled && !error && !disabled;
+
+  if (isValid) {
+    return "bg-field-success-bg border-field-success border-2 focus-visible:bg-field-success-bg focus-visible:border-field-success focus-visible:ring-field-success/8 dark:bg-emerald-950/10 dark:border-emerald-600 dark:focus-visible:ring-emerald-600/20 pr-10";
+  }
+
+  return "bg-[#F1F3F6] border-transparent focus-visible:bg-white focus-visible:border-ring focus-visible:ring-ring/8 dark:bg-zinc-800";
 }
 
 function isEmailField(field: FormField) {
@@ -220,10 +230,14 @@ function FieldStatusTooltip({
   field,
   value,
   rightOffset = "right-3",
+  error,
+  disabled,
 }: {
   field: FormField;
   value?: unknown;
   rightOffset?: string;
+  error?: string;
+  disabled?: boolean;
 }) {
   if (field.approval_status === "Approved") {
     return (
@@ -239,6 +253,22 @@ function FieldStatusTooltip({
   }
 
   if (field.read_only) return null;
+
+  const isFilled = value !== undefined && value !== null && String(value).trim() !== "";
+  const isValid = isFilled && !error && !disabled;
+
+  if (isValid) {
+    return (
+      <div
+        className={cn(
+          "absolute top-1/2 -translate-y-1/2 flex items-center justify-center text-field-success bg-transparent rounded-full z-10",
+          rightOffset,
+        )}
+      >
+        <Check className="h-4 w-4" />
+      </div>
+    );
+  }
 
   const isValueChanged = (curr: unknown, orig: unknown) => {
     const normCurr = curr === undefined || curr === null ? "" : String(curr).trim();
@@ -277,33 +307,191 @@ function FieldStatusTooltip({
   return null;
 }
 
+function FieldInput({
+  field,
+  value,
+  onChange,
+  onBlur,
+  error,
+  disabled,
+}: {
+  field: FormField;
+  value: unknown;
+  onChange: (value: unknown) => void;
+  onBlur?: () => void;
+  error?: string;
+  disabled?: boolean;
+}) {
+  const isPhone = isPhoneField(field);
+  const baseClass = getFieldClass(field, value, error, disabled);
+
+  if (isPhone) {
+    const containerClass = cn(
+      "flex items-center rounded-md border transition-all duration-200 w-full bg-[#F1F3F6] dark:bg-zinc-800 border-transparent",
+      baseClass.replace(/focus-visible:/g, "focus-within:").replace(/focus:/g, "focus-within:")
+    );
+
+    const inputClass = cn(
+      baseClass,
+      "w-full h-9 px-0 py-1 text-sm bg-transparent border-0 outline-none focus:ring-0 focus-visible:ring-0 focus-visible:border-0 shadow-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+    );
+
+    return (
+      <div className={containerClass}>
+        <span className="pl-3 text-sm font-semibold text-muted-foreground/80 select-none">
+          +91
+        </span>
+        <span className="mx-2 text-muted-foreground/30 select-none">|</span>
+        <input
+          type="text"
+          value={typeof value === "string" ? normalizeInputValue(field, value) : (value as string) || ""}
+          onChange={(e) => onChange(normalizeInputValue(field, e.target.value))}
+          onBlur={onBlur}
+          placeholder="9876543210"
+          disabled={disabled || !!field.read_only}
+          className={inputClass}
+          inputMode="numeric"
+          maxLength={10}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <Input
+      type={isEmailField(field) ? "email" : "text"}
+      value={typeof value === "string" ? normalizeInputValue(field, value) : (value as string) || ""}
+      onChange={(e) => onChange(normalizeInputValue(field, e.target.value))}
+      onBlur={onBlur}
+      placeholder={field.label}
+      disabled={disabled || !!field.read_only}
+      className={baseClass}
+      inputMode={isPincodeField(field) || isAadhaarField(field) || isAccountNumberField(field) ? "numeric" : undefined}
+      maxLength={isPincodeField(field) ? 6 : isAadhaarField(field) ? 12 : isPanField(field) ? 10 : field.fieldname === "custom_ifsc_code" ? 11 : undefined}
+    />
+  );
+}
+
 const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
   Data: {
-    component: ({ field, value, onChange, onBlur, error, disabled, className }) => (
-      <div className={cn("space-y-1.5", className)}>
-        <Label className="text-sm font-medium text-foreground">
-          {field.label}{" "}
-          {!!(field.is_mandatory || field.reqd) && (
-            <span className="text-destructive">*</span>
-          )}
-        </Label>
-        <div className="relative">
-          <Input
-            type={isEmailField(field) ? "email" : "text"}
-            value={typeof value === "string" ? normalizeInputValue(field, value) : (value as string) || ""}
-            onChange={(e) => onChange(normalizeInputValue(field, e.target.value))}
-            onBlur={onBlur}
-            placeholder={field.label}
-            disabled={disabled || !!field.read_only}
-            className={cn("bg-muted", getValidationClass(field, value))}
-            inputMode={isPhoneField(field) || isPincodeField(field) || isAadhaarField(field) || isAccountNumberField(field) ? "numeric" : undefined}
-            maxLength={isPhoneField(field) ? 10 : isPincodeField(field) ? 6 : isAadhaarField(field) ? 12 : isPanField(field) ? 10 : field.fieldname === "custom_ifsc_code" ? 11 : undefined}
-          />
-          <FieldStatusTooltip field={field} value={value} />
+    component: ({ field, value, onChange, onBlur, error, disabled, className }) => {
+      const isKnownLanguages = field.fieldname === "custom_known_languages";
+
+      if (isKnownLanguages) {
+        const LANGUAGES = [
+          "English",
+          "Hindi",
+          "Marathi",
+          "Gujarati",
+          "Tamil",
+          "Telugu",
+          "Kannada",
+          "Bengali",
+          "Malayalam",
+          "Punjabi",
+          "Odia",
+          "Urdu",
+        ];
+
+        // Parse comma-separated value
+        const selectedLanguages = typeof value === "string"
+          ? value
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : [];
+
+        const handleToggleLanguage = (lang: string) => {
+          let newList: string[];
+          if (selectedLanguages.includes(lang)) {
+            newList = selectedLanguages.filter((l) => l !== lang);
+          } else {
+            newList = [...selectedLanguages, lang];
+          }
+          onChange(newList.join(", "));
+        };
+
+        return (
+          <div className={cn("space-y-1.5", className)}>
+            <Label className="text-sm font-medium text-foreground">
+              {field.label}{" "}
+              {!!(field.is_mandatory || field.reqd) && (
+                <span className="text-destructive">*</span>
+              )}
+            </Label>
+            <div className="relative">
+              <FieldInput
+                field={field}
+                value={value}
+                onChange={onChange}
+                onBlur={onBlur}
+                error={error}
+                disabled={disabled}
+              />
+              <FieldStatusTooltip
+                field={field}
+                value={value}
+                error={error}
+                disabled={disabled}
+              />
+            </div>
+
+            {/* Language Chips */}
+            <div className="flex flex-wrap gap-2 mt-2 select-none">
+              {LANGUAGES.map((lang) => {
+                const isSelected = selectedLanguages.includes(lang);
+                return (
+                  <button
+                    key={lang}
+                    type="button"
+                    disabled={disabled || !!field.read_only}
+                    onClick={() => handleToggleLanguage(lang)}
+                    className={cn(
+                      "text-xs px-3 py-1.5 rounded-full font-semibold border transition-all duration-200 cursor-pointer",
+                      isSelected
+                        ? "bg-[#5B2EE5] text-white border-transparent shadow-sm shadow-purple-500/10"
+                        : "bg-white dark:bg-zinc-900 text-muted-foreground border-border hover:bg-muted dark:hover:bg-zinc-800",
+                    )}
+                  >
+                    {lang}
+                  </button>
+                );
+              })}
+            </div>
+
+            {error && <p className="text-xs text-destructive">{error}</p>}
+          </div>
+        );
+      }
+
+      return (
+        <div className={cn("space-y-1.5", className)}>
+          <Label className="text-sm font-medium text-foreground">
+            {field.label}{" "}
+            {!!(field.is_mandatory || field.reqd) && (
+              <span className="text-destructive">*</span>
+            )}
+          </Label>
+          <div className="relative">
+            <FieldInput
+              field={field}
+              value={value}
+              onChange={onChange}
+              onBlur={onBlur}
+              error={error}
+              disabled={disabled}
+            />
+            <FieldStatusTooltip
+              field={field}
+              value={value}
+              error={error}
+              disabled={disabled}
+            />
+          </div>
+          {error && <p className="text-xs text-destructive">{error}</p>}
         </div>
-        {error && <p className="text-xs text-destructive">{error}</p>}
-      </div>
-    ),
+      );
+    },
   },
   Int: {
     component: ({ field, value, onChange, onBlur, error, disabled, className }) => (
@@ -322,9 +510,9 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
             onBlur={onBlur}
             placeholder={field.label}
             disabled={disabled || !!field.read_only}
-            className={cn("bg-muted", getValidationClass(field, value))}
+            className={getFieldClass(field, value, error, disabled)}
           />
-          <FieldStatusTooltip field={field} value={value} />
+          <FieldStatusTooltip field={field} value={value} error={error} disabled={disabled} />
         </div>
         {error && <p className="text-xs text-destructive">{error}</p>}
       </div>
@@ -348,9 +536,9 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
             onBlur={onBlur}
             placeholder={field.label}
             disabled={disabled || !!field.read_only}
-            className={cn("bg-muted", getValidationClass(field, value))}
+            className={getFieldClass(field, value, error, disabled)}
           />
-          <FieldStatusTooltip field={field} value={value} />
+          <FieldStatusTooltip field={field} value={value} error={error} disabled={disabled} />
         </div>
         {error && <p className="text-xs text-destructive">{error}</p>}
       </div>
@@ -379,10 +567,10 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
               onChange={(e) => onChange(e.target.value)}
               onBlur={onBlur}
               disabled={disabled || !!field.read_only}
-              className={cn("bg-muted", getValidationClass(field, value))}
+              className={getFieldClass(field, value, error, disabled)}
               max={maxDateAttr}
             />
-            <FieldStatusTooltip field={field} value={value} />
+            <FieldStatusTooltip field={field} value={value} error={error} disabled={disabled} />
           </div>
           {error && <p className="text-xs text-destructive">{error}</p>}
         </div>
@@ -541,9 +729,9 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
               searchValue={search}
               onSearchValueChange={setSearch}
               onBlur={onBlur}
-              className={getValidationClass(field, displayValue)}
+              className={getFieldClass(field, displayValue, error, disabled)}
             />
-            <FieldStatusTooltip field={field} value={displayValue} rightOffset="right-8" />
+            <FieldStatusTooltip field={field} value={displayValue} rightOffset="right-8" error={error} disabled={disabled} />
           </div>
 
           {error && <p className="text-xs text-destructive">{error}</p>}
@@ -593,9 +781,9 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
               placeholder={`Select ${field.label}`}
               searchPlaceholder={`Search ${field.label}...`}
               onBlur={onBlur}
-              className={getValidationClass(field, displayValue)}
+              className={getFieldClass(field, displayValue, error, disabled)}
             />
-            <FieldStatusTooltip field={field} value={displayValue} rightOffset="right-8" />
+            <FieldStatusTooltip field={field} value={displayValue} rightOffset="right-8" error={error} disabled={disabled} />
           </div>
           {error && <p className="text-xs text-destructive">{error}</p>}
         </div>
@@ -614,18 +802,15 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
           )}
         </Label>
         <div className="relative">
-          <Input
-            type={isEmailField(field) ? "email" : "text"}
-            value={typeof value === "string" ? normalizeInputValue(field, value) : (value as string) || ""}
-            onChange={(e) => onChange(normalizeInputValue(field, e.target.value))}
+          <FieldInput
+            field={field}
+            value={value}
+            onChange={onChange}
             onBlur={onBlur}
-            placeholder={field.label}
-            disabled={disabled || !!field.read_only}
-            className={cn("bg-muted", getValidationClass(field, value))}
-            inputMode={isPhoneField(field) || isPincodeField(field) || isAadhaarField(field) || isAccountNumberField(field) ? "numeric" : undefined}
-            maxLength={isPhoneField(field) ? 10 : isPincodeField(field) ? 6 : isAadhaarField(field) ? 12 : isPanField(field) ? 10 : undefined}
+            error={error}
+            disabled={disabled}
           />
-          <FieldStatusTooltip field={field} value={value} />
+          <FieldStatusTooltip field={field} value={value} error={error} disabled={disabled} />
         </div>
         {error && <p className="text-xs text-destructive">{error}</p>}
       </div>
@@ -641,18 +826,15 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
           )}
         </Label>
         <div className="relative">
-          <Input
-            type={isEmailField(field) ? "email" : "text"}
-            value={typeof value === "string" ? normalizeInputValue(field, value) : (value as string) || ""}
-            onChange={(e) => onChange(normalizeInputValue(field, e.target.value))}
+          <FieldInput
+            field={field}
+            value={value}
+            onChange={onChange}
             onBlur={onBlur}
-            placeholder={field.label}
-            disabled={disabled || !!field.read_only}
-            className={cn("bg-muted", getValidationClass(field, value))}
-            inputMode={isPhoneField(field) || isPincodeField(field) || isAadhaarField(field) || isAccountNumberField(field) ? "numeric" : undefined}
-            maxLength={isPhoneField(field) ? 10 : isPincodeField(field) ? 6 : isAadhaarField(field) ? 12 : isPanField(field) ? 10 : field.fieldname === "custom_ifsc_code" ? 11 : undefined}
+            error={error}
+            disabled={disabled}
           />
-          <FieldStatusTooltip field={field} value={value} />
+          <FieldStatusTooltip field={field} value={value} error={error} disabled={disabled} />
         </div>
         {error && <p className="text-xs text-destructive">{error}</p>}
       </div>
@@ -755,17 +937,15 @@ export function DynamicFieldRenderer<T extends FormField>({
           )}
         </Label>
         <div className="relative">
-          <Input
-            value={typeof value === "string" ? normalizeInputValue(fieldForRender, value) : (value as string) || ""}
-            onChange={(e) => onChange(normalizeInputValue(fieldForRender, e.target.value))}
+          <FieldInput
+            field={fieldForRender}
+            value={value}
+            onChange={onChange}
             onBlur={onBlur}
-            placeholder={fieldForRender.label}
-            disabled={disabled || isReadOnly}
-            className={cn("bg-muted", getValidationClass(fieldForRender, value))}
-            inputMode={isPhoneField(fieldForRender) || isAccountNumberField(fieldForRender) ? "numeric" : undefined}
-            maxLength={isPhoneField(fieldForRender) ? 10 : isPanField(fieldForRender) ? 10 : fieldForRender.fieldname === "custom_ifsc_code" ? 11 : undefined}
+            error={error}
+            disabled={disabled}
           />
-          <FieldStatusTooltip field={fieldForRender} value={value} />
+          <FieldStatusTooltip field={fieldForRender} value={value} error={error} disabled={disabled} />
         </div>
         {error && <p className="text-xs text-destructive">{error}</p>}
       </div>

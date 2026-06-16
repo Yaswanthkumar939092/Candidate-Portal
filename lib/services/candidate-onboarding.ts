@@ -54,6 +54,11 @@ export function transformOnboardingForm(
     status: data.boarding_status,
     tabs: data.tabs,
     field_status_counts: data.field_status_counts,
+    branding: data.branding,
+    joining: data.joining,
+    key_contacts: data.key_contacts,
+    onboarding_journey: data.onboarding_journey,
+    form_source: data.form_source,
   };
 }
 

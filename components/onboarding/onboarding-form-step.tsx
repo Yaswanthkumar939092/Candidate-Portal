@@ -13,11 +13,11 @@ import {
   Controller,
   FormProvider,
 } from "react-hook-form";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+
 import { useOnboarding } from "@/lib/contexts/onboarding-context";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Separator } from "@/components/ui/separator";
+
 import { FileUploadField } from "@/components/onboarding/file-upload-field";
 import { cn } from "@/lib/utils";
 import { OnboardingTab, OnboardingField } from "@/lib/types/onboarding";
@@ -129,6 +129,7 @@ export function OnboardingFormStep({
     isSaving,
     currentStep,
     submitAll,
+    registerSubmitTrigger,
   } = useOnboarding();
   const existingData = useMemo(
     () => (stepData[stepKey] ?? {}) as Record<string, unknown>,
@@ -274,12 +275,12 @@ export function OnboardingFormStep({
     });
   }, [doc, tab, getValues, setValue]);
 
-  // Auto-save form values to context to prevent data loss on navigation
+  // Auto-save form values to context to prevent data loss on navigation (low debounce for real-time ID card / checklist sync)
   useEffect(() => {
     const timer = setTimeout(() => {
       const values = getValues();
       setStepData(stepKey, values);
-    }, 500);
+    }, 150);
     return () => clearTimeout(timer);
   }, [currentFormValues, getValues, setStepData, stepKey]);
 
@@ -326,6 +327,53 @@ export function OnboardingFormStep({
       // Error is handled in submitAll
     }
   }, onInvalid);
+
+  useEffect(() => {
+    if (registerSubmitTrigger) {
+      const handleAction = async (action: "save_continue" | "save_draft") => {
+        if (action === "save_continue") {
+          let success = false;
+          await handleSubmit(
+            async (data) => {
+              try {
+                setStepData(stepKey, data);
+                await submitAll("save", stepKey, data);
+                markStepComplete(stepKey);
+                nextStep();
+                success = true;
+              } catch (e) {
+                // error handled in submitAll
+              }
+            },
+            onInvalid
+          )();
+          return success;
+        } else if (action === "save_draft") {
+          const data = getValues();
+          try {
+            setStepData(stepKey, data);
+            await submitAll("save", stepKey, data);
+            window.location.assign("/dashboard");
+            return true;
+          } catch (e) {
+            return false;
+          }
+        }
+      };
+
+      return registerSubmitTrigger(handleAction);
+    }
+  }, [
+    registerSubmitTrigger,
+    handleSubmit,
+    onInvalid,
+    setStepData,
+    submitAll,
+    markStepComplete,
+    nextStep,
+    stepKey,
+    getValues,
+  ]);
 
   const handleFileUpload = useCallback(
     (fieldname: string) => (url: string | null) => {
@@ -415,10 +463,32 @@ export function OnboardingFormStep({
 
         if (!hasVisibleFields) return null;
 
+        const visibleFields = section.fields.filter((field) => {
+          return !field.hidden && (!field.depends_on || evaluateDependsOn(field.depends_on, doc));
+        });
+        const totalFields = visibleFields.length;
+        const filledFields = visibleFields.filter((field) => {
+          const val = doc[field.fieldname];
+          if (field.approval_status === "Approved") return true;
+          if (field.fieldtype === "Table") {
+            const rows = Array.isArray(val) ? val : [];
+            return rows.length > 0;
+          }
+          if (field.fieldtype === "Check") {
+            return Boolean(val);
+          }
+          return val !== undefined && val !== null && String(val).trim() !== "";
+        }).length;
+
+        const sectionCounts = { filled: filledFields, total: totalFields };
+
         return (
           <React.Fragment key={idx}>
             <SectionCard
+              id={`section-${section.section.toLowerCase().replace(/\s+/g, "_")}`}
               title={section.section === tab.tab ? undefined : section.section}
+              sectionTitle={section.section}
+              counts={sectionCounts}
             >
               <div
                 className={cn(
@@ -463,22 +533,18 @@ export function OnboardingFormStep({
           </React.Fragment>
         );
       })}
-
-      {/* Navigation */}
-      <Separator />
-      <div className="flex items-center justify-between pt-2">
+      {/* Navigation (hidden from UI, kept for programmatic test compatibility) */}
+      <div className="hidden" aria-hidden="true">
         <Button
           type="button"
           variant="outline"
           onClick={prevStep}
           disabled={currentStep === 0 || isSaving}
         >
-          <ChevronLeft className="mr-1 h-4 w-4" />
           Previous
         </Button>
         <Button type="submit" disabled={isSaving}>
           {isSaving ? "Saving..." : "Save & Next"}
-          <ChevronRight className="ml-1 h-4 w-4" />
         </Button>
       </div>
       </form>

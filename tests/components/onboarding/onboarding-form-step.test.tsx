@@ -72,7 +72,7 @@ vi.mock("@/components/onboarding/dynamic-table-field", () => ({
 
 // Mock DynamicFieldRenderer to avoid deep UI rendering issues and focus on props
 vi.mock("@/components/ui/field-renderer", () => ({
-    DynamicFieldRenderer: ({ field, value, onChange, error, overrides, className }: DynamicFieldRendererProps) => {
+    DynamicFieldRenderer: ({ field, value, onChange, error, overrides, className }: any) => {
         if (field.fieldtype === "Attach" || field.fieldtype === "Attach Image") {
             // In OnboardingFormStep, overrides for Attach are provided
             if (overrides && overrides[field.fieldtype]) {
@@ -651,11 +651,11 @@ describe("OnboardingFormStep", () => {
        fireEvent.change(screen.getByTestId("input-first_name"), { target: { value: "Diana" } });
        
        // Advance partially
-       vi.advanceTimersByTime(200);
+       vi.advanceTimersByTime(50);
        expect(mockSetStepData).not.toHaveBeenCalledWith("auto_save_test", expect.any(Object));
        
-       // Fulfill 500ms window
-       vi.advanceTimersByTime(400);
+       // Fulfill 150ms window
+       vi.advanceTimersByTime(150);
        expect(mockSetStepData).toHaveBeenCalledWith("auto_save_test", expect.objectContaining({ first_name: "Diana" }));
        
        vi.useRealTimers();
@@ -983,8 +983,8 @@ describe("OnboardingFormStep", () => {
                      read_only: 0,
                      hidden: 0,
                      child_fields: [
-                        { fieldname: "education_level", label: "Education Level", fieldtype: "Select", reqd: 1, read_only: 0, hidden: 0 },
-                        { fieldname: "year_of_passing", label: "Year of Passing", fieldtype: "Link", reqd: 1, read_only: 0, hidden: 0 }
+                        { fieldname: "education_level", label: "Education Level", fieldtype: "Select", reqd: 1, is_mandatory: 1, read_only: 0, hidden: 0 },
+                        { fieldname: "year_of_passing", label: "Year of Passing", fieldtype: "Link", reqd: 1, is_mandatory: 1, read_only: 0, hidden: 0 }
                      ]
                   }
                ]
@@ -1028,9 +1028,9 @@ describe("OnboardingFormStep", () => {
                      read_only: 0,
                      hidden: 0,
                      child_fields: [
-                        { fieldname: "nomination_type", label: "Nomination Type", fieldtype: "Select", reqd: 1, read_only: 0, hidden: 0 },
-                        { fieldname: "nominee_name", label: "Name", fieldtype: "Data", reqd: 1, read_only: 0, hidden: 0 },
-                        { fieldname: "percentage", label: "Percentage", fieldtype: "Float", reqd: 1, read_only: 0, hidden: 0 }
+                        { fieldname: "nomination_type", label: "Nomination Type", fieldtype: "Select", reqd: 1, is_mandatory: 1, read_only: 0, hidden: 0 },
+                        { fieldname: "nominee_name", label: "Name", fieldtype: "Data", reqd: 1, is_mandatory: 1, read_only: 0, hidden: 0 },
+                        { fieldname: "percentage", label: "Percentage", fieldtype: "Float", reqd: 1, is_mandatory: 1, read_only: 0, hidden: 0 }
                      ]
                   }
                ]

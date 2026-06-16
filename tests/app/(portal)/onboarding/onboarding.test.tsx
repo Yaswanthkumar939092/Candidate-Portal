@@ -52,8 +52,12 @@ describe("OnboardingPage", () => {
       currentStep: 0,
       completedSteps: new Set(),
       formConfig: {
-        tabs: [{ tab: "Personal Info" }, { tab: "Education" }],
+        tabs: [
+          { tab: "Personal Info", sections: [] },
+          { tab: "Education", sections: [] },
+        ],
       },
+      stepData: {},
       status: "in_progress",
     });
 
@@ -71,8 +75,12 @@ describe("OnboardingPage", () => {
       currentStep: 2,
       completedSteps: new Set([0, 1]),
       formConfig: {
-        tabs: [{ tab: "Personal Info" }, { tab: "Education" }],
+        tabs: [
+          { tab: "Personal Info", sections: [] },
+          { tab: "Education", sections: [] },
+        ],
       },
+      stepData: {},
       status: "in_progress",
     });
 
@@ -89,8 +97,12 @@ describe("OnboardingPage", () => {
       currentStep: 2,
       completedSteps: new Set([0, 1, 2]),
       formConfig: {
-        tabs: [{ tab: "Personal Info" }, { tab: "Education" }],
+        tabs: [
+          { tab: "Personal Info", sections: [] },
+          { tab: "Education", sections: [] },
+        ],
       },
+      stepData: {},
       status: "submitted",
     });
 
