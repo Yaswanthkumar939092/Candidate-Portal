@@ -1,16 +1,13 @@
-"use client"
+"use client";
 
-import Link from 'next/link'
-import {
-  Check,
-  ArrowLeft,
-} from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { useOnboarding } from '@/lib/contexts/onboarding-context'
-import { evaluateDependsOn } from '@/lib/onboarding-utils'
+import Link from "next/link";
+import { Check, ArrowLeft, Pencil } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useOnboarding } from "@/lib/contexts/onboarding-context";
+import { evaluateDependsOn } from "@/lib/onboarding-utils";
 
 interface OnboardingStepNavProps {
-  className?: string
+  className?: string;
 }
 
 /**
@@ -21,35 +18,63 @@ interface OnboardingStepNavProps {
  * (active/completed/pending), and a "Back to Dashboard" link at the bottom.
  */
 export function OnboardingStepNav({ className }: OnboardingStepNavProps) {
-  const { currentStep, completedSteps, goToStep, formConfig, status, stepData } = useOnboarding()
+  const {
+    currentStep,
+    completedSteps,
+    goToStep,
+    formConfig,
+    status,
+    stepData,
+  } = useOnboarding();
 
-  const tabs = formConfig?.tabs || []
+  const tabs = formConfig?.tabs || [];
   const steps = [
-    ...tabs.map(t => ({
-      key: t.tab.toLowerCase().replace(/\s+/g, '_'),
+    ...tabs.map((t) => ({
+      key: t.tab.toLowerCase().replace(/\s+/g, "_"),
       label: t.tab,
-      counts: t.field_counts
+      counts: t.field_counts,
     })),
-    { key: 'review', label: 'Review', counts: undefined }
-  ]
+    { key: "review", label: "Review", counts: undefined },
+  ];
 
-  const totalSteps = steps.length
-  const progressPercentage = formConfig?.field_status_counts && formConfig.field_status_counts.total > 0
-    ? Math.round(((formConfig.field_status_counts.filled + formConfig.field_status_counts.approved) / formConfig.field_status_counts.total) * 100)
-    : (totalSteps > 0
-      ? Math.round((completedSteps.size / totalSteps) * 100)
-      : 0)
+  const totalSteps = steps.length;
+  const progressPercentage =
+    formConfig?.field_status_counts && formConfig.field_status_counts.total > 0
+      ? Math.round(
+          ((formConfig.field_status_counts.filled +
+            formConfig.field_status_counts.approved) /
+            formConfig.field_status_counts.total) *
+            100,
+        )
+      : totalSteps > 0
+        ? Math.round((completedSteps.size / totalSteps) * 100)
+        : 0;
+
+  const totalFields =
+    formConfig?.field_status_counts?.total ??
+    tabs.reduce((sum, t) => sum + (t.field_counts?.total || 0), 0);
+
+  const filledFields = formConfig?.field_status_counts
+    ? formConfig.field_status_counts.filled +
+      formConfig.field_status_counts.approved
+    : tabs.reduce(
+        (sum, t) =>
+          sum +
+          ((t.field_counts?.filled || 0) + (t.field_counts?.approved || 0)),
+        0,
+      );
 
   return (
     <nav
       className={cn(
-        "flex h-full flex-col bg-card border-r border-border",
-        className
+        "flex h-full flex-col bg-card border-r border-border rounded-xl",
+        className,
       )}
       aria-label="Onboarding steps"
     >
       {/* Blue header section */}
-      <div className="bg-primary px-5 py-5">
+      <div className="bg-primary px-5 py-5 rounded-t-xl relative overflow-hidden">
+        <div className="size-32 bg-white/8 rounded-full absolute -top-5 -right-5"></div>
         <h2 className="text-lg font-bold text-primary-foreground">
           Onboarding
         </h2>
@@ -65,81 +90,109 @@ export function OnboardingStepNav({ className }: OnboardingStepNavProps) {
             />
           </div>
         </div>
+        {/* Progress Meta */}
+        <div className="flex justify-between items-center mt-2 text-[11px] font-semibold text-primary-foreground/90 font-mono select-none">
+          <span>{progressPercentage}% complete</span>
+          {totalFields > 0 && (
+            <span>
+              {filledFields}/{totalFields} fields
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Step list */}
       <div className="flex-1 overflow-y-auto px-3 py-4">
         <div className="flex flex-col gap-0.5">
           {steps.map((step, index) => {
-            const isSubmitted = status !== 'draft'
+            const isSubmitted = status !== "draft";
             const isTabCompleted = step.counts
-              ? (step.counts.total === (step.counts.filled + step.counts.approved))
-              : completedSteps.has(step.key)
-            const isCompleted = isSubmitted || isTabCompleted
-            const isCurrent = index === currentStep
-            const isPast = index < currentStep
-            const isNextStep = index === currentStep + 1
+              ? step.counts.total === step.counts.filled + step.counts.approved
+              : completedSteps.has(step.key);
+            const isCompleted = isSubmitted || isTabCompleted;
+            const isCurrent = index === currentStep;
+            const isPast = index < currentStep;
+            const isNextStep = index === currentStep + 1;
 
-            const doc: Record<string, any> = {}
+            const doc: Record<string, any> = {};
             if (stepData) {
               Object.keys(stepData).forEach((key) => {
-                Object.assign(doc, stepData[key])
-              })
+                Object.assign(doc, stepData[key]);
+              });
             }
 
             const currentTabMandatoryFieldsAreFilled = (() => {
-              if (currentStep >= tabs.length) return false
-              const currentTab = tabs[currentStep]
-              if (!currentTab) return false
+              if (currentStep >= tabs.length) return false;
+              const currentTab = tabs[currentStep];
+              if (!currentTab) return false;
 
-              let allFilled = true
-              currentTab.sections.forEach(section => {
-                section.fields.forEach(field => {
-                  const isVisible = !field.hidden && (!field.depends_on || evaluateDependsOn(field.depends_on, doc))
-                  if (!isVisible) return
+              let allFilled = true;
+              currentTab.sections.forEach((section) => {
+                section.fields.forEach((field) => {
+                  const isVisible =
+                    !field.hidden &&
+                    (!field.depends_on ||
+                      evaluateDependsOn(field.depends_on, doc));
+                  if (!isVisible) return;
 
                   const isMandatory =
                     field.is_mandatory ||
                     field.reqd ||
-                    (field.mandatory_depends_on && evaluateDependsOn(field.mandatory_depends_on, doc))
+                    (field.mandatory_depends_on &&
+                      evaluateDependsOn(field.mandatory_depends_on, doc));
 
-                  if (!isMandatory) return
+                  if (!isMandatory) return;
 
-                  const fieldValue = doc[field.fieldname]
+                  const fieldValue = doc[field.fieldname];
                   const normalizedValue =
-                    typeof fieldValue === "string" ? fieldValue.trim() : fieldValue
+                    typeof fieldValue === "string"
+                      ? fieldValue.trim()
+                      : fieldValue;
 
-                  const isTable = field.fieldtype === "Table"
+                  const isTable = field.fieldtype === "Table";
                   if (isTable) {
-                    const rows = Array.isArray(normalizedValue) ? (normalizedValue as Record<string, unknown>[]) : []
-                    const visibleChildFields = field.child_fields?.filter(f => !f.hidden) || []
-                    const mandatoryChildFields = visibleChildFields.filter(f => f.is_mandatory || f.reqd)
+                    const rows = Array.isArray(normalizedValue)
+                      ? (normalizedValue as Record<string, unknown>[])
+                      : [];
+                    const visibleChildFields =
+                      field.child_fields?.filter((f) => !f.hidden) || [];
+                    const mandatoryChildFields = visibleChildFields.filter(
+                      (f) => f.is_mandatory || f.reqd,
+                    );
 
                     const isRowEmpty = (row: Record<string, unknown>) => {
-                      return !visibleChildFields.some(cf => {
-                        const val = row[cf.fieldname]
-                        return val !== undefined && val !== null && String(val).trim() !== ""
-                      })
-                    }
+                      return !visibleChildFields.some((cf) => {
+                        const val = row[cf.fieldname];
+                        return (
+                          val !== undefined &&
+                          val !== null &&
+                          String(val).trim() !== ""
+                        );
+                      });
+                    };
 
                     const isRowValid = (row: Record<string, unknown>) => {
-                      return mandatoryChildFields.every(cf => {
-                        const val = row[cf.fieldname]
-                        return val !== undefined && val !== null && String(val).trim() !== ""
-                      })
-                    }
+                      return mandatoryChildFields.every((cf) => {
+                        const val = row[cf.fieldname];
+                        return (
+                          val !== undefined &&
+                          val !== null &&
+                          String(val).trim() !== ""
+                        );
+                      });
+                    };
 
-                    const nonEmptyRows = rows.filter(row => !isRowEmpty(row))
+                    const nonEmptyRows = rows.filter((row) => !isRowEmpty(row));
                     if (nonEmptyRows.length === 0) {
-                      allFilled = false
+                      allFilled = false;
                     } else if (!nonEmptyRows.every(isRowValid)) {
-                      allFilled = false
+                      allFilled = false;
                     }
                   } else {
-                    const isCheck = field.fieldtype === "Check"
+                    const isCheck = field.fieldtype === "Check";
                     if (isCheck) {
                       if (!Boolean(normalizedValue)) {
-                        allFilled = false
+                        allFilled = false;
                       }
                     } else {
                       if (
@@ -147,16 +200,22 @@ export function OnboardingStepNav({ className }: OnboardingStepNavProps) {
                         normalizedValue === null ||
                         normalizedValue === ""
                       ) {
-                        allFilled = false
+                        allFilled = false;
                       }
                     }
                   }
-                })
-              })
-              return allFilled
-            })()
+                });
+              });
+              return allFilled;
+            })();
 
-            const isClickable = isCompleted || isCurrent || isPast || (isNextStep && currentTabMandatoryFieldsAreFilled)
+            const isClickable =
+              isCompleted ||
+              isCurrent ||
+              isPast ||
+              (isNextStep && currentTabMandatoryFieldsAreFilled);
+
+            const isTabFullyFilled = isTabCompleted || isSubmitted;
 
             return (
               <button
@@ -164,44 +223,52 @@ export function OnboardingStepNav({ className }: OnboardingStepNavProps) {
                 onClick={() => isClickable && goToStep(index)}
                 disabled={!isClickable}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors",
-                  isCurrent && "bg-primary/10 text-primary font-medium",
-                  isCompleted && !isCurrent && "text-green-700 dark:text-green-400 hover:bg-muted",
-                  isPast && !isCompleted && !isCurrent && "text-muted-foreground hover:bg-muted",
-                  !isClickable && "cursor-not-allowed text-muted-foreground/60"
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-all border border-transparent select-none relative",
+                  isCurrent 
+                    ? "bg-primary/5 border-primary/20 border-l-4 border-l-primary font-bold text-[#1B2124] dark:text-white" 
+                    : "hover:bg-muted text-muted-foreground",
+                  !isClickable && "cursor-not-allowed opacity-50",
                 )}
                 aria-current={isCurrent ? "step" : undefined}
               >
-                {/* Step indicator circle */}
+                {/* Step indicator checkmark circle */}
                 <span
                   className={cn(
-                    "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-medium",
-                    isCompleted &&
-                    "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-                    isCurrent &&
-                    !isCompleted &&
-                    "bg-primary text-primary-foreground",
-                    !isCompleted &&
-                    !isCurrent &&
-                    "border border-border bg-muted text-muted-foreground"
+                    "flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-all duration-300",
+                    isTabFullyFilled
+                      ? "bg-[#16B364] text-white" 
+                      : isCurrent
+                        ? "bg-primary/10 text-primary"
+                        : "bg-[#F4F5F7] text-muted-foreground dark:bg-zinc-800"
                   )}
                 >
-                  {isCompleted ? (
-                    <Check className="h-4 w-4" />
+                  {isCurrent && !isTabFullyFilled ? (
+                    <Pencil className="h-3.5 w-3.5 stroke-[2.5]" />
                   ) : (
-                    index + 1
+                    <Check className="h-4 w-4 stroke-[3]" />
                   )}
                 </span>
 
                 {/* Step label */}
-                <span className="truncate flex-1">{step.label}</span>
+                <span className="truncate flex-1 font-semibold text-[#1B2124] dark:text-zinc-200">
+                  {step.label}
+                </span>
+                
+                {/* Step dynamic counts badge */}
                 {step.counts && (
-                  <span className="text-xs font-medium tabular-nums opacity-60">
+                  <span className={cn(
+                    "text-[11px] font-bold font-mono px-2 py-0.5 rounded-full transition-all duration-300 select-none",
+                    isTabFullyFilled
+                      ? "bg-[#E6F8EF] text-[#087443] dark:bg-green-950/40 dark:text-green-400"
+                      : isCurrent
+                        ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-foreground"
+                        : "bg-[#F4F5F7] text-muted-foreground dark:bg-zinc-850"
+                  )}>
                     {step.counts.filled + step.counts.approved}/{step.counts.total}
                   </span>
                 )}
               </button>
-            )
+            );
           })}
         </div>
       </div>
@@ -217,5 +284,5 @@ export function OnboardingStepNav({ className }: OnboardingStepNavProps) {
         </Link>
       </div>
     </nav>
-  )
+  );
 }
