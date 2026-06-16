@@ -14,6 +14,13 @@ function isFilled(value: unknown) {
   return value !== undefined && value !== null && String(value).trim() !== "";
 }
 
+function getSelectOptions(options?: string) {
+  return (options || "")
+    .split("\n")
+    .map((option) => option.trim())
+    .filter(Boolean);
+}
+
 function setNestedTableError(
   errors: ValidationErrors,
   tableFieldname: string,
@@ -183,8 +190,13 @@ export function validateOnboardingStep(
           }
         }
 
-        // Validate that nominee percentages sum to exactly 100% for each nomination type
-        if (field.fieldname === "custom_nomination_details" && nonEmptyRows.length > 0) {
+        // Validate that every nomination category is filled and totals exactly 100%.
+        if (field.fieldname === "custom_nomination_details") {
+          const nominationTypeOptions = getSelectOptions(
+            field.child_fields?.find(
+              (childField) => childField.fieldname === "nomination_type",
+            )?.options,
+          );
           const typeTotals: Record<string, number> = {};
           
           nonEmptyRows.forEach(row => {
@@ -195,6 +207,18 @@ export function validateOnboardingStep(
               typeTotals[type] = (typeTotals[type] || 0) + percent;
             }
           });
+
+          const missingTypes = nominationTypeOptions.filter(
+            (type) => typeTotals[type] === undefined,
+          );
+
+          if (missingTypes.length > 0) {
+            setTableRootError(errorList, field.fieldname, {
+              type: "required",
+              message: `Please add nomination details for: ${missingTypes.join(", ")}`,
+            });
+            return;
+          }
 
           for (const [type, total] of Object.entries(typeTotals)) {
             if (Math.abs(total - 100) > 0.001) {

@@ -1059,5 +1059,101 @@ describe("OnboardingFormStep", () => {
             );
          });
       });
+
+      it("requires every configured nomination category before moving next", async () => {
+         const nomTab: OnboardingTab = {
+            tab: "Nomination Tab",
+            sections: [{
+               section: "Nominations",
+               fields: [
+                  {
+                     fieldname: "custom_nomination_details",
+                     label: "Nomination Details",
+                     fieldtype: "Table",
+                     is_mandatory: 0,
+                     read_only: 0,
+                     hidden: 0,
+                     child_fields: [
+                        { fieldname: "nomination_type", label: "Nomination Type", fieldtype: "Select", options: "Gratuity\nPF\nGPA", reqd: 1, is_mandatory: 1, read_only: 0, hidden: 0 },
+                        { fieldname: "nominee_name", label: "Name", fieldtype: "Data", reqd: 1, is_mandatory: 1, read_only: 0, hidden: 0 },
+                        { fieldname: "percentage", label: "Percentage", fieldtype: "Float", reqd: 1, is_mandatory: 1, read_only: 0, hidden: 0 }
+                     ]
+                  }
+               ]
+            }]
+         };
+
+         vi.mocked(useOnboarding).mockReturnValue({
+            ...defaultContext,
+            stepData: {
+               nom_test: {
+                  custom_nomination_details: [
+                     { nomination_type: "Gratuity", nominee_name: "Nominee 1", percentage: "100" }
+                  ]
+               }
+            }
+         });
+
+         render(<OnboardingFormStep tab={nomTab} stepKey="nom_test" />);
+
+         fireEvent.click(screen.getByText("Save & Next"));
+
+         await waitFor(() => {
+            expect(screen.getByTestId("error-message")).toHaveTextContent(
+               "Please add nomination details for: PF, GPA"
+            );
+            expect(mockNextStep).not.toHaveBeenCalled();
+         });
+      });
+
+      it("allows moving next when every configured nomination category totals 100%", async () => {
+         const nomTab: OnboardingTab = {
+            tab: "Nomination Tab",
+            sections: [{
+               section: "Nominations",
+               fields: [
+                  {
+                     fieldname: "custom_nomination_details",
+                     label: "Nomination Details",
+                     fieldtype: "Table",
+                     is_mandatory: 0,
+                     read_only: 0,
+                     hidden: 0,
+                     child_fields: [
+                        { fieldname: "nomination_type", label: "Nomination Type", fieldtype: "Select", options: "Gratuity\nPF\nGPA", reqd: 1, is_mandatory: 1, read_only: 0, hidden: 0 },
+                        { fieldname: "nominee_name", label: "Name", fieldtype: "Data", reqd: 1, is_mandatory: 1, read_only: 0, hidden: 0 },
+                        { fieldname: "percentage", label: "Percentage", fieldtype: "Float", reqd: 1, is_mandatory: 1, read_only: 0, hidden: 0 }
+                     ]
+                  }
+               ]
+            }]
+         };
+
+         vi.mocked(useOnboarding).mockReturnValue({
+            ...defaultContext,
+            stepData: {
+               nom_test: {
+                  custom_nomination_details: [
+                     { nomination_type: "Gratuity", nominee_name: "Nominee 1", percentage: "100" },
+                     { nomination_type: "PF", nominee_name: "Nominee 2", percentage: "40" },
+                     { nomination_type: "PF", nominee_name: "Nominee 3", percentage: "60" },
+                     { nomination_type: "GPA", nominee_name: "Nominee 4", percentage: "100" }
+                  ]
+               }
+            }
+         });
+
+         render(<OnboardingFormStep tab={nomTab} stepKey="nom_test" />);
+
+         fireEvent.click(screen.getByText("Save & Next"));
+
+         await waitFor(() => {
+            expect(defaultContext.submitAll).toHaveBeenCalledWith("save", "nom_test", expect.objectContaining({
+               custom_nomination_details: expect.any(Array)
+            }));
+            expect(mockMarkStepComplete).toHaveBeenCalledWith("nom_test");
+            expect(mockNextStep).toHaveBeenCalled();
+         });
+      });
     });
 });

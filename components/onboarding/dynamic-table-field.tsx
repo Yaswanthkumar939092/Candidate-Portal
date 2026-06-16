@@ -98,10 +98,12 @@ export function DynamicTableField({
   })
   const addedRowSubmitCounts = React.useRef<Record<number, number>>({})
 
-  // Initialize with one empty row if none exist
-  if (fields.length === 0) {
-    append({})
-  }
+  // Initialize with one empty row if none exist.
+  React.useEffect(() => {
+    if (fields.length === 0) {
+      append({})
+    }
+  }, [append, fields.length])
 
   const handleAdd = () => {
     addedRowSubmitCounts.current[fields.length] = submitCount
@@ -142,10 +144,14 @@ export function DynamicTableField({
       (field.mandatory_depends_on && evaluateDependsOn(field.mandatory_depends_on, document))
   )
 
-  const rowValues = useWatch({
+  const watchedRowValues = useWatch({
     control,
     name: field.fieldname,
-  }) || []
+  })
+  const rowValues = React.useMemo(
+    () => (Array.isArray(watchedRowValues) ? watchedRowValues : []),
+    [watchedRowValues],
+  )
 
   // Automatically clear child fields when they become hidden or violate year sequence
   React.useEffect(() => {
