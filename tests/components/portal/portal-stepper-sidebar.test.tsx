@@ -41,7 +41,7 @@ describe("PortalStepperSidebar", () => {
         error: null,
       });
 
-      render(<PortalStepperSidebar currentStep="offer" />);
+      render(<PortalStepperSidebar currentStep="offer" isViewOnly={false} />);
 
       // Labels rendered
       expect(screen.getByText("Survey")).toBeTruthy();

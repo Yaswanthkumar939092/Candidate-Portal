@@ -74,7 +74,7 @@ describe("candidateOnboardingService", () => {
         boarding_status: "Pending",
         tabs: [{ id: "tab1" } as any],
       };
-      const output = transformOnboardingForm(input);
+      const output = transformOnboardingForm(input as any);
       expect(output).toEqual({
         applicantId: "ID1",
         status: "Pending",

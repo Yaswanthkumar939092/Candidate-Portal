@@ -1,42 +1,11 @@
-export interface OnboardingFormField {
-  fieldname: string;
-  label: string;
-  fieldtype: string;
-  is_mandatory: number;
-  read_only: number;
-  hidden: number;
-  options: string;
-  value: unknown;
-  default?: unknown;
-  approval_status: string;
-  hr_comment: string;
-}
+export * from "@/lib/types/onboarding";
 
-export interface OnboardingFormSection {
-  section: string;
-  fields: OnboardingFormField[];
-}
+import {
+  OnboardingField,
+  OnboardingSection,
+  OnboardingTab,
+} from "@/lib/types/onboarding";
 
-export interface OnboardingFormTab {
-  tab: string;
-  sections: OnboardingFormSection[];
-}
-
-export interface OnboardingFormMessage {
-  status: string;
-  job_applicant: string;
-  form_source: string;
-  onboarding_name: string;
-  boarding_status: string;
-  tabs: OnboardingFormTab[];
-}
-
-export interface OnboardingFormApiResponse {
-  message: OnboardingFormMessage;
-}
-
-export interface OnboardingForm {
-  applicantId: string;
-  status: string;
-  tabs: OnboardingFormTab[];
-}
+export type OnboardingFormField = OnboardingField;
+export type OnboardingFormSection = OnboardingSection;
+export type OnboardingFormTab = OnboardingTab;

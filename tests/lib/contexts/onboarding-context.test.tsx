@@ -342,8 +342,9 @@ describe('OnboardingContext', () => {
             tab: 'Personal Info',
             sections: [
               {
+                section: 'Basic Info',
                 fields: [
-                  { fieldname: 'first_name', fieldtype: 'Data', value: '', default: '', is_mandatory: 1 },
+                  { fieldname: 'first_name', fieldtype: 'Data', value: '', default: '', is_mandatory: 1 } as any,
                 ],
               },
             ],

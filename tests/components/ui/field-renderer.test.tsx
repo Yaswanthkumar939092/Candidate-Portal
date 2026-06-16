@@ -985,9 +985,26 @@ describe("DynamicFieldRenderer", () => {
         <DynamicFieldRenderer field={field} value="sample" onChange={vi.fn()} />
       )
       const input = container.querySelector("input")
-      expect(input?.className).toContain("border-success")
+      expect(input?.className).toContain("border-field-success")
 
       // Verify presence of Check icon (uses standard lucide svg attributes)
+      const checkIcon = container.querySelector(".lucide-check")
+      expect(checkIcon).toBeTruthy()
+    })
+
+    it("applies validation class and check icon when field is filled and valid", () => {
+      const field: FormField = {
+        fieldname: "valid_field",
+        label: "Valid Field",
+        fieldtype: "Data",
+      }
+      const { container } = render(
+        <DynamicFieldRenderer field={field} value="sample_value" onChange={vi.fn()} />
+      )
+      const input = container.querySelector("input")
+      expect(input?.className).toContain("border-field-success")
+
+      // Verify presence of Check icon
       const checkIcon = container.querySelector(".lucide-check")
       expect(checkIcon).toBeTruthy()
     })
@@ -1238,5 +1255,53 @@ describe("DynamicFieldRenderer", () => {
       expect(screen.getByText("2022")).toBeTruthy();
       expect(screen.queryByText("2023")).toBeNull();
     });
-  })
-})
+  });
+
+  describe("Custom Known Languages Field", () => {
+    it("renders language chips when fieldname is custom_known_languages", () => {
+      const field: FormField = {
+        fieldname: "custom_known_languages",
+        label: "Known Languages",
+        fieldtype: "Data",
+      };
+
+      render(
+        <DynamicFieldRenderer
+          field={field}
+          value="English, Hindi"
+          onChange={vi.fn()}
+        />
+      );
+
+      expect(screen.getByDisplayValue("English, Hindi")).toBeTruthy();
+      expect(screen.getByRole("button", { name: "English" })).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Hindi" })).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Marathi" })).toBeTruthy();
+    });
+
+    it("toggles language selection and updates value correctly", async () => {
+      const field: FormField = {
+        fieldname: "custom_known_languages",
+        label: "Known Languages",
+        fieldtype: "Data",
+      };
+      const onChange = vi.fn();
+
+      render(
+        <DynamicFieldRenderer
+          field={field}
+          value="English"
+          onChange={onChange}
+        />
+      );
+
+      const marathiChip = screen.getByRole("button", { name: "Marathi" });
+      await user.click(marathiChip);
+      expect(onChange).toHaveBeenCalledWith("English, Marathi");
+
+      const englishChip = screen.getByRole("button", { name: "English" });
+      await user.click(englishChip);
+      expect(onChange).toHaveBeenCalledWith("");
+    });
+  });
+});

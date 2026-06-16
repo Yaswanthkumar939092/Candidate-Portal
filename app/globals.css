@@ -47,6 +47,8 @@
   --color-success: var(--success);
   --color-success-bg: var(--success-bg);
   --color-success-text: var(--success-text);
+  --color-field-success: var(--field-success);
+  --color-field-success-bg: var(--field-success-bg);
   --color-warning: var(--warning);
   --color-warning-bg: var(--warning-bg);
   --color-info: var(--info);
@@ -96,6 +98,8 @@
   --success:       #16A34A;
   --success-bg:    #DCFCE7;
   --success-text:  #15803D;
+  --field-success:       #16B364;
+  --field-success-bg:    #F1FBF5;
   --info:          #7B2CF1;
   --info-bg:       #F3EEFF;
   --warning:       #D97706;
@@ -138,6 +142,8 @@
   --success:       #15A66B;
   --success-bg:    #0F2E22;
   --success-text:  #6EE7B7;
+  --field-success:       #16B364;
+  --field-success-bg:    #0F2E22;
   --info:          #8B5CF6;
   --info-bg:       #2A1F4D;
   --warning:       #FBBF24;
@@ -156,4 +162,38 @@
     @apply bg-background text-foreground;
     font-family: var(--font-geist-sans), var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
   }
+}
+
+/* Custom Ultra-Thin Scrollbars */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(123, 44, 241, 0.2) transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(86, 76, 110, 0.15);
+  border-radius: 9999px;
+  transition: background 0.2s ease;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(123, 44, 241, 0.4);
+}
+
+/* Dark mode adjustment */
+.dark .scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(163, 156, 189, 0.2);
+}
+
+.dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.55);
 }
