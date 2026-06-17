@@ -58,6 +58,13 @@ function setTableRootError(
   errors[tableFieldname] = error;
 }
 
+const REQUIRED_EDUCATION_LEVELS = ["10th", "12th", "Graduation"];
+const POST_GRADUATION_LEVEL = "Post Graduation";
+
+function isYes(value: unknown) {
+  return String(value ?? "").trim().toLowerCase() === "yes";
+}
+
 export function validateOnboardingStep(
   tab: OnboardingTab,
   values: OnboardingFormValues,
@@ -157,35 +164,59 @@ export function validateOnboardingStep(
           });
         }
 
-        // Validate that year of passing does not decrease as education level progresses
-        if (field.fieldname === "custom_education_details" && nonEmptyRows.length > 0) {
+        if (field.fieldname === "custom_education_details") {
           const EDUCATION_LEVEL_ORDER: Record<string, number> = {
             "10th": 1,
             "12th": 2,
             "Graduation": 3,
             "Post Graduation": 4,
           };
-          const eduRows = nonEmptyRows
-            .map(row => {
-              const level = String(row["education_level"] || "").trim();
-              const yearStr = String(row["year_of_passing"] || "").trim();
-              const rank = EDUCATION_LEVEL_ORDER[level];
-              const year = parseInt(yearStr, 10);
-              return { level, rank, year };
-            })
-            .filter(item => item.rank !== undefined && !isNaN(item.year));
+          const submittedEducationLevels = new Set(
+            nonEmptyRows
+              .map((row) => String(row["education_level"] || "").trim())
+              .filter(Boolean),
+          );
+          const requiredEducationLevels = [
+            ...REQUIRED_EDUCATION_LEVELS,
+            ...(isYes(doc["custom_has_post_graduation_degree"])
+              ? [POST_GRADUATION_LEVEL]
+              : []),
+          ];
+          const missingEducationLevels = requiredEducationLevels.filter(
+            (level) => !submittedEducationLevels.has(level),
+          );
 
-          eduRows.sort((a, b) => a.rank - b.rank);
+          if (missingEducationLevels.length > 0) {
+            setTableRootError(errorList, field.fieldname, {
+              type: "required",
+              message: `Please add education details for: ${missingEducationLevels.join(", ")}`,
+            });
+          }
 
-          for (let i = 0; i < eduRows.length - 1; i++) {
-            const current = eduRows[i];
-            const next = eduRows[i + 1];
-            if (current.year >= next.year) {
-              setTableRootError(errorList, field.fieldname, {
-                type: "validate",
-                message: `Year of passing for ${next.level} must be after ${current.level} (${current.year})`,
-              });
-              break;
+          if (nonEmptyRows.length > 0) {
+            // Validate that year of passing does not decrease as education level progresses
+            const eduRows = nonEmptyRows
+              .map(row => {
+                const level = String(row["education_level"] || "").trim();
+                const yearStr = String(row["year_of_passing"] || "").trim();
+                const rank = EDUCATION_LEVEL_ORDER[level];
+                const year = parseInt(yearStr, 10);
+                return { level, rank, year };
+              })
+              .filter(item => item.rank !== undefined && !isNaN(item.year));
+
+            eduRows.sort((a, b) => a.rank - b.rank);
+
+            for (let i = 0; i < eduRows.length - 1; i++) {
+              const current = eduRows[i];
+              const next = eduRows[i + 1];
+              if (current.year >= next.year) {
+                setTableRootError(errorList, field.fieldname, {
+                  type: "validate",
+                  message: `Year of passing for ${next.level} must be after ${current.level} (${current.year})`,
+                });
+                break;
+              }
             }
           }
         }
