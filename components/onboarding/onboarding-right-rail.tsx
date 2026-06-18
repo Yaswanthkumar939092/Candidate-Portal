@@ -311,19 +311,51 @@ export function OnboardingRightRail({
   return (
     <aside className="w-full flex flex-col gap-6 h-full select-none">
       {/* 1. ID Card Preview */}
-      <div className="bg-linear-to-br from-[#6E3AE8] to-[#4B22C9] rounded-2xl p-4 flex gap-2 items-center">
-        <div className="w-5.5 h-5.5 rounded-md bg-white/20 flex items-center justify-center shrink-0">
-          <Sparkles className="w-3 h-3 text-white" />
+      <div className="bg-linear-to-br from-[#6E3AE8] to-[#4B22C9] rounded-2xl p-4.5 flex flex-col gap-4 shadow-md text-white">
+        {/* Header Row */}
+        <div className="flex gap-2 items-center w-full">
+          <div className="w-5.5 h-5.5 rounded-md bg-white/20 flex items-center justify-center shrink-0">
+            <Sparkles className="w-3 h-3 text-white" />
+          </div>
+
+          <span className="text-white font-bold text-xs tracking-wider uppercase truncate max-w-[170px]">
+            {companyName}
+          </span>
+          <div className="w-8 h-5.5 ml-auto rounded bg-linear-to-br from-[#F5D571] to-[#C99A2C] relative opacity-90 shadow-sm shrink-0">
+            <div className="absolute inset-x-1 top-2.5 h-px bg-black/15" />
+            <div className="absolute inset-x-1 bottom-1.5 h-px bg-black/15" />
+          </div>
         </div>
 
-        <span className="text-white font-bold text-xs tracking-wider uppercase truncate max-w-[170px]">
-          {companyName}
-        </span>
-        <div className="w-8 h-5.5 ml-auto rounded bg-linear-to-br from-[#F5D571] to-[#C99A2C] relative opacity-90 shadow-sm shrink-0">
-          <div className="absolute inset-x-1 top-2.5 h-px bg-black/15" />
-
-          <div className="absolute inset-x-1 bottom-1.5 h-px bg-black/15" />
-        </div>
+        {/* Card Body - Candidate Info / Joining Info */}
+        {formConfig?.joining && (formConfig.joining.date_of_joining || formConfig.joining.role_name || formConfig.joining.department_name) && (
+          <div className="border-t border-white/15 pt-3 flex flex-col gap-2.5 w-full">
+            {formConfig.joining.role_name && (
+              <div className="flex justify-between items-center gap-4 text-xs md:text-sm">
+                <span className="text-white/60 font-semibold shrink-0">Role</span>
+                <span className="font-bold text-right truncate max-w-[65%]">
+                  {formConfig.joining.role_name}
+                </span>
+              </div>
+            )}
+            {formConfig.joining.department_name && (
+              <div className="flex justify-between items-center gap-4 text-xs md:text-sm">
+                <span className="text-white/60 font-semibold shrink-0">Department</span>
+                <span className="font-bold text-right truncate max-w-[65%]">
+                  {formConfig.joining.department_name}
+                </span>
+              </div>
+            )}
+            {formConfig.joining.date_of_joining && (
+              <div className="flex justify-between items-center gap-4 text-xs md:text-sm">
+                <span className="text-white/60 font-semibold shrink-0">Date of Joining</span>
+                <span className="font-bold text-right shrink-0">
+                  {formatDisplayDate(formConfig.joining.date_of_joining)}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
       {/* 2. Countdown Widget */}
       {daysToJoining !== null ? (

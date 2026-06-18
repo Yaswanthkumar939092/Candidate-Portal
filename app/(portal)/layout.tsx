@@ -25,8 +25,8 @@ export default function PortalLayout({
   const router = useRouter()
   const pathname = usePathname()
 
-  const showNavigation = pathname !== '/survey' && !pathname.startsWith('/job_offer')
-  const showSurveyOfferNavigation = pathname === '/survey' || pathname.startsWith('/job_offer')
+  const showNavigation = pathname !== '/survey'
+  const showSurveyOfferNavigation = pathname === '/survey'
 
   useEffect(() => {
     if (!isLoading && !user) {

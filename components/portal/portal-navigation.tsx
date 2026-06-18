@@ -231,25 +231,40 @@ export function PortalNavigation({ className, hideNavLinks = false }: PortalNavi
           )}
 
           {/* Desktop/Mobile PW Logo */}
-          <Link href="/dashboard" className="flex shrink-0 items-center gap-2">
-            <Image
-              src={
-                branding?.app_logo
-                  ? branding.app_logo.startsWith("http")
-                    ? branding.app_logo
-                    : `${(process.env.NEXT_PUBLIC_FRAPPE_URL || "").replace(/\/$/, "")}${branding.app_logo.startsWith("/") ? branding.app_logo : `/${branding.app_logo}`}`
-                  : "/fallback.png"
-              }
-              alt={branding?.title_prefix || "Logo"}
-              width={32}
-              height={32}
-              priority
-              className="shrink-0"
-            />
-            <span className="text-[14px] sm:text-base font-extrabold text-black uppercase hidden sm:block">
-              {branding?.title_prefix || ""}
-            </span>
-          </Link>
+          {(() => {
+            const disableBrandRedirect = pathname === "/survey" || pathname.startsWith("/job_offer");
+            const content = (
+              <>
+                <Image
+                  src={
+                    branding?.app_logo
+                      ? branding.app_logo.startsWith("http")
+                        ? branding.app_logo
+                        : `${(process.env.NEXT_PUBLIC_FRAPPE_URL || "").replace(/\/$/, "")}${branding.app_logo.startsWith("/") ? branding.app_logo : `/${branding.app_logo}`}`
+                      : "/fallback.png"
+                  }
+                  alt={branding?.title_prefix || "Logo"}
+                  width={32}
+                  height={32}
+                  priority
+                  className="shrink-0"
+                />
+                <span className="text-[14px] sm:text-base font-extrabold text-black uppercase hidden sm:block">
+                  {branding?.title_prefix || ""}
+                </span>
+              </>
+            );
+
+            return disableBrandRedirect ? (
+              <div className="flex shrink-0 items-center gap-2 cursor-default select-none">
+                {content}
+              </div>
+            ) : (
+              <Link href="/dashboard" className="flex shrink-0 items-center gap-2">
+                {content}
+              </Link>
+            );
+          })()}
         </div>
 
         {/* Center: Nav links with pill-style active states (Hidden on Mobile) */}
@@ -353,12 +368,12 @@ export function PortalNavigation({ className, hideNavLinks = false }: PortalNavi
               </DropdownMenuItem>
 
               {/* Settings link */}
-              <DropdownMenuItem asChild>
+              {/* <DropdownMenuItem asChild>
                 <Link href="/settings" className="flex items-center">
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Settings</span>
                 </Link>
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
 
               <DropdownMenuItem
                 onClick={toggleTheme}
