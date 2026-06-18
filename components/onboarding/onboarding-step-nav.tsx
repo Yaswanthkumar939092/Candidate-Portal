@@ -209,11 +209,7 @@ export function OnboardingStepNav({ className }: OnboardingStepNavProps) {
               return allFilled;
             })();
 
-            const isClickable =
-              isCompleted ||
-              isCurrent ||
-              isPast ||
-              (isNextStep && currentTabMandatoryFieldsAreFilled);
+            const isClickable = true;
 
             const isTabFullyFilled = isTabCompleted || isSubmitted;
 
