@@ -62,10 +62,11 @@ vi.mock("@/components/onboarding/file-upload-field", () => ({
 }));
 
 vi.mock("@/components/onboarding/dynamic-table-field", () => ({
-  DynamicTableField: ({ field, errors }: DynamicTableFieldProps) => (
+  DynamicTableField: ({ field, errors, onAttachChange }: any) => (
     <div data-testid="table-field">
       {field.label} Table
       {errors[field.fieldname] && <span data-testid="error-message">{errors[field.fieldname].message}</span>}
+      <button data-testid={`btn-attach-${field.fieldname}`} type="button" onClick={() => onAttachChange && onAttachChange("some_sub_field")("some_url")}>Trigger Attach Change</button>
     </div>
   ),
 }));
@@ -1153,6 +1154,206 @@ describe("OnboardingFormStep", () => {
             }));
             expect(mockMarkStepComplete).toHaveBeenCalledWith("nom_test");
             expect(mockNextStep).toHaveBeenCalled();
+         });
+      });
+    });
+
+    describe("Extra Line Coverage Tests", () => {
+      it("automatically calculates and populates custom_age based on custom_date_of_birth change (birthday not yet occurred this year)", async () => {
+         const dobAgeTab: OnboardingTab = {
+            tab: "Personal Info",
+            sections: [{
+               section: "General Info",
+               fields: [
+                  { fieldname: "custom_date_of_birth", label: "Date of Birth", fieldtype: "Date", is_mandatory: 0, read_only: 0, hidden: 0 },
+                  { fieldname: "custom_age", label: "Age", fieldtype: "Int", is_mandatory: 0, read_only: 0, hidden: 0 }
+               ]
+            }]
+         };
+         
+         vi.mocked(useOnboarding).mockReturnValue(defaultContext);
+         render(<OnboardingFormStep tab={dobAgeTab} stepKey="personal_test" />);
+         
+         const today = new Date();
+         const birthDate = new Date(today.getFullYear() - 25, today.getMonth() + 1, 15);
+         const birthDateStr = birthDate.toISOString().split("T")[0];
+
+         fireEvent.change(screen.getByTestId("input-custom_date_of_birth"), { target: { value: birthDateStr } });
+         fireEvent.blur(screen.getByTestId("input-custom_date_of_birth"));
+         
+         await waitFor(() => {
+            const ageInput = screen.getByTestId("input-custom_age") as HTMLInputElement;
+            expect(ageInput.value).toBe("24");
+         });
+      });
+
+      it("registers and handles external submit triggers for save_continue and save_draft", async () => {
+         const simpleTab: OnboardingTab = {
+            tab: "Simple",
+            sections: [{
+               section: "Fields",
+               fields: [
+                  { fieldname: "first_name", label: "First Name", fieldtype: "Data", is_mandatory: 0, read_only: 0, hidden: 0 }
+               ]
+            }]
+         };
+
+         let registeredTrigger: ((action: "save_continue" | "save_draft") => Promise<boolean | void>) | null = null;
+         const registerSubmitTrigger = vi.fn((fn) => {
+            registeredTrigger = fn;
+            return () => {};
+         });
+
+         const mockSubmitAll = vi.fn().mockResolvedValue(true);
+         vi.mocked(useOnboarding).mockReturnValue({
+            ...defaultContext,
+            registerSubmitTrigger,
+            submitAll: mockSubmitAll,
+         });
+
+         render(<OnboardingFormStep tab={simpleTab} stepKey="simple_test" />);
+
+         expect(registerSubmitTrigger).toHaveBeenCalled();
+         expect(registeredTrigger).toBeTruthy();
+
+         if (registeredTrigger) {
+            const trigger = registeredTrigger as (action: "save_continue" | "save_draft") => Promise<boolean | void>;
+            
+            const successContinue = await trigger("save_continue");
+            expect(successContinue).toBe(true);
+            expect(mockSubmitAll).toHaveBeenCalledWith("save", "simple_test", expect.any(Object));
+
+            mockSubmitAll.mockClear();
+
+            const originalLocation = window.location;
+            delete (window as any).location;
+            window.location = { assign: vi.fn() } as any;
+
+            const successDraft = await trigger("save_draft");
+            expect(successDraft).toBe(true);
+            expect(mockSubmitAll).toHaveBeenCalledWith("save", "simple_test", expect.any(Object));
+            expect(window.location.assign).toHaveBeenCalledWith("/dashboard");
+
+            window.location = originalLocation;
+         }
+      });
+
+      it("handles failures during external submit triggers", async () => {
+         const simpleTab: OnboardingTab = {
+            tab: "Simple",
+            sections: [{
+               section: "Fields",
+               fields: [
+                  { fieldname: "first_name", label: "First Name", fieldtype: "Data", is_mandatory: 0, read_only: 0, hidden: 0 }
+               ]
+            }]
+         };
+
+         let registeredTrigger: ((action: "save_continue" | "save_draft") => Promise<boolean | void>) | null = null;
+         const registerSubmitTrigger = vi.fn((fn) => {
+            registeredTrigger = fn;
+            return () => {};
+         });
+
+         const mockSubmitAll = vi.fn().mockRejectedValue(new Error("Submit failed"));
+         vi.mocked(useOnboarding).mockReturnValue({
+            ...defaultContext,
+            registerSubmitTrigger,
+            submitAll: mockSubmitAll,
+         });
+
+         render(<OnboardingFormStep tab={simpleTab} stepKey="simple_test" />);
+
+         if (registeredTrigger) {
+            const trigger = registeredTrigger as (action: "save_continue" | "save_draft") => Promise<boolean | void>;
+            
+            const successContinue = await trigger("save_continue");
+            expect(successContinue).toBe(false);
+
+            const successDraft = await trigger("save_draft");
+            expect(successDraft).toBe(false);
+         }
+      });
+
+      it("handles file upload and attach change for Attach Image field type", async () => {
+         const imageTab: OnboardingTab = {
+            tab: "Documents",
+            sections: [{
+               section: "ID Proofs",
+               fields: [
+                  { fieldname: "custom_pan_card", label: "PAN Card", fieldtype: "Attach Image", is_mandatory: 1, read_only: 0, hidden: 0 }
+               ]
+            }]
+         };
+         
+         const mockSubmitAll = vi.fn();
+         vi.mocked(useOnboarding).mockReturnValue({
+            ...defaultContext,
+            submitAll: mockSubmitAll,
+         });
+
+         const { container } = render(<OnboardingFormStep tab={imageTab} stepKey="docs_test" />);
+
+         fireEvent.click(screen.getByText("Upload"));
+
+         const form = container.querySelector("form");
+         expect(form).toBeTruthy();
+         fireEvent.submit(form!);
+
+         await waitFor(() => {
+            expect(mockSubmitAll).toHaveBeenCalledWith(
+               "save",
+               "docs_test",
+               expect.objectContaining({
+                  custom_pan_card: "uploaded-file-url"
+               })
+            );
+         });
+      });
+
+      it("handles file upload callback via handleFileUpload on table field", async () => {
+         const tableTab: OnboardingTab = {
+            tab: "Table Tab",
+            sections: [{
+               section: "Details",
+               fields: [
+                  {
+                     fieldname: "custom_table_details",
+                     label: "Table Details",
+                     fieldtype: "Table",
+                     is_mandatory: 0,
+                     read_only: 0,
+                     hidden: 0,
+                     child_fields: [
+                        { fieldname: "some_sub_field", label: "Sub Field", fieldtype: "Attach", is_mandatory: 1, read_only: 0, hidden: 0 }
+                     ]
+                  }
+               ]
+            }]
+         };
+
+         const mockSubmitAll = vi.fn();
+         vi.mocked(useOnboarding).mockReturnValue({
+            ...defaultContext,
+            submitAll: mockSubmitAll,
+         });
+
+         const { container } = render(<OnboardingFormStep tab={tableTab} stepKey="table_test" />);
+
+         fireEvent.click(screen.getByTestId("btn-attach-custom_table_details"));
+
+         const form = container.querySelector("form");
+         expect(form).toBeTruthy();
+         fireEvent.submit(form!);
+
+         await waitFor(() => {
+            expect(mockSubmitAll).toHaveBeenCalledWith(
+               "save",
+               "table_test",
+               expect.objectContaining({
+                  some_sub_field: "some_url"
+               })
+            );
          });
       });
     });

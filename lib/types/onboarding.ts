@@ -59,6 +59,10 @@ export interface OnboardingJoining {
   boarding_begins_on?: string | null;
   days_to_joining?: number | null;
   is_set?: boolean;
+  role?: string | null;
+  role_name?: string | null;
+  department?: string | null;
+  department_name?: string | null;
 }
 
 export interface OnboardingJourneyStep {
