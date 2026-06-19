@@ -92,6 +92,11 @@ export default function LoginPage() {
     } catch (error) {
       console.error("Login error:", error);
       const msg = error instanceof Error ? error.message : "Failed to sign in";
+      if (msg.includes("Please verify your email OTP before signing in.")) {
+        toast.error(msg);
+        router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
+        return;
+      }
       toast.error(msg);
     } finally {
       setIsLoading(false);
