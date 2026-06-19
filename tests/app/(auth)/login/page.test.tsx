@@ -379,6 +379,20 @@ describe("LoginPage – Error Handling", () => {
     expect(mockSignIn).toHaveBeenCalled();
   });
 
+  it("redirects to /verify-email when login fails with 'Please verify your email OTP before signing in.' message", async () => {
+    mockSignIn.mockRejectedValue(new Error("Please verify your email OTP before signing in."));
+    await renderLoginPage();
+
+    await user.type(screen.getByPlaceholderText("you@example.com"), "verify@example.com");
+    await user.type(screen.getByPlaceholderText("Enter your password"), "password123");
+    await user.click(screen.getByRole("button", { name: /Sign in to your account/i }));
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith("/verify-email?email=verify%40example.com");
+      expect(mockToastError).toHaveBeenCalledWith("Please verify your email OTP before signing in.");
+    });
+  });
+
   it("re-enables the submit button after an error", async () => {
     mockSignIn.mockRejectedValue(new Error("fail"));
     await renderLoginPage();
