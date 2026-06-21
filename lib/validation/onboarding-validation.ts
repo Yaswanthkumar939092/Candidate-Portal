@@ -10,6 +10,130 @@ export interface ValidationError {
 
 export type ValidationErrors = Record<string, ValidationError | Record<string, unknown> | Array<Record<string, unknown>>>;
 
+function validateFieldPattern(
+  fieldname: string,
+  label: string,
+  fieldtype: string,
+  value: unknown
+): ValidationError | null {
+  if (value === undefined || value === null || value === "") {
+    return null;
+  }
+  const normalizedValue = typeof value === "string" ? value.trim() : String(value).trim();
+  if (normalizedValue === "") {
+    return null;
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const phoneRegex = /^\d{10}$/;
+
+  const labelLower = (label || "").toLowerCase();
+  const nameLower = (fieldname || "").toLowerCase();
+
+  const isEmailField =
+    (fieldtype || "").toLowerCase() === "email" ||
+    labelLower.includes("email") ||
+    nameLower.includes("email");
+
+  const isPhoneField =
+    labelLower.includes("mobile") ||
+    labelLower.includes("contact number") ||
+    labelLower.includes("contact no") ||
+    labelLower.includes("phone") ||
+    nameLower.includes("mobile") ||
+    nameLower.includes("phone") ||
+    nameLower.includes("contact_no") ||
+    nameLower.includes("contactnumber") ||
+    nameLower.includes("contact_number");
+
+  if (isEmailField && !emailRegex.test(normalizedValue)) {
+    return {
+      type: "pattern",
+      message: "Please enter a valid email address",
+    };
+  }
+
+  if (isPhoneField && !phoneRegex.test(normalizedValue)) {
+    return {
+      type: "pattern",
+      message: "Please enter a valid 10-digit mobile number",
+    };
+  }
+
+  if (fieldname === "custom_aadhaar_number" && !/^\d{12}$/.test(normalizedValue)) {
+    return {
+      type: "pattern",
+      message: "Please enter a valid 12-digit Aadhaar number",
+    };
+  }
+
+  if (fieldname === "custom_pan_number" && !/^[A-Za-z]{5}\d{4}[A-Za-z]{1}$/.test(normalizedValue)) {
+    return {
+      type: "pattern",
+      message: "Please enter a valid 10-character PAN number (e.g. AAAAA1111A)",
+    };
+  }
+
+  if (fieldname === "custom_permanent_postal_code" && !/^[1-9]\d{5}$/.test(normalizedValue)) {
+    return {
+      type: "pattern",
+      message: "Please enter a valid 6-digit postal code (cannot start with 0)",
+    };
+  }
+
+  if (fieldname === "custom_ifsc_code" && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(normalizedValue)) {
+    return {
+      type: "pattern",
+      message: "Please enter a valid 11-character IFSC code (e.g. BBBB0AAAAAA)",
+    };
+  }
+
+  if ((fieldname === "custom_date_of_birth" || fieldname === "dob") && normalizedValue !== "") {
+    const birthDate = new Date(normalizedValue);
+    const today = new Date();
+    const ageLimitDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+    if (birthDate > ageLimitDate) {
+      return {
+        type: "validate",
+        message: "You must be at least 18 years old",
+      };
+    }
+  }
+
+  const isNumberField =
+    fieldtype === "Int" ||
+    fieldtype === "Float" ||
+    fieldtype === "Currency" ||
+    fieldtype === "Percent";
+
+  if (isNumberField) {
+    const numVal = Number(normalizedValue);
+    if (!isNaN(numVal) && numVal < 0) {
+      return {
+        type: "validate",
+        message: `${label || "This field"} cannot be negative`,
+      };
+    }
+  }
+
+  const isPercent =
+    nameLower.includes("percentage") ||
+    labelLower.includes("percentage") ||
+    (fieldtype || "").toLowerCase() === "percent";
+
+  if (isPercent) {
+    const numVal = Number(normalizedValue);
+    if (!isNaN(numVal) && numVal > 100) {
+      return {
+        type: "validate",
+        message: `${label || "Percentage"} cannot be greater than 100`,
+      };
+    }
+  }
+
+  return null;
+}
+
 function isFilled(value: unknown) {
   return value !== undefined && value !== null && String(value).trim() !== "";
 }
@@ -103,7 +227,8 @@ export function validateOnboardingStep(
         field.fieldname.toLowerCase().includes("mobile") ||
         field.fieldname.toLowerCase().includes("phone") ||
         field.fieldname.toLowerCase().includes("contact_no") ||
-        field.fieldname.toLowerCase().includes("contactnumber");
+        field.fieldname.toLowerCase().includes("contactnumber") ||
+        field.fieldname.toLowerCase().includes("contact_number");
 
       const isTable = field.fieldtype === "Table";
       const isMandatory =
@@ -148,6 +273,21 @@ export function validateOnboardingStep(
                 type: "required",
                 message: `${childField.label || "This field"} is required`,
               });
+            }
+          });
+
+          visibleChildFieldsForRow(row).forEach((childField) => {
+            const val = row[childField.fieldname];
+            if (isFilled(val)) {
+              const patternError = validateFieldPattern(
+                childField.fieldname,
+                childField.label || "",
+                childField.fieldtype || "Data",
+                val
+              );
+              if (patternError) {
+                setNestedTableError(errorList, field.fieldname, originalIndex, childField.fieldname, patternError);
+              }
             }
           });
         });
@@ -387,17 +527,17 @@ export function validateOnboardingStep(
         typeof normalizedValue === "string" &&
         normalizedValue !== ""
       ) {
-        const ifscRegex = /^[A-Za-z]{4}0[A-Za-z0-9]{6}$/;
+        const ifscRegex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
         if (!ifscRegex.test(normalizedValue)) {
           errorList[field.fieldname] = {
             type: "pattern",
-            message: "Please enter a valid 11-character IFSC code (e.g. SBIN0123456)",
+            message: "Please enter a valid 11-character IFSC code (e.g. BBBB0AAAAAA)",
           };
         }
       }
 
       if (
-        field.fieldname === "custom_date_of_birth" &&
+        (field.fieldname === "custom_date_of_birth" || field.fieldname === "dob") &&
         typeof normalizedValue === "string" &&
         normalizedValue !== ""
       ) {
@@ -410,6 +550,17 @@ export function validateOnboardingStep(
             message: "You must be at least 18 years old",
           };
         }
+      }
+
+      // Run generic pattern and type validation
+      const patternError = validateFieldPattern(
+        field.fieldname,
+        field.label || "",
+        field.fieldtype || "Data",
+        normalizedValue
+      );
+      if (patternError) {
+        errorList[field.fieldname] = patternError;
       }
     });
   });

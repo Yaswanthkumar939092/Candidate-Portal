@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useMemo } from "react";
 import Link from "next/link";
 import { Check, ArrowLeft, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -28,41 +29,100 @@ export function OnboardingStepNav({ className }: OnboardingStepNavProps) {
   } = useOnboarding();
 
   const tabs = formConfig?.tabs || [];
+
+  // Flattened doc of all current onboarding fields
+  const doc = useMemo(() => {
+    const merged: Record<string, any> = {};
+    if (stepData) {
+      Object.keys(stepData).forEach((key) => {
+        Object.assign(merged, stepData[key]);
+      });
+    }
+    return merged;
+  }, [stepData]);
+
+  // Compute real-time counts on the frontend
+  const tabCounts = useMemo(() => {
+    return tabs.map((tab) => {
+      let total = 0;
+      let filled = 0;
+      let approved = 0;
+
+      tab.sections.forEach((section) => {
+        section.fields.forEach((field) => {
+          const isVisible =
+            !field.hidden &&
+            (!field.depends_on || evaluateDependsOn(field.depends_on, doc));
+          if (!isVisible) return;
+
+          total++;
+
+          const val = doc[field.fieldname];
+          let isFilled = false;
+
+          if (field.fieldtype === "Table") {
+            isFilled = Array.isArray(val) && val.length > 0;
+          } else if (field.fieldtype === "Check") {
+            isFilled = Boolean(val);
+          } else {
+            isFilled = val !== undefined && val !== null && String(val).trim() !== "";
+          }
+
+          if (isFilled) {
+            if (field.approval_status === "Approved") {
+              approved++;
+            } else {
+              filled++;
+            }
+          }
+        });
+      });
+
+      return { total, filled, approved };
+    });
+  }, [tabs, doc]);
+
+  const hasRealTimeFields = tabCounts.some((c) => c.total > 0);
+
   const steps = [
-    ...tabs.map((t) => ({
+    ...tabs.map((t, idx) => ({
       key: t.tab.toLowerCase().replace(/\s+/g, "_"),
       label: t.tab,
-      counts: t.field_counts,
+      counts: hasRealTimeFields ? tabCounts[idx] : t.field_counts,
     })),
     { key: "review", label: "Review", counts: undefined },
   ];
 
   const totalSteps = steps.length;
-  const progressPercentage =
-    formConfig?.field_status_counts && formConfig.field_status_counts.total > 0
-      ? Math.round(
-          ((formConfig.field_status_counts.filled +
-            formConfig.field_status_counts.approved) /
-            formConfig.field_status_counts.total) *
-            100,
-        )
-      : totalSteps > 0
-        ? Math.round((completedSteps.size / totalSteps) * 100)
-        : 0;
 
-  const totalFields =
-    formConfig?.field_status_counts?.total ??
-    tabs.reduce((sum, t) => sum + (t.field_counts?.total || 0), 0);
+  const totalFields = hasRealTimeFields
+    ? tabCounts.reduce((sum, c) => sum + c.total, 0)
+    : (formConfig?.field_status_counts?.total ??
+       tabs.reduce((sum, t) => sum + (t.field_counts?.total || 0), 0));
 
-  const filledFields = formConfig?.field_status_counts
-    ? formConfig.field_status_counts.filled +
-      formConfig.field_status_counts.approved
-    : tabs.reduce(
-        (sum, t) =>
-          sum +
-          ((t.field_counts?.filled || 0) + (t.field_counts?.approved || 0)),
-        0,
-      );
+  const filledFields = hasRealTimeFields
+    ? tabCounts.reduce((sum, c) => sum + c.filled + c.approved, 0)
+    : (formConfig?.field_status_counts
+       ? formConfig.field_status_counts.filled + formConfig.field_status_counts.approved
+       : tabs.reduce(
+           (sum, t) =>
+             sum +
+             ((t.field_counts?.filled || 0) + (t.field_counts?.approved || 0)),
+           0,
+         ));
+
+  const progressPercentage = hasRealTimeFields
+    ? (totalFields > 0 ? Math.round((filledFields / totalFields) * 100) : 0)
+    : (formConfig?.field_status_counts && formConfig.field_status_counts.total > 0
+       ? Math.round(
+           ((formConfig.field_status_counts.filled +
+             formConfig.field_status_counts.approved) /
+             formConfig.field_status_counts.total) *
+             100,
+         )
+       : totalSteps > 0
+         ? Math.round((completedSteps.size / totalSteps) * 100)
+         : 0);
 
   return (
     <nav
@@ -113,13 +173,6 @@ export function OnboardingStepNav({ className }: OnboardingStepNavProps) {
             const isCurrent = index === currentStep;
             const isPast = index < currentStep;
             const isNextStep = index === currentStep + 1;
-
-            const doc: Record<string, any> = {};
-            if (stepData) {
-              Object.keys(stepData).forEach((key) => {
-                Object.assign(doc, stepData[key]);
-              });
-            }
 
             const currentTabMandatoryFieldsAreFilled = (() => {
               if (currentStep >= tabs.length) return false;

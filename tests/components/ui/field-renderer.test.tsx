@@ -204,6 +204,27 @@ describe("DynamicFieldRenderer", () => {
       expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("9876543210")
     })
 
+    it("normalizes reporting_manager_contact_number input to 10 digits", async () => {
+      const field: FormField = {
+        fieldname: "reporting_manager_contact_number",
+        label: "Reporting Manager Contact Number",
+        fieldtype: "Data",
+      }
+
+      const { rerender } = render(
+        <DynamicFieldRenderer field={field} value="" onChange={vi.fn()} />
+      )
+
+      const input = screen.getByRole("textbox") as HTMLInputElement
+      expect(input.maxLength).toBe(10)
+
+      rerender(
+        <DynamicFieldRenderer field={field} value="abc98765-43210xyz" onChange={vi.fn()} />
+      )
+
+      expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("9876543210")
+    })
+
     it("accepts only digits for custom_account_number", async () => {
       const field: FormField = {
         fieldname: "custom_account_number",
@@ -344,6 +365,42 @@ describe("DynamicFieldRenderer", () => {
       expect(input.maxLength).not.toBe(12)
       expect(input.inputMode).not.toBe("numeric")
     })
+
+    it("normalizes custom_name_as_per_aadhaar input to only alphabet and spaces", async () => {
+      const field: FormField = {
+        fieldname: "custom_name_as_per_aadhaar",
+        label: "Name as per Aadhaar",
+        fieldtype: "Data",
+      }
+
+      const { rerender } = render(
+        <DynamicFieldRenderer field={field} value="" onChange={vi.fn()} />
+      )
+
+      rerender(
+        <DynamicFieldRenderer field={field} value="John Doe 123!@#" onChange={vi.fn()} />
+      )
+
+      expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("John Doe ")
+    })
+
+    it("normalizes custom_name_as_per_pan input to only alphabet and spaces", async () => {
+      const field: FormField = {
+        fieldname: "custom_name_as_per_pan",
+        label: "Name as per PAN",
+        fieldtype: "Data",
+      }
+
+      const { rerender } = render(
+        <DynamicFieldRenderer field={field} value="" onChange={vi.fn()} />
+      )
+
+      rerender(
+        <DynamicFieldRenderer field={field} value="Jane Doe 456$%^" onChange={vi.fn()} />
+      )
+
+      expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("Jane Doe ")
+    })
   })
 
   describe("Int Field Type", () => {
@@ -411,6 +468,28 @@ describe("DynamicFieldRenderer", () => {
       await user.type(screen.getByRole("spinbutton"), "9")
       expect(onChange).toHaveBeenLastCalledWith("9")
     })
+
+    it("normalizes percentage fields to at most 3 digits", async () => {
+      const field: FormField = {
+        fieldname: "percentage",
+        label: "Percentage",
+        fieldtype: "Float",
+      }
+
+      const { rerender } = render(
+        <DynamicFieldRenderer field={field} value="" onChange={vi.fn()} />
+      )
+
+      rerender(
+        <DynamicFieldRenderer field={field} value="99.99" onChange={vi.fn()} />
+      )
+      expect((screen.getByRole("spinbutton") as HTMLInputElement).value).toBe("99.9")
+
+      rerender(
+        <DynamicFieldRenderer field={field} value="100.5" onChange={vi.fn()} />
+      )
+      expect((screen.getByRole("spinbutton") as HTMLInputElement).value).toBe("100")
+    })
   })
 
   describe("Date Field Type", () => {
@@ -433,6 +512,11 @@ describe("DynamicFieldRenderer", () => {
       expect(input).toBeTruthy()
       expect(input.type).toBe("date")
       expect(input.value).toBe("2000-01-15")
+
+      const today = new Date()
+      const eighteenYearsAgo = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate())
+      const expectedMax = eighteenYearsAgo.toISOString().split("T")[0]
+      expect(input.max).toBe(expectedMax)
     })
 
     it("handles date changes", async () => {

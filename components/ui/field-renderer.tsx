@@ -138,7 +138,8 @@ function isPhoneField(field: FormField) {
     fieldname.includes("mobile") ||
     fieldname.includes("phone") ||
     fieldname.includes("contact_no") ||
-    fieldname.includes("contactnumber")
+    fieldname.includes("contactnumber") ||
+    fieldname.includes("contact_number")
   );
 }
 
@@ -194,6 +195,13 @@ function isFieldRequired(field: FormField, doc: Record<string, unknown> = {}) {
 }
 
 function normalizeInputValue(field: FormField, rawValue: string) {
+  if (
+    field.fieldname === "custom_name_as_per_aadhaar" ||
+    field.fieldname === "custom_name_as_per_pan"
+  ) {
+    return rawValue.replace(/[^a-zA-Z\s]/g, "");
+  }
+
   if (field.fieldname === "custom_ifsc_code") {
     return rawValue.toUpperCase().slice(0, 11);
   }
@@ -216,6 +224,44 @@ function normalizeInputValue(field: FormField, rawValue: string) {
 
   if (isPanField(field)) {
     return rawValue.toUpperCase().slice(0, 10);
+  }
+
+  if (field.fieldname === "custom_permanent_postal_code") {
+    return rawValue.replace(/\D/g, "").slice(0, 6);
+  }
+
+  const isPercent =
+    (field.fieldname || "").toLowerCase().includes("percentage") ||
+    (field.label || "").toLowerCase().includes("percentage") ||
+    field.fieldtype === "Percent";
+
+  if (field.fieldtype === "Int") {
+    const cleaned = rawValue.replace(/\D/g, "");
+    return isPercent ? cleaned.slice(0, 3) : cleaned;
+  }
+
+  if (field.fieldtype === "Float") {
+    let cleaned = rawValue.replace(/[^0-9.]/g, "");
+    if (isPercent) {
+      const dotIndex = cleaned.indexOf(".");
+      if (dotIndex === -1) {
+        cleaned = cleaned.slice(0, 3);
+      } else {
+        const beforeDot = cleaned.slice(0, dotIndex).slice(0, 3);
+        const allowedAfter = Math.max(0, 3 - beforeDot.length);
+        const afterDot = cleaned.slice(dotIndex + 1);
+        if (allowedAfter === 0) {
+          cleaned = beforeDot;
+        } else {
+          cleaned = beforeDot + "." + afterDot.slice(0, allowedAfter);
+        }
+      }
+    }
+    const parts = cleaned.split(".");
+    if (parts.length > 2) {
+      return parts[0] + "." + parts.slice(1).join("");
+    }
+    return cleaned;
   }
 
   return rawValue;
@@ -494,60 +540,76 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
     },
   },
   Int: {
-    component: ({ field, value, onChange, onBlur, error, disabled, className }) => (
-      <div className={cn("space-y-1.5", className)}>
-        <Label className="text-sm font-medium text-foreground">
-          {field.label}{" "}
-          {!!(field.is_mandatory || field.reqd) && (
-            <span className="text-destructive">*</span>
-          )}
-        </Label>
-        <div className="relative">
-          <Input
-            type="number"
-            value={(value as string) || ""}
-            onChange={(e) => onChange(e.target.value)}
-            onBlur={onBlur}
-            placeholder={field.label}
-            disabled={disabled || !!field.read_only}
-            className={getFieldClass(field, value, error, disabled)}
-          />
-          <FieldStatusTooltip field={field} value={value} error={error} disabled={disabled} />
+    component: ({ field, value, onChange, onBlur, error, disabled, className }) => {
+      const isPercent =
+        (field.fieldname || "").toLowerCase().includes("percentage") ||
+        (field.label || "").toLowerCase().includes("percentage") ||
+        field.fieldtype === "Percent";
+      return (
+        <div className={cn("space-y-1.5", className)}>
+          <Label className="text-sm font-medium text-foreground">
+            {field.label}{" "}
+            {!!(field.is_mandatory || field.reqd) && (
+              <span className="text-destructive">*</span>
+            )}
+          </Label>
+          <div className="relative">
+            <Input
+              type="number"
+              min="0"
+              max={isPercent ? "100" : undefined}
+              value={typeof value === "string" ? normalizeInputValue(field, value) : (value as string) || ""}
+              onChange={(e) => onChange(normalizeInputValue(field, e.target.value))}
+              onBlur={onBlur}
+              placeholder={field.label}
+              disabled={disabled || !!field.read_only}
+              className={getFieldClass(field, value, error, disabled)}
+            />
+            <FieldStatusTooltip field={field} value={value} error={error} disabled={disabled} />
+          </div>
+          {error && <p className="text-xs text-destructive">{error}</p>}
         </div>
-        {error && <p className="text-xs text-destructive">{error}</p>}
-      </div>
-    ),
+      );
+    },
   },
   Float: {
-    component: ({ field, value, onChange, onBlur, error, disabled, className }) => (
-      <div className={cn("space-y-1.5", className)}>
-        <Label className="text-sm font-medium text-foreground">
-          {field.label}{" "}
-          {!!(field.is_mandatory || field.reqd) && (
-            <span className="text-destructive">*</span>
-          )}
-        </Label>
-        <div className="relative">
-          <Input
-            type="number"
-            step="any"
-            value={(value as string) || ""}
-            onChange={(e) => onChange(e.target.value)}
-            onBlur={onBlur}
-            placeholder={field.label}
-            disabled={disabled || !!field.read_only}
-            className={getFieldClass(field, value, error, disabled)}
-          />
-          <FieldStatusTooltip field={field} value={value} error={error} disabled={disabled} />
+    component: ({ field, value, onChange, onBlur, error, disabled, className }) => {
+      const isPercent =
+        (field.fieldname || "").toLowerCase().includes("percentage") ||
+        (field.label || "").toLowerCase().includes("percentage") ||
+        field.fieldtype === "Percent";
+      return (
+        <div className={cn("space-y-1.5", className)}>
+          <Label className="text-sm font-medium text-foreground">
+            {field.label}{" "}
+            {!!(field.is_mandatory || field.reqd) && (
+              <span className="text-destructive">*</span>
+            )}
+          </Label>
+          <div className="relative">
+            <Input
+              type="number"
+              step="any"
+              min="0"
+              max={isPercent ? "100" : undefined}
+              value={typeof value === "string" ? normalizeInputValue(field, value) : (value as string) || ""}
+              onChange={(e) => onChange(normalizeInputValue(field, e.target.value))}
+              onBlur={onBlur}
+              placeholder={field.label}
+              disabled={disabled || !!field.read_only}
+              className={getFieldClass(field, value, error, disabled)}
+            />
+            <FieldStatusTooltip field={field} value={value} error={error} disabled={disabled} />
+          </div>
+          {error && <p className="text-xs text-destructive">{error}</p>}
         </div>
-        {error && <p className="text-xs text-destructive">{error}</p>}
-      </div>
-    ),
+      );
+    },
   },
   Date: {
     component: ({ field, value, onChange, onBlur, error, disabled, className }) => {
       let maxDateAttr: string | undefined = undefined;
-      if (field.fieldname === "custom_date_of_birth") {
+      if (field.fieldname === "custom_date_of_birth" || field.fieldname === "dob") {
         const today = new Date();
         const eighteenYearsAgo = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
         maxDateAttr = eighteenYearsAgo.toISOString().split("T")[0];

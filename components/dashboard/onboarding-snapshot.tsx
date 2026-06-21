@@ -103,7 +103,7 @@ export function OnboardingSnapshot({
   return (
     <div
       className={cn(
-        "space-y-4 border border-[#E5E7EB] rounded-[calc(1rem+8px)] p-2 bg-white shadow-sm",
+        "space-y-4 border border-[#E5E7EB] rounded-3xl p-2 bg-white shadow-sm",
         className,
       )}
     >
@@ -135,11 +135,11 @@ export function OnboardingSnapshot({
             </h2>
 
             {/* Subtext */}
-            <p className="max-w-xl text-[16px] font-normal text-[#475467]">
+            {/* <p className="max-w-xl text-[16px] font-normal text-[#475467]">
               {isComplete
                 ? "All mandatory tasks and document submissions have been approved. We have prepared your workstation and access cards."
                 : "Complete your onboarding tasks to get ready for your first day. Upload required documents and fill in your details."}
-            </p>
+            </p> */}
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
