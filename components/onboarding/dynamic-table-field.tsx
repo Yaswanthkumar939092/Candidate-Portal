@@ -11,6 +11,30 @@ import { DynamicFieldRenderer, type DynamicFieldRendererProps } from "@/componen
 import { cn } from "@/lib/utils"
 import { evaluateDependsOn } from "@/lib/onboarding-utils"
 
+const EDUCATION_DETAILS_FIELDNAME = "custom_education_details"
+const EDUCATION_LEVEL_FIELDNAME = "education_level"
+const POST_GRADUATION_FIELDNAME = "custom_has_post_graduation_degree"
+const EDUCATION_LEVELS = ["10th", "12th", "Graduation", "Post Graduation"] as const
+
+function isYes(value: unknown) {
+  return String(value ?? "").trim().toLowerCase() === "yes"
+}
+
+function parseTableOptions(options?: string) {
+  if (!options) return []
+  return options
+    .split(/\n|\s{2,}/)
+    .flatMap((option) => option.split("\n"))
+    .map((option) => option.trim())
+    .filter(Boolean)
+}
+
+function getApplicableEducationLevels(document: Record<string, unknown>) {
+  return isYes(document[POST_GRADUATION_FIELDNAME])
+    ? [...EDUCATION_LEVELS]
+    : EDUCATION_LEVELS.slice(0, 3)
+}
+
 interface DynamicTableFieldProps {
   field: OnboardingField
   control: Control<FieldValues>
@@ -152,6 +176,25 @@ export function DynamicTableField({
     () => (Array.isArray(watchedRowValues) ? watchedRowValues : []),
     [watchedRowValues],
   )
+  const isEducationDetailsTable = field.fieldname === EDUCATION_DETAILS_FIELDNAME
+  const selectedEducationLevels = React.useMemo(() => {
+    if (!isEducationDetailsTable) return new Set<string>()
+
+    return new Set(
+      rowValues
+        .map((row: any) => String(row?.[EDUCATION_LEVEL_FIELDNAME] || "").trim())
+        .filter(Boolean),
+    )
+  }, [isEducationDetailsTable, rowValues])
+  const requiredEducationLevels = React.useMemo(
+    () => getApplicableEducationLevels(document),
+    [document],
+  )
+  const hasAllApplicableEducationLevels = React.useMemo(() => {
+    if (!isEducationDetailsTable) return false
+
+    return requiredEducationLevels.every((level) => selectedEducationLevels.has(level))
+  }, [isEducationDetailsTable, requiredEducationLevels, selectedEducationLevels])
 
   // Automatically clear child fields when they become hidden or violate year sequence
   React.useEffect(() => {
@@ -174,7 +217,7 @@ export function DynamicTableField({
       });
     });
 
-    if (field.fieldname === "custom_education_details" && rowValues.length > 0) {
+    if (field.fieldname === EDUCATION_DETAILS_FIELDNAME && rowValues.length > 0) {
       const EDUCATION_LEVEL_ORDER: Record<string, number> = {
         "10th": 1,
         "12th": 2,
@@ -262,6 +305,22 @@ export function DynamicTableField({
                     const addedAtSubmitCount = addedRowSubmitCounts.current[index] ?? -1;
                     const shouldShowChildError =
                       Boolean(childError) && (wasTouched || (submitCount > 0 && submitCount > addedAtSubmitCount));
+                    let fieldForRow = childField;
+
+                    if (
+                      isEducationDetailsTable &&
+                      childField.fieldname === EDUCATION_LEVEL_FIELDNAME
+                    ) {
+                      const currentLevel = String(rowDoc?.[EDUCATION_LEVEL_FIELDNAME] || "").trim();
+                      const optionSource = parseTableOptions(childField.options);
+                      const availableOptions = (optionSource.length ? optionSource : [...EDUCATION_LEVELS])
+                        .filter((option) => option === currentLevel || !selectedEducationLevels.has(option));
+
+                      fieldForRow = {
+                        ...childField,
+                        options: availableOptions.join("\n"),
+                      };
+                    }
 
                     return (
                       <TableRowField
@@ -269,8 +328,8 @@ export function DynamicTableField({
                         tableFieldname={field.fieldname}
                         rowIndex={index}
                         childField={{
-                          ...childField,
-                          read_only: field.read_only ? 1 : childField.read_only,
+                          ...fieldForRow,
+                          read_only: field.read_only ? 1 : fieldForRow.read_only,
                         }}
                         document={rowDoc}
                         control={control}
@@ -289,7 +348,7 @@ export function DynamicTableField({
         })}
       </div>
 
-      {!field.read_only && (
+      {!field.read_only && !hasAllApplicableEducationLevels && (
         <Button
           type="button"
           variant="outline"
