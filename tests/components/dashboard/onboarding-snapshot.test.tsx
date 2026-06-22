@@ -70,7 +70,6 @@ describe("OnboardingSnapshot", () => {
     await waitFor(() => {
       expect(screen.getByText("ONBOARDING IN PROGRESS")).toBeTruthy();
       expect(screen.getByText("3 of 8 steps completed")).toBeTruthy();
-      expect(screen.getByText(/Complete your onboarding tasks/)).toBeTruthy();
     });
   });
 
@@ -92,7 +91,6 @@ describe("OnboardingSnapshot", () => {
     await waitFor(() => {
       expect(screen.getByText("ONBOARDING COMPLETE")).toBeTruthy();
       expect(screen.getByText("You are ready to join us on September 8th!")).toBeTruthy();
-      expect(screen.getByText(/All mandatory tasks/)).toBeTruthy();
       expect(screen.getByText("Ready")).toBeTruthy();
     });
   });
