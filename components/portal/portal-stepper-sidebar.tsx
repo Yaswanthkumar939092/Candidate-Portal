@@ -53,7 +53,8 @@ export function PortalStepperSidebar({
         apiStep.status.toLowerCase() === "ongoing" ||
         apiStep.key === data.current_step;
 
-      const isCompleted = !isOngoing && apiStep.status.toLowerCase() === "completed";
+      const isCompleted =
+        !isOngoing && apiStep.status.toLowerCase() === "completed";
 
       const statusUpper = isOngoing
         ? "ONGOING"
@@ -115,7 +116,7 @@ export function PortalStepperSidebar({
   return (
     <div
       className={cn(
-        "w-full md:w-[340px] md:self-stretch shrink-0 bg-[#f8fafc] dark:bg-[#111827] border border-border/60 rounded-2xl p-5 flex flex-col gap-6 shadow-sm",
+        "w-full md:w-85 md:self-stretch shrink-0 bg-[#f8fafc] dark:bg-[#111827] border border-border/60 rounded-2xl p-5 flex flex-col gap-6 shadow-sm",
         className,
       )}
     >
@@ -166,7 +167,10 @@ export function PortalStepperSidebar({
             isOngoing
               ? "bg-primary text-primary-foreground shadow-md scale-[1.02]"
               : "bg-white dark:bg-card border border-border/50 text-foreground",
-            !isViewOnly && step.redirect_url && !isOngoing && "hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer"
+            !isViewOnly &&
+              step.redirect_url &&
+              !isOngoing &&
+              "hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer",
           );
 
           if (step.redirect_url && !isViewOnly) {
@@ -182,10 +186,7 @@ export function PortalStepperSidebar({
           }
 
           return (
-            <div
-              key={step.id}
-              className={classNameStr}
-            >
+            <div key={step.id} className={classNameStr}>
               {content}
             </div>
           );
@@ -193,7 +194,7 @@ export function PortalStepperSidebar({
       </div>
 
       {/* Spacer pushing Next Step to bottom on desktop */}
-      <div className="hidden md:block flex-1 min-h-[40px]" />
+      <div className="hidden md:block flex-1 min-h-10" />
 
       {/* Bottom Card: Next Step */}
       <div className="bg-[#eaf2ff] dark:bg-[#1e293b]/40 rounded-xl p-4 border border-blue-100/50 dark:border-slate-800">
