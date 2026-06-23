@@ -1,14 +1,14 @@
  
-import { CustomJobOpening, ApplicationField, SubmitApplicationPayload, SubmitApplicationResponse, JobField } from "../../types/job";
+import { CustomJobOpening, ApplicationField, SubmitApplicationPayload, SubmitApplicationResponse, JobField, ListOpeningsResponse } from "../../types/job";
 import { FrappeAPI } from "../frappe-api";
 
 export const JobOpeningService = {
-  getJobOpening: async (page: number, limit: number): Promise<CustomJobOpening[]> => {
+  getJobOpening: async (page: number, limit: number): Promise<ListOpeningsResponse> => {
     const response = await FrappeAPI.get("recruitment.api.channels.careers.list_openings", {
       page: String(page),
       limit: String(limit),
     });
-    return response as CustomJobOpening[];
+    return response as ListOpeningsResponse;
   },
 };
 

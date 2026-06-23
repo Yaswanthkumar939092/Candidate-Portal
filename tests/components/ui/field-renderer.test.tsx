@@ -1199,12 +1199,27 @@ describe("DynamicFieldRenderer", () => {
       expect(onChange).toHaveBeenLastCalledWith("56")
     })
 
-    it("parses options split by spaces when no newlines present", async () => {
+    it("treats space-separated options string as a single option (no newline splitting)", async () => {
       const field: FormField = {
         fieldname: "space_select",
         label: "Options Space",
         fieldtype: "Select",
         options: "Red Blue Green",
+      }
+
+      render(<DynamicFieldRenderer field={field} value="" onChange={vi.fn()} />)
+
+      await user.click(screen.getByRole("combobox"))
+      // Without newlines the entire string is one option
+      expect(screen.getByText("Red Blue Green")).toBeTruthy()
+    })
+
+    it("parses options split by newlines", async () => {
+      const field: FormField = {
+        fieldname: "newline_select",
+        label: "Options Newline",
+        fieldtype: "Select",
+        options: "Red\nBlue\nGreen",
       }
 
       render(<DynamicFieldRenderer field={field} value="" onChange={vi.fn()} />)

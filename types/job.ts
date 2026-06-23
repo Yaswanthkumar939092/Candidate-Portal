@@ -23,6 +23,17 @@ export interface ListOpeningsParams {
   limit: string;
 }
 
+export interface JobOpeningColumn {
+  fieldname: string;
+  label: string;
+  value_key: string;
+}
+
+export interface ListOpeningsResponse {
+  columns: JobOpeningColumn[];
+  openings: CustomJobOpening[];
+}
+
 export interface ApplicationField {
   section: string;
   reference_name: string;
