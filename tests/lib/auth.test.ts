@@ -44,7 +44,7 @@ describe("Frappe candidate auth", () => {
     expect(result.status).toBe("otp_required")
     expect(result.user?.email).toBe("candidate@example.com")
     expect(fetchMock).toHaveBeenCalledWith(
-      "http://localhost:8005/api/method/recruitment.api.candidate_auth.signup",
+      "/backend/api/method/recruitment.api.candidate_auth.signup",
       expect.objectContaining({
         method: "POST",
         credentials: "include",
@@ -85,7 +85,7 @@ describe("Frappe candidate auth", () => {
     expect(result.user?.id).toBe("candidate@example.com")
     expect(result.session).toBeNull()
     expect(fetchMock).toHaveBeenCalledWith(
-      "http://localhost:8005/api/method/recruitment.api.candidate_auth.login",
+      "/backend/api/method/recruitment.api.candidate_auth.login",
       expect.objectContaining({ credentials: "include" }),
     )
   })
@@ -140,7 +140,7 @@ describe("Frappe candidate auth", () => {
     expect(result.otp_log).toBe("CAND-OTP-2026-00001")
     expect(result.delivery_status).toBe("Sent")
     expect(fetchMock).toHaveBeenCalledWith(
-      "http://localhost:8005/api/method/recruitment.api.candidate_auth.request_email_signup_otp",
+      "/backend/api/method/recruitment.api.candidate_auth.request_email_signup_otp",
       expect.objectContaining({
         method: "POST",
         credentials: "include",
@@ -168,7 +168,7 @@ describe("Frappe candidate auth", () => {
     expect(result.user?.email).toBe("candidate@example.com")
     expect(result.user?.password_setup_required).toBe(false)
     expect(fetchMock).toHaveBeenCalledWith(
-      "http://localhost:8005/api/method/recruitment.api.candidate_auth.set_password",
+      "/backend/api/method/recruitment.api.candidate_auth.set_password",
       expect.objectContaining({
         method: "POST",
         credentials: "include",

@@ -1,4 +1,5 @@
 import { FrappeAPI } from "../frappe-api";
+import { frappeApiBase } from "../frappe-base";
 
 export interface JobOfferSummary {
   expiry_display: string | null;
@@ -70,9 +71,10 @@ export const jobOfferService = {
   },
 
   getJobOfferPdfUrl: (appl: string): string => {
-    const configuredUrl = (process.env.NEXT_PUBLIC_FRAPPE_URL || "").replace(/\/$/, "");
     const params = new URLSearchParams({ appl }).toString();
-    return `${configuredUrl}/api/method/recruitment.job_offer_utils.download_job_offer_pdf?${params}`;
+    // Same-origin proxy in the browser so the PDF request carries the
+    // first-party session cookie (iOS Safari ITP-safe).
+    return `${frappeApiBase()}/api/method/recruitment.job_offer_utils.download_job_offer_pdf?${params}`;
   },
 
   updateJobOfferStatus: async (

@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { frappeApiBase } from "@/lib/frappe-base"
 
 export interface Request {
   attachment: string
@@ -79,7 +80,9 @@ export function MyRequestsList({
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
-  const BASE_URL = process.env.NEXT_PUBLIC_FRAPPE_URL
+  // Same-origin proxy so the PDF iframe loads with the first-party session
+  // cookie (iOS Safari ITP-safe). See lib/frappe-base.ts.
+  const BASE_URL = frappeApiBase()
 
   const filteredRequests =
     filter && filter !== "all"

@@ -1,4 +1,5 @@
 import type { Profile } from "@/types/database";
+import { frappeApiBase } from "@/lib/frappe-base";
 
 const FRAPPE_AUTH_METHOD = "recruitment.api.candidate_auth";
 
@@ -98,27 +99,17 @@ interface FrappeResponse<T> {
   _server_messages?: string;
 }
 
-function frappeBaseUrl() {
-  const configuredUrl = (process.env.NEXT_PUBLIC_FRAPPE_URL || "").replace(/\/$/, "");
-  if (
-    typeof window !== "undefined" &&
-    window.location.hostname === "localhost" &&
-    configuredUrl.startsWith("http://127.0.0.1:")
-  ) {
-    return configuredUrl.replace("http://127.0.0.1:", "http://localhost:");
-  }
-  return configuredUrl;
-}
-
 async function frappeMethod<T>(method: string, body?: Record<string, unknown>, init?: RequestInit): Promise<T> {
-  const baseUrl = frappeBaseUrl();
+  const baseUrl = frappeApiBase();
   if (!baseUrl) {
     throw new Error("NEXT_PUBLIC_FRAPPE_URL is required");
   }
 
   const isGet = !body;
-  const url = new URL(`${baseUrl}/api/method/${method}`);
-  const response = await fetch(url.toString(), {
+  // baseUrl may be a same-origin relative prefix ("/backend"), so build a plain
+  // string rather than `new URL()` which requires an absolute URL.
+  const url = `${baseUrl}/api/method/${method}`;
+  const response = await fetch(url, {
     method: isGet ? "GET" : "POST",
     credentials: "include",
     headers: isGet ? undefined : { "Content-Type": "application/json" },
