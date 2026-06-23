@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { frappeApiBase } from "@/lib/frappe-base"
 
 export interface Task {
   attachment: string
@@ -77,7 +78,9 @@ export function AssignedTasksList({
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
-  const BASE_URL = process.env.NEXT_PUBLIC_FRAPPE_URL
+  // Same-origin proxy so the PDF iframe loads with the first-party session
+  // cookie (iOS Safari ITP-safe). See lib/frappe-base.ts.
+  const BASE_URL = frappeApiBase()
   const filteredTasks =
     filter && filter !== "all"
       ? tasks.filter((task) => {

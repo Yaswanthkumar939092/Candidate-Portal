@@ -1,15 +1,12 @@
 // src/lib/frappe-api.ts
 
+import { frappeApiBase } from "@/lib/frappe-base";
+
+// In the browser this returns the same-origin proxy prefix ("/backend") so the
+// session cookie stays first-party (iOS Safari ITP-safe); on the server it
+// returns the absolute Frappe URL. See lib/frappe-base.ts.
 function getFrappeUrl() {
-  const configuredUrl = (process.env.NEXT_PUBLIC_FRAPPE_URL || "").replace(/\/$/, "");
-  if (
-    typeof window !== "undefined" &&
-    window.location.hostname === "localhost" &&
-    configuredUrl.startsWith("http://127.0.0.1:")
-  ) {
-    return configuredUrl.replace("http://127.0.0.1:", "http://localhost:");
-  }
-  return configuredUrl;
+  return frappeApiBase();
 }
 
 async function handleResponseError(res: Response): Promise<never> {
