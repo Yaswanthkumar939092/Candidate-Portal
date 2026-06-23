@@ -1,7 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { FrappeAPI } from '@/lib/frappe-api'
+import { FRAPPE_PROXY_PREFIX } from '@/lib/frappe-base'
 
 const FRAPPE_URL = 'http://localhost:8000'
+// In a browser context (jsdom) requests go through the same-origin proxy so the
+// session cookie stays first-party (iOS Safari ITP-safe). See lib/frappe-base.ts.
+const API_BASE = FRAPPE_PROXY_PREFIX
 
 beforeEach(() => {
   vi.stubEnv('NEXT_PUBLIC_FRAPPE_URL', FRAPPE_URL)
@@ -31,7 +35,7 @@ describe('FrappeAPI', () => {
 
       expect(result).toEqual({ file_url: '/files/test.pdf' })
       expect(global.fetch).toHaveBeenCalledWith(
-        `${FRAPPE_URL}/api/method/upload_file`,
+        `${API_BASE}/api/method/upload_file`,
         expect.objectContaining({ method: 'POST', credentials: 'include' })
       )
     })
@@ -63,7 +67,7 @@ describe('FrappeAPI', () => {
       const result = await FrappeAPI.get('my_method')
       expect(result).toEqual({ result: 'data' })
       expect(global.fetch).toHaveBeenCalledWith(
-        `${FRAPPE_URL}/api/method/my_method`,
+        `${API_BASE}/api/method/my_method`,
         expect.objectContaining({ method: 'GET', credentials: 'include' })
       )
     })
@@ -83,7 +87,7 @@ describe('FrappeAPI', () => {
 
       await FrappeAPI.get('my_method')
       const url = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0]
-      expect(url).toBe(`${FRAPPE_URL}/api/method/my_method`)
+      expect(url).toBe(`${API_BASE}/api/method/my_method`)
     })
 
     it('throws on failed response', async () => {
@@ -100,7 +104,7 @@ describe('FrappeAPI', () => {
       const result = await FrappeAPI.getResource('Job Application')
       expect(result).toEqual(responseData)
       expect(global.fetch).toHaveBeenCalledWith(
-        `${FRAPPE_URL}/api/resource/Job Application`,
+        `${API_BASE}/api/resource/Job Application`,
         expect.objectContaining({ method: 'GET' })
       )
     })
@@ -158,7 +162,7 @@ describe('FrappeAPI', () => {
       expect(result).toEqual({ success: true })
 
       const call = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0]
-      expect(call[0]).toBe(`${FRAPPE_URL}/api/method/my_method`)
+      expect(call[0]).toBe(`${API_BASE}/api/method/my_method`)
       expect(call[1].method).toBe('POST')
       expect(call[1].headers['Content-Type']).toBe('application/json')
       expect(JSON.parse(call[1].body)).toEqual({ key: 'value' })
