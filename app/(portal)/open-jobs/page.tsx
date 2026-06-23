@@ -31,7 +31,7 @@ import { JobMatchCard } from "@/components/jobs/job-match-card"
 import { JobDetailDialog } from "@/components/jobs/job-detail-dialog"
 import { cn } from "@/lib/utils"
 import { useJobOpening } from "@/lib/hooks/useJobOpening"
-import { CustomJobOpening } from "@/types/job"
+import { CustomJobOpening, JobOpeningColumn } from "@/types/job"
 import { useAuth } from "@/lib/contexts/auth-context"
 import { useGetSavedJobs, useToggleSavedJob } from "@/lib/hooks/useSavedJobs"
 import { toast } from "sonner"
@@ -96,10 +96,12 @@ function Pagination({
 export default function OpenJobsPage() {
   const [currentPage, setCurrentPage] = useState(1)
   console.log("Fetching jobs for page:", currentPage)
-  const { data: jobOpenings } = useJobOpening({
+  const { data: jobOpeningsResponse } = useJobOpening({
     page: currentPage,
     limit: JOBS_PER_PAGE,
   })
+  const jobOpenings = jobOpeningsResponse?.openings || []
+  const jobColumns = jobOpeningsResponse?.columns || []
 
   const [activeTab, setActiveTab] = useState<"smart-match" | "view-all">(
     "smart-match"
@@ -193,6 +195,26 @@ export default function OpenJobsPage() {
       matchPercentage: 0,
     }))
   }, [jobOpenings])
+
+  // Build column metadata for each opening, extracting values via value_key.
+  // Exclude 'name' (used as ID) and 'job_title' (already shown as card title).
+  const openingColumnData = useMemo(() => {
+    const displayColumns = jobColumns.filter(
+      (col) => col.value_key !== "name" && col.value_key !== "job_title"
+    )
+    const map = new Map<string, Array<{ label: string; value: string }>>()
+    const list = Array.isArray(jobOpenings) ? jobOpenings : []
+    list.forEach((opening: any) => {
+      const fields = displayColumns
+        .map((col) => ({
+          label: col.label,
+          value: String(opening[col.value_key] ?? ""),
+        }))
+        .filter((f) => f.value !== "" && f.value !== "null")
+      map.set(opening.name, fields)
+    })
+    return map
+  }, [jobColumns, jobOpenings])
 
   // ✅ FIXED (boundary check added)
   const handlePageChange = (page: number) => {
@@ -328,6 +350,7 @@ export default function OpenJobsPage() {
                   <JobMatchCard
                     key={job.id}
                     job={job}
+                    columnFields={openingColumnData.get(job.id)}
                     isBookmarked={savedJobIdsList.includes(job.id)}
                     onBookmark={() => handleBookmark(job.id)}
                     onViewDetails={() => handleViewDetails(job)}

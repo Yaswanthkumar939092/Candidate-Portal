@@ -937,10 +937,8 @@ function parseOptions(options?: string): string[] {
       .map((opt) => opt.trim())
       .filter(Boolean);
   }
-  return options
-    .split(" ")
-    .map((opt) => opt.trim())
-    .filter(Boolean);
+  const trimmed = options.trim();
+  return trimmed ? [trimmed] : [];
 }
 
 export interface DynamicFieldRendererProps<T extends FormField> {

@@ -29,10 +29,10 @@ function parseTableOptions(options?: string) {
     .filter(Boolean)
 }
 
-function getApplicableEducationLevels(document: Record<string, unknown>) {
+function getApplicableEducationLevels(document: Record<string, unknown>): string[] {
   return isYes(document[POST_GRADUATION_FIELDNAME])
     ? [...EDUCATION_LEVELS]
-    : EDUCATION_LEVELS.slice(0, 3)
+    : [...EDUCATION_LEVELS.slice(0, 3)]
 }
 
 interface DynamicTableFieldProps {
@@ -313,7 +313,9 @@ export function DynamicTableField({
                     ) {
                       const currentLevel = String(rowDoc?.[EDUCATION_LEVEL_FIELDNAME] || "").trim();
                       const optionSource = parseTableOptions(childField.options);
+                      const applicableLevels = getApplicableEducationLevels(document);
                       const availableOptions = (optionSource.length ? optionSource : [...EDUCATION_LEVELS])
+                        .filter((option) => applicableLevels.includes(option))
                         .filter((option) => option === currentLevel || !selectedEducationLevels.has(option));
 
                       fieldForRow = {

@@ -7,6 +7,7 @@ import {
   BookmarkCheck,
   Building2,
   IndianRupee,
+  Info,
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -25,10 +26,20 @@ interface JobMatchCardProps {
     skills: string[]
     matchPercentage: number
   }
+  /** Column-driven fields from the API (label + value pairs). When provided, these are rendered instead of hardcoded fields. */
+  columnFields?: Array<{ label: string; value: string }>
   onViewDetails?: () => void
   onBookmark?: () => void
   isBookmarked?: boolean
   className?: string
+}
+
+/** Map well-known column labels to icons for richer UI */
+const COLUMN_ICONS: Record<string, React.ElementType> = {
+  Company: Building2,
+  Location: MapPin,
+  Department: Briefcase,
+  Designation: Briefcase,
 }
 
 /**
@@ -36,12 +47,14 @@ interface JobMatchCardProps {
  * a "View Details" button, and a bookmark icon.
  *
  * @param job - The job object containing title, company, location, experience, salary, type, skills, matchPercentage
+ * @param columnFields - Optional API-driven column fields to render
  * @param onViewDetails - Callback when user clicks "View Details"
  * @param onBookmark - Callback when user toggles the bookmark
  * @param isBookmarked - Whether the job is currently bookmarked
  */
 export function JobMatchCard({
   job,
+  columnFields,
   onViewDetails,
   onBookmark,
   isBookmarked = false,
@@ -60,37 +73,59 @@ export function JobMatchCard({
           <h3 className="text-base font-semibold text-foreground">
             {job.title}
           </h3>
-        { job.matchPercentage &&(  <Badge
+        {job.matchPercentage > 0 && (
+          <Badge
             variant="secondary"
             className="shrink-0 border-transparent bg-primary/10 text-primary"
           >
             {job.matchPercentage}%
           </Badge>
-          )}
+        )}
         </div>
 
-        {/* Info tags */}
+        {/* Info tags — API-driven when columnFields are available */}
         <div className="flex flex-wrap items-center gap-2">
-        {job.company && (<span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
-            <Building2 className="h-3 w-3" />
-            {job.company}
-          </span>
-        )}
-          {job.location && ( <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
-            <MapPin className="h-3 w-3" />
-            {job.location}
-          </span>
+          {columnFields && columnFields.length > 0 ? (
+            columnFields.map((field) => {
+              const IconComp = COLUMN_ICONS[field.label] || Info
+              return (
+                <span
+                  key={field.label}
+                  className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground"
+                >
+                  <IconComp className="h-3 w-3" />
+                  {field.value}
+                </span>
+              )
+            })
+          ) : (
+            <>
+              {job.company && (
+                <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+                  <Building2 className="h-3 w-3" />
+                  {job.company}
+                </span>
+              )}
+              {job.location && (
+                <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+                  <MapPin className="h-3 w-3" />
+                  {job.location}
+                </span>
+              )}
+              {job.experience && (
+                <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+                  <Briefcase className="h-3 w-3" />
+                  {job.experience}
+                </span>
+              )}
+              {job.salary && (
+                <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+                  <IndianRupee className="h-3 w-3" />
+                  {job.salary}
+                </span>
+              )}
+            </>
           )}
-          {job.experience && ( <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
-            <Briefcase className="h-3 w-3" />
-            {job.experience}
-          </span>
-          )}
-         {job.salary && ( <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
-            <IndianRupee className="h-3 w-3" />
-            {job.salary}
-          </span>
-            )}
         </div>
        
 
