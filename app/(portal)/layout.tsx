@@ -56,7 +56,7 @@ export default function PortalLayout({
     <FeatureFlagProvider>
       <FeatureFlagLoader>
         <div className="min-h-screen bg-background">
-          {showNavigation && <PortalNavigation />}
+          {showNavigation && <PortalNavigation hideNavLinks={pathname === '/profile'} />}
           {showSurveyOfferNavigation && <SurveyOfferNavigation />}
           <main className={showNavigation || showSurveyOfferNavigation ? "flex-1 pt-16" : "flex-1"}>
             {children}

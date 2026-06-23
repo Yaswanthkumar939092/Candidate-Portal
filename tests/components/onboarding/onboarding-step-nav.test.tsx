@@ -70,6 +70,13 @@ describe("OnboardingStepNav", () => {
     // 1 completed step.
     vi.mocked(useOnboarding).mockReturnValue({
       ...defaultProps,
+      formConfig: {
+        ...defaultProps.formConfig!,
+        tabs: [
+          { tab: "Personal Information", sections: [] },
+          { tab: "Education Details", sections: [] }
+        ]
+      },
       completedSteps: new Set(["personal_information"])
     });
 
@@ -83,6 +90,10 @@ describe("OnboardingStepNav", () => {
       ...defaultProps,
       formConfig: {
         ...defaultProps.formConfig!,
+        tabs: [
+          { tab: "Personal Information", sections: [] },
+          { tab: "Education Details", sections: [] }
+        ],
         field_status_counts: {
           total: 10,
           pending: 5,
@@ -97,6 +108,54 @@ describe("OnboardingStepNav", () => {
     const progressBar = container.querySelector(".bg-primary-foreground.transition-all");
     // (filled: 3 + approved: 2) / total: 10 * 100 = 50%
     expect(progressBar).toHaveStyle("width: 50%");
+  });
+
+  it("calculates progress percentage and step counts in real-time from stepData", () => {
+    vi.mocked(useOnboarding).mockReturnValue({
+      ...defaultProps,
+      stepData: {
+        personal_information: {
+          first_name: "John",
+        }
+      },
+      formConfig: {
+        applicantId: "test-id",
+        status: "Pending",
+        tabs: [
+          {
+            tab: "Personal Information",
+            sections: [
+              {
+                section: "General Info",
+                fields: [
+                  {
+                    fieldname: "first_name",
+                    label: "First Name",
+                    fieldtype: "Data",
+                    is_mandatory: 1,
+                    read_only: 0,
+                    hidden: 0,
+                  },
+                  {
+                    fieldname: "last_name",
+                    label: "Last Name",
+                    fieldtype: "Data",
+                    is_mandatory: 0,
+                    read_only: 0,
+                    hidden: 0,
+                  }
+                ]
+              }
+            ]
+          },
+          { tab: "Education Details", sections: [] }
+        ]
+      }
+    });
+
+    render(<OnboardingStepNav />);
+    // 2 fields total, 1 is filled (first_name). Badge should render "1/2".
+    expect(screen.getByText("1/2")).toBeTruthy();
   });
 
   it("renders steps with correct status indicators", () => {

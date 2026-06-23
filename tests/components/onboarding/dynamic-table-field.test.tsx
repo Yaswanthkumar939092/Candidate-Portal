@@ -20,7 +20,7 @@ interface WrapperProps {
 // Mocking DynamicFieldRenderer since it's used inside
 vi.mock("@/components/ui/field-renderer", () => ({
   DynamicFieldRenderer: ({ field, value, onChange, onBlur, error }: DynamicFieldRendererProps) => (
-    <div data-testid={`field-${field.fieldname}`}>
+    <div data-testid={`field-${field.fieldname}`} data-options={field.options || ""}>
       <label>{field.label}</label>
       <input 
         value={(value as string) || ""} 
@@ -245,5 +245,170 @@ describe("DynamicTableField", () => {
 
     // Expect row 1 (12th) passing year to be automatically cleared to "" because it must be strictly after
     expect(yearInputs[1].value).toBe("");
+  });
+
+  it("hides already selected education levels from other rows", () => {
+    const eduTableField: OnboardingField = {
+      fieldname: "custom_education_details",
+      label: "Education Details",
+      is_mandatory: 1,
+      read_only: 0,
+      hidden: 0,
+      fieldtype: "Table",
+      child_fields: [
+        {
+          fieldname: "education_level",
+          label: "Education Level",
+          fieldtype: "Select",
+          options: "10th\n12th\nGraduation\nPost Graduation",
+          reqd: 1,
+          is_mandatory: 1,
+          read_only: 0,
+          hidden: 0,
+        },
+      ],
+    };
+
+    render(
+      <Wrapper
+        defaultValues={{
+          custom_education_details: [
+            { education_level: "10th" },
+            { education_level: "" },
+          ],
+        }}
+      >
+        {(methods) => (
+          <DynamicTableField
+            field={eduTableField}
+            control={methods.control}
+            setValue={methods.setValue}
+            errors={methods.formState.errors as unknown as FieldErrors<FieldValues>}
+          />
+        )}
+      </Wrapper>
+    );
+
+    const levelFields = screen.getAllByTestId("field-education_level");
+
+    expect(levelFields[0].getAttribute("data-options")).toContain("10th");
+    expect(levelFields[1].getAttribute("data-options")).not.toContain("10th");
+    expect(levelFields[1].getAttribute("data-options")).toContain("12th");
+    expect(levelFields[1].getAttribute("data-options")).toContain("Graduation");
+  });
+
+  it("hides add button when required education levels are complete without post graduation", () => {
+    const eduTableField: OnboardingField = {
+      fieldname: "custom_education_details",
+      label: "Education Details",
+      is_mandatory: 1,
+      read_only: 0,
+      hidden: 0,
+      fieldtype: "Table",
+      child_fields: [
+        { fieldname: "education_level", label: "Education Level", fieldtype: "Select", options: "10th\n12th\nGraduation\nPost Graduation", reqd: 1, is_mandatory: 1, read_only: 0, hidden: 0 },
+      ],
+    };
+
+    render(
+      <Wrapper
+        defaultValues={{
+          custom_education_details: [
+            { education_level: "10th" },
+            { education_level: "12th" },
+            { education_level: "Graduation" },
+          ],
+        }}
+      >
+        {(methods) => (
+          <DynamicTableField
+            field={eduTableField}
+            control={methods.control}
+            setValue={methods.setValue}
+            errors={methods.formState.errors as unknown as FieldErrors<FieldValues>}
+            document={{ custom_has_post_graduation_degree: "No" }}
+          />
+        )}
+      </Wrapper>
+    );
+
+    expect(screen.queryByRole("button", { name: /Add Education Details/i })).toBeNull();
+  });
+
+  it("keeps add button visible until post graduation is complete when applicable", () => {
+    const eduTableField: OnboardingField = {
+      fieldname: "custom_education_details",
+      label: "Education Details",
+      is_mandatory: 1,
+      read_only: 0,
+      hidden: 0,
+      fieldtype: "Table",
+      child_fields: [
+        { fieldname: "education_level", label: "Education Level", fieldtype: "Select", options: "10th\n12th\nGraduation\nPost Graduation", reqd: 1, is_mandatory: 1, read_only: 0, hidden: 0 },
+      ],
+    };
+
+    render(
+      <Wrapper
+        defaultValues={{
+          custom_education_details: [
+            { education_level: "10th" },
+            { education_level: "12th" },
+            { education_level: "Graduation" },
+          ],
+        }}
+      >
+        {(methods) => (
+          <DynamicTableField
+            field={eduTableField}
+            control={methods.control}
+            setValue={methods.setValue}
+            errors={methods.formState.errors as unknown as FieldErrors<FieldValues>}
+            document={{ custom_has_post_graduation_degree: "Yes" }}
+          />
+        )}
+      </Wrapper>
+    );
+
+    expect(screen.getByRole("button", { name: /Add Education Details/i })).toBeTruthy();
+  });
+
+  it("hides add button when post graduation is complete and applicable", () => {
+    const eduTableField: OnboardingField = {
+      fieldname: "custom_education_details",
+      label: "Education Details",
+      is_mandatory: 1,
+      read_only: 0,
+      hidden: 0,
+      fieldtype: "Table",
+      child_fields: [
+        { fieldname: "education_level", label: "Education Level", fieldtype: "Select", options: "10th\n12th\nGraduation\nPost Graduation", reqd: 1, is_mandatory: 1, read_only: 0, hidden: 0 },
+      ],
+    };
+
+    render(
+      <Wrapper
+        defaultValues={{
+          custom_education_details: [
+            { education_level: "10th" },
+            { education_level: "12th" },
+            { education_level: "Graduation" },
+            { education_level: "Post Graduation" },
+          ],
+        }}
+      >
+        {(methods) => (
+          <DynamicTableField
+            field={eduTableField}
+            control={methods.control}
+            setValue={methods.setValue}
+            errors={methods.formState.errors as unknown as FieldErrors<FieldValues>}
+            document={{ custom_has_post_graduation_degree: "Yes" }}
+          />
+        )}
+      </Wrapper>
+    );
+
+    expect(screen.queryByRole("button", { name: /Add Education Details/i })).toBeNull();
   });
 });

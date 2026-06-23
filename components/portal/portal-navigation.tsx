@@ -33,11 +33,9 @@ import {
   Home,
   Briefcase,
   ClipboardList,
-  Globe,
   ChevronDown,
   LogOut,
   User,
-  Settings,
   Menu,
   Sun,
   Moon,
@@ -112,7 +110,10 @@ function formatRole(role: string): string {
  * Matches the Physics Wallah design with dark pill active states,
  * green pill for Action Center, badge counts, and user avatar dropdown.
  */
-export function PortalNavigation({ className, hideNavLinks = false }: PortalNavigationProps) {
+export function PortalNavigation({
+  className,
+  hideNavLinks = false,
+}: PortalNavigationProps) {
   const { user, profile } = useAuth();
   const { isEnabled } = useFeatureFlags();
   const { data: branding } = useCandidateBranding();
@@ -134,7 +135,6 @@ export function PortalNavigation({ className, hideNavLinks = false }: PortalNavi
   const displayName =
     profile?.full_name ||
     user?.user_metadata?.full_name ||
-    user?.user_metadata?.name ||
     user?.email?.split("@")[0] ||
     "User";
 
@@ -181,12 +181,16 @@ export function PortalNavigation({ className, hideNavLinks = false }: PortalNavi
             <div className="md:hidden">
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="-ml-3 shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="-ml-3 shrink-0"
+                  >
                     <Menu className="h-5 w-5" />
                     <span className="sr-only">Toggle menu</span>
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-[80vw] sm:w-[350px]">
+                <SheetContent side="left" className="w-[80vw] sm:w-87.5">
                   <SheetHeader>
                     <SheetTitle className="text-left font-bold text-lg">
                       Navigation
@@ -203,7 +207,7 @@ export function PortalNavigation({ className, hideNavLinks = false }: PortalNavi
                           className={cn(
                             "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                             active
-                              ? "bg-[var(--nav-active-bg)] text-[var(--nav-active-text)]"
+                              ? "bg-nav-active-bg text-nav-active-text"
                               : "hover:bg-muted text-muted-foreground",
                           )}
                         >
@@ -212,9 +216,9 @@ export function PortalNavigation({ className, hideNavLinks = false }: PortalNavi
                           {badgeCount > 0 && (
                             <Badge
                               className={cn(
-                                "flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-semibold border-none",
+                                "flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-semibold border-none",
                                 active
-                                  ? "bg-[var(--nav-active-text)]/20 text-[var(--nav-active-text)]"
+                                  ? "bg-(--nav-active-text)/20 text-nav-active-text"
                                   : "bg-muted text-muted-foreground",
                               )}
                             >
@@ -232,7 +236,8 @@ export function PortalNavigation({ className, hideNavLinks = false }: PortalNavi
 
           {/* Desktop/Mobile PW Logo */}
           {(() => {
-            const disableBrandRedirect = pathname === "/survey" || pathname.startsWith("/job_offer");
+            const disableBrandRedirect =
+              pathname === "/survey" || pathname.startsWith("/job_offer");
             const content = (
               <>
                 <Image
@@ -260,7 +265,10 @@ export function PortalNavigation({ className, hideNavLinks = false }: PortalNavi
                 {content}
               </div>
             ) : (
-              <Link href="/dashboard" className="flex shrink-0 items-center gap-2">
+              <Link
+                href="/dashboard"
+                className="flex shrink-0 items-center gap-2"
+              >
                 {content}
               </Link>
             );
@@ -281,7 +289,7 @@ export function PortalNavigation({ className, hideNavLinks = false }: PortalNavi
                   className={cn(
                     "relative flex items-center gap-2 text-sm font-medium px-4 py-1.5 rounded-full transition-all duration-300 ease-in-out",
                     active
-                      ? "bg-[var(--nav-active-bg)] text-[var(--nav-active-text)]"
+                      ? "bg-nav-active-bg text-nav-active-text"
                       : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
                   )}
                 >
@@ -292,7 +300,7 @@ export function PortalNavigation({ className, hideNavLinks = false }: PortalNavi
                       className={cn(
                         "ml-0.5 flex items-center justify-center rounded-full px-1.5 py-1 text-[10px] font-semibold border-none",
                         active
-                          ? "bg-[var(--nav-active-text)]/20 text-[var(--nav-active-text)]"
+                          ? "bg-(--nav-active-text)/20 text-nav-active-text"
                           : "bg-muted text-muted-foreground",
                       )}
                     >
@@ -323,7 +331,7 @@ export function PortalNavigation({ className, hideNavLinks = false }: PortalNavi
                     {initials}
                   </AvatarFallback>
                 </Avatar>
-                <div className="hidden max-w-[120px] flex-col items-start md:flex">
+                <div className="hidden max-w-30 flex-col items-start md:flex">
                   <span className="truncate text-sm font-medium text-foreground w-full text-left">
                     {displayName}
                   </span>
