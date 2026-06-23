@@ -49,20 +49,28 @@ describe("OpenJobsPage - Saved Jobs", () => {
     } as any);
 
     vi.mocked(useJobOpening).mockReturnValue({
-      data: [
-        {
-          name: "HR-OPN-1",
-          job_title: "Developer Job",
-          company: "Test Corp",
-          location: "Remote",
-          employment_type: "Full-time",
-          custom_work_experience: "3 years",
-          lower_range: 10,
-          upper_range: 15,
-          description: "<p>Job Description HTML</p>",
-          status: "Open",
-        },
-      ],
+      data: {
+        columns: [
+          { fieldname: "job_title", label: "Job Title", value_key: "job_title" },
+          { fieldname: "company", label: "Company", value_key: "company" },
+          { fieldname: "location", label: "Location", value_key: "location" },
+          { fieldname: "status", label: "Status", value_key: "status" },
+        ],
+        openings: [
+          {
+            name: "HR-OPN-1",
+            job_title: "Developer Job",
+            company: "Test Corp",
+            location: "Remote",
+            employment_type: "Full-time",
+            custom_work_experience: "3 years",
+            lower_range: 10,
+            upper_range: 15,
+            description: "<p>Job Description HTML</p>",
+            status: "Open",
+          },
+        ],
+      },
     } as any);
 
     vi.mocked(useGetSavedJobs).mockReturnValue({
