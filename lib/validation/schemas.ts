@@ -29,6 +29,24 @@ export const signinSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 })
 
+// Change password schema
+export const changePasswordSchema = z.object({
+  current_password: z.string().min(1, 'Current password is required'),
+  new_password: z.string().min(8, 'Password must be at least 8 characters'),
+  confirm_password: z.string().min(1, 'Please confirm your password'),
+}).refine((data) => data.new_password === data.confirm_password, {
+  message: "Passwords don't match",
+  path: ['confirm_password'],
+})
+
+// Mobile number schema
+export const mobileNumberSchema = z.object({
+  mobile_no: z.string()
+    .min(10, 'Valid mobile number is required')
+    .max(15, 'Mobile number is too long')
+    .regex(/^\+?[\d\s\-\(\)]{10,}$/, 'Invalid phone number format'),
+})
+
 export const updateProfileSchema = z.object({
   full_name: z.string().min(1, 'Full name is required').optional(),
   phone: z.string().optional(),
@@ -209,3 +227,7 @@ export const handleValidationError = (error: unknown) => {
   }
   throw error
 }
+
+// Inferred types for profile schemas
+export type ChangePasswordData = z.infer<typeof changePasswordSchema>
+export type MobileNumberData = z.infer<typeof mobileNumberSchema>

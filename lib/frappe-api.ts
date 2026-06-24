@@ -16,7 +16,10 @@ async function handleResponseError(res: Response): Promise<never> {
       const errorData = await res.json();
       const serverError = errorData?.message?.message || errorData?.message || errorData?.exception;
       if (serverError) {
-        throw new Error(typeof serverError === "string" ? serverError : JSON.stringify(serverError));
+        const msg = typeof serverError === "string" ? serverError : JSON.stringify(serverError);
+        // Strip Frappe exception prefixes like "frappe.exceptions.ValidationError: "
+        const cleanMsg = msg.replace(/^frappe\.\w+(\.\w+)*:\s*/i, "");
+        throw new Error(cleanMsg);
       }
     }
   } catch (e) {
@@ -49,7 +52,7 @@ export const FrappeAPI = {
     );
 
     if (!res.ok) {
-      throw new Error("Upload failed");
+      await handleResponseError(res);
     }
 
     const data = await res.json();
