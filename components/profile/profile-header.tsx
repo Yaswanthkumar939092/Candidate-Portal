@@ -3,8 +3,23 @@
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Mail, Phone, MapPin, Pencil, Camera, Check, X } from "lucide-react";
 import type { Profile } from "@/types/database";
+import { useState, useRef } from "react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useFileUpload } from "@/lib/hooks/useFileUpload";
+import { useUpdateProfile } from "@/lib/hooks/useUpdateProfile";
+import { frappeApiBase } from "@/lib/frappe-base";
+import { toast } from "sonner";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
+
+const nameSchema = z.object({
+  full_name: z.string().min(1, "Name is required"),
+});
 
 interface ProfileHeaderProps {
   profile: Profile;
@@ -77,6 +92,77 @@ const LIFECYCLE_CONFIG: Record<
 export function ProfileHeader({ profile, className }: ProfileHeaderProps) {
   const cfg = LIFECYCLE_CONFIG[profile?.lifecycle_stage];
 
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { mutate: uploadFile, isPending: isUploading } = useFileUpload();
+  const { mutateAsync: updateProfile } = useUpdateProfile();
+
+  const form = useForm<z.infer<typeof nameSchema>>({
+    resolver: zodResolver(nameSchema),
+    defaultValues: {
+      full_name: profile?.full_name ?? "",
+    },
+  });
+
+  const onSubmitName = async (values: z.infer<typeof nameSchema>) => {
+    try {
+      await updateProfile({
+        full_name: values.full_name,
+        mobile_no: profile?.phone || "",
+        avatar_url: profile?.avatar_url || ""
+      });
+      setIsEditingName(false);
+      toast.success("Name updated successfully");
+    } catch (error) {
+      toast.error("Failed to update name");
+    }
+  };
+
+  const ALLOWED_AVATAR_TYPES = ["image/jpeg", "image/jpg", "image/png"];
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!ALLOWED_AVATAR_TYPES.includes(file.type)) {
+      toast.error("Only JPG and PNG files are allowed");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewUrl(objectUrl);
+
+    // Reset input so re-selecting the same file triggers onChange again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+    
+    uploadFile(file, {
+      onSuccess: async (data) => {
+        try {
+          await updateProfile({
+            full_name: profile?.full_name || "",
+            mobile_no: profile?.phone || "",
+            avatar_url: data.file_url
+          });
+          toast.success("Avatar updated successfully");
+        } catch (error) {
+          setPreviewUrl(null);
+          const message = error instanceof Error ? error.message : "Failed to update avatar";
+          toast.error(message);
+        }
+      },
+      onError: (error) => {
+        setPreviewUrl(null);
+        const message = error instanceof Error ? error.message : "Failed to upload file";
+        toast.error(message);
+      }
+    });
+  };
+
   return (
     <div
       className={cn(
@@ -102,27 +188,92 @@ export function ProfileHeader({ profile, className }: ProfileHeaderProps) {
         overlaps the banner. The details column uses pt-12 to
         push text back down below the banner edge.
       */}
-      <div className="flex items-center gap-5 px-6 pb-6 -mt-14">
+      <div className="flex items-center gap-5 px-6 pb-6 -mt-14 relative z-10">
         {/* LEFT — avatar, sits half-in the banner */}
         <div className="shrink-0">
-          <Avatar className="h-20 w-20">
-            <AvatarImage
-              src={profile?.avatar_url ?? ""}
-              alt={profile?.full_name ?? "User"}
-            />
-            <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-              {getInitials(profile?.full_name)}
-            </AvatarFallback>
-          </Avatar>
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            className="hidden" 
+            accept=".jpg,.jpeg,.png"
+            onChange={handleFileChange}
+          />
+          <div 
+            className={cn(
+              "relative group cursor-pointer h-20 w-20 rounded-full",
+              isUploading && "opacity-50 pointer-events-none"
+            )}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Avatar className="h-20 w-20 ring-4 ring-background">
+              <AvatarImage
+                src={previewUrl ?? (profile?.avatar_url ? (profile.avatar_url.startsWith("/files") ? `${frappeApiBase()}${profile.avatar_url}` : profile.avatar_url) : "")}
+                alt={profile?.full_name ?? "User"}
+                className={isUploading ? "animate-pulse" : ""}
+              />
+              <AvatarFallback className="bg-primary text-primary-foreground text-xl font-bold">
+                {getInitials(profile?.full_name)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="absolute bottom-0 left-0 bg-background border shadow-sm rounded-full p-1.5 text-muted-foreground hover:text-foreground transition-colors z-10">
+              <Camera className="h-4 w-4" />
+            </div>
+          </div>
         </div>
 
         {/* RIGHT — all text, aligned to start below the banner */}
         <div className="flex-1 min-w-0">
           {/* Name + lifecycle badge on same line */}
           <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-            <h2 className="text-2xl font-bold tracking-tight text-foreground leading-none capitalize">
-              {profile?.full_name ?? "—"}
-            </h2>
+            {isEditingName ? (
+              <Form {...form}>
+                <form 
+                  onSubmit={form.handleSubmit(onSubmitName)} 
+                  className="flex items-center gap-1.5 sm:gap-2 -ml-24 sm:ml-0 mb-2 sm:mb-0 relative z-20 w-[calc(100%+6rem)] sm:w-auto"
+                >
+                  <FormField
+                    control={form.control}
+                    name="full_name"
+                    render={({ field }) => (
+                      <FormItem className="flex-1 min-w-0 sm:flex-none">
+                        <FormControl>
+                          <Input
+                            {...field}
+                            className="h-9 text-lg font-bold px-2 py-1 w-full sm:w-64"
+                            autoFocus
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <Button size="sm" type="submit" disabled={form.formState.isSubmitting} className="shrink-0">
+                    {form.formState.isSubmitting ? "Saving..." : "Save"}
+                  </Button>
+                  <Button size="sm" variant="ghost" type="button" onClick={() => setIsEditingName(false)} disabled={form.formState.isSubmitting} className="shrink-0">
+                    Cancel
+                  </Button>
+                </form>
+              </Form>
+            ) : (
+              <div 
+                className="flex items-center gap-2 group cursor-pointer"
+                onClick={() => {
+                  form.reset({ full_name: profile?.full_name ?? "" });
+                  setIsEditingName(true);
+                }}
+              >
+                <h2 className="text-2xl font-bold tracking-tight text-foreground leading-none capitalize group-hover:text-primary transition-colors">
+                  {profile?.full_name ?? "—"}
+                </h2>
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  className="h-8 w-8 rounded-full hover:bg-muted pointer-events-none"
+                >
+                  <Pencil className="h-4 w-4 text-muted-foreground transition-colors" />
+                </Button>
+              </div>
+            )}
             <Badge
               variant="outline"
               className={cn(

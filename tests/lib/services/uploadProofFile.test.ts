@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { profileService } from "@/lib/services/uploadProofFile";
+import { fileUploadService } from "@/lib/services/uploadProofFile";
 import { FrappeAPI } from "@/lib/frappe-api";
 
 // Mock FrappeAPI
@@ -9,7 +9,7 @@ vi.mock("@/lib/frappe-api", () => ({
   },
 }));
 
-describe("profileService", () => {
+describe("fileUploadService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -19,7 +19,7 @@ describe("profileService", () => {
     (FrappeAPI.uploadFile as any).mockResolvedValue(mockRes);
 
     const file = new File(["test"], "test.pdf");
-    const result = await profileService.uploadFile(file, "DocType", "DocName");
+    const result = await fileUploadService.uploadFile(file, "DocType", "DocName");
 
     expect(result).toEqual(mockRes);
     expect(FrappeAPI.uploadFile).toHaveBeenCalledWith(file, "", "DocName", "DocType");
@@ -31,9 +31,10 @@ describe("profileService", () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
     const file = new File(["test"], "test.pdf");
-    await expect(profileService.uploadFile(file)).rejects.toThrow(mockError);
+    await expect(fileUploadService.uploadFile(file)).rejects.toThrow(mockError);
     expect(consoleSpy).toHaveBeenCalled();
     
     consoleSpy.mockRestore();
   });
 });
+

@@ -2,12 +2,12 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useFileUpload } from "@/lib/hooks/useFileUpload";
-import { profileService } from "@/lib/services/uploadProofFile";
+import { fileUploadService } from "@/lib/services/uploadProofFile";
 import React from "react";
 
-// Mock profileService
+// Mock fileUploadService
 vi.mock("@/lib/services/uploadProofFile", () => ({
-  profileService: {
+  fileUploadService: {
     uploadFile: vi.fn(),
   },
 }));
@@ -32,7 +32,7 @@ describe("useFileUpload Hook", () => {
 
   it("uploads file successfully", async () => {
     const mockResponse = { url: "https://example.com/file.pdf" };
-    (profileService.uploadFile as any).mockResolvedValue(mockResponse);
+    (fileUploadService.uploadFile as any).mockResolvedValue(mockResponse);
 
     const { result } = renderHook(() => useFileUpload(), { wrapper });
 
@@ -41,12 +41,12 @@ describe("useFileUpload Hook", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual(mockResponse);
-    expect(profileService.uploadFile).toHaveBeenCalledWith(file);
+    expect(fileUploadService.uploadFile).toHaveBeenCalledWith(file);
   });
 
   it("handles upload error", async () => {
     const mockError = new Error("Upload failed");
-    (profileService.uploadFile as any).mockRejectedValue(mockError);
+    (fileUploadService.uploadFile as any).mockRejectedValue(mockError);
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
     const { result } = renderHook(() => useFileUpload(), { wrapper });
@@ -61,3 +61,4 @@ describe("useFileUpload Hook", () => {
     consoleSpy.mockRestore();
   });
 });
+

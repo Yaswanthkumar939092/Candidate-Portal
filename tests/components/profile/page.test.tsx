@@ -46,6 +46,27 @@ vi.mock("@/lib/contexts/auth-context", () => ({
   useAuth: () => mockUseAuth(),
 }))
 
+vi.mock("@/lib/hooks/useFileUpload", () => ({
+  useFileUpload: () => ({
+    mutate: vi.fn(),
+    isPending: false,
+  }),
+}))
+
+vi.mock("@/lib/hooks/useUpdateProfile", () => ({
+  useUpdateProfile: () => ({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  }),
+}))
+
+vi.mock("@/lib/hooks/useChangePassword", () => ({
+  useChangePassword: () => ({
+    mutate: vi.fn(),
+    isPending: false,
+  }),
+}))
+
 const user = userEvent.setup()
 
 // =====================================================================

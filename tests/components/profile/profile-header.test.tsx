@@ -1,7 +1,21 @@
-import { describe, it, expect } from "vitest"
+import { describe, it, expect, vi } from "vitest"
 import { render, screen } from "@testing-library/react"
 import { ProfileHeader } from "@/components/profile/profile-header"
 import type { Profile } from "@/types/database"
+
+vi.mock("@/lib/hooks/useFileUpload", () => ({
+  useFileUpload: vi.fn().mockReturnValue({
+    mutate: vi.fn(),
+    isPending: false,
+  }),
+}))
+
+vi.mock("@/lib/hooks/useUpdateProfile", () => ({
+  useUpdateProfile: vi.fn().mockReturnValue({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  }),
+}))
 
 // ─── Shared mock data ────────────────────────────────────────────────
 const BASE_PROFILE: Profile = {

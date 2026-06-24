@@ -1,7 +1,23 @@
-import { describe, it, expect } from "vitest"
+import { describe, it, expect, vi } from "vitest"
 import { render, screen } from "@testing-library/react"
 import { ProfileDetails } from "@/components/profile/profile-details"
 import type { Profile } from "@/types/database"
+
+vi.mock("@/lib/hooks/useChangePassword", () => ({
+  useChangePassword: vi.fn().mockReturnValue({
+    mutate: vi.fn(),
+    isPending: false,
+    error: null,
+  }),
+}))
+
+vi.mock("@/lib/hooks/useUpdateProfile", () => ({
+  useUpdateProfile: vi.fn().mockReturnValue({
+    mutateAsync: vi.fn(),
+    isPending: false,
+    error: null,
+  }),
+}))
 
 // ─── Shared mock data ────────────────────────────────────────────────
 const BASE_PROFILE: Profile = {
@@ -25,15 +41,16 @@ const BASE_PROFILE: Profile = {
   email_domain: null,
   created_at: "2025-01-15T10:00:00.000Z",
   updated_at: "2025-06-20T08:00:00.000Z",
+  last_login_at: "2025-06-20T08:00:00.000Z",
 }
 
 // =====================================================================
 //  PROFILE DETAILS – SECTION HEADINGS
 // =====================================================================
 describe("ProfileDetails – Section Headings", () => {
-  it("renders 'Professional Preferences' heading", () => {
+  it("renders 'Account Security' heading", () => {
     render(<ProfileDetails profile={BASE_PROFILE} />)
-    expect(screen.getByText("Professional Preferences")).toBeTruthy()
+    expect(screen.getByText("Account Security")).toBeTruthy()
   })
 
   it("renders 'Account Info' heading", () => {
@@ -43,39 +60,19 @@ describe("ProfileDetails – Section Headings", () => {
 })
 
 // =====================================================================
-//  PROFILE DETAILS – PROFESSIONAL PREFERENCES
+//  PROFILE DETAILS – ACCOUNT SECURITY
 // =====================================================================
-describe("ProfileDetails – Professional Preferences", () => {
-  it("shows 'No preferences set yet' when all preference fields are null", () => {
+describe("ProfileDetails – Account Security", () => {
+  it("renders password fields", () => {
     render(<ProfileDetails profile={BASE_PROFILE} />)
-    expect(screen.getByText(/No preferences set yet/i)).toBeTruthy()
+    expect(screen.getByLabelText(/Current Password/i)).toBeTruthy()
+    expect(screen.getByLabelText(/^New Password/i)).toBeTruthy()
+    expect(screen.getByLabelText(/Confirm New Password/i)).toBeTruthy()
   })
 
-  it("shows experience level when set", () => {
-    render(<ProfileDetails profile={{ ...BASE_PROFILE, experience_level: "mid" }} />)
-    expect(screen.getByText("Mid Level")).toBeTruthy()
-  })
-
-  it("shows 'Senior' label for senior experience level", () => {
-    render(<ProfileDetails profile={{ ...BASE_PROFILE, experience_level: "senior" }} />)
-    expect(screen.getByText("Senior")).toBeTruthy()
-  })
-
-  it("renders skill badges when skills are provided", () => {
-    render(<ProfileDetails profile={{ ...BASE_PROFILE, skills: ["React", "Node.js"] }} />)
-    expect(screen.getByText("React")).toBeTruthy()
-    expect(screen.getByText("Node.js")).toBeTruthy()
-  })
-
-  it("renders job type badges when preferred_job_types are provided", () => {
-    render(<ProfileDetails profile={{ ...BASE_PROFILE, preferred_job_types: ["full-time", "contract"] }} />)
-    expect(screen.getByText("Full Time")).toBeTruthy()
-    expect(screen.getByText("Contract")).toBeTruthy()
-  })
-
-  it("hides 'No preferences' message when at least one preference is set", () => {
-    render(<ProfileDetails profile={{ ...BASE_PROFILE, experience_level: "entry" }} />)
-    expect(screen.queryByText(/No preferences set yet/i)).toBeNull()
+  it("renders update button", () => {
+    render(<ProfileDetails profile={BASE_PROFILE} />)
+    expect(screen.getByRole("button", { name: /Update Password/i })).toBeTruthy()
   })
 })
 
@@ -93,14 +90,10 @@ describe("ProfileDetails – Account Info", () => {
     expect(screen.getByText("admin")).toBeTruthy()
   })
 
-  it("renders formatted 'Member Since' date", () => {
-    render(<ProfileDetails profile={BASE_PROFILE} />)
-    expect(screen.getByText("Jan 15, 2025")).toBeTruthy()
-  })
 
-  it("renders formatted 'Last Updated' date", () => {
+  it("renders formatted 'Last Logged In' date and time", () => {
     render(<ProfileDetails profile={BASE_PROFILE} />)
-    expect(screen.getByText("Jun 20, 2025")).toBeTruthy()
+    expect(screen.getByText(/Jun 20, 2025/)).toBeTruthy()
   })
 
   it("renders sign-in provider when provided", () => {
