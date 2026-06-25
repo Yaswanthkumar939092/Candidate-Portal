@@ -31,6 +31,7 @@ export interface Database {
           email_domain: string | null
           created_at: string
           updated_at: string
+          last_login_at?: string | null
         }
         Insert: {
           id: string
@@ -53,6 +54,7 @@ export interface Database {
           email_domain?: string | null
           created_at?: string
           updated_at?: string
+          last_login_at?: string | null
         }
         Update: {
           id?: string
@@ -75,6 +77,7 @@ export interface Database {
           email_domain?: string | null
           created_at?: string
           updated_at?: string
+          last_login_at?: string | null
         }
         Relationships: [
           {

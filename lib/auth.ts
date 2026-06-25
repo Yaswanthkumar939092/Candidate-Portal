@@ -62,7 +62,10 @@ export interface FrappeAuthUser {
   last_name?: string | null;
   full_name?: string | null;
   user_image?: string | null;
+  avatar_url?: string | null;
+  mobile_no?: string;
   enabled?: 0 | 1 | boolean;
+  status?: string;
   user_type?: string;
   roles?: string[];
   password_setup_required?: boolean;
@@ -71,10 +74,12 @@ export interface FrappeAuthUser {
     avatar_url?: string | null;
     email?: string;
   };
+  last_login_at?: string | null;
 }
 
 export interface FrappeSession {
   user: FrappeAuthUser;
+  session_id?: string;
 }
 
 export interface FrappeAuthSettings {
@@ -164,8 +169,8 @@ export function profileFromFrappeUser(user: FrappeAuthUser): Profile {
     id: user.id,
     email: user.email,
     full_name: user.full_name || user.user_metadata.full_name || null,
-    avatar_url: user.user_image || user.user_metadata.avatar_url || null,
-    phone: null,
+    avatar_url: user.user_metadata?.avatar_url || user.avatar_url || user.user_image || null,
+    phone: user.mobile_no || null,
     location: null,
     bio: null,
     skills: null,
@@ -181,26 +186,29 @@ export function profileFromFrappeUser(user: FrappeAuthUser): Profile {
     email_domain: user.email.split("@")[1] || null,
     created_at: now,
     updated_at: now,
+    last_login_at: user.last_login_at || null,
   };
 }
 
 export const auth = {
   signUp: async ({ email, password, fullName, mobileNo }: SignUpData) => {
-    const data = await frappeMethod<{ status: string; user: FrappeAuthUser; otp_log?: string; delivery_status?: string }>(
+    const data = await frappeMethod<{ status?: string; user: FrappeAuthUser; session_id?: string; otp_log?: string; delivery_status?: string }>(
       `${FRAPPE_AUTH_METHOD}.signup`,
       { email, password, full_name: fullName, mobile_no: mobileNo },
     );
     const user = mapUser(data.user);
-    return { ...data, user, session: data.status === "success" && user ? { user } : null };
+    const isSuccess = data.status === "success" || !!user;
+    return { ...data, user, session: isSuccess && user ? { user, session_id: data.session_id } : null };
   },
 
   signIn: async ({ email, password }: SignInData) => {
-    const data = await frappeMethod<{ status: string; user: FrappeAuthUser }>(
+    const data = await frappeMethod<{ status?: string; user: FrappeAuthUser; session_id?: string }>(
       `${FRAPPE_AUTH_METHOD}.login`,
       { email, password },
     );
     const user = mapUser(data.user);
-    return { ...data, user, session: data.status === "success" && user ? { user } : null };
+    const isSuccess = data.status === "success";
+    return { ...data, user, session: isSuccess && user ? { user, session_id: data.session_id } : null };
   },
 
   requestOtp: async ({ identifier, purpose = "Login", identifierType = "Email", mode }: RequestOtpData) => {
@@ -218,12 +226,12 @@ export const auth = {
   },
 
   verifyOtp: async ({ identifier, otp, purpose = "Login", identifierType = "Email", otp_log }: VerifyOtpData) => {
-    const data = await frappeMethod<{ status: string; user: FrappeAuthUser }>(
+    const data = await frappeMethod<{ status?: string; user: FrappeAuthUser; session_id?: string }>(
       `${FRAPPE_AUTH_METHOD}.verify_otp`,
       { identifier, otp, purpose, identifier_type: identifierType, otp_log },
     );
     const user = mapUser(data.user);
-    return { user, session: user ? { user } : null };
+    return { user, session: user ? { user, session_id: data.session_id } : null };
   },
 
   signOut: async () => {
@@ -238,8 +246,8 @@ export const auth = {
     throw new Error("Password updates are managed from Frappe for candidate accounts.");
   },
 
-  setPassword: async (password: string): Promise<{ status: string; user: FrappeAuthUser | null }> => {
-    const data = await frappeMethod<{ status: string; user: FrappeAuthUser }>(
+  setPassword: async (password: string): Promise<{ status?: string; user: FrappeAuthUser | null }> => {
+    const data = await frappeMethod<{ status?: string; user: FrappeAuthUser }>(
       `${FRAPPE_AUTH_METHOD}.set_password`,
       { password },
     );
@@ -248,9 +256,9 @@ export const auth = {
   },
 
   getSession: async (): Promise<FrappeSession | null> => {
-    const data = await frappeMethod<{ user: FrappeAuthUser | null }>(`${FRAPPE_AUTH_METHOD}.me`);
+    const data = await frappeMethod<{ user: FrappeAuthUser | null; session_id?: string }>(`${FRAPPE_AUTH_METHOD}.me`);
     const user = mapUser(data.user);
-    return user ? { user } : null;
+    return user ? { user, session_id: data.session_id } : null;
   },
 
   getCurrentUser: async () => {

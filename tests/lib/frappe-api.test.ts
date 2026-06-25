@@ -56,7 +56,7 @@ describe('FrappeAPI', () => {
       mockFetch({}, false)
 
       const file = new File(['content'], 'test.pdf')
-      await expect(FrappeAPI.uploadFile(file)).rejects.toThrow('Upload failed')
+      await expect(FrappeAPI.uploadFile(file)).rejects.toThrow('API request failed')
     })
   })
 
