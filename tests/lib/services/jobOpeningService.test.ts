@@ -33,6 +33,19 @@ describe("JobOpening Services", () => {
         limit: "10"
       });
     });
+
+    it("getJobOpening calls FrappeAPI.get with search_term parameter", async () => {
+      const mockRes = [{ name: "HR-OPN-2026-0006" }];
+      (FrappeAPI.get as any).mockResolvedValue(mockRes);
+
+      const result = await JobOpeningService.getJobOpening(1, 10, "engineering");
+      expect(result).toEqual(mockRes);
+      expect(FrappeAPI.get).toHaveBeenCalledWith("recruitment.api.channels.careers.list_openings", {
+        page: "1",
+        limit: "10",
+        search_term: "engineering"
+      });
+    });
   });
 
   describe("JobApplicantService", () => {

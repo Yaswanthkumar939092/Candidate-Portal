@@ -1,15 +1,8 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
-import { Search, Briefcase } from "lucide-react";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -26,12 +19,10 @@ import { JobMatchCard } from "@/components/jobs/job-match-card";
 import { JobDetailDialog } from "@/components/jobs/job-detail-dialog";
 import { cn } from "@/lib/utils";
 import { useJobOpening } from "@/lib/hooks/useJobOpening";
-import { CustomJobOpening, JobOpeningColumn } from "@/types/job";
+import { CustomJobOpening } from "@/types/job";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { useGetSavedJobs, useToggleSavedJob } from "@/lib/hooks/useSavedJobs";
 import { toast } from "sonner";
-
-type PageState = "upload" | "analyzing" | "results";
 
 const JOBS_PER_PAGE = 5;
 
@@ -98,15 +89,13 @@ export default function OpenJobsPage() {
     limit: JOBS_PER_PAGE,
     searchTerm: debouncedSearch || undefined,
   });
-  const jobOpenings = jobOpeningsResponse?.openings || [];
-  const jobColumns = jobOpeningsResponse?.columns || [];
+  const jobOpenings = useMemo(() => jobOpeningsResponse?.openings || [], [jobOpeningsResponse]);
+  const jobColumns = useMemo(() => jobOpeningsResponse?.columns || [], [jobOpeningsResponse]);
 
   const [activeTab, setActiveTab] = useState<"smart-match" | "view-all">(
     "smart-match",
   );
 
-  const [pageState, setPageState] = useState<PageState>("upload");
-  const [applyFormOpen, setApplyFormOpen] = useState(false);
   const [matchResults, setMatchResults] = useState<MatchedJob[]>([]);
   const { user } = useAuth();
   const userEmail = user?.email || user?.user_metadata?.email || "";
@@ -118,7 +107,6 @@ export default function OpenJobsPage() {
 
   // filters state
   const [searchText, setSearchText] = useState("");
-  const [jobType, setJobType] = useState("all");
 
   // Detail dialog
   const [selectedJob, setSelectedJob] = useState<MatchedJob | null>(null);
@@ -126,7 +114,6 @@ export default function OpenJobsPage() {
 
   const handleAnalysisComplete = useCallback((results: MatchedJob[]) => {
     setMatchResults(results);
-    setPageState("results");
   }, []);
 
   const handleBookmark = (jobId: string) => {
@@ -175,10 +162,7 @@ export default function OpenJobsPage() {
     };
   }, []);
 
-  const handleJobTypeChange = (val: string) => {
-    setJobType(val);
-    setCurrentPage(1);
-  };
+
 
   const mappedJobs: MatchedJob[] = useMemo(() => {
     const list = Array.isArray(jobOpenings) ? jobOpenings : [];
@@ -243,15 +227,10 @@ export default function OpenJobsPage() {
   const totalPages =
     mappedJobs.length < JOBS_PER_PAGE ? currentPage : currentPage + 1;
 
-  // 🔍 CLIENT-SIDE FILTER — search is now server-side, only status filter remains client-side
+  // 🔍 CLIENT-SIDE FILTER — search is now server-side, no local filtering needed
   const filteredJobs = useMemo(() => {
-    return mappedJobs.filter((job) => {
-      const matchesType =
-        jobType === "all" || job.type?.toLowerCase() === jobType;
-
-      return matchesType;
-    });
-  }, [mappedJobs, jobType]);
+    return mappedJobs;
+  }, [mappedJobs]);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 sm:px-6 py-8">
@@ -384,7 +363,6 @@ export default function OpenJobsPage() {
               }
             : null
         }
-        onApply={setApplyFormOpen}
       />
     </div>
   );
