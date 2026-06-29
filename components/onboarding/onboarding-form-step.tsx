@@ -180,7 +180,7 @@ export function OnboardingFormStep({
     defaultValues,
     resolver: validationResolver,
     mode: "onBlur",
-    reValidateMode: "onBlur",
+    reValidateMode: "onChange",
   });
 
   const {
