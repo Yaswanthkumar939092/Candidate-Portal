@@ -21,6 +21,7 @@ export interface CustomJobOpening {
 export interface ListOpeningsParams {
   page: string;
   limit: string;
+  search_term?: string;
 }
 
 export interface JobOpeningColumn {
@@ -32,6 +33,8 @@ export interface JobOpeningColumn {
 export interface ListOpeningsResponse {
   columns: JobOpeningColumn[];
   openings: CustomJobOpening[];
+  total_pages?: number;
+  total?: number;
 }
 
 export interface ApplicationField {

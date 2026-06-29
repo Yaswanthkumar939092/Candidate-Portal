@@ -8,10 +8,10 @@ import {
   jobApplicationService,
 } from "../services/jobOpeningService";
 
-export const useJobOpening = ({ page, limit }: { page: number; limit: number }) => {
+export const useJobOpening = ({ page, limit, searchTerm }: { page: number; limit: number; searchTerm?: string }) => {
   return useQuery<ListOpeningsResponse>({
-    queryKey: ["job-opening", page, limit],
-    queryFn: () => JobOpeningService.getJobOpening(page, limit),
+    queryKey: ["job-opening", page, limit, searchTerm],
+    queryFn: () => JobOpeningService.getJobOpening(page, limit, searchTerm),
   });
 };
 
