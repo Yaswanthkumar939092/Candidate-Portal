@@ -3,11 +3,15 @@ import { CustomJobOpening, ApplicationField, SubmitApplicationPayload, SubmitApp
 import { FrappeAPI } from "../frappe-api";
 
 export const JobOpeningService = {
-  getJobOpening: async (page: number, limit: number): Promise<ListOpeningsResponse> => {
-    const response = await FrappeAPI.get("recruitment.api.channels.careers.list_openings", {
+  getJobOpening: async (page: number, limit: number, searchTerm?: string): Promise<ListOpeningsResponse> => {
+    const params: Record<string, string> = {
       page: String(page),
       limit: String(limit),
-    });
+    };
+    if (searchTerm) {
+      params.search_term = searchTerm;
+    }
+    const response = await FrappeAPI.get("recruitment.api.channels.careers.list_openings", params);
     return response as ListOpeningsResponse;
   },
 };

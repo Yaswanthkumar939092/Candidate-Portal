@@ -59,7 +59,21 @@ describe("useJobOpening Hooks", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual(mockData);
-    expect(JobOpeningService.getJobOpening).toHaveBeenCalledWith(1, 10);
+    expect(JobOpeningService.getJobOpening).toHaveBeenCalledWith(1, 10, undefined);
+  });
+
+  it("useJobOpening fetches data with search term correctly", async () => {
+    const mockData = [] as any;
+    (JobOpeningService.getJobOpening as any).mockResolvedValue(mockData);
+
+    const { result } = renderHook(
+      () => useJobOpening({ page: 1, limit: 10, searchTerm: "developer" }),
+      { wrapper }
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toEqual(mockData);
+    expect(JobOpeningService.getJobOpening).toHaveBeenCalledWith(1, 10, "developer");
   });
 
   it("useCreateJobApplicant calls service on mutate", async () => {
