@@ -468,6 +468,32 @@ describe('OnboardingContext', () => {
         })
       })
     })
+
+    it("invalidates both onboarding-form and dashboard queries after success", async () => {
+      mockMutateAsync.mockResolvedValue(undefined)
+      mockInvalidateQueries.mockResolvedValue(undefined)
+
+      function SaveTest() {
+        const { submitAll } = useOnboarding()
+        return (
+          <button onClick={() => submitAll("save", "personal_info", { first_name: "Charlie" })}>
+            Save
+          </button>
+        )
+      }
+
+      render(<OnboardingProvider><SaveTest /></OnboardingProvider>)
+      await user.click(screen.getByText("Save"))
+
+      await waitFor(() => {
+        expect(mockInvalidateQueries).toHaveBeenCalledWith({
+          queryKey: ["onboarding-form", { userEmail: "test@example.com" }]
+        })
+        expect(mockInvalidateQueries).toHaveBeenCalledWith({
+          queryKey: ["dashboard", { email: "test@example.com" }]
+        })
+      })
+    })
   })
 
   describe('formConfig', () => {

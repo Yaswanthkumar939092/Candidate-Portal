@@ -343,6 +343,11 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
       void queryClient.invalidateQueries({
         queryKey: ["onboarding-form", { userEmail: email }]
       });
+
+      // Invalidate the onboarding dashboard query to update progress
+      void queryClient.invalidateQueries({
+        queryKey: ["dashboard", { email }]
+      });
     } catch (error) {
       console.error(`Error during onboarding ${action}:`, error);
       const errorMessage = error instanceof Error ? error.message : "";
