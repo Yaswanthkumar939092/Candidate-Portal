@@ -533,7 +533,7 @@ export function OnboardingRightRail({
             </h4>
             <p className="text-[11px] text-muted-foreground font-medium mb-4 leading-relaxed">
               {formConfig.onboarding_journey.subtitle ||
-                "Your first two weeks at Homefirst — at a glance."}
+                `Your first two weeks at ${companyName} — at a glance.`}
             </p>
             <div className="flex flex-col gap-4">
               {formConfig.onboarding_journey.steps?.map((step, idx) => (
