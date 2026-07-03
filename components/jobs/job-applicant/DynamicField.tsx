@@ -20,6 +20,10 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { JobApplicationTableField } from "./ChildTable";
 import { useAuth } from "@/lib/contexts/auth-context";
+import {
+  validateJobAppField,
+  validateJobAppFields,
+} from "@/lib/validation/job-application-validation";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -180,46 +184,78 @@ export function JobApplicationStep({
 
 
 
-  // ── Manual required-field validation ─────────────────────────────────────
+  // ── Manual required-field + pattern validation ───────────────────────────
   const validateRequiredFields = (): boolean => {
     const currentValues = watch();
     const newErrors: Record<string, string> = {};
 
     allTabFields.forEach((field) => {
       if (field.hidden) return;
-      if (!(field.reqd || field.is_mandatory)) return;
 
-      const val = currentValues[field.fieldname];
-      const isEmpty =
-        val === undefined ||
-        val === null ||
-        val === "" ||
-        (Array.isArray(val) && val.length === 0);
+      // Required check
+      if (field.reqd || field.is_mandatory) {
+        const val = currentValues[field.fieldname];
+        const isEmpty =
+          val === undefined ||
+          val === null ||
+          val === "" ||
+          (Array.isArray(val) && val.length === 0);
 
-      if (isEmpty) {
-        newErrors[field.fieldname] = `${field.label} is required`;
+        if (isEmpty) {
+          newErrors[field.fieldname] = `${field.label} is required`;
+          return; // skip pattern check for empty required fields
+        }
+      }
+
+      // Pattern validation (phone, etc.)
+      const patternError = validateJobAppField(field, currentValues[field.fieldname]);
+      if (patternError) {
+        newErrors[field.fieldname] = patternError.message;
       }
     });
 
     setFieldErrors(newErrors);
 
     if (Object.keys(newErrors).length > 0) {
-      toast.warning("Please fill all required fields before proceeding.");
+      const hasRequired = allTabFields.some(
+        (f) =>
+          !f.hidden &&
+          (f.reqd || f.is_mandatory) &&
+          (() => {
+            const v = currentValues[f.fieldname];
+            return v === undefined || v === null || v === "" || (Array.isArray(v) && v.length === 0);
+          })()
+      );
+      if (hasRequired) {
+        toast.warning("Please fill all required fields before proceeding.");
+      } else {
+        toast.warning("Please fix the validation errors before proceeding.");
+      }
       return false;
     }
 
     return true;
   };
 
-  // ── Clear a single field error on change ─────────────────────────────────
-  const clearFieldError = (fieldname: string) => {
-    if (fieldErrors[fieldname]) {
-      setFieldErrors((prev) => {
-        const next = { ...prev };
-        delete next[fieldname];
-        return next;
-      });
-    }
+  // ── Clear a single field error on change (and re-validate pattern) ───────
+  const clearFieldError = (fieldname: string, newValue?: unknown) => {
+    setFieldErrors((prev) => {
+      const next = { ...prev };
+      delete next[fieldname];
+
+      // Run pattern validation on the new value if provided
+      if (newValue !== undefined) {
+        const field = allTabFields.find((f) => f.fieldname === fieldname);
+        if (field) {
+          const patternError = validateJobAppField(field, newValue);
+          if (patternError) {
+            next[fieldname] = patternError.message;
+          }
+        }
+      }
+
+      return next;
+    });
   };
 
   const handleFileUpload =
@@ -383,7 +419,7 @@ export function JobApplicationStep({
 
     const handleChange = (val: unknown) => {
       setValue(field.fieldname, val, { shouldValidate: false });
-      clearFieldError(field.fieldname);
+      clearFieldError(field.fieldname, val);
     };
 
     const error =

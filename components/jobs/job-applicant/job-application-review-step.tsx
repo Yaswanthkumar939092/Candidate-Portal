@@ -174,7 +174,7 @@ export function JobApplicationReviewStep({
                 .filter((f: any) => !f.hidden && f.fieldtype !== "Table")
                 .map((f: any) => data[f.fieldname])
                 .filter((v: any) => v && typeof v === "string")
-                .slice(0, 2);
+                .slice(0, 3);
               if (values.length > 0) {
                 return (values as string[]).join(" ");
               }

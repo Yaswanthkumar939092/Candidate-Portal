@@ -16,8 +16,8 @@ export const useToggleSavedJob = () => {
     mutationFn: ({ email, jobId }: { email: string; jobId: string }) =>
       SavedJobsService.toggleSavedJob(email, jobId),
     onSuccess: (data, variables) => {
-      // Invalidate both saved-jobs list and job opening list to sync UI
       queryClient.invalidateQueries({ queryKey: ["saved-jobs", variables.email] });
+      queryClient.invalidateQueries({ queryKey: ["job-opening"] });
     },
   });
 };

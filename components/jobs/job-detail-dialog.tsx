@@ -1,6 +1,13 @@
 "use client";
 
-import { MapPin, Building2, Clock, IndianRupee, ChevronRight } from "lucide-react";
+import {
+  MapPin,
+  Building2,
+  Clock,
+  IndianRupee,
+  ChevronRight,
+  CheckCircle2,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +36,7 @@ interface JobDetailDialogProps {
     matchPercentage: number;
     description?: string;
     requirements?: string[];
+    applied?: boolean;
   } | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -82,7 +90,7 @@ export function JobDetailDialog({
             Job Description
           </h4>
           <>
-  <style>{`
+            <style>{`
     .ql-editor li[data-list="bullet"] {
       list-style-type: disc;
       margin-left: 1.25rem;
@@ -114,25 +122,32 @@ export function JobDetailDialog({
     }
   `}</style>
 
-  <div
-    className="ql-editor prose prose-sm max-w-none text-muted-foreground"
-    dangerouslySetInnerHTML={{ __html: job.description || "" }}
-  />
-</>
+            <div
+              className="ql-editor prose prose-sm max-w-none text-muted-foreground"
+              dangerouslySetInnerHTML={{ __html: job.description || "" }}
+            />
+          </>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button size="sm" asChild className="hover:cursor-pointer gap-1 ">
-            <Link
-              href={`/open-jobs/${job.id}/apply-job`}
-            >
-              Apply
-              <ChevronRight className="h-4 w-4" />
-            </Link>
-          </Button>
+          {job.applied ? (
+            <Button size="sm" asChild className="gap-1">
+              <Link href="/my-jobs">
+                Applied
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          ) : (
+            <Button size="sm" asChild className="hover:cursor-pointer gap-1 ">
+              <Link href={`/open-jobs/${job.id}/apply-job`}>
+                Apply
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

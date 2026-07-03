@@ -78,27 +78,21 @@ export function JobApplicationStepNav({
           {steps.map((step, index) => {
             const isCompleted = completedSteps.has(step.key);
             const isCurrent = index === currentStep;
-            const isPast = index < currentStep;
-            const isClickable = isCompleted || isCurrent || isPast;
 
             return (
               <button
                 key={step.key}
-                onClick={() => isClickable && onStepChange(index)}
-                disabled={!isClickable}
+                onClick={() => onStepChange(index)}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors",
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors hover:bg-muted",
                   isCurrent &&
                     "bg-primary/10 text-primary font-medium",
                   isCompleted &&
                     !isCurrent &&
-                    "text-green-700 dark:text-green-400 hover:bg-muted",
-                  isPast &&
-                    !isCompleted &&
+                    "text-green-700 dark:text-green-400",
+                  !isCompleted &&
                     !isCurrent &&
-                    "text-muted-foreground hover:bg-muted",
-                  !isClickable &&
-                    "cursor-not-allowed text-muted-foreground/60"
+                    "text-muted-foreground"
                 )}
                 aria-current={isCurrent ? "step" : undefined}
               >

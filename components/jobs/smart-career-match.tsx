@@ -5,8 +5,6 @@ import { Upload, Rocket } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { CircularProgress } from "@/components/shared/circular-progress"
 import { cn } from "@/lib/utils"
-import { useJobOpening } from "@/lib/hooks/useJobOpening"
-import { CustomJobOpening } from "@/types/job"
 
 // ---------------- TYPES ----------------
 export interface MatchedJob {
@@ -24,6 +22,8 @@ export interface MatchedJob {
   matchPercentage: number
   description: string
   status: string
+  applied?: boolean
+  saved?: boolean
 }
 
 interface Props {
@@ -47,8 +47,6 @@ export function SmartCareerMatch({ onAnalysisComplete, className }: Props) {
   const [error, setError] = useState<string | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const { data: jobOpenings } = useJobOpening({ page: 1, limit: 50 })
 
   // ---------------- API ----------------
   const extractTextFromAPI = async (file: File) => {
@@ -80,27 +78,6 @@ export function SmartCareerMatch({ onAnalysisComplete, className }: Props) {
     return SKILLS.filter(skill => cleaned.includes(skill))
   }
 
-  const extractSkillsFromJob = (job: CustomJobOpening) => {
-    const text = cleanText(`
-      ${job.job_title}
-      ${job.description}
-      ${job.skills_required || ""}
-    `)
-
-    return SKILLS.filter(skill => text.includes(skill))
-  }
-
-  // ---------------- MATCH ----------------
-  const getMatchScore = (candidateSkills: string[], jobSkills: string[]) => {
-    if (!jobSkills.length) return 0
-
-    const matched = jobSkills.filter(skill =>
-      candidateSkills.includes(skill)
-    )
-
-    return Math.round((matched.length / jobSkills.length) * 100)
-  }
-
   // ---------------- MAIN ----------------
   const runAnalysis = useCallback(async () => {
     if (!selectedFile) return
@@ -113,59 +90,16 @@ export function SmartCareerMatch({ onAnalysisComplete, className }: Props) {
 
     setProgress(50)
 
-    const jobs = Array.isArray(jobOpenings)
-      ? jobOpenings
-      : []
-
-    if (!jobs.length) {
-      setError("No jobs available")
-      return
-    }
-
     // 🔥 Candidate Skills
     const candidateSkills = extractSkills(text)
 
     console.log("✅ Clean Resume Text:", text)
     console.log("✅ Candidate Skills:", candidateSkills)
 
-    setProgress(75)
-
-    const results: MatchedJob[] = jobs.map((job: CustomJobOpening) => {
-      const jobSkills = extractSkillsFromJob(job)
-      const match = getMatchScore(candidateSkills, jobSkills)
-
-      console.log("JOB:", job.job_title, {
-        jobSkills,
-        match
-      })
-
-      return {
-        id: job.name,
-        title: job.job_title || job.designation,
-        company: job.company,
-        location: job.location || "Not specified",
-        experience: job.custom_work_experience || "",
-        salary: job.custom_salary || "Not disclosed",
-        type: job.employment_type || "Full-time",
-        skills: jobSkills,
-        matchPercentage: match,
-        description: job.description,
-        status: job.status,
-        lower_range: job.lower_range ?? null,
-        upper_range: job.upper_range ?? null,
-        custom_qualifications: [],
-      }
-    })
-
-    // ✅ KEEP ALL (no aggressive filter)
-    const sorted = results.sort(
-      (a, b) => b.matchPercentage - a.matchPercentage
-    )
-
     setProgress(100)
 
-    onAnalysisComplete?.(sorted)
-  }, [selectedFile, jobOpenings, onAnalysisComplete])
+    onAnalysisComplete?.([])
+  }, [selectedFile, onAnalysisComplete])
 
   // ---------------- FILE ----------------
   const handleFileUpload = (file: File) => {

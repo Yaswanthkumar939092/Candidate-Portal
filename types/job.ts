@@ -16,6 +16,8 @@ export interface CustomJobOpening {
   upper_range?: number | null;
   skills_required?: string;
   custom_salary?: string;
+  applied?: boolean;
+  saved?: boolean;
 }
 
 export interface ListOpeningsParams {

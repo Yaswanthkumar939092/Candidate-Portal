@@ -62,6 +62,20 @@ export default function JobApplicationPage({
     }
   }, [defaultValues, initializeAllStepsFromDraft]);
 
+  // ── Pre-fill user fields from auth on mount ──────────────────────────────
+  useEffect(() => {
+    if (!user) return;
+    const firstName = user.first_name || "";
+    const lastName = user.last_name || "";
+    const email = user.email || user.user_metadata?.email || "";
+    const fullName = user.full_name || [firstName, lastName].filter(Boolean).join(" ") || email;
+
+    if (firstName) methods.setValue("applicant_name", firstName, { shouldValidate: false });
+    if (lastName) methods.setValue("custom_applicant_last_name", lastName, { shouldValidate: false });
+    if (email) methods.setValue("email_id", email, { shouldValidate: false });
+    if (fullName) methods.setValue("reference_name", fullName, { shouldValidate: false });
+  }, [user, methods]);
+
 
   // ── Loading / empty states ──────────────────────────────────────────────
 
@@ -122,14 +136,7 @@ export default function JobApplicationPage({
   };
 
   const handleStepChange = (nextIndex: number) => {
-    if (!isReviewStep && nextIndex > currentStep) {
-      const errors = validateCurrentStep();
-      if (Object.keys(errors).length > 0) {
-        toast.warning("Please fill all required fields before proceeding.");
-        return;
-      }
-      markStepComplete(stepKey);
-    }
+    // Allow free navigation to any step without validation
     setCurrentStep(nextIndex);
   };
 
