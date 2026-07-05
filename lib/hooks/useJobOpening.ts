@@ -1,10 +1,9 @@
  
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CustomJobOpening, SubmitApplicationPayload, SubmitApplicationResponse, ListOpeningsResponse } from "../../types/job";
 import {
-  draftJobApplicantService,
-  JobApplicantService,
   JobOpeningService,
+  draftJobApplicantService,
   jobApplicationService,
 } from "../services/jobOpeningService";
 
@@ -17,20 +16,13 @@ export const useJobOpening = ({ page, limit, searchTerm, email, enabled }: { pag
 };
 
 export const useCreateJobApplicant = () => {
+  const queryClient = useQueryClient();
   return useMutation<SubmitApplicationResponse, Error, SubmitApplicationPayload>({
-    mutationFn: JobApplicantService.createJobApplicant,
-    onSuccess: (data) => console.log("✅ Job Applicant Created:", data),
+    mutationFn: jobApplicationService.submitApplication,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["job-opening"] });
+    },
     onError: (error: Error) => console.error("❌ Error creating applicant:", error),
-  });
-};
-
-// ✅ FIX: enabled must require BOTH email AND jobId (use && not ||)
-export const useGetDraftJobApplicant = (email: string, jobId: string) => {
-  return useQuery<any>({
-    queryKey: ["draft-job-applicant", email, jobId],
-    queryFn: () => draftJobApplicantService.getDraftJobApplicant(email, jobId),
-    enabled: !!email && !!jobId, // ← was || which caused fetch with empty email
-    retry: false,
   });
 };
 
@@ -40,22 +32,6 @@ export const useGetAllDrafts = (email: string) => {
     queryFn: () => draftJobApplicantService.getAllDrafts(email),
     enabled: !!email,
     retry: false,
-  });
-};
-
-export const useSaveApplication = () => {
-  return useMutation({
-    mutationFn: draftJobApplicantService.saveApplication,
-    onSuccess: (data) => console.log("✅ Application Saved:", data),
-    onError: (error: any) => console.error("❌ Error saving application:", error),
-  });
-};
-
-export const useUpdateDraftJobApplicant = () => {
-  return useMutation({
-    mutationFn: draftJobApplicantService.updateDraftJobApplicant,
-    onSuccess: (data) => console.log("✅ Draft Updated:", data),
-    onError: (error: any) => console.error("❌ Error updating draft:", error),
   });
 };
 

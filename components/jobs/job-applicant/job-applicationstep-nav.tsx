@@ -9,6 +9,7 @@ interface JobApplicationStepNavProps {
   currentStep: number;
   completedSteps: Set<string>;
   onStepChange: (index: number) => void;
+  fieldProgress?: number;
   className?: string;
 }
 
@@ -23,6 +24,7 @@ export function JobApplicationStepNav({
   currentStep,
   completedSteps,
   onStepChange,
+  fieldProgress,
   className,
 }: JobApplicationStepNavProps) {
   const { tabs } = useJobApp();
@@ -36,10 +38,13 @@ export function JobApplicationStepNav({
   ];
 
   const totalSteps = steps.length;
+  // Use field-level progress if provided, otherwise fall back to step-level
   const progressPercentage =
-    totalSteps > 0
-      ? Math.round((completedSteps.size / totalSteps) * 100)
-      : 0;
+    fieldProgress !== undefined
+      ? fieldProgress
+      : totalSteps > 0
+        ? Math.round((completedSteps.size / totalSteps) * 100)
+        : 0;
 
   return (
     <nav
@@ -78,13 +83,17 @@ export function JobApplicationStepNav({
           {steps.map((step, index) => {
             const isCompleted = completedSteps.has(step.key);
             const isCurrent = index === currentStep;
+            const isPast = index < currentStep;
+            const isClickable = isCompleted || isCurrent || isPast;
 
             return (
               <button
                 key={step.key}
-                onClick={() => onStepChange(index)}
+                onClick={() => isClickable && onStepChange(index)}
+                disabled={!isClickable}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors hover:bg-muted",
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors",
+                  isClickable && "hover:bg-muted",
                   isCurrent &&
                     "bg-primary/10 text-primary font-medium",
                   isCompleted &&
@@ -92,7 +101,9 @@ export function JobApplicationStepNav({
                     "text-green-700 dark:text-green-400",
                   !isCompleted &&
                     !isCurrent &&
-                    "text-muted-foreground"
+                    "text-muted-foreground",
+                  !isClickable &&
+                    "cursor-not-allowed text-muted-foreground/60"
                 )}
                 aria-current={isCurrent ? "step" : undefined}
               >

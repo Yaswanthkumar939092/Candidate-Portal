@@ -1,7 +1,8 @@
 "use client";
 
-import { CalendarDays, MapPin, Building2, AlertCircle, Inbox } from "lucide-react";
+import { CalendarDays, MapPin, Building2, AlertCircle } from "lucide-react";
 import { useAuth } from "@/lib/contexts/auth-context";
+import { EmptyState } from "@/components/shared/empty-state";
 import { WelcomeHeader } from "@/components/dashboard/welcome-header";
 import { OnboardingSnapshot } from "@/components/dashboard/onboarding-snapshot";
 import { InfoCard } from "@/components/dashboard/info-card";
@@ -138,22 +139,6 @@ function DashboardErrorState({
   );
 }
 
-function DashboardEmptyState() {
-  return (
-    <div className="w-full rounded-3xl border bg-card p-12 text-center shadow-sm">
-      <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-600">
-        <Inbox className="h-6 w-6" />
-      </div>
-      <h2 className="text-xl font-semibold text-foreground">
-        No Data Available
-      </h2>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Currently there is no data to display.
-      </p>
-    </div>
-  );
-}
-
 export default function DashboardPage() {
   const { user, profile } = useAuth();
   const {
@@ -206,7 +191,7 @@ export default function DashboardPage() {
       />
 
       {dashboardData?.onboarding_status === false ? (
-        <DashboardEmptyState />
+        <EmptyState />
       ) : (
         <>
           <OnboardingSnapshot

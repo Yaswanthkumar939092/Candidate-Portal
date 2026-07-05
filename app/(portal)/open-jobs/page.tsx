@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { EmptyState } from "@/components/shared/empty-state";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   SmartCareerMatch,
@@ -315,11 +316,10 @@ export default function OpenJobsPage() {
               ))}
             </div>
           ) : filteredJobs.length === 0 ? (
-            <div className="rounded-lg border border-dashed p-12 text-center">
-              <p className="text-sm text-muted-foreground">
-                No open jobs found. Try adjusting your filters.
-              </p>
-            </div>
+            <EmptyState
+              title="No Open Jobs Found"
+              description="No open jobs found. Try adjusting your filters."
+            />
           ) : (
             <>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

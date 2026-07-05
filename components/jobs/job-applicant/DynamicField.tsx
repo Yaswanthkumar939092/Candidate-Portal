@@ -12,9 +12,7 @@ import { DynamicFieldRenderer } from "@/components/ui/field-renderer";
 import { cn } from "@/lib/utils";
 import { useJobApp } from "@/lib/contexts/job-application-context";
 import {
-  useSaveApplication,
-  useUpdateDraftJobApplicant,
-  useDeleteDraftJobApplicant,
+  useCreateJobApplicant,
 } from "@/lib/hooks/useJobOpening";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -59,8 +57,6 @@ interface JobApplicationStepProps {
   onNext: () => void;
   onPrev: () => void;
   methods: any;
-  draftName: string | null;
-  setDraftName: (name: string | null) => void;
   className?: string;
 }
 
@@ -137,16 +133,10 @@ export function JobApplicationStep({
   onNext,
   onPrev,
   methods,
-  draftName,
-  setDraftName,
   className,
 }: JobApplicationStepProps) {
   const { stepData, setStepData, initializeAllStepsFromDraft } = useJobApp();
-  const { mutate: saveApplicationMutate, isPending } = useSaveApplication();
-  const isDraftPending = isPending;
-  const { mutate: draftUpdateMutate, isPending: isDraftUpdatePending } =
-    useUpdateDraftJobApplicant();
-  const { mutate: deleteDraftMutate } = useDeleteDraftJobApplicant();
+  const { mutate: createApplicant, isPending } = useCreateJobApplicant();
   const router = useRouter();
   const { user } = useAuth();
   const userEmail = user?.email || user?.user_metadata?.email || "";
@@ -279,7 +269,7 @@ export function JobApplicationStep({
     };
   };
 
-  const buildDraftPayload = (data: Record<string, unknown>) => {
+  const buildSubmitPayload = (data: Record<string, unknown>, status: string) => {
     const formData: Record<string, unknown> = {};
 
     Object.entries(data).forEach(([key, value]) => {
@@ -287,11 +277,13 @@ export function JobApplicationStep({
     });
 
     return {
-      job_applicant_email: userEmail,
-      status: "Draft",
-      form_data: JSON.stringify(formData),
+      job_applicant_email: userEmail || null,
       job_opening: jobID,
-      job_title: jobID,
+      form_data: {
+        ...formData,
+        email_id: userEmail || null,
+      },
+      status,
     };
   };
 
@@ -304,16 +296,10 @@ export function JobApplicationStep({
     if (!validateRequiredFields()) return;
 
     if (isLastStep) {
-      const draftPayload = buildDraftPayload(data);
-      const submitPayload = {
-        ...draftPayload,
-        status: "Open",
-      };
-      saveApplicationMutate(submitPayload as any, {
+      const submitPayload = buildSubmitPayload(data, "Open");
+      createApplicant(submitPayload as any, {
         onSuccess: () => {
           toast.success("Application submitted successfully!");
-          // ✅ Delete draft after successful submission
-          deleteDraftMutate({ email: userEmail, jobId: jobID });
           reset({});
           router.push(`/open-jobs/${jobID}/apply-job/thank-you`);
         },
@@ -332,31 +318,14 @@ export function JobApplicationStep({
   const onDraftSave = () => {
     const data = watch();
     setStepData(stepKey, data);
-    const draftPayload = buildDraftPayload(data);
+    const payload = buildSubmitPayload(data, "Draft");
 
-    // Use prop value directly
-    const currentDraftName = draftName;
-
-    if (currentDraftName) {
-      // UPDATE existing draft
-      draftUpdateMutate(
-        { name: currentDraftName, payload: draftPayload },
-        {
-          onSuccess: () => toast.success("Draft updated successfully!"),
-          onError: () => toast.error("Draft update failed."),
-        }
-      );
-    } else {
-      // CREATE new draft
-      saveApplicationMutate(draftPayload as any, {
-        onSuccess: (responseData) => {
-          const newName = responseData?.name ?? responseData?.data?.name ?? null;
-          setDraftName(newName);
-          toast.success("Draft saved successfully!");
-        },
-        onError: () => toast.error("Draft save failed."),
-      });
-    }
+    createApplicant(payload as any, {
+      onSuccess: () => {
+        toast.success("Draft saved successfully!");
+      },
+      onError: () => toast.error("Draft save failed."),
+    });
   };
 
   // ── Field overrides ───────────────────────────────────────────────────────
@@ -483,9 +452,7 @@ export function JobApplicationStep({
           onClick={onPrev}
           disabled={
             currentStep === 0 ||
-            isPending ||
-            isDraftPending ||
-            isDraftUpdatePending
+            isPending
           }
         >
           <ChevronLeft className="mr-1 h-4 w-4" />
@@ -497,7 +464,7 @@ export function JobApplicationStep({
             type="button"
             variant="outline"
             onClick={onDraftSave}
-            disabled={isDraftPending || isDraftUpdatePending}
+            disabled={isPending}
           >
             Save Draft
           </Button>

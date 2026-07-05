@@ -22,11 +22,4 @@ export const useToggleSavedJob = () => {
   });
 };
 
-export const useGetSavedJobDetails = (names: string[]) => {
-  return useQuery<any>({
-    queryKey: ["saved-job-details", names],
-    queryFn: () => SavedJobsService.getJobOpeningsByNames(names),
-    enabled: Array.isArray(names) && names.length > 0,
-    retry: false,
-  });
-};
+

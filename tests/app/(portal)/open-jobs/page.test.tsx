@@ -68,6 +68,7 @@ describe("OpenJobsPage - Saved Jobs", () => {
             upper_range: 15,
             description: "<p>Job Description HTML</p>",
             status: "Open",
+            saved: true,
           },
         ],
       },

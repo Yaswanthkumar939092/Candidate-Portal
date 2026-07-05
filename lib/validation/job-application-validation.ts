@@ -90,7 +90,19 @@ export function validateJobAppField(
     };
   }
 
-  // 🔜 Add more field validations below as needed …
+  // ── Expected DOJ — no past dates allowed ────────────────────────────────
+  if (field.fieldname === "custom_expected_doj") {
+    const selected = new Date(normalizedValue);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (selected < today) {
+      return {
+        type: "date",
+        message: "Expected date of joining cannot be before today",
+      };
+    }
+  }
 
   return null;
 }

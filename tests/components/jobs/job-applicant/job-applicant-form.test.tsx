@@ -47,14 +47,14 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-const mockUseGetDraftJobApplicant = vi.fn()
 const mockUseCreateJobApplicant = vi.fn(() => ({ mutate: vi.fn(), isPending: false }))
 const mockUseDeleteDraftJobApplicant = vi.fn(() => ({ mutate: vi.fn() }))
+const mockUseGetDraftJobApplicant = vi.fn(() => ({ data: null, isLoading: false }))
 
 vi.mock("@/lib/hooks/useJobOpening", () => ({
-  useGetDraftJobApplicant: (...args: any[]) => mockUseGetDraftJobApplicant(...args),
   useCreateJobApplicant: () => mockUseCreateJobApplicant(),
   useDeleteDraftJobApplicant: () => mockUseDeleteDraftJobApplicant(),
+  useGetDraftJobApplicant: () => mockUseGetDraftJobApplicant(),
 }))
 
 vi.mock("@/components/jobs/job-applicant/job-applicationstep-nav", () => ({
@@ -349,6 +349,18 @@ describe("JobApplicantForm", () => {
     })
 
     it("marks step as complete when navigating away", async () => {
+      mockUseJobApp.mockReturnValue({
+        initializeAllStepsFromDraft: vi.fn(),
+        tabs: [
+          mockTabs[0],
+          { ...mockTabs[1], skipAutoFill: true }
+        ],
+        isLoading: false,
+        stepData: {
+          personal_info: { name: "John Doe", email: "john@example.com" },
+          experience: { experience: "5 years" },
+        },
+      })
       render(<JobApplicationPage jobID="job-123" />)
 
       await waitFor(() => {
@@ -366,6 +378,15 @@ describe("JobApplicantForm", () => {
     })
 
     it("accumulates completed steps", async () => {
+      mockUseJobApp.mockReturnValue({
+        initializeAllStepsFromDraft: vi.fn(),
+        tabs: mockTabs.map(t => ({ ...t, skipAutoFill: true })),
+        isLoading: false,
+        stepData: {
+          personal_info: { name: "John Doe", email: "john@example.com" },
+          experience: { experience: "5 years" },
+        },
+      })
       render(<JobApplicationPage jobID="job-123" />)
 
       expect(screen.getByTestId("completed-steps").textContent).toBe("0")

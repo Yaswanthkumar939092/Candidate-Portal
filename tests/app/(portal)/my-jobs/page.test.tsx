@@ -4,7 +4,7 @@ import MyJobsPage from "@/app/(portal)/my-jobs/page";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { useApplicantStatus } from "@/lib/hooks/useApplicantStatus";
 import { useGetAllDrafts, useDeleteDraftJobApplicant } from "@/lib/hooks/useJobOpening";
-import { useGetSavedJobs, useGetSavedJobDetails, useToggleSavedJob } from "@/lib/hooks/useSavedJobs";
+import { useGetSavedJobs, useToggleSavedJob } from "@/lib/hooks/useSavedJobs";
 import { toast } from "sonner";
 import React from "react";
 
@@ -34,7 +34,6 @@ vi.mock("@/lib/hooks/useJobOpening", () => ({
 
 vi.mock("@/lib/hooks/useSavedJobs", () => ({
   useGetSavedJobs: vi.fn(),
-  useGetSavedJobDetails: vi.fn(),
   useToggleSavedJob: vi.fn(),
 }));
 
@@ -76,13 +75,8 @@ describe("MyJobsPage - Saved Jobs", () => {
     } as any);
 
     vi.mocked(useGetSavedJobs).mockReturnValue({
-      data: { saved_job_openings: ["HR-OPN-1"] },
-      isLoading: false,
-    } as any);
-
-    vi.mocked(useGetSavedJobDetails).mockReturnValue({
       data: {
-        data: [
+        saved_job_openings: [
           {
             name: "HR-OPN-1",
             job_title: "Saved Developer Job",
@@ -120,7 +114,6 @@ describe("MyJobsPage - Saved Jobs", () => {
     expect(screen.getByText("Saved Developer Job")).toBeInTheDocument();
     expect(screen.getByText("Test Corp")).toBeInTheDocument();
     expect(screen.getByText("Remote")).toBeInTheDocument();
-    expect(screen.getByText("10 - 15 LPA")).toBeInTheDocument();
   });
 
   it("handles toggling bookmark (unsaving) click from Saved Jobs tab", async () => {

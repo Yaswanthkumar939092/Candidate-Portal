@@ -22,7 +22,7 @@ describe("ApplicantStatusResponse Service", () => {
 
     expect(result).toEqual(mockResponse);
     expect(FrappeAPI.get).toHaveBeenCalledWith(
-      "recruitment.api.employee_onboarding.get_applicant_status",
+      "recruitment.api.channels.careers.get_applied_jobs",
       { email: "test@example.com" }
     );
   });

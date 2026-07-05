@@ -4,16 +4,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { 
   useJobOpening, 
   useCreateJobApplicant, 
-  useGetDraftJobApplicant,
   useGetAllDrafts,
-  useSaveApplication,
-  useUpdateDraftJobApplicant,
   useDeleteDraftJobApplicant,
   useJobApplicationForm
 } from "@/lib/hooks/useJobOpening";
 import { 
   JobOpeningService, 
-  JobApplicantService, 
   draftJobApplicantService, 
   jobApplicationService 
 } from "@/lib/services/jobOpeningService";
@@ -22,15 +18,11 @@ import React from "react";
 // Mock services
 vi.mock("@/lib/services/jobOpeningService", () => ({
   JobOpeningService: { getJobOpening: vi.fn() },
-  JobApplicantService: { createJobApplicant: vi.fn() },
+  jobApplicationService: { submitApplication: vi.fn(), getJobApplicationForm: vi.fn() },
   draftJobApplicantService: { 
-    getDraftJobApplicant: vi.fn(),
     getAllDrafts: vi.fn(),
-    saveApplication: vi.fn(),
-    updateDraftJobApplicant: vi.fn(),
     deleteDraftJobApplicant: vi.fn(),
   },
-  jobApplicationService: { getJobApplicationForm: vi.fn() },
 }));
 
 const queryClient = new QueryClient({
@@ -59,7 +51,7 @@ describe("useJobOpening Hooks", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual(mockData);
-    expect(JobOpeningService.getJobOpening).toHaveBeenCalledWith(1, 10, undefined);
+    expect(JobOpeningService.getJobOpening).toHaveBeenCalledWith(1, 10, undefined, undefined);
   });
 
   it("useJobOpening fetches data with search term correctly", async () => {
@@ -73,7 +65,7 @@ describe("useJobOpening Hooks", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual(mockData);
-    expect(JobOpeningService.getJobOpening).toHaveBeenCalledWith(1, 10, "developer");
+    expect(JobOpeningService.getJobOpening).toHaveBeenCalledWith(1, 10, "developer", undefined);
   });
 
   it("useCreateJobApplicant calls service on mutate", async () => {
@@ -82,25 +74,15 @@ describe("useJobOpening Hooks", () => {
       name: "HR-APP-2026-00123",
       source: "Careers Page"
     };
-    (JobApplicantService.createJobApplicant as any).mockResolvedValue(mockResponse);
+    (jobApplicationService.submitApplication as any).mockResolvedValue(mockResponse);
     const { result } = renderHook(() => useCreateJobApplicant(), { wrapper });
 
     result.current.mutate({ opening: "job1", data: { name: "John" } });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(vi.mocked(JobApplicantService.createJobApplicant).mock.calls[0][0]).toEqual({
+    expect(vi.mocked(jobApplicationService.submitApplication).mock.calls[0][0]).toEqual({
       opening: "job1",
       data: { name: "John" }
     });
-  });
-
-  it("useGetDraftJobApplicant fetches draft when enabled", async () => {
-    const mockDraft = { id: "draft1" };
-    (draftJobApplicantService.getDraftJobApplicant as any).mockResolvedValue(mockDraft);
-
-    const { result } = renderHook(() => useGetDraftJobApplicant("test@example.com", "job1"), { wrapper });
-
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data).toEqual(mockDraft);
   });
 
   it("useGetAllDrafts fetches all drafts", async () => {
@@ -139,34 +121,8 @@ describe("useJobOpening Hooks", () => {
     });
 
     it("useCreateJobApplicant onError is called on failure", async () => {
-      (JobApplicantService.createJobApplicant as any).mockRejectedValue(new Error("err"));
+      (jobApplicationService.submitApplication as any).mockRejectedValue(new Error("err"));
       const { result } = renderHook(() => useCreateJobApplicant(), { wrapper });
-      result.current.mutate({} as any);
-      await waitFor(() => expect(result.current.isError).toBe(true));
-      expect(consoleErrorSpy).toHaveBeenCalled();
-    });
-
-    it("useSaveApplication callbacks work", async () => {
-      (draftJobApplicantService.saveApplication as any).mockResolvedValue({ id: "1" });
-      const { result } = renderHook(() => useSaveApplication(), { wrapper });
-      result.current.mutate({} as any);
-      await waitFor(() => expect(result.current.isSuccess).toBe(true));
-      expect(consoleLogSpy).toHaveBeenCalled();
-
-      (draftJobApplicantService.saveApplication as any).mockRejectedValue(new Error("err"));
-      result.current.mutate({} as any);
-      await waitFor(() => expect(result.current.isError).toBe(true));
-      expect(consoleErrorSpy).toHaveBeenCalled();
-    });
-
-    it("useUpdateDraftJobApplicant callbacks work", async () => {
-      (draftJobApplicantService.updateDraftJobApplicant as any).mockResolvedValue({ id: "1" });
-      const { result } = renderHook(() => useUpdateDraftJobApplicant(), { wrapper });
-      result.current.mutate({} as any);
-      await waitFor(() => expect(result.current.isSuccess).toBe(true));
-      expect(consoleLogSpy).toHaveBeenCalled();
-
-      (draftJobApplicantService.updateDraftJobApplicant as any).mockRejectedValue(new Error("err"));
       result.current.mutate({} as any);
       await waitFor(() => expect(result.current.isError).toBe(true));
       expect(consoleErrorSpy).toHaveBeenCalled();
