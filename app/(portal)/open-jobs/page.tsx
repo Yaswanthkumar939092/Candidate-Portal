@@ -3,14 +3,8 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/shared/empty-state";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import {
   SmartCareerMatch,
   type MatchedJob,
@@ -18,13 +12,15 @@ import {
 import { JobMatchCard } from "@/components/jobs/job-match-card";
 import { JobDetailDialog } from "@/components/jobs/job-detail-dialog";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useJobOpening } from "@/lib/hooks/useJobOpening";
-import { CustomJobOpening } from "@/types/job";
+import { useToggleSavedJob } from "@/lib/hooks/useSavedJobs";
 import { useAuth } from "@/lib/contexts/auth-context";
-import { useGetSavedJobs, useToggleSavedJob } from "@/lib/hooks/useSavedJobs";
+import { CustomJobOpening } from "@/types/job";
 import { toast } from "sonner";
 
-const JOBS_PER_PAGE = 5;
+
+const JOBS_PER_PAGE = 6;
 
 // ---------------------------------------------------------------------------
 // Pagination Component
@@ -84,26 +80,27 @@ export default function OpenJobsPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { data: jobOpeningsResponse } = useJobOpening({
+  const [activeTab, setActiveTab] = useState<"smart-match" | "view-all">(
+    "view-all",
+  );
+
+  const { user } = useAuth();
+  const userEmail = user?.email || user?.user_metadata?.email || "";
+
+  const { data: jobOpeningsResponse, isLoading } = useJobOpening({
     page: currentPage,
     limit: JOBS_PER_PAGE,
     searchTerm: debouncedSearch || undefined,
+    email: userEmail || undefined,
+    enabled: activeTab === "view-all",
   });
   const jobOpenings = useMemo(() => jobOpeningsResponse?.openings || [], [jobOpeningsResponse]);
   const jobColumns = useMemo(() => jobOpeningsResponse?.columns || [], [jobOpeningsResponse]);
 
-  const [activeTab, setActiveTab] = useState<"smart-match" | "view-all">(
-    "smart-match",
-  );
-
   const [matchResults, setMatchResults] = useState<MatchedJob[]>([]);
-  const { user } = useAuth();
-  const userEmail = user?.email || user?.user_metadata?.email || "";
-  const { data: savedJobsResponse } = useGetSavedJobs(userEmail);
-  const savedJobIdsList = savedJobsResponse?.saved_job_openings || [];
   const toggleSavedJobMutation = useToggleSavedJob();
+  const [pendingBookmarkId, setPendingBookmarkId] = useState<string | null>(null);
 
-  const [savedDrawerOpen, setSavedDrawerOpen] = useState(false);
 
   // filters state
   const [searchText, setSearchText] = useState("");
@@ -116,14 +113,21 @@ export default function OpenJobsPage() {
     setMatchResults(results);
   }, []);
 
+  const handleViewDetails = (job: MatchedJob) => {
+    setSelectedJob(job);
+    setDialogOpen(true);
+  };
+
   const handleBookmark = (jobId: string) => {
     if (!userEmail) {
       toast.error("Please log in to save jobs");
       return;
     }
+    setPendingBookmarkId(jobId);
     toggleSavedJobMutation.mutate(
       { email: userEmail, jobId },
       {
+        onSettled: () => setPendingBookmarkId(null),
         onSuccess: (data) => {
           if (data?.action === "saved") {
             toast.success("Job saved successfully");
@@ -136,11 +140,6 @@ export default function OpenJobsPage() {
         },
       },
     );
-  };
-
-  const handleViewDetails = (job: MatchedJob) => {
-    setSelectedJob(job);
-    setDialogOpen(true);
   };
 
   // Filter change handlers — also reset page to 1
@@ -186,6 +185,8 @@ export default function OpenJobsPage() {
           : "Not disclosed"),
       skills: job.skills_required ? job.skills_required.split(" ") : [],
       matchPercentage: 0,
+      applied: job.applied,
+      saved: job.saved,
     }));
   }, [jobOpenings]);
 
@@ -217,10 +218,6 @@ export default function OpenJobsPage() {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
-
-  const savedJobs = matchResults.filter((job) =>
-    savedJobIdsList.includes(job.id),
-  );
 
   // Total pages from API response
   // Adjust the key (total_pages / pageCount / etc.) to match your API shape
@@ -293,12 +290,36 @@ export default function OpenJobsPage() {
           </div>
 
           {/* JOB LIST */}
-          {filteredJobs.length === 0 ? (
-            <div className="rounded-lg border border-dashed p-12 text-center">
-              <p className="text-sm text-muted-foreground">
-                No open jobs found. Try adjusting your filters.
-              </p>
+          {isLoading ? (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: JOBS_PER_PAGE }).map((_, i) => (
+                <div key={i} className="rounded-lg border p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <Skeleton className="h-5 w-3/5" />
+                    <Skeleton className="h-5 w-10 shrink-0 rounded-full" />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Skeleton className="h-6 w-24 rounded-md" />
+                    <Skeleton className="h-6 w-28 rounded-md" />
+                    <Skeleton className="h-6 w-20 rounded-md" />
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    <Skeleton className="h-5 w-14 rounded-full" />
+                    <Skeleton className="h-5 w-20 rounded-full" />
+                    <Skeleton className="h-5 w-16 rounded-full" />
+                  </div>
+                  <div className="flex items-center justify-between pt-1">
+                    <Skeleton className="h-9 w-28 rounded-md" />
+                    <Skeleton className="h-8 w-8 rounded-md" />
+                  </div>
+                </div>
+              ))}
             </div>
+          ) : filteredJobs.length === 0 ? (
+            <EmptyState
+              title="No Open Jobs Found"
+              description="No open jobs found. Try adjusting your filters."
+            />
           ) : (
             <>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -307,7 +328,8 @@ export default function OpenJobsPage() {
                     key={job.id}
                     job={job}
                     columnFields={openingColumnData.get(job.id)}
-                    isBookmarked={savedJobIdsList.includes(job.id)}
+                    isBookmarked={job.saved ?? false}
+                    isBookmarkPending={pendingBookmarkId === job.id}
                     onBookmark={() => handleBookmark(job.id)}
                     onViewDetails={() => handleViewDetails(job)}
                   />
@@ -326,26 +348,6 @@ export default function OpenJobsPage() {
           )}
         </div>
       )}
-
-      {/* DRAWER */}
-      <Sheet open={savedDrawerOpen} onOpenChange={setSavedDrawerOpen}>
-        <SheetContent side="right">
-          <SheetHeader>
-            <SheetTitle>Saved Jobs ({savedJobs.length})</SheetTitle>
-          </SheetHeader>
-
-          {savedJobs.map((job) => (
-            <Card key={job.id}>
-              <CardContent>
-                <h4>{job.title}</h4>
-                <Button onClick={() => handleViewDetails(job)}>
-                  View Details
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </SheetContent>
-      </Sheet>
 
       <JobDetailDialog
         open={dialogOpen}

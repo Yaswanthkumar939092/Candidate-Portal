@@ -16,6 +16,8 @@ export interface CustomJobOpening {
   upper_range?: number | null;
   skills_required?: string;
   custom_salary?: string;
+  applied?: boolean;
+  saved?: boolean;
 }
 
 export interface ListOpeningsParams {
@@ -47,12 +49,15 @@ export interface ApplicationField {
   ctq: number;
   visibility: string;
   editability: string;
+  value?: string;
   table_fields?: any[];
 }
 
 export interface SubmitApplicationPayload {
-  opening: string;
-  data: Record<string, unknown>;
+  job_applicant_email: string;
+  job_opening: string;
+  form_data: Record<string, unknown>;
+  status?: string;
 }
 
 export interface SubmitApplicationResponse {
@@ -74,4 +79,5 @@ export interface JobField {
   child_fields?: JobField[];
   tab_label?: string;
   section_label?: string;
+  value?: string;
 }

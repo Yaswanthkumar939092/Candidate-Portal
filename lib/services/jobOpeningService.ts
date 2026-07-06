@@ -1,9 +1,19 @@
- 
-import { CustomJobOpening, ApplicationField, SubmitApplicationPayload, SubmitApplicationResponse, JobField, ListOpeningsResponse } from "../../types/job";
+import {
+  ApplicationField,
+  SubmitApplicationPayload,
+  SubmitApplicationResponse,
+  JobField,
+  ListOpeningsResponse,
+} from "../../types/job";
 import { FrappeAPI } from "../frappe-api";
 
 export const JobOpeningService = {
-  getJobOpening: async (page: number, limit: number, searchTerm?: string): Promise<ListOpeningsResponse> => {
+  getJobOpening: async (
+    page: number,
+    limit: number,
+    searchTerm?: string,
+    email?: string,
+  ): Promise<ListOpeningsResponse> => {
     const params: Record<string, string> = {
       page: String(page),
       limit: String(limit),
@@ -11,87 +21,27 @@ export const JobOpeningService = {
     if (searchTerm) {
       params.search_term = searchTerm;
     }
-    const response = await FrappeAPI.get("recruitment.api.channels.careers.list_openings", params);
+    if (email) {
+      params.email = email;
+    }
+    const response = await FrappeAPI.get(
+      "recruitment.api.channels.careers.list_openings",
+      params,
+    );
     return response as ListOpeningsResponse;
   },
 };
 
-
-export const JobApplicantService = {
-  createJobApplicant: async (payload: SubmitApplicationPayload): Promise<SubmitApplicationResponse> => {
-    const response = await FrappeAPI.post(
-      "recruitment.api.channels.careers.submit_application",
-      payload as unknown as Record<string, unknown>
-    );
-    return response as SubmitApplicationResponse;
-  },
-};
-
 export const draftJobApplicantService = {
-  // ✅ GET — fetch existing draft by email
-  getDraftJobApplicant: async (email: string, jobId: string): Promise<any> => {
-    const response = await FrappeAPI.get(
-      "recruitment.api.draft_application.get_draft",
-      {
-        job_applicant_email: email,
-        job_opening: jobId
-        }
-    );
-    return response;
-  },
-
   // ✅ GET — fetch ALL drafts by email
   getAllDrafts: async (email: string): Promise<any> => {
     const response = await FrappeAPI.get(
-      "recruitment.api.draft_application.get_draft",
+      "recruitment.api.channels.careers.get_draft",
       {
         job_applicant_email: email,
-      }
+      },
     );
     return response;
-  },
-
-  // ✅ SAVE APPLICATION — POST draft or final application
-  saveApplication: async (payload: any): Promise<any> => {
-    let formData = payload.form_data;
-    if (typeof formData === "string") {
-      try {
-        formData = JSON.parse(formData);
-      } catch (e) {
-        console.error("Failed to parse form_data:", e);
-      }
-    }
-
-    const postData: Record<string, any> = {
-      job_applicant_email: payload.job_applicant_email,
-      job_opening: payload.job_opening,
-      form_data: formData,
-    };
-
-    if (payload.status) {
-      postData.status = payload.status;
-    }
-
-    const response = await FrappeAPI.post("recruitment.api.draft_application.save_application", postData);
-    return response;
-  },
-
-  // ✅ UPDATE — PUT existing draft by name
-  updateDraftJobApplicant: async ({
-    name,
-    payload,
-  }: {
-    name: string;
-    payload: any;
-  }): Promise<any> => {
-    const response = await FrappeAPI.getresourceDocumentData(
-      `Draft Application/${name}`,
-      {
-        method: "PUT",
-        data: payload,
-      }
-    );
-    return response.data;
   },
 
   // ✅ DELETE — delete draft
@@ -102,7 +52,7 @@ export const draftJobApplicantService = {
     email: string;
     jobId: string;
   }): Promise<any> => {
-    return FrappeAPI.post("recruitment.api.draft_application.delete_draft", {
+    return FrappeAPI.post("recruitment.api.channels.careers.delete_draft", {
       job_applicant_email: email,
       job_opening: jobId,
     });
@@ -110,15 +60,28 @@ export const draftJobApplicantService = {
 };
 
 export const jobApplicationService = {
+  // ✅ Submit job application (status: "Draft" or "Open")
+  submitApplication: async (
+    payload: SubmitApplicationPayload,
+  ): Promise<SubmitApplicationResponse> => {
+    const response = await FrappeAPI.post(
+      "recruitment.api.channels.careers.submit_application",
+      payload as unknown as Record<string, unknown>,
+    );
+    return response as SubmitApplicationResponse;
+  },
+
   // ✅ Fetch dynamic job application fields
-  getJobApplicationForm: async (job_opening?: string, form_name?: string): Promise<{ fields: JobField[] }> => {
+  getJobApplicationForm: async (
+    job_opening?: string,
+  ): Promise<{ fields: JobField[] }> => {
     try {
       const params: Record<string, string> = {};
       if (job_opening) params.opening = job_opening;
 
       const res = await FrappeAPI.get(
         "recruitment.api.channels.careers.get_application_fields",
-        params
+        params,
       );
 
       const fields = (res || []).map((field: ApplicationField) => ({
@@ -131,6 +94,7 @@ export const jobApplicationService = {
         tab_label: field.section,
         section_label: "Details",
         child_fields: field.table_fields,
+        value: field.value,
       }));
 
       return { fields };
@@ -138,13 +102,5 @@ export const jobApplicationService = {
       console.error("API ERROR:", error);
       return { fields: [] };
     }
-  },
-
-  // ✅ Submit final job application
-  submitJobApplication: async (data: Record<string, unknown>) => {
-    return FrappeAPI.post(
-      "recruitment.api.candidate_portal.create_job_applicant",
-      data
-    );
   },
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useForm, FormProvider } from "react-hook-form";
@@ -9,6 +9,7 @@ import { JobApplicationStepNav } from "./job-applicationstep-nav";
 import { JobApplicationStep } from "./DynamicField";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { JobApplicationReviewStep } from "./job-application-review-step";
+import { validateJobAppField } from "@/lib/validation/job-application-validation";
 
 interface JobApplicationPageProps {
   jobID: string;
@@ -17,7 +18,7 @@ interface JobApplicationPageProps {
 export default function JobApplicationPage({
   jobID,
 }: JobApplicationPageProps) {
-  const { tabs, allFields, isLoading, initializeAllStepsFromDraft, draftName: apiDraftName } = useJobApp();
+  const { tabs = [], allFields = [], isLoading, initializeAllStepsFromDraft } = useJobApp();
   const { user } = useAuth();
   const userEmail = user?.email || user?.user_metadata?.email || "";
   const [currentStep, setCurrentStep] = useState(0);
@@ -26,8 +27,6 @@ export default function JobApplicationPage({
   );
 
   
-  const [draftName, setDraftName] = useState<string | null>(null);
-
   // ✅ Derive form values reactively from allFields (layout default or value attributes)
   const defaultValues = useMemo(() => {
     const formData: Record<string, any> = {};
@@ -48,19 +47,165 @@ export default function JobApplicationPage({
     values: Object.keys(defaultValues).length > 0 ? defaultValues : undefined,
   });
 
-  // ── Sync draftName from context API response when it loads ──────────────
-  useEffect(() => {
-    if (apiDraftName) {
-      setDraftName(apiDraftName);
-    }
-  }, [apiDraftName]);
-
   // ── Apply field values ONCE across ALL steps on initial load ──────────────
   useEffect(() => {
     if (Object.keys(defaultValues).length > 0) {
       initializeAllStepsFromDraft(defaultValues);
     }
   }, [defaultValues, initializeAllStepsFromDraft]);
+
+  // ── Pre-fill user fields from auth on mount ──────────────────────────────
+  useEffect(() => {
+    if (!user || !allFields.length) return;
+    const firstName = user.first_name || "";
+    const lastName = user.last_name || "";
+    const email = user.email || user.user_metadata?.email || "";
+    const fullName = user.full_name || [firstName, lastName].filter(Boolean).join(" ") || email;
+
+    allFields.forEach((field: any) => {
+      const label = (field.label || "").toLowerCase();
+      const fname = field.fieldname || "";
+      let val: string | undefined;
+
+      if (label.includes("first name") || fname === "first_name") val = firstName;
+      else if (label.includes("last name") || fname === "last_name") val = lastName;
+      else if (label.includes("full name") || fname === "full_name") val = fullName;
+      else if (label.includes("email") || fname === "email") val = email;
+
+      if (val) methods.setValue(fname, val, { shouldValidate: false });
+    });
+  }, [user, methods, allFields]);
+
+  // ── Auto-complete steps based on real-time field validation ──────────────
+  // A step gets the ✓ check mark ONLY when ALL visible fields in that tab
+  // are filled and pass pattern validation (e.g. phone format).
+  // Layout-only field types that don't hold user data are skipped.
+  const LAYOUT_FIELD_TYPES = new Set([
+    "Section Break", "Column Break", "Tab Break", "HTML",
+  ]);
+
+  const checkStepCompletion = useCallback(
+    (formValues: Record<string, any>) => {
+      if (!tabs.length) return;
+
+      setCompletedSteps((prev) => {
+        const next = new Set(prev);
+
+        tabs.forEach((tab: any) => {
+          const key = tab.tab.toLowerCase().replace(/\s+/g, "_");
+          const allFields = tab.sections.flatMap((s: any) => s.fields || []);
+          let stepValid = true;
+
+          for (const field of allFields) {
+            // Skip hidden and layout-only fields
+            if (field.hidden) continue;
+            if (LAYOUT_FIELD_TYPES.has(field.fieldtype)) continue;
+
+            const val = formValues[field.fieldname];
+
+            // ALL fields must be filled (not just required ones)
+            const isEmpty =
+              val === undefined ||
+              val === null ||
+              val === "" ||
+              (Array.isArray(val) && val.length === 0);
+
+            if (isEmpty) {
+              stepValid = false;
+              break;
+            }
+
+            // Filled values must also pass pattern validation (e.g. phone number)
+            const patternError = validateJobAppField(field, val);
+            if (patternError) {
+              stepValid = false;
+              break;
+            }
+          }
+
+          if (stepValid) {
+            next.add(key);
+          } else {
+            next.delete(key);
+          }
+        });
+
+        // Only update state if the set actually changed
+        if (next.size !== prev.size || ![...next].every((k) => prev.has(k))) {
+          return next;
+        }
+        return prev;
+      });
+    },
+    [tabs]
+  );
+
+  // ── Field-level progress for real-time progress bar ──────────────────────
+  const LAYOUT_FIELD_TYPES_PROGRESS = useMemo(
+    () => new Set(["Section Break", "Column Break", "Tab Break", "HTML"]),
+    []
+  );
+
+  const computeFieldProgress = useCallback(
+    (formValues: Record<string, any>): number => {
+      if (!tabs.length) return 0;
+
+      let totalFields = 0;
+      let filledFields = 0;
+
+      tabs.forEach((tab: any) => {
+        const fields = tab.sections.flatMap((s: any) => s.fields || []);
+        for (const field of fields) {
+          if (field.hidden) continue;
+          if (LAYOUT_FIELD_TYPES_PROGRESS.has(field.fieldtype)) continue;
+
+          totalFields++;
+
+          const val = formValues[field.fieldname];
+          const isEmpty =
+            val === undefined ||
+            val === null ||
+            val === "" ||
+            (Array.isArray(val) && val.length === 0);
+
+          if (!isEmpty) {
+            filledFields++;
+          }
+        }
+      });
+
+      return totalFields > 0 ? Math.round((filledFields / totalFields) * 100) : 0;
+    },
+    [tabs, LAYOUT_FIELD_TYPES_PROGRESS]
+  );
+
+  const [fieldProgress, setFieldProgress] = useState(0);
+
+  useEffect(() => {
+    if (!tabs.length) return;
+
+    const subscription = methods.watch((formValues: Record<string, any>) => {
+      setFieldProgress(computeFieldProgress(formValues));
+    });
+
+    // Initial computation
+    setFieldProgress(computeFieldProgress(methods.getValues()));
+
+    return () => subscription.unsubscribe();
+  }, [tabs, methods, computeFieldProgress]);
+
+  useEffect(() => {
+    if (!tabs.length) return;
+
+    const subscription = methods.watch((formValues) => {
+      checkStepCompletion(formValues as Record<string, any>);
+    });
+
+    // Also run an initial check with current values
+    checkStepCompletion(methods.getValues());
+
+    return () => subscription.unsubscribe();
+  }, [tabs, methods, checkStepCompletion]);
 
 
   // ── Loading / empty states ──────────────────────────────────────────────
@@ -80,10 +225,6 @@ export default function JobApplicationPage({
   const isReviewStep = currentStep === tabs.length;
   const currentTab = tabs[currentStep];
   const stepKey = currentTab?.tab.toLowerCase().replace(/\s+/g, "_") ?? "";
-
-  const markStepComplete = (key: string) => {
-    setCompletedSteps((prev) => new Set([...prev, key]));
-  };
 
   /**
    * Validate required fields for the currently active step.
@@ -112,7 +253,6 @@ export default function JobApplicationPage({
   // ── Step navigation ──────────────────────────────────────────────────────
 
   const handleNext = () => {
-    markStepComplete(stepKey);
     // Allow advancing to the review step (tabs.length)
     setCurrentStep((p) => Math.min(p + 1, tabs.length));
   };
@@ -122,13 +262,12 @@ export default function JobApplicationPage({
   };
 
   const handleStepChange = (nextIndex: number) => {
-    if (!isReviewStep && nextIndex > currentStep) {
+    if (nextIndex > currentStep) {
       const errors = validateCurrentStep();
       if (Object.keys(errors).length > 0) {
         toast.warning("Please fill all required fields before proceeding.");
         return;
       }
-      markStepComplete(stepKey);
     }
     setCurrentStep(nextIndex);
   };
@@ -144,6 +283,7 @@ export default function JobApplicationPage({
         currentStep={currentStep}
         completedSteps={completedSteps}
         onStepChange={handleStepChange}
+        fieldProgress={fieldProgress}
         className="hidden w-64 shrink-0 md:flex"
       />
 
@@ -157,7 +297,7 @@ export default function JobApplicationPage({
                 Step {currentStep + 1} of {totalStepsWithReview}
               </p>
               <p className="text-xs font-medium text-muted-foreground">
-                {Math.round(((currentStep + 1) / totalStepsWithReview) * 100)}%
+                {fieldProgress}%
               </p>
             </div>
 
@@ -165,7 +305,7 @@ export default function JobApplicationPage({
             <div className="md:hidden h-1.5 w-full rounded-full bg-muted overflow-hidden mb-3">
               <div
                 className="h-full rounded-full bg-primary transition-all duration-500 ease-out"
-                style={{ width: `${((currentStep + 1) / totalStepsWithReview) * 100}%` }}
+                style={{ width: `${fieldProgress}%` }}
               />
             </div>
 
@@ -180,7 +320,6 @@ export default function JobApplicationPage({
               goToStep={handleStepChange}
               onPrev={handlePrev}
               jobID={jobID}
-              draftName={draftName}
             />
           ) : (
             <FormProvider {...methods}>
@@ -193,8 +332,6 @@ export default function JobApplicationPage({
                 onNext={handleNext}
                 onPrev={handlePrev}
                 methods={methods}
-                draftName={draftName}
-                setDraftName={setDraftName}
               />
             </FormProvider>
           )}

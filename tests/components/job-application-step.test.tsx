@@ -195,9 +195,7 @@ describe("JobApplicationStep", () => {
       })
 
     const mockMutation = { mutate: vi.fn(), isPending: false }
-      ; (jobOpeningHooks.useSaveApplication as any).mockReturnValue(mockMutation)
-      ; (jobOpeningHooks.useUpdateDraftJobApplicant as any).mockReturnValue(mockMutation)
-      ; (jobOpeningHooks.useDeleteDraftJobApplicant as any).mockReturnValue(mockMutation)
+      ; (jobOpeningHooks.useCreateJobApplicant as any).mockReturnValue(mockMutation)
   })
 
   it("renders form with sections and fields", () => {
@@ -211,8 +209,6 @@ describe("JobApplicationStep", () => {
         onNext={mockOnNext}
         onPrev={mockOnPrev}
         methods={mockMethods}
-        draftName={null}
-        setDraftName={vi.fn()}
       />
     )
 
@@ -231,8 +227,6 @@ describe("JobApplicationStep", () => {
         onNext={mockOnNext}
         onPrev={mockOnPrev}
         methods={mockMethods}
-        draftName={null}
-        setDraftName={vi.fn()}
       />
     )
 
@@ -251,8 +245,6 @@ describe("JobApplicationStep", () => {
         onNext={mockOnNext}
         onPrev={mockOnPrev}
         methods={mockMethods}
-        draftName={null}
-        setDraftName={vi.fn()}
       />
     )
 
@@ -271,8 +263,6 @@ describe("JobApplicationStep", () => {
         onNext={mockOnNext}
         onPrev={mockOnPrev}
         methods={mockMethods}
-        draftName={null}
-        setDraftName={vi.fn()}
       />
     )
 
@@ -291,8 +281,6 @@ describe("JobApplicationStep", () => {
         onNext={mockOnNext}
         onPrev={mockOnPrev}
         methods={mockMethods}
-        draftName={null}
-        setDraftName={vi.fn()}
       />
     )
 
@@ -310,8 +298,6 @@ describe("JobApplicationStep", () => {
         onNext={mockOnNext}
         onPrev={mockOnPrev}
         methods={mockMethods}
-        draftName={null}
-        setDraftName={vi.fn()}
       />
     )
 
@@ -332,8 +318,6 @@ describe("JobApplicationStep", () => {
         onNext={mockOnNext}
         onPrev={mockOnPrev}
         methods={mockMethods}
-        draftName={null}
-        setDraftName={vi.fn()}
       />
     )
 
@@ -361,8 +345,6 @@ describe("JobApplicationStep", () => {
         onNext={mockOnNext}
         onPrev={mockOnPrev}
         methods={mockMethods}
-        draftName={null}
-        setDraftName={vi.fn()}
         className="custom-form-class"
       />
     )
@@ -399,8 +381,6 @@ describe("JobApplicationStep", () => {
         onNext={mockOnNext}
         onPrev={mockOnPrev}
         methods={mockMethods}
-        draftName={null}
-        setDraftName={vi.fn()}
       />
     )
 
@@ -435,8 +415,6 @@ describe("JobApplicationStep", () => {
         onNext={mockOnNext}
         onPrev={mockOnPrev}
         methods={mockMethods}
-        draftName={null}
-        setDraftName={vi.fn()}
       />
     )
 
@@ -470,8 +448,6 @@ describe("JobApplicationStep", () => {
         onNext={mockOnNext}
         onPrev={mockOnPrev}
         methods={mockMethods}
-        draftName={null}
-        setDraftName={vi.fn()}
       />
     )
 
@@ -515,8 +491,6 @@ describe("JobApplicationStep", () => {
         onNext={mockOnNext}
         onPrev={mockOnPrev}
         methods={mockMethods}
-        draftName={null}
-        setDraftName={vi.fn()}
       />
     )
 
@@ -541,16 +515,8 @@ describe("JobApplicationStep Coverage Enhancements", () => {
       })
 
        
-      ; (jobOpeningHooks.useSaveApplication as any).mockReturnValue({
+      ; (jobOpeningHooks.useCreateJobApplicant as any).mockReturnValue({
         mutate: mockMutate,
-        isPending: false,
-      })
-      ; (jobOpeningHooks.useUpdateDraftJobApplicant as any).mockReturnValue({
-        mutate: vi.fn(),
-        isPending: false,
-      })
-      ; (jobOpeningHooks.useDeleteDraftJobApplicant as any).mockReturnValue({
-        mutate: vi.fn(),
         isPending: false,
       })
   })
@@ -577,8 +543,6 @@ describe("JobApplicationStep Coverage Enhancements", () => {
         onNext={vi.fn()}
         onPrev={vi.fn()}
         methods={mockMethods}
-        draftName={null}
-        setDraftName={vi.fn()}
       />
     )
 
@@ -617,8 +581,6 @@ describe("JobApplicationStep Coverage Enhancements", () => {
         onNext={vi.fn()}
         onPrev={vi.fn()}
         methods={mockMethods}
-        draftName={null}
-        setDraftName={vi.fn()}
       />
     )
 
@@ -652,8 +614,6 @@ describe("JobApplicationStep Coverage Enhancements", () => {
         onNext={vi.fn()}
         onPrev={vi.fn()}
         methods={mockMethods}
-        draftName={null}
-        setDraftName={vi.fn()}
       />
     )
 
@@ -694,8 +654,6 @@ describe("JobApplicationStep Coverage Enhancements", () => {
         onNext={vi.fn()}
         onPrev={vi.fn()}
         methods={mockMethods}
-        draftName={null}
-        setDraftName={vi.fn()}
       />
     )
 
@@ -708,12 +666,11 @@ describe("JobApplicationStep Coverage Enhancements", () => {
       expect(mockMutate).toHaveBeenCalled()
     })
 
-    // 1. Check successful buildFinalPayload properties in payload argument
+    // 1. Check successful buildSubmitPayload properties in payload argument
     const payloadSent = mockMutate.mock.calls[0][0];
     expect(payloadSent.job_opening).toBe("job-submission-id");
-    expect(payloadSent.job_title).toBe("job-submission-id");
-    // ensure undefined/empty mapping from previous step "emptyField" is handled:
-    expect(payloadSent.emptyField).toBeFalsy();
+    expect(payloadSent.job_applicant_email).toBe("test@example.com");
+    expect(payloadSent.status).toBe("Open");
 
     // 2. Trigger onSuccess logic
     expect(mutateCallbacks).toBeTruthy();
@@ -751,8 +708,6 @@ describe("JobApplicationStep Coverage Enhancements", () => {
         onNext={vi.fn()}
         onPrev={vi.fn()}
         methods={mockMethods}
-        draftName={null}
-        setDraftName={vi.fn()}
       />
     )
 
@@ -769,8 +724,6 @@ describe("JobApplicationStep Coverage Enhancements", () => {
         onNext={vi.fn()}
         onPrev={vi.fn()}
         methods={mockMethods}
-        draftName={null}
-        setDraftName={vi.fn()}
       />
     )
 
@@ -798,8 +751,6 @@ describe("JobApplicationStep Coverage Enhancements", () => {
         onNext={onNextMock}
         onPrev={vi.fn()}
         methods={mockMethods}
-        draftName={null}
-        setDraftName={vi.fn()}
       />
     )
 

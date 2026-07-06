@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useGetSavedJobs, useToggleSavedJob, useGetSavedJobDetails } from "@/lib/hooks/useSavedJobs";
+import { useGetSavedJobs, useToggleSavedJob } from "@/lib/hooks/useSavedJobs";
 import { SavedJobsService } from "@/lib/services/savedJobsService";
 import React from "react";
 
@@ -10,7 +10,6 @@ vi.mock("@/lib/services/savedJobsService", () => ({
   SavedJobsService: {
     getSavedJobs: vi.fn(),
     toggleSavedJob: vi.fn(),
-    getJobOpeningsByNames: vi.fn(),
   },
 }));
 
@@ -58,14 +57,5 @@ describe("useSavedJobs Hooks", () => {
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["saved-jobs", "candidate@test.com"] });
   });
 
-  it("useGetSavedJobDetails queries detailed job openings by names", async () => {
-    const mockDetails = { data: [{ name: "HR-OPN-1", job_title: "Developer" }] };
-    (SavedJobsService.getJobOpeningsByNames as any).mockResolvedValue(mockDetails);
 
-    const { result } = renderHook(() => useGetSavedJobDetails(["HR-OPN-1"]), { wrapper });
-
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data).toEqual(mockDetails);
-    expect(SavedJobsService.getJobOpeningsByNames).toHaveBeenCalledWith(["HR-OPN-1"]);
-  });
 });

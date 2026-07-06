@@ -3,12 +3,11 @@
 import JobApplicationPage from "@/components/jobs/job-applicant/JobApplicantForm";
 import { JobAppProvider } from "@/lib/contexts/job-application-context";
 
-export default function ApplyPage({ params }: { params: { id: string } }) {
+export default async function ApplyPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   return (
-    <div className="h-screen">
-      <JobAppProvider job_opening={params.id} form_name="">
-        <JobApplicationPage jobID={params.id} />
-      </JobAppProvider>
-    </div>
+    <JobAppProvider job_opening={id} form_name="">
+      <JobApplicationPage jobID={id} />
+    </JobAppProvider>
   );
 }
