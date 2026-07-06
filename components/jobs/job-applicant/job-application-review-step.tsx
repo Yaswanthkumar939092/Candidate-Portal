@@ -16,7 +16,6 @@ import { useJobApp } from "@/lib/contexts/job-application-context";
 import { useAuth } from "@/lib/contexts/auth-context";
 import {
   useCreateJobApplicant,
-  useDeleteDraftJobApplicant,
 } from "@/lib/hooks/useJobOpening";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -33,7 +32,6 @@ interface JobApplicationReviewStepProps {
   goToStep: (index: number) => void;
   onPrev: () => void;
   jobID: string;
-  draftName: string | null;
 }
 
 export function JobApplicationReviewStep({
@@ -41,12 +39,10 @@ export function JobApplicationReviewStep({
   goToStep,
   onPrev,
   jobID,
-  draftName,
 }: JobApplicationReviewStepProps) {
   const { tabs, stepData } = useJobApp();
   const { user } = useAuth();
   const { mutate: createApplicant, isPending } = useCreateJobApplicant();
-  const { mutate: deleteDraft } = useDeleteDraftJobApplicant();
   const router = useRouter();
   const userEmail = user?.email || user?.user_metadata?.email || "";
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -66,13 +62,31 @@ export function JobApplicationReviewStep({
 
   const declarationAccepted = watch("declaration_accepted");
 
-  const incompleteSteps = tabs
-    .map((tab: any, idx: number) => ({ tab, originalIdx: idx }))
-    .filter(({ tab, originalIdx }: { tab: any; originalIdx: number }) => {
-      const rawKey = tab.tab || `Step ${originalIdx + 1}`;
-      const key = rawKey.toLowerCase().replace(/\s+/g, "_");
-      return !completedSteps.has(key);
+  const getMissingRequiredFields = (tab: any, key: string) => {
+    const data = stepData[key] || {};
+    const missing: string[] = [];
+    tab.sections.forEach((section: any) => {
+      section.fields.forEach((field: any) => {
+        if (field.hidden) return;
+        if (field.reqd || field.is_mandatory) {
+          const val = data[field.fieldname];
+          if (val === undefined || val === null || val === "" || (Array.isArray(val) && val.length === 0)) {
+            missing.push(field.label);
+          }
+        }
+      });
     });
+    return missing;
+  };
+
+  const stepsWithMissingFields = tabs
+    .map((tab: any, idx: number) => {
+      const rawKey = tab.tab || `Step ${idx + 1}`;
+      const key = rawKey.toLowerCase().replace(/\s+/g, "_");
+      const missing = getMissingRequiredFields(tab, key);
+      return { tab, originalIdx: idx, key, missing };
+    })
+    .filter(({ missing }) => missing.length > 0);
 
   const toggleSection = (key: string) => {
     setExpandedSection(expandedSection === key ? null : key);
@@ -93,19 +107,18 @@ export function JobApplicationReviewStep({
       });
 
       const payload = {
-        opening: jobID,
-        data: {
+        job_applicant_email: userEmail || null,
+        job_opening: jobID,
+        form_data: {
           ...mergedData,
           email_id: userEmail || null,
         },
+        status: "Open",
       };
 
       createApplicant(payload, {
         onSuccess: () => {
           toast.success("Application submitted successfully!");
-          if (draftName) {
-            deleteDraft({ email: userEmail, jobId: jobID });
-          }
           router.push(`/open-jobs/${jobID}/apply-job/thank-you`);
         },
         onError: (err: any) => {
@@ -131,29 +144,25 @@ export function JobApplicationReviewStep({
         </h3>
         <Separator className="mt-2 mb-4" />
 
-        {incompleteSteps.length > 0 && (
+        {stepsWithMissingFields.length > 0 && (
           <div className="mb-4 flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4">
             <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
             <div>
               <p className="text-sm font-medium text-destructive">
-                Please complete all steps before submitting.
+                Please complete all required fields before submitting.
               </p>
-              <div className="mt-1 flex flex-wrap gap-1">
-                {incompleteSteps.map(
-                  ({ tab, originalIdx }: { tab: any; originalIdx: number }) => {
-                    const rawKey = tab.tab || `Step ${originalIdx + 1}`;
-                    const key = rawKey.toLowerCase().replace(/\s+/g, "_");
-                    return (
-                      <button
-                        key={key}
-                        type="button"
-                        onClick={() => goToStep(originalIdx)}
-                        className="text-xs text-primary underline hover:no-underline mr-2"
-                      >
-                        {tab.tab || `Step ${originalIdx + 1}`}
-                      </button>
-                    );
-                  },
+              <div className="mt-1 flex flex-wrap gap-2">
+                {stepsWithMissingFields.map(
+                  ({ tab, originalIdx, missing }: { tab: any; originalIdx: number; missing: string[] }) => (
+                    <button
+                      key={tab.tab || `Step ${originalIdx + 1}`}
+                      type="button"
+                      onClick={() => goToStep(originalIdx)}
+                      className="text-xs text-destructive underline hover:no-underline font-medium"
+                    >
+                      {tab.tab || `Step ${originalIdx + 1}`}
+                    </button>
+                  ),
                 )}
               </div>
             </div>
@@ -174,7 +183,7 @@ export function JobApplicationReviewStep({
                 .filter((f: any) => !f.hidden && f.fieldtype !== "Table")
                 .map((f: any) => data[f.fieldname])
                 .filter((v: any) => v && typeof v === "string")
-                .slice(0, 2);
+                .slice(0, 3);
               if (values.length > 0) {
                 return (values as string[]).join(" ");
               }
@@ -368,7 +377,7 @@ export function JobApplicationReviewStep({
             </Button>
             <Button
               type="submit"
-              disabled={isPending || incompleteSteps.length > 0}
+              disabled={isPending || stepsWithMissingFields.length > 0}
             >
               {isPending ? "Submitting..." : "Submit Application"}
               <ChevronRight className="ml-1 h-4 w-4" />

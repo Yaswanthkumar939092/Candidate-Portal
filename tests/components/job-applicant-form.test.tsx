@@ -11,10 +11,11 @@ const mockUseAuth = vi.fn()
 vi.mock("@/lib/contexts/auth-context", () => ({
   useAuth: () => mockUseAuth(),
 }))
-
 const mockUseGetDraftJobApplicant = vi.fn()
 vi.mock("@/lib/hooks/useJobOpening", () => ({
-  useGetDraftJobApplicant: (...args: any[]) => mockUseGetDraftJobApplicant(...args),
+  useCreateJobApplicant: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+  useDeleteDraftJobApplicant: vi.fn(() => ({ mutate: vi.fn() })),
+  useGetDraftJobApplicant: () => mockUseGetDraftJobApplicant(),
 }))
 
 vi.mock("lucide-react", async () => {

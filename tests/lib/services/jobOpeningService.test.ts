@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { 
   JobOpeningService, 
-  JobApplicantService, 
   draftJobApplicantService, 
   jobApplicationService 
 } from "@/lib/services/jobOpeningService";
@@ -48,8 +47,8 @@ describe("JobOpening Services", () => {
     });
   });
 
-  describe("JobApplicantService", () => {
-    it("createJobApplicant calls FrappeAPI.post with submit_application", async () => {
+  describe("jobApplicationService", () => {
+    it("submitApplication calls FrappeAPI.post with submit_application", async () => {
       const mockRes = {
         status: "ok",
         name: "HR-APP-2026-00123",
@@ -65,77 +64,13 @@ describe("JobOpening Services", () => {
           phone_number: "+91-9000000000",
         }
       };
-      const result = await JobApplicantService.createJobApplicant(payload);
+      const result = await jobApplicationService.submitApplication(payload);
       expect(result).toEqual(mockRes);
       expect(FrappeAPI.post).toHaveBeenCalledWith("recruitment.api.channels.careers.submit_application", payload);
     });
   });
 
   describe("draftJobApplicantService", () => {
-    it("getDraftJobApplicant calls FrappeAPI.get", async () => {
-      const mockRes = { id: "D1" };
-      (FrappeAPI.get as any).mockResolvedValue(mockRes);
-
-      const result = await draftJobApplicantService.getDraftJobApplicant("test@test.com", "JO1");
-      expect(result).toEqual(mockRes);
-      expect(FrappeAPI.get).toHaveBeenCalledWith(expect.stringContaining("get_draft"), {
-        job_applicant_email: "test@test.com",
-        job_opening: "JO1"
-      });
-    });
-
-    it("saveApplication calls FrappeAPI.post with save_application", async () => {
-      const mockRes = { name: "D1", success: true };
-      (FrappeAPI.post as any).mockResolvedValue(mockRes);
-
-      const payload = {
-        job_applicant_email: "test@test.com",
-        job_opening: "JO1",
-        form_data: JSON.stringify({ age: 30 })
-      };
-
-      const result = await draftJobApplicantService.saveApplication(payload);
-      expect(result).toEqual(mockRes);
-      expect(FrappeAPI.post).toHaveBeenCalledWith("recruitment.api.draft_application.save_application", {
-        job_applicant_email: "test@test.com",
-        job_opening: "JO1",
-        form_data: { age: 30 }
-      });
-    });
-
-    it("saveApplication includes status parameter when provided", async () => {
-      const mockRes = { name: "D1", success: true };
-      (FrappeAPI.post as any).mockResolvedValue(mockRes);
-
-      const payload = {
-        job_applicant_email: "test@test.com",
-        job_opening: "JO1",
-        form_data: { age: 30 },
-        status: "Open"
-      };
-
-      const result = await draftJobApplicantService.saveApplication(payload);
-      expect(result).toEqual(mockRes);
-      expect(FrappeAPI.post).toHaveBeenCalledWith("recruitment.api.draft_application.save_application", {
-        job_applicant_email: "test@test.com",
-        job_opening: "JO1",
-        form_data: { age: 30 },
-        status: "Open"
-      });
-    });
-
-    it("updateDraftJobApplicant calls FrappeAPI.getresourceDocumentData with PUT", async () => {
-      const mockRes = { data: { success: true } };
-      (FrappeAPI.getresourceDocumentData as any).mockResolvedValue(mockRes);
-
-      const result = await draftJobApplicantService.updateDraftJobApplicant({ name: "D1", payload: { age: 30 } });
-      expect(result).toEqual(mockRes.data);
-      expect(FrappeAPI.getresourceDocumentData).toHaveBeenCalledWith("Draft Application/D1", expect.objectContaining({
-        method: "PUT",
-        data: { age: 30 }
-      }));
-    });
-
     it("deleteDraftJobApplicant calls FrappeAPI.post", async () => {
       (FrappeAPI.post as any).mockResolvedValue({ success: true });
       await draftJobApplicantService.deleteDraftJobApplicant({ email: "test@test.com", jobId: "JO1" });
@@ -184,11 +119,6 @@ describe("JobOpening Services", () => {
       expect(result2.fields).toEqual([]);
     });
 
-    it("submitJobApplication calls FrappeAPI.post", async () => {
-      (FrappeAPI.post as any).mockResolvedValue({ success: true });
-      const data = { name: "John" };
-      await jobApplicationService.submitJobApplication(data);
-      expect(FrappeAPI.post).toHaveBeenCalledWith(expect.stringContaining("create_job_applicant"), data);
-    });
+
   });
 });

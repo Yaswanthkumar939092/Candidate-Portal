@@ -111,8 +111,26 @@ describe("JobApplicationReviewStep", () => {
   });
 
   it("renders correctly with incomplete steps warning", () => {
+    const requiredTabs = [
+      mockTabs[0],
+      {
+        ...mockTabs[1],
+        sections: [
+          {
+            ...mockTabs[1].sections[0],
+            fields: [
+              {
+                ...mockTabs[1].sections[0].fields[0],
+                reqd: 1,
+              },
+            ],
+          },
+        ],
+      },
+    ];
+
     vi.mocked(useJobApp).mockReturnValue({
-      tabs: mockTabs,
+      tabs: requiredTabs,
       stepData: {
         personal_info: { full_name: "John Doe", email: "john@example.com" },
         work_history: {},
@@ -128,12 +146,11 @@ describe("JobApplicationReviewStep", () => {
         goToStep={mockGoToStep}
         onPrev={mockOnPrev}
         jobID="job-123"
-        draftName="draft-456"
       />,
     );
 
     expect(
-      screen.getByText("Please complete all steps before submitting."),
+      screen.getByText("Please complete all required fields before submitting."),
     ).toBeTruthy();
     const workHistoryBtn = screen.getByRole("button", { name: "Work History" });
     expect(workHistoryBtn).toBeTruthy();
@@ -165,7 +182,6 @@ describe("JobApplicationReviewStep", () => {
         goToStep={mockGoToStep}
         onPrev={mockOnPrev}
         jobID="job-123"
-        draftName={null}
       />,
     );
 
@@ -216,7 +232,6 @@ describe("JobApplicationReviewStep", () => {
         goToStep={mockGoToStep}
         onPrev={mockOnPrev}
         jobID="job-123"
-        draftName={null}
       />,
     );
 
@@ -242,7 +257,6 @@ describe("JobApplicationReviewStep", () => {
         goToStep={mockGoToStep}
         onPrev={mockOnPrev}
         jobID="job-123"
-        draftName={null}
       />,
     );
 
@@ -251,7 +265,7 @@ describe("JobApplicationReviewStep", () => {
     expect(mockOnPrev).toHaveBeenCalled();
   });
 
-  it("performs successful submission flow and calls deleteDraft when draftName is provided", async () => {
+  it("performs successful submission flow with status Open", async () => {
     vi.mocked(useJobApp).mockReturnValue({
       tabs: mockTabs,
       stepData: {
@@ -272,7 +286,6 @@ describe("JobApplicationReviewStep", () => {
         goToStep={mockGoToStep}
         onPrev={mockOnPrev}
         jobID="job-123"
-        draftName="draft-456"
       />,
     );
 
@@ -292,19 +305,17 @@ describe("JobApplicationReviewStep", () => {
     await waitFor(() => {
       expect(mockCreateApplicantMutate).toHaveBeenCalledWith(
         expect.objectContaining({
-          opening: "job-123",
-          data: expect.objectContaining({
+          job_opening: "job-123",
+          job_applicant_email: "applicant@example.com",
+          form_data: expect.objectContaining({
             full_name: "John Doe",
             email: "john@example.com",
             email_id: "applicant@example.com",
           }),
+          status: "Open",
         }),
         expect.any(Object),
       );
-      expect(mockDeleteDraftMutate).toHaveBeenCalledWith({
-        email: "applicant@example.com",
-        jobId: "job-123",
-      });
       expect(toast.success).toHaveBeenCalledWith(
         "Application submitted successfully!",
       );
@@ -333,7 +344,6 @@ describe("JobApplicationReviewStep", () => {
         goToStep={mockGoToStep}
         onPrev={mockOnPrev}
         jobID="job-123"
-        draftName={null}
       />,
     );
 
@@ -370,7 +380,6 @@ describe("JobApplicationReviewStep", () => {
         goToStep={mockGoToStep}
         onPrev={mockOnPrev}
         jobID="job-123"
-        draftName={null}
       />,
     );
 
@@ -404,7 +413,6 @@ describe("JobApplicationReviewStep", () => {
         goToStep={mockGoToStep}
         onPrev={mockOnPrev}
         jobID="job-123"
-        draftName={null}
       />,
     );
 
@@ -442,7 +450,6 @@ describe("JobApplicationReviewStep", () => {
         goToStep={mockGoToStep}
         onPrev={mockOnPrev}
         jobID="job-123"
-        draftName={null}
       />,
     );
 
