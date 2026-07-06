@@ -262,13 +262,6 @@ export default function JobApplicationPage({
   };
 
   const handleStepChange = (nextIndex: number) => {
-    if (nextIndex > currentStep) {
-      const errors = validateCurrentStep();
-      if (Object.keys(errors).length > 0) {
-        toast.warning("Please fill all required fields before proceeding.");
-        return;
-      }
-    }
     setCurrentStep(nextIndex);
   };
 

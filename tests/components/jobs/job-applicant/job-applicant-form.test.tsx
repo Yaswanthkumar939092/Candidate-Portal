@@ -271,7 +271,7 @@ describe("JobApplicantForm", () => {
   })
 
   describe("Field Validation", () => {
-    it("shows warning when required fields are missing on step change", async () => {
+    it("allows step change even when required fields are missing", async () => {
       mockUseGetDraftJobApplicant.mockReturnValue({
         success: true,
         data: {
@@ -302,9 +302,8 @@ describe("JobApplicantForm", () => {
       await user.click(goToStep1Btn)
 
       await waitFor(() => {
-        expect(toast.warning).toHaveBeenCalledWith(
-          "Please fill all required fields before proceeding."
-        )
+        expect(screen.getByTestId("current-step").textContent).toBe("1")
+        expect(toast.warning).not.toHaveBeenCalled()
       })
     })
 

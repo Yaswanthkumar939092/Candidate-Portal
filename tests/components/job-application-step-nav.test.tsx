@@ -166,7 +166,7 @@ describe("JobApplicationStepNav", () => {
     expect(mockOnStepChange).toHaveBeenCalledWith(0)
   })
 
-  it("disables non-clickable future steps", () => {
+  it("does not disable future steps", () => {
     render(
       <JobApplicationStepNav
         currentStep={0}
@@ -176,8 +176,8 @@ describe("JobApplicationStepNav", () => {
     )
 
     const buttons = screen.getAllByRole("button")
-    // Future steps (index 2, 3) that are not completed should be disabled
-    expect(buttons[2]).toBeDisabled()
+    // Future steps should not be disabled
+    expect(buttons[2]).not.toBeDisabled()
   })
 
   it("allows clicking on past steps", async () => {
