@@ -2,14 +2,18 @@ export interface CustomJobOpening {
   name: string;
   job_title: string;
   designation: string;
+  designation_id: string;
   department: string;
+  department_id: string;
   location: string;
+  location_id: string;
   company: string;
+  company_id: string;
   status: string;
   posted_on: string;
   closes_on: string | null;
   description: string;
-  opening_code: string;
+  opening_code: string | null;
   employment_type?: string;
   custom_work_experience?: string;
   lower_range?: number | null;
@@ -34,9 +38,15 @@ export interface JobOpeningColumn {
 
 export interface ListOpeningsResponse {
   columns: JobOpeningColumn[];
+  search_filters: any[];
   openings: CustomJobOpening[];
-  total_pages?: number;
-  total?: number;
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    total_pages: number;
+    has_more: boolean;
+  };
 }
 
 export interface ApplicationField {

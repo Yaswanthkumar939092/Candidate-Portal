@@ -258,7 +258,15 @@ export function JobApplicationStep({
     const final: Record<string, unknown> = {};
 
     Object.entries(currentData).forEach(([key, value]) => {
-      final[key] = value === "" || value === undefined ? null : value;
+      let cleanValue = value === "" || value === undefined ? null : value;
+      if (
+        (key === "custom_current_ctc" || key === "custom_expected_ctc") &&
+        typeof cleanValue === "string"
+      ) {
+        const numericStr = cleanValue.replace(/,/g, "");
+        cleanValue = numericStr ? Number(numericStr) : null;
+      }
+      final[key] = cleanValue;
     });
 
     return {
@@ -273,7 +281,15 @@ export function JobApplicationStep({
     const formData: Record<string, unknown> = {};
 
     Object.entries(data).forEach(([key, value]) => {
-      formData[key] = value === "" || value === undefined ? null : value;
+      let cleanValue = value === "" || value === undefined ? null : value;
+      if (
+        (key === "custom_current_ctc" || key === "custom_expected_ctc") &&
+        typeof cleanValue === "string"
+      ) {
+        const numericStr = cleanValue.replace(/,/g, "");
+        cleanValue = numericStr ? Number(numericStr) : null;
+      }
+      formData[key] = cleanValue;
     });
 
     return {

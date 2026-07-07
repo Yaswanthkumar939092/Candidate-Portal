@@ -4,7 +4,7 @@ import { Check, Building2, MapPin, Clock, Briefcase, CalendarDays, User } from "
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import { cn, formatDateDDMMYYYY } from "@/lib/utils"
 import React from "react"
 import { ViewApplicationModal } from "./view-application-modal"
 
@@ -215,7 +215,7 @@ export function AppliedJobsTimeline({
                     Applied On
                   </span>
                   <span className="text-sm font-medium text-foreground">
-                    {app.applied_on || <span className="text-muted-foreground italic">—</span>}
+                    {app.applied_on ? formatDateDDMMYYYY(app.applied_on, "-") : <span className="text-muted-foreground italic">—</span>}
                   </span>
                 </div>
               </div>
@@ -267,7 +267,7 @@ export function AppliedJobsTimeline({
 
                           {isActive && flag.date ? (
                             <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                              {flag.date}
+                              {formatDateDDMMYYYY(flag.date, "-")}
                             </span>
                           ) : (
                             <span className="text-[10px] invisible">—</span>

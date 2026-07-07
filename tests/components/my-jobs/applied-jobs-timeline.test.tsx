@@ -115,12 +115,12 @@ describe("AppliedJobsTimeline", () => {
 
     it("displays stage dates for completed stages", () => {
       renderTimeline()
-      // "2024-01-15" appears twice (Applied On and Open flag)
-      // "2024-01-20" appears once (Screening flag)
-      // "2024-01-25" appears once (Interview flag)
-      expect(screen.getAllByText("2024-01-15").length).toBe(2)
-      expect(screen.getByText("2024-01-20")).toBeTruthy()
-      expect(screen.getByText("2024-01-25")).toBeTruthy()
+      // "15-01-2024" appears twice (Applied On and Open flag)
+      // "20-01-2024" appears once (Screening flag)
+      // "25-01-2024" appears once (Interview flag)
+      expect(screen.getAllByText("15-01-2024").length).toBe(2)
+      expect(screen.getByText("20-01-2024")).toBeTruthy()
+      expect(screen.getByText("25-01-2024")).toBeTruthy()
     })
 
     it("does not display date for future stages without date", () => {
@@ -132,8 +132,8 @@ describe("AppliedJobsTimeline", () => {
         ],
       }
       renderTimeline([app])
-      // "2024-01-15" appears twice
-      const dates = screen.getAllByText(/2024-01-\d+/)
+      // "15-01-2024" appears twice
+      const dates = screen.getAllByText(/\d{2}-\d{2}-\d{4}/)
       expect(dates.length).toBe(2)
     })
   })

@@ -22,6 +22,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { formatIndianFormat } from "@/components/ui/field-renderer";
 import {
   reviewDeclarationSchema,
   type ReviewDeclarationData,
@@ -101,8 +102,15 @@ export function JobApplicationReviewStep({
         const key = tab.tab.toLowerCase().replace(/\s+/g, "_");
         const data = stepData[key] || {};
         Object.entries(data).forEach(([fieldName, value]) => {
-          mergedData[fieldName] =
-            value === "" || value === undefined ? null : value;
+          let cleanValue = value === "" || value === undefined ? null : value;
+          if (
+            (fieldName === "custom_current_ctc" || fieldName === "custom_expected_ctc") &&
+            typeof cleanValue === "string"
+          ) {
+            const numericStr = cleanValue.replace(/,/g, "");
+            cleanValue = numericStr ? Number(numericStr) : null;
+          }
+          mergedData[fieldName] = cleanValue;
         });
       });
 
@@ -293,7 +301,9 @@ export function JobApplicationReviewStep({
                                   <span className="font-semibold text-foreground mr-1">
                                     {f.label}:
                                   </span>
-                                  {String(val)}
+                                  {f.fieldname === "custom_current_ctc" || f.fieldname === "custom_expected_ctc"
+                                    ? formatIndianFormat(val)
+                                    : String(val)}
                                 </p>
                               );
                             })}

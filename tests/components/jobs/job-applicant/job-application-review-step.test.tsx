@@ -464,4 +464,87 @@ describe("JobApplicationReviewStep", () => {
     expect(screen.getByText("SWE")).toBeTruthy();
     expect(screen.queryByText("Secret:")).toBeNull();
   });
+
+  it("renders formatted CTC fields and cleans them upon submission", async () => {
+    const ctcTabs = [
+      {
+        tab: "Salary Info",
+        sections: [
+          {
+            section: "Salary Details",
+            fields: [
+              {
+                fieldname: "custom_current_ctc",
+                label: "Current CTC",
+                fieldtype: "Currency",
+                hidden: 0,
+              },
+              {
+                fieldname: "custom_expected_ctc",
+                label: "Expected CTC",
+                fieldtype: "Currency",
+                hidden: 0,
+              },
+            ],
+          },
+        ],
+      },
+    ];
+
+    vi.mocked(useJobApp).mockReturnValue({
+      tabs: ctcTabs,
+      stepData: {
+        salary_info: {
+          custom_current_ctc: "12,00,000",
+          custom_expected_ctc: "15,00,000",
+        },
+      },
+    } as any);
+
+    render(
+      <JobApplicationReviewStep
+        completedSteps={new Set(["salary_info"])}
+        goToStep={mockGoToStep}
+        onPrev={mockOnPrev}
+        jobID="job-123"
+      />,
+    );
+
+    // Expand Salary Info section
+    const salaryTabHeader = screen.getByRole("button", {
+      name: /Salary Info/,
+    });
+    fireEvent.click(salaryTabHeader);
+
+    // Verify formatted values are displayed
+    expect(screen.getByText("Current CTC:")).toBeTruthy();
+    expect(screen.getByText("12,00,000")).toBeTruthy();
+    expect(screen.getByText("Expected CTC:")).toBeTruthy();
+    expect(screen.getByText("15,00,000")).toBeTruthy();
+
+    // Accept declaration
+    const checkbox = screen.getByRole("checkbox", {
+      name: /declaration/i,
+    });
+    fireEvent.click(checkbox);
+
+    // Submit
+    const submitBtn = screen.getByRole("button", {
+      name: "Submit Application",
+    });
+    fireEvent.click(submitBtn);
+
+    await waitFor(() => {
+      expect(mockCreateApplicantMutate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          job_opening: "job-123",
+          form_data: expect.objectContaining({
+            custom_current_ctc: 1200000,
+            custom_expected_ctc: 1500000,
+          }),
+        }),
+        expect.any(Object),
+      );
+    });
+  });
 });
