@@ -84,13 +84,13 @@ export function JobApplicationStepNav({
             const isCompleted = completedSteps.has(step.key);
             const isCurrent = index === currentStep;
             const isPast = index < currentStep;
-            const isClickable = isCompleted || isCurrent || isPast;
+            const isClickable = true;
 
             return (
               <button
                 key={step.key}
-                onClick={() => isClickable && onStepChange(index)}
-                disabled={!isClickable}
+                onClick={() => onStepChange(index)}
+                disabled={false}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors",
                   isClickable && "hover:bg-muted",
