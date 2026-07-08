@@ -64,10 +64,12 @@ export interface ApplicationField {
 }
 
 export interface SubmitApplicationPayload {
-  job_applicant_email: string;
+  job_applicant_email: string | null;
   job_opening: string;
   form_data: Record<string, unknown>;
   status?: string;
+  isCampus?: boolean;
+  campus_invite?: string | null;
 }
 
 export interface SubmitApplicationResponse {

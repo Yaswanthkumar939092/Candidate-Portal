@@ -23,6 +23,9 @@ vi.mock("next/navigation", () => ({
     prefetch: vi.fn(),
     refresh: vi.fn(),
   }),
+  useSearchParams: () => ({
+    get: vi.fn().mockReturnValue(null),
+  }),
 }));
 
 vi.mock("next/image", () => ({

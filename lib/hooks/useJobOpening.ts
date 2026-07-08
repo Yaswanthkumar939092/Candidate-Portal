@@ -1,16 +1,51 @@
  
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CustomJobOpening, SubmitApplicationPayload, SubmitApplicationResponse, ListOpeningsResponse } from "../../types/job";
+import { SubmitApplicationPayload, SubmitApplicationResponse, ListOpeningsResponse } from "../../types/job";
 import {
   JobOpeningService,
   draftJobApplicantService,
   jobApplicationService,
 } from "../services/jobOpeningService";
 
-export const useJobOpening = ({ page, limit, searchTerm, email, enabled }: { page: number; limit: number; searchTerm?: string; email?: string; enabled?: boolean }) => {
+export const useJobOpening = ({
+  page,
+  limit,
+  searchTerm,
+  email,
+  enabled,
+  campusInvite,
+}: {
+  page: number;
+  limit: number;
+  searchTerm?: string;
+  email?: string;
+  enabled?: boolean;
+  campusInvite?: string | null;
+}) => {
   return useQuery<ListOpeningsResponse>({
-    queryKey: ["job-opening", page, limit, searchTerm, email],
-    queryFn: () => JobOpeningService.getJobOpening(page, limit, searchTerm, email),
+    queryKey: ["job-opening", page, limit, searchTerm, email, campusInvite],
+    queryFn: async (): Promise<ListOpeningsResponse> => {
+      if (campusInvite) {
+        const response = await JobOpeningService.getCampusInviteOpenings(campusInvite, email);
+        const openings = (response?.data?.openings || response?.openings || []).map((o: any) => ({
+          ...o,
+          name: o.name || o.job_opening,
+        }));
+        return {
+          columns: [],
+          search_filters: [],
+          openings,
+          pagination: {
+            total: openings.length,
+            page: 1,
+            limit: openings.length || 10,
+            total_pages: 1,
+            has_more: false,
+          },
+        };
+      }
+      return JobOpeningService.getJobOpening(page, limit, searchTerm, email);
+    },
     enabled: enabled ?? true,
   });
 };
@@ -43,11 +78,11 @@ export const useDeleteDraftJobApplicant = () => {
   });
 };
 
-export function useJobApplicationForm(job_opening?: string, form_name?: string) {
+export function useJobApplicationForm(job_opening?: string, form_name?: string, isCampus?: boolean) {
   return useQuery({
-    queryKey: ["job-application-form", job_opening, form_name],
+    queryKey: ["job-application-form", job_opening, form_name, isCampus],
     queryFn: async () => {
-      const data = await jobApplicationService.getJobApplicationForm(job_opening, form_name);
+      const data = await jobApplicationService.getJobApplicationForm(job_opening, isCampus);
       return data ?? { fields: [] };
     },
   });

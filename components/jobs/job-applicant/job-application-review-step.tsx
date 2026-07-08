@@ -10,7 +10,7 @@ import {
   AlertCircle,
   Info,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useJobApp } from "@/lib/contexts/job-application-context";
 import { useAuth } from "@/lib/contexts/auth-context";
@@ -33,18 +33,22 @@ interface JobApplicationReviewStepProps {
   goToStep: (index: number) => void;
   onPrev: () => void;
   jobID: string;
+  onSubmitSuccess?: () => void;
 }
 
 export function JobApplicationReviewStep({
-  completedSteps,
+  completedSteps: _completedSteps,
   goToStep,
   onPrev,
   jobID,
+  onSubmitSuccess,
 }: JobApplicationReviewStepProps) {
   const { tabs, stepData } = useJobApp();
   const { user } = useAuth();
   const { mutate: createApplicant, isPending } = useCreateJobApplicant();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const campusInvite = searchParams.get("campus_invite");
   const userEmail = user?.email || user?.user_metadata?.email || "";
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
@@ -119,15 +123,20 @@ export function JobApplicationReviewStep({
         job_opening: jobID,
         form_data: {
           ...mergedData,
-          email_id: userEmail || null,
         },
         status: "Open",
+        isCampus: !!campusInvite,
+        campus_invite: campusInvite || null,
       };
 
       createApplicant(payload, {
         onSuccess: () => {
           toast.success("Application submitted successfully!");
-          router.push(`/open-jobs/${jobID}/apply-job/thank-you`);
+          if (onSubmitSuccess) {
+            onSubmitSuccess();
+          } else {
+            router.push(`/open-jobs/${jobID}/apply-job/thank-you`);
+          }
         },
         onError: (err: any) => {
           const errMsg = err?.message || "Submission failed. Please try again.";
@@ -161,7 +170,7 @@ export function JobApplicationReviewStep({
               </p>
               <div className="mt-1 flex flex-wrap gap-2">
                 {stepsWithMissingFields.map(
-                  ({ tab, originalIdx, missing }: { tab: any; originalIdx: number; missing: string[] }) => (
+                  ({ tab, originalIdx }: { tab: any; originalIdx: number }) => (
                     <button
                       key={tab.tab || `Step ${originalIdx + 1}`}
                       type="button"

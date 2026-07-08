@@ -57,6 +57,37 @@ describe("Frappe candidate auth", () => {
     )
   })
 
+  it("signs up through the recruitment Frappe API with candidateSource", async () => {
+    fetchMock.mockResolvedValueOnce(frappePayload({
+      status: "otp_required",
+      user: { name: "candidate@example.com", email: "candidate@example.com", full_name: "Candidate One" },
+      otp_log: "CAND-OTP-2026-00001",
+      delivery_status: "Sent",
+    }))
+
+    const result = await auth.signUp({
+      email: "candidate@example.com",
+      password: "Candidate@12345",
+      fullName: "Candidate One",
+      candidateSource: "Campus",
+    })
+
+    expect(result.status).toBe("otp_required")
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/backend/api/method/recruitment.api.candidate_auth.signup",
+      expect.objectContaining({
+        method: "POST",
+        credentials: "include",
+        body: JSON.stringify({
+          email: "candidate@example.com",
+          password: "Candidate@12345",
+          full_name: "Candidate One",
+          candidate_source: "Campus",
+        }),
+      }),
+    )
+  })
+
   it("verifies an OTP and returns a session-shaped user", async () => {
     fetchMock.mockResolvedValueOnce(frappePayload({
       status: "success",

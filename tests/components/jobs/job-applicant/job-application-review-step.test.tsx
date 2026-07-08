@@ -28,6 +28,9 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: mockPush,
   }),
+  useSearchParams: () => ({
+    get: vi.fn().mockReturnValue(null),
+  }),
 }));
 
 vi.mock("sonner", () => ({
@@ -310,7 +313,6 @@ describe("JobApplicationReviewStep", () => {
           form_data: expect.objectContaining({
             full_name: "John Doe",
             email: "john@example.com",
-            email_id: "applicant@example.com",
           }),
           status: "Open",
         }),

@@ -2,7 +2,6 @@ import {
   ApplicationField,
   SubmitApplicationPayload,
   SubmitApplicationResponse,
-  JobField,
   ListOpeningsResponse,
 } from "../../types/job";
 import { FrappeAPI } from "../frappe-api";
@@ -29,6 +28,22 @@ export const JobOpeningService = {
       params,
     );
     return response as ListOpeningsResponse;
+  },
+
+  getCampusInviteOpenings: async (
+    campusInvite: string,
+    email?: string,
+  ): Promise<any> => {
+    const params: Record<string, string> = {
+      campus_invite: campusInvite,
+    };
+    if (email) {
+      params.email = email;
+    }
+    return FrappeAPI.get(
+      "recruitment.api.channels.campus.get_invite_openings",
+      params,
+    );
   },
 };
 
@@ -64,6 +79,19 @@ export const jobApplicationService = {
   submitApplication: async (
     payload: SubmitApplicationPayload,
   ): Promise<SubmitApplicationResponse> => {
+    if (payload.isCampus && payload.campus_invite) {
+      const response = await FrappeAPI.post(
+        "recruitment.api.channels.campus.submit_invite_application",
+        {
+          campus_invite: payload.campus_invite,
+          job_opening: payload.job_opening,
+          email: payload.job_applicant_email,
+          form_data: payload.form_data,
+        },
+      );
+      return response as SubmitApplicationResponse;
+    }
+
     const response = await FrappeAPI.post(
       "recruitment.api.channels.careers.submit_application",
       payload as unknown as Record<string, unknown>,
@@ -71,18 +99,19 @@ export const jobApplicationService = {
     return response as SubmitApplicationResponse;
   },
 
-  // ✅ Fetch dynamic job application fields
   getJobApplicationForm: async (
     job_opening?: string,
-  ): Promise<{ fields: JobField[] }> => {
+    isCampus?: boolean,
+  ): Promise<any> => {
     try {
       const params: Record<string, string> = {};
       if (job_opening) params.opening = job_opening;
 
-      const res = await FrappeAPI.get(
-        "recruitment.api.channels.careers.get_application_fields",
-        params,
-      );
+      const endpoint = isCampus
+        ? "recruitment.api.channels.campus.get_application_fields"
+        : "recruitment.api.channels.careers.get_application_fields";
+
+      const res = await FrappeAPI.get(endpoint, params);
 
       const fields = (res || []).map((field: ApplicationField) => ({
         fieldname: field.reference_name,

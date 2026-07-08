@@ -8,6 +8,7 @@ export interface SignUpData {
   password: string;
   fullName?: string;
   mobileNo?: string;
+  candidateSource?: string;
 }
 
 export interface SignInData {
@@ -191,10 +192,10 @@ export function profileFromFrappeUser(user: FrappeAuthUser): Profile {
 }
 
 export const auth = {
-  signUp: async ({ email, password, fullName, mobileNo }: SignUpData) => {
+  signUp: async ({ email, password, fullName, mobileNo, candidateSource }: SignUpData) => {
     const data = await frappeMethod<{ status?: string; user: FrappeAuthUser; session_id?: string; otp_log?: string; delivery_status?: string }>(
       `${FRAPPE_AUTH_METHOD}.signup`,
-      { email, password, full_name: fullName, mobile_no: mobileNo },
+      { email, password, full_name: fullName, mobile_no: mobileNo, candidate_source: candidateSource },
     );
     const user = mapUser(data.user);
     const isSuccess = data.status === "success" || !!user;

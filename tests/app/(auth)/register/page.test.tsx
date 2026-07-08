@@ -5,6 +5,7 @@ import RegisterPage from "@/app/(auth)/register/page";
 
 // ─── Mocks ──────────────────────────────────────────────────────────
 const mockPush = vi.fn();
+const mockGet = vi.fn().mockReturnValue(null);
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -13,6 +14,9 @@ vi.mock("next/navigation", () => ({
     back: vi.fn(),
     prefetch: vi.fn(),
     refresh: vi.fn(),
+  }),
+  useSearchParams: () => ({
+    get: mockGet,
   }),
 }));
 
@@ -78,6 +82,7 @@ vi.mock("@/lib/hooks/useAuthSettings", () => ({
 
 beforeEach(() => {
   currentSettings = { ...defaultAuthSettings };
+  mockGet.mockReturnValue(null);
 });
 
 vi.mock("@/lib/hooks/useCandidateBranding", () => ({
@@ -449,6 +454,32 @@ describe("RegisterPage – Edge Cases", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Network Error")).toBeTruthy();
+    });
+  });
+
+  it("attaches candidateSource: 'Campus' when redirect query param matches /campus-apply", async () => {
+    mockGet.mockReturnValue("/campus-apply");
+    await renderRegisterPage();
+    await fillRegisterForm();
+    submitForm();
+
+    await waitFor(() => {
+      expect(mockSignUp).toHaveBeenCalledWith(expect.objectContaining({
+        candidateSource: "Campus",
+      }));
+    });
+  });
+
+  it("attaches candidateSource: 'Campus' when redirect query param has query parameters", async () => {
+    mockGet.mockReturnValue("/campus-apply?campus_invite=CINV-2026-0001&email=deepakrajput0006@gmail.com");
+    await renderRegisterPage();
+    await fillRegisterForm();
+    submitForm();
+
+    await waitFor(() => {
+      expect(mockSignUp).toHaveBeenCalledWith(expect.objectContaining({
+        candidateSource: "Campus",
+      }));
     });
   });
 });
