@@ -45,6 +45,18 @@ describe("JobOpening Services", () => {
         search_term: "engineering"
       });
     });
+
+    it("getCampusInviteOpenings calls FrappeAPI.get with campus_invite", async () => {
+      const mockRes = { campus_invite: "CINV-2026-0001", openings: [] };
+      (FrappeAPI.get as any).mockResolvedValue(mockRes);
+
+      const result = await JobOpeningService.getCampusInviteOpenings("CINV-2026-0001", "test@example.com");
+      expect(result).toEqual(mockRes);
+      expect(FrappeAPI.get).toHaveBeenCalledWith("recruitment.api.channels.campus.get_invite_openings", {
+        campus_invite: "CINV-2026-0001",
+        email: "test@example.com",
+      });
+    });
   });
 
   describe("jobApplicationService", () => {
@@ -64,9 +76,38 @@ describe("JobOpening Services", () => {
           phone_number: "+91-9000000000",
         }
       };
-      const result = await jobApplicationService.submitApplication(payload);
+      const result = await jobApplicationService.submitApplication(payload as any);
       expect(result).toEqual(mockRes);
       expect(FrappeAPI.post).toHaveBeenCalledWith("recruitment.api.channels.careers.submit_application", payload);
+    });
+
+    it("submitApplication calls submit_invite_application when isCampus is true", async () => {
+      const mockRes = {
+        status: "ok",
+        name: "HR-APP-2026-00123",
+        source: "Campus Invite"
+      };
+      (FrappeAPI.post as any).mockResolvedValue(mockRes);
+
+      const payload = {
+        job_applicant_email: "test@example.com",
+        job_opening: "HR-OPN-2026-0006",
+        form_data: {
+          applicant_name: "Aarav Sharma",
+        },
+        isCampus: true,
+        campus_invite: "CINV-2026-0001",
+      };
+      const result = await jobApplicationService.submitApplication(payload);
+      expect(result).toEqual(mockRes);
+      expect(FrappeAPI.post).toHaveBeenCalledWith("recruitment.api.channels.campus.submit_invite_application", {
+        campus_invite: "CINV-2026-0001",
+        job_opening: "HR-OPN-2026-0006",
+        email: "test@example.com",
+        form_data: {
+          applicant_name: "Aarav Sharma",
+        },
+      });
     });
   });
 
@@ -97,7 +138,7 @@ describe("JobOpening Services", () => {
         }
       ];
       (FrappeAPI.get as any).mockResolvedValue(mockRawFields);
-      const result = await jobApplicationService.getJobApplicationForm("job1", "test");
+      const result = await jobApplicationService.getJobApplicationForm("job1");
       expect(result.fields).toEqual([
         {
           fieldname: "f1",
@@ -111,6 +152,13 @@ describe("JobOpening Services", () => {
         }
       ]);
       expect(FrappeAPI.get).toHaveBeenCalledWith("recruitment.api.channels.careers.get_application_fields", {
+        opening: "job1"
+      });
+
+      // Test with isCampus = true
+      (FrappeAPI.get as any).mockResolvedValue(mockRawFields);
+      await jobApplicationService.getJobApplicationForm("job1", true);
+      expect(FrappeAPI.get).toHaveBeenCalledWith("recruitment.api.channels.campus.get_application_fields", {
         opening: "job1"
       });
 

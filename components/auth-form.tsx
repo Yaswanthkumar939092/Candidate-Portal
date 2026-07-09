@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useCandidateBranding } from "@/lib/hooks/useCandidateBranding";
 
 export interface AuthFormData {
@@ -61,6 +62,11 @@ export function AuthForm({
   defaultEmail,
 }: AuthFormProps) {
   const { data: branding } = useCandidateBranding();
+  const searchParams = useSearchParams();
+  const redirectParam = searchParams.get("redirect");
+  const redirectQuery = redirectParam ? `&redirect=${encodeURIComponent(redirectParam)}` : "";
+  const redirectQueryQuestion = redirectParam ? `?redirect=${encodeURIComponent(redirectParam)}` : "";
+
   const [formData, setFormData] = useState<AuthFormData>({
     email: defaultEmail || "",
     password: "",
@@ -569,7 +575,7 @@ export function AuthForm({
                   </label>
                 </div>
                 <Link
-                  href={`/verify-email?purpose=Password%20Reset${formData.email ? `&email=${encodeURIComponent(formData.email)}` : ""}`}
+                  href={`/verify-email?purpose=Password%20Reset${formData.email ? `&email=${encodeURIComponent(formData.email)}` : ""}${redirectQuery}`}
                   className="font-semibold text-[#2563EB] hover:text-[#1D4ED8] transition-colors"
                 >
                   Forgot password?
@@ -681,7 +687,7 @@ export function AuthForm({
                 isPasswordless ? (
                   <div>
                     <Link
-                      href="/login"
+                      href={`/login${redirectQueryQuestion}`}
                       className="font-semibold text-[#2563EB] hover:text-[#1D4ED8] transition-colors"
                     >
                       Back to login
@@ -693,7 +699,7 @@ export function AuthForm({
                       <div>
                         {"Don't have an account? "}
                         <Link
-                          href="/register"
+                          href={`/register${redirectQueryQuestion}`}
                           className="font-semibold text-[#2563EB] hover:text-[#1D4ED8] transition-colors"
                         >
                           Create account
@@ -715,7 +721,7 @@ export function AuthForm({
                 <div>
                   Already have an account?{" "}
                   <Link
-                    href="/login"
+                    href={`/login${redirectQueryQuestion}`}
                     className="font-semibold text-[#2563EB] hover:text-[#1D4ED8] transition-colors"
                   >
                     Sign in

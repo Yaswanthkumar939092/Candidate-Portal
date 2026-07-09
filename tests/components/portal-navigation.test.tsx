@@ -16,9 +16,10 @@ vi.mock("@/lib/contexts/theme-context")
 vi.mock("@/lib/hooks/useCandidateBranding")
 vi.mock("@/lib/hooks/useApplicantStatus")
 
+let mockPathname = "/dashboard"
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
-  usePathname: () => "/dashboard",
+  usePathname: () => mockPathname,
 }))
 
 vi.mock("lucide-react", async () => {
@@ -78,6 +79,7 @@ describe("PortalNavigation", () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    mockPathname = "/dashboard"
 
     vi.mocked(authContext.useAuth).mockReturnValue({
       user: mockUser,
@@ -403,5 +405,13 @@ describe("PortalNavigation", () => {
     expect(screen.queryByText("Open Jobs")).toBeNull()
     expect(screen.queryByText("My Jobs")).toBeNull()
     expect(screen.queryByRole("button", { name: /Toggle menu/i })).toBeNull()
+  })
+
+  it("disables brand logo redirect on /campus-apply", () => {
+    mockPathname = "/campus-apply"
+    render(<PortalNavigation />)
+    const logoImg = screen.getByAltText("Physics Wallah")
+    const link = logoImg.closest("a")
+    expect(link).toBeNull()
   })
 })

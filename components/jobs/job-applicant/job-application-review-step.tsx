@@ -10,7 +10,7 @@ import {
   AlertCircle,
   Info,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useJobApp } from "@/lib/contexts/job-application-context";
 import { useAuth } from "@/lib/contexts/auth-context";
@@ -33,21 +33,28 @@ interface JobApplicationReviewStepProps {
   goToStep: (index: number) => void;
   onPrev: () => void;
   jobID: string;
+  onSubmitSuccess?: () => void;
+  isCampus?: boolean;
 }
 
 export function JobApplicationReviewStep({
-  completedSteps,
+  completedSteps: _completedSteps,
   goToStep,
   onPrev,
   jobID,
+  onSubmitSuccess,
+  isCampus = false,
 }: JobApplicationReviewStepProps) {
   const { tabs, stepData } = useJobApp();
   const { user } = useAuth();
   const { mutate: createApplicant, isPending } = useCreateJobApplicant();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const campusInvite = searchParams.get("campus_invite");
   const userEmail = user?.email || user?.user_metadata?.email || "";
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const [showValidationErrors, setShowValidationErrors] = useState(false);
 
   const {
     handleSubmit,
@@ -89,6 +96,8 @@ export function JobApplicationReviewStep({
     })
     .filter(({ missing }) => missing.length > 0);
 
+  const shouldShowErrorBox = stepsWithMissingFields.length > 0 && (!isCampus || showValidationErrors);
+
   const toggleSection = (key: string) => {
     setExpandedSection(expandedSection === key ? null : key);
   };
@@ -119,15 +128,20 @@ export function JobApplicationReviewStep({
         job_opening: jobID,
         form_data: {
           ...mergedData,
-          email_id: userEmail || null,
         },
         status: "Open",
+        isCampus: !!campusInvite,
+        campus_invite: campusInvite || null,
       };
 
       createApplicant(payload, {
         onSuccess: () => {
           toast.success("Application submitted successfully!");
-          router.push(`/open-jobs/${jobID}/apply-job/thank-you`);
+          if (onSubmitSuccess) {
+            onSubmitSuccess();
+          } else {
+            router.push(`/open-jobs/${jobID}/apply-job/thank-you`);
+          }
         },
         onError: (err: any) => {
           const errMsg = err?.message || "Submission failed. Please try again.";
@@ -152,24 +166,28 @@ export function JobApplicationReviewStep({
         </h3>
         <Separator className="mt-2 mb-4" />
 
-        {stepsWithMissingFields.length > 0 && (
+        {!isCampus && shouldShowErrorBox && (
           <div className="mb-4 flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4">
             <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
             <div>
               <p className="text-sm font-medium text-destructive">
                 Please complete all required fields before submitting.
               </p>
-              <div className="mt-1 flex flex-wrap gap-2">
+              <div className="mt-2 flex flex-col gap-2">
                 {stepsWithMissingFields.map(
                   ({ tab, originalIdx, missing }: { tab: any; originalIdx: number; missing: string[] }) => (
-                    <button
-                      key={tab.tab || `Step ${originalIdx + 1}`}
-                      type="button"
-                      onClick={() => goToStep(originalIdx)}
-                      className="text-xs text-destructive underline hover:no-underline font-medium"
-                    >
-                      {tab.tab || `Step ${originalIdx + 1}`}
-                    </button>
+                    <div key={tab.tab || `Step ${originalIdx + 1}`} className="flex flex-col sm:flex-row sm:items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => goToStep(originalIdx)}
+                        className="text-xs text-destructive underline hover:no-underline font-bold text-left"
+                      >
+                        {tab.tab || `Step ${originalIdx + 1}`}
+                      </button>
+                      <span className="text-xs text-destructive/80 font-medium">
+                        : Missing: {missing.join(", ")}
+                      </span>
+                    </div>
                   ),
                 )}
               </div>
@@ -367,6 +385,35 @@ export function JobApplicationReviewStep({
             </p>
           )}
 
+          {isCampus && shouldShowErrorBox && (
+            <div className="mb-4 flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
+              <div>
+                <p className="text-sm font-medium text-destructive">
+                  Please complete all required fields before submitting.
+                </p>
+                <div className="mt-2 flex flex-col gap-2">
+                  {stepsWithMissingFields.map(
+                    ({ tab, originalIdx, missing }: { tab: any; originalIdx: number; missing: string[] }) => (
+                      <div key={tab.tab || `Step ${originalIdx + 1}`} className="flex flex-col sm:flex-row sm:items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => goToStep(originalIdx)}
+                          className="text-xs text-destructive underline hover:no-underline font-bold text-left"
+                        >
+                          {tab.tab || `Step ${originalIdx + 1}`}
+                        </button>
+                        <span className="text-xs text-destructive/80 font-medium">
+                          : Missing: {missing.join(", ")}
+                        </span>
+                      </div>
+                    ),
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {submitError && (
             <div className="flex items-center gap-2 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
               <AlertCircle className="h-4 w-4 shrink-0" />
@@ -387,7 +434,14 @@ export function JobApplicationReviewStep({
             </Button>
             <Button
               type="submit"
-              disabled={isPending || stepsWithMissingFields.length > 0}
+              disabled={isPending || (!isCampus && stepsWithMissingFields.length > 0)}
+              onClick={(e) => {
+                if (isCampus && stepsWithMissingFields.length > 0) {
+                  setShowValidationErrors(true);
+                  e.preventDefault();
+                  toast.error("Please complete all required fields before submitting.");
+                }
+              }}
             >
               {isPending ? "Submitting..." : "Submit Application"}
               <ChevronRight className="ml-1 h-4 w-4" />

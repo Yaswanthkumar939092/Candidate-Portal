@@ -1,17 +1,34 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AuthForm, AuthFormData } from "@/components/auth-form";
 import { auth } from "@/lib/auth";
 import { useAuthSettings } from "@/lib/hooks/useAuthSettings";
-import { MailCheck } from "lucide-react";
+import { MailCheck, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { surveyService } from "@/lib/services/survey";
 import { useAuth } from "@/lib/contexts/auth-context";
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-0 md:p-8">
+        <div className="flex flex-col items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="mt-4 text-sm text-[#64748B]">Loading...</p>
+        </div>
+      </div>
+    }>
+      <LoginFormContent />
+    </Suspense>
+  );
+}
+
+function LoginFormContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectParam = searchParams.get("redirect");
   const { refreshProfile } = useAuth();
   const { data: settings, isLoading: isSettingsLoading, error: settingsError } = useAuthSettings();
   const [isLoading, setIsLoading] = useState(false);
@@ -31,6 +48,8 @@ export default function LoginPage() {
       }
       if (response.survey_required) {
         router.push("/survey");
+      } else if (redirectParam) {
+        router.push(redirectParam);
       } else {
         router.push(response.redirect_url || "/dashboard");
       }
@@ -39,7 +58,7 @@ export default function LoginPage() {
       if (typeof window !== "undefined" && window.sessionStorage) {
         sessionStorage.setItem("showLoginToast", "true");
       }
-      router.push("/dashboard");
+      router.push(redirectParam || "/dashboard");
     }
   };
 
@@ -94,7 +113,8 @@ export default function LoginPage() {
       const msg = error instanceof Error ? error.message : "Failed to sign in";
       if (msg.includes("Please verify your email OTP before signing in.")) {
         toast.error(msg);
-        router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
+        const redirectSuffix = redirectParam ? `&redirect=${encodeURIComponent(redirectParam)}` : "";
+        router.push(`/verify-email?email=${encodeURIComponent(formData.email)}${redirectSuffix}`);
         return;
       }
       toast.error(msg);
@@ -168,7 +188,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-0 md:p-4 lg:p-8">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-0 md:p-4 lg:p-8 w-full">
       {isSettingsLoading ? (
         <AuthUnavailable title="Loading login" message="Checking candidate authentication settings." />
       ) : !settings ? (

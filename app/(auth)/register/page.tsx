@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AuthForm, AuthFormData } from "@/components/auth-form";
 import { auth } from "@/lib/auth";
 import { useAuthSettings } from "@/lib/hooks/useAuthSettings";
@@ -11,6 +12,25 @@ import { Label } from "@/components/ui/label";
 import { AlertTriangle, MailCheck, Loader2 } from "lucide-react";
 
 export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-0 md:p-8">
+        <div className="flex flex-col items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="mt-4 text-sm text-[#64748B]">Loading...</p>
+        </div>
+      </div>
+    }>
+      <RegisterContent />
+    </Suspense>
+  );
+}
+
+function RegisterContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectParam = searchParams.get("redirect");
+
   const { data: settings, isLoading: isSettingsLoading, error: settingsError } = useAuthSettings();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,6 +40,14 @@ export default function RegisterPage() {
   const displayError = settingsError
     ? (settingsError instanceof Error ? settingsError.message : "Failed to load auth settings")
     : error;
+
+  const handlePostRegistrationRouting = () => {
+    if (redirectParam) {
+      router.push(redirectParam);
+    } else {
+      router.push("/dashboard");
+    }
+  };
 
   const handleRegister = async (formData: AuthFormData) => {
     if (formData.password !== formData.confirmPassword) {
@@ -32,11 +60,15 @@ export default function RegisterPage() {
 
     try {
       const fullName = formData.fullName || `${formData.firstName} ${formData.lastName}`.trim();
+      const redirectPathname = redirectParam?.split("?")[0];
+      const isCampusApply = redirectPathname === "/campus-apply" || redirectPathname?.startsWith("/campus-apply/");
+      const candidateSource = isCampusApply ? "Campus" : undefined;
 
       const result = await auth.signUp({
         email: formData.email,
         password: formData.password,
         fullName: fullName || undefined,
+        candidateSource,
       });
 
       if (result.status === "otp_required") {
@@ -44,7 +76,7 @@ export default function RegisterPage() {
         return;
       }
 
-      redirectToDashboard();
+      handlePostRegistrationRouting();
     } catch (error) {
       console.error("Registration error:", error);
       setError(error instanceof Error ? error.message : "Failed to create account");
@@ -66,7 +98,7 @@ export default function RegisterPage() {
         purpose: "Signup",
         identifierType: "Email",
       });
-      redirectToDashboard();
+      handlePostRegistrationRouting();
     } catch (error) {
       console.error("OTP verification error:", error);
       setError(error instanceof Error ? error.message : "Failed to verify OTP");
@@ -76,7 +108,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-0 md:p-4 lg:p-8">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-0 md:p-4 lg:p-8 w-full">
       {displayError && (
         <div className="p-4">
           <Alert className="max-w-md mx-auto border-destructive/30 bg-destructive/10">
@@ -138,10 +170,6 @@ export default function RegisterPage() {
       )}
     </div>
   );
-}
-
-function redirectToDashboard() {
-  window.location.assign("/dashboard");
 }
 
 function AuthUnavailable({ title, message }: { title: string; message: string }) {

@@ -28,6 +28,7 @@ function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const purposeParam = searchParams.get("purpose");
   const emailParam = searchParams.get("email") || "";
+  const redirectParam = searchParams.get("redirect");
   const isPasswordReset = purposeParam === "Password Reset";
 
   const { data: settings, isLoading: isSettingsLoading, error: settingsError } = useAuthSettings();
@@ -117,7 +118,9 @@ function VerifyEmailContent() {
       setPendingOtpEmail(null);
       setOtp("");
       toast.success("Password resetted successfully please login!");
-      router.push("/login");
+      
+      const redirectSuffix = redirectParam ? `?redirect=${encodeURIComponent(redirectParam)}` : "";
+      router.push(`/login${redirectSuffix}`);
     } catch (error) {
       console.error("Set password error:", error);
       const msg = error instanceof Error ? error.message : "Failed to set password";
@@ -136,11 +139,12 @@ function VerifyEmailContent() {
   };
 
   const handleBackToLogin = () => {
-    router.push("/login");
+    const redirectSuffix = redirectParam ? `?redirect=${encodeURIComponent(redirectParam)}` : "";
+    router.push(`/login${redirectSuffix}`);
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-0 md:p-8">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-0 md:p-8 w-full">
       {isSettingsLoading ? (
         <div className="flex flex-col items-center justify-center py-12">
           <div className="w-8 h-8 border-4 border-[#2563EB] border-t-transparent rounded-full animate-spin"></div>

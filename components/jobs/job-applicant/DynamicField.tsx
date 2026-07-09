@@ -15,12 +15,11 @@ import {
   useCreateJobApplicant,
 } from "@/lib/hooks/useJobOpening";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { JobApplicationTableField } from "./ChildTable";
 import { useAuth } from "@/lib/contexts/auth-context";
 import {
   validateJobAppField,
-  validateJobAppFields,
 } from "@/lib/validation/job-application-validation";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -58,6 +57,7 @@ interface JobApplicationStepProps {
   onPrev: () => void;
   methods: any;
   className?: string;
+  isCampus?: boolean;
 }
 
 type OverrideComponentProps = {
@@ -134,10 +134,13 @@ export function JobApplicationStep({
   onPrev,
   methods,
   className,
+  isCampus = false,
 }: JobApplicationStepProps) {
-  const { stepData, setStepData, initializeAllStepsFromDraft } = useJobApp();
+  const { setStepData } = useJobApp();
   const { mutate: createApplicant, isPending } = useCreateJobApplicant();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const campusInvite = searchParams.get("campus_invite");
   const { user } = useAuth();
   const userEmail = user?.email || user?.user_metadata?.email || "";
 
@@ -162,10 +165,6 @@ export function JobApplicationStep({
     [tab]
   );
 
-  const allTabFieldNames = useMemo(
-    () => new Set(allTabFields.map((f) => f.fieldname)),
-    [allTabFields]
-  );
 
   // ── Reset manual errors when step changes ───────────────────────────────
   useEffect(() => {
@@ -254,28 +253,6 @@ export function JobApplicationStep({
       clearFieldError(fieldname);
     };
 
-  const buildFinalPayload = (currentData: Record<string, unknown>) => {
-    const final: Record<string, unknown> = {};
-
-    Object.entries(currentData).forEach(([key, value]) => {
-      let cleanValue = value === "" || value === undefined ? null : value;
-      if (
-        (key === "custom_current_ctc" || key === "custom_expected_ctc") &&
-        typeof cleanValue === "string"
-      ) {
-        const numericStr = cleanValue.replace(/,/g, "");
-        cleanValue = numericStr ? Number(numericStr) : null;
-      }
-      final[key] = cleanValue;
-    });
-
-    return {
-      ...final,
-      job_opening: jobID,
-      job_title: jobID,
-      email_id: userEmail || null,
-    };
-  };
 
   const buildSubmitPayload = (data: Record<string, unknown>, status: string) => {
     const formData: Record<string, unknown> = {};
@@ -297,9 +274,10 @@ export function JobApplicationStep({
       job_opening: jobID,
       form_data: {
         ...formData,
-        email_id: userEmail || null,
       },
       status,
+      isCampus: !!campusInvite,
+      campus_invite: campusInvite || null,
     };
   };
 
@@ -309,7 +287,7 @@ export function JobApplicationStep({
     // Optionally update context, but the form data itself is already centralized
     setStepData(stepKey, data);
 
-    if (!validateRequiredFields()) return;
+    if (!isCampus && !validateRequiredFields()) return;
 
     if (isLastStep) {
       const submitPayload = buildSubmitPayload(data, "Open");
@@ -476,14 +454,16 @@ export function JobApplicationStep({
         </Button>
 
         <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onDraftSave}
-            disabled={isPending}
-          >
-            Save Draft
-          </Button>
+          {!campusInvite && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onDraftSave}
+              disabled={isPending}
+            >
+              Save Draft
+            </Button>
+          )}
 
           <Button type="submit" disabled={isPending}>
             {isLastStep ? "Submit Application" : "Next Step"}
