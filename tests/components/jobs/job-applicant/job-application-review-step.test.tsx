@@ -549,4 +549,61 @@ describe("JobApplicationReviewStep", () => {
       );
     });
   });
+
+  it("does not show missing fields warning initially when isCampus=true, but shows it on submit click", async () => {
+    const requiredTabs = [
+      mockTabs[0],
+      {
+        ...mockTabs[1],
+        sections: [
+          {
+            ...mockTabs[1].sections[0],
+            fields: [
+              {
+                ...mockTabs[1].sections[0].fields[0],
+                reqd: 1,
+              },
+            ],
+          },
+        ],
+      },
+    ];
+
+    vi.mocked(useJobApp).mockReturnValue({
+      tabs: requiredTabs,
+      stepData: {
+        personal_info: { full_name: "John Doe", email: "john@example.com" },
+        work_history: {},
+      },
+    } as any);
+
+    const completedSteps = new Set(["personal_info"]);
+
+    render(
+      <JobApplicationReviewStep
+        completedSteps={completedSteps}
+        goToStep={mockGoToStep}
+        onPrev={mockOnPrev}
+        jobID="job-123"
+        isCampus={true}
+      />,
+    );
+
+    expect(
+      screen.queryByText("Please complete all required fields before submitting."),
+    ).toBeNull();
+
+    const submitBtn = screen.getByRole("button", {
+      name: "Submit Application",
+    });
+    expect(submitBtn.hasAttribute("disabled")).toBeFalsy();
+
+    fireEvent.click(submitBtn);
+
+    expect(
+      screen.getByText("Please complete all required fields before submitting."),
+    ).toBeTruthy();
+
+    expect(toast.error).toHaveBeenCalledWith("Please complete all required fields before submitting.");
+  });
 });

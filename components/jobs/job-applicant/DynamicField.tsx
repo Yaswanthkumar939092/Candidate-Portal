@@ -57,6 +57,7 @@ interface JobApplicationStepProps {
   onPrev: () => void;
   methods: any;
   className?: string;
+  isCampus?: boolean;
 }
 
 type OverrideComponentProps = {
@@ -133,6 +134,7 @@ export function JobApplicationStep({
   onPrev,
   methods,
   className,
+  isCampus = false,
 }: JobApplicationStepProps) {
   const { setStepData } = useJobApp();
   const { mutate: createApplicant, isPending } = useCreateJobApplicant();
@@ -285,7 +287,7 @@ export function JobApplicationStep({
     // Optionally update context, but the form data itself is already centralized
     setStepData(stepKey, data);
 
-    if (!validateRequiredFields()) return;
+    if (!isCampus && !validateRequiredFields()) return;
 
     if (isLastStep) {
       const submitPayload = buildSubmitPayload(data, "Open");

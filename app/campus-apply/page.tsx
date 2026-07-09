@@ -619,11 +619,6 @@ function CampusApplyWizardInner({
   const stepKey = currentTab?.tab.toLowerCase().replace(/\s+/g, "_") ?? "";
 
   const handleNext = () => {
-    const errors = validateCurrentStep();
-    if (Object.keys(errors).length > 0) {
-      toast.error(Object.values(errors)[0]);
-      return;
-    }
     setCurrentStep((p) => Math.min(p + 1, tabs.length));
   };
 
@@ -632,13 +627,6 @@ function CampusApplyWizardInner({
   };
 
   const handleStepClick = (nextIndex: number) => {
-    if (nextIndex > currentStep) {
-      const errors = validateCurrentStep();
-      if (Object.keys(errors).length > 0) {
-        toast.error(Object.values(errors)[0]);
-        return;
-      }
-    }
     setCurrentStep(nextIndex);
   };
 
@@ -726,6 +714,7 @@ function CampusApplyWizardInner({
               onPrev={handlePrev}
               jobID={selectedJobName}
               onSubmitSuccess={() => setIsSubmitted(true)}
+              isCampus={true}
             />
           ) : (
             <FormProvider {...methods}>
@@ -738,6 +727,7 @@ function CampusApplyWizardInner({
                 onNext={handleNext}
                 onPrev={handlePrev}
                 methods={methods}
+                isCampus={true}
               />
             </FormProvider>
           )}
