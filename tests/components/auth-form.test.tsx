@@ -4,6 +4,17 @@ import userEvent from "@testing-library/user-event";
 import { AuthForm } from "@/components/auth-form";
 
 // ─── Mocks ──────────────────────────────────────────────────────────
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+  }),
+  useSearchParams: () => ({
+    get: vi.fn().mockReturnValue(null),
+  }),
+}));
+
 vi.mock("next/image", () => ({
   __esModule: true,
   default: (props: Record<string, unknown>) => {

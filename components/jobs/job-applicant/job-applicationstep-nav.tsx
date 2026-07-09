@@ -11,6 +11,8 @@ interface JobApplicationStepNavProps {
   onStepChange: (index: number) => void;
   fieldProgress?: number;
   className?: string;
+  onBackClick?: () => void;
+  backLabel?: string;
 }
 
 /**
@@ -26,6 +28,8 @@ export function JobApplicationStepNav({
   onStepChange,
   fieldProgress,
   className,
+  onBackClick,
+  backLabel,
 }: JobApplicationStepNavProps) {
   const { tabs } = useJobApp();
 
@@ -83,7 +87,6 @@ export function JobApplicationStepNav({
           {steps.map((step, index) => {
             const isCompleted = completedSteps.has(step.key);
             const isCurrent = index === currentStep;
-            const isPast = index < currentStep;
             const isClickable = true;
 
             return (
@@ -137,13 +140,23 @@ export function JobApplicationStepNav({
 
       {/* Back to Jobs link */}
       <div className="border-t border-border px-5 py-4">
-        <Link
-          href="/open-jobs"
-          className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Jobs
-        </Link>
+        {onBackClick ? (
+          <button
+            onClick={onBackClick}
+            className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground cursor-pointer w-full text-left font-medium"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            {backLabel || "Back"}
+          </button>
+        ) : (
+          <Link
+            href="/open-jobs"
+            className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Jobs
+          </Link>
+        )}
       </div>
     </nav>
   );

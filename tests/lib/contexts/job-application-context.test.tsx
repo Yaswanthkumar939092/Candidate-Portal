@@ -107,7 +107,7 @@ describe('JobAppContext', () => {
           <div>Child</div>
         </JobAppProvider>
       )
-      expect(mockUseJobApplicationForm).toHaveBeenCalledWith("job123", "custom_form")
+      expect(mockUseJobApplicationForm).toHaveBeenCalledWith("job123", "custom_form", undefined)
     })
 
     it('provides tabs from transformFieldsToTabs result', () => {

@@ -8,13 +8,14 @@ import {
   MapPin,
   Clock,
   Briefcase,
+  Calendar,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { AppliedJobsTimeline } from "@/components/my-jobs/applied-jobs-timeline";
-import { cn } from "@/lib/utils";
+import { cn, formatDateDDMMYYYY } from "@/lib/utils";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { useApplicantStatus } from "@/lib/hooks/useApplicantStatus";
 import {
@@ -47,7 +48,8 @@ export default function MyJobsPage() {
 
   const { data: savedJobsResponse, isLoading: isLoadingSaved } =
     useGetSavedJobs(userEmail);
-  const savedJobsDetails = savedJobsResponse?.saved_job_openings || [];
+  const savedJobsDetails = savedJobsResponse?.openings || savedJobsResponse?.saved_job_openings || [];
+  const savedJobColumns = savedJobsResponse?.columns || [];
 
   const toggleSavedJobMutation = useToggleSavedJob();
 
@@ -250,81 +252,93 @@ export default function MyJobsPage() {
               description="No draft applications. When you start an application without finishing, it will appear here."
             />
           ) : (
-            drafts.map((draft: any) => (
-              <Card key={draft.name} className="shadow-sm">
-                <CardContent className="space-y-4">
-                  {/* Job info */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-1">
-                      <h3 className="text-lg font-semibold text-foreground">
-                        {draft.job_title || draft.job_opening}
-                      </h3>
-                      <div className="flex flex-wrap items-center gap-2">
-                        {draft.company && (
-                          <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
-                            <Building2 className="h-3 w-3" />
-                            {draft.company}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {drafts.map((draft: any) => (
+                <Card key={draft.name} className="transition-shadow hover:shadow-md h-full flex flex-col justify-between">
+                  <CardContent className="flex flex-col h-full space-y-3 pt-1">
+                    <div className="flex-1 space-y-3">
+                      {/* Job info */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="space-y-1">
+                          <h3 className="text-base font-semibold text-foreground">
+                            {draft.job_title || draft.job_opening}
+                          </h3>
+                          <div className="flex flex-wrap items-center gap-2">
+                            {draft.company && (
+                              <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+                                <Building2 className="h-3 w-3" />
+                                {draft.company}
+                              </span>
+                            )}
+                            {draft.location && (
+                              <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+                                <MapPin className="h-3 w-3" />
+                                {draft.location}
+                              </span>
+                            )}
+                            {draft.experience && (
+                              <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+                                <Clock className="h-3 w-3" />
+                                {draft.experience}
+                              </span>
+                            )}
+                            {draft.employment_type && (
+                              <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+                                <Briefcase className="h-3 w-3" />
+                                {draft.employment_type}
+                              </span>
+                            )}
+                            {(draft.creation || draft.modified || draft.date) && (
+                              <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+                                <Calendar className="h-3.5 w-3.5" />
+                                {formatDateDDMMYYYY(draft.creation || draft.modified || draft.date, "-")}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Progress bar */}
+                      <div className="space-y-1.5">
+                        <p className="text-xs font-medium text-muted-foreground">
+                          Application Progress
+                        </p>
+                        <div className="flex items-center gap-3">
+                          <Progress
+                            value={draft.progress?.percentage || 0}
+                            className="h-2 flex-1"
+                          />
+                          <span className="shrink-0 text-sm font-semibold text-primary">
+                            {draft.progress?.percentage || 0}%
                           </span>
-                        )}
-                        {draft.location && (
-                          <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
-                            <MapPin className="h-3 w-3" />
-                            {draft.location}
-                          </span>
-                        )}
-                        {draft.experience && (
-                          <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
-                            <Clock className="h-3 w-3" />
-                            {draft.experience}
-                          </span>
-                        )}
-                        {draft.employment_type && (
-                          <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
-                            <Briefcase className="h-3 w-3" />
-                            {draft.employment_type}
-                          </span>
-                        )}
+                        </div>
                       </div>
                     </div>
-                    {/* Progress percentage */}
-                    <span className="shrink-0 text-sm font-semibold text-primary">
-                      {draft.progress?.percentage || 0}%
-                    </span>
-                  </div>
 
-                  {/* Progress bar */}
-                  <div className="space-y-1.5">
-                    <p className="text-xs font-medium text-muted-foreground">
-                      Application Progress
-                    </p>
-                    <Progress
-                      value={draft.progress?.percentage || 0}
-                      className="h-2"
-                    />
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center justify-between">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDeleteDraft(draft.job_opening)}
-                      disabled={isDeletingDraft}
-                      className="gap-1 text-destructive hover:bg-destructive/10 hover:text-destructive focus:ring-destructive"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      Discard Draft
-                    </Button>
-                    <Button size="sm" className="gap-1" asChild>
-                      <Link href={`/open-jobs/${draft.job_opening}/apply-job`}>
-                        Resume Application
-                        <ChevronRight className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
+                    {/* Actions */}
+                    <div className="flex items-center justify-between pt-1">
+                      <Button
+                        variant="outline"
+                        size="icon-sm"
+                        onClick={() => handleDeleteDraft(draft.job_opening)}
+                        disabled={isDeletingDraft}
+                        className="text-destructive hover:bg-destructive/10 hover:text-destructive focus:ring-destructive"
+                        title="Discard Draft"
+                        aria-label="Discard Draft"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                      <Button size="sm" className="gap-1" asChild>
+                        <Link href={`/open-jobs/${draft.job_opening}/apply-job`}>
+                          Resume Application
+                          <ChevronRight className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           )}
         </div>
       )}
@@ -344,25 +358,24 @@ export default function MyJobsPage() {
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {savedJobsDetails.map((job: any) => {
-                const postedDate = job.posted_on
-                  ? new Date(job.posted_on).toLocaleDateString("en-IN", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
+                let columnFields: Array<{ label: string; value: string }> | undefined = undefined;
+                if (savedJobColumns && savedJobColumns.length > 0) {
+                  const displayColumns = savedJobColumns.filter(
+                    (col: any) => col.value_key !== "name" && col.value_key !== "job_title",
+                  );
+                  columnFields = displayColumns
+                    .map((col: any) => {
+                      let val = String(job[col.value_key] ?? "");
+                      if ((col.value_key === "posted_on" || col.value_key.toLowerCase().includes("date")) && val) {
+                        val = formatDateDDMMYYYY(val, "-");
+                      }
+                      return {
+                        label: col.label,
+                        value: val,
+                      };
                     })
-                  : "";
-                const columnFields = [
-                  { label: "Designation", value: job.designation },
-                  { label: "Department", value: job.department },
-                  { label: "Company", value: job.company },
-                  {
-                    label: "Location",
-                    value:
-                      job.location || job.custom_location || "Not specified",
-                  },
-                  { label: "Posted On", value: postedDate },
-                  { label: "Status", value: job.status },
-                ].filter((f) => f.value);
+                    .filter((f: any) => f.value !== "" && f.value !== "null");
+                }
                 const mappedJob = {
                   id: job.name,
                   title: job.job_title || job.designation,

@@ -11,7 +11,7 @@ import {
 } from "@/components/jobs/smart-career-match";
 import { JobMatchCard } from "@/components/jobs/job-match-card";
 import { JobDetailDialog } from "@/components/jobs/job-detail-dialog";
-import { cn } from "@/lib/utils";
+import { cn, formatDateDDMMYYYY } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useJobOpening } from "@/lib/hooks/useJobOpening";
 import { useToggleSavedJob } from "@/lib/hooks/useSavedJobs";
@@ -34,7 +34,31 @@ function Pagination({
   totalPages: number;
   onPageChange: (page: number) => void;
 }) {
-  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+  const MAX_VISIBLE = 5;
+
+  const getVisiblePages = (): (number | "ellipsis-start" | "ellipsis-end")[] => {
+    if (totalPages <= MAX_VISIBLE) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+
+    let start = Math.max(1, currentPage - Math.floor(MAX_VISIBLE / 2));
+    let end = start + MAX_VISIBLE - 1;
+
+    if (end > totalPages) {
+      end = totalPages;
+      start = end - MAX_VISIBLE + 1;
+    }
+
+    const pages: (number | "ellipsis-start" | "ellipsis-end")[] = [];
+
+    if (start > 1) pages.push("ellipsis-start");
+    for (let i = start; i <= end; i++) pages.push(i);
+    if (end < totalPages) pages.push("ellipsis-end");
+
+    return pages;
+  };
+
+  const visiblePages = getVisiblePages();
 
   return (
     <div className="flex items-center justify-center gap-1 flex-wrap">
@@ -46,20 +70,29 @@ function Pagination({
         ‹ Previous
       </button>
 
-      {pages.map((page) => (
-        <button
-          key={page}
-          onClick={() => onPageChange(page)}
-          className={cn(
-            "h-9 w-9 rounded-full  text-sm font-medium transition-colors",
-            page === currentPage
-              ? "bg-foreground text-background"
-              : "text-muted-foreground hover:bg-muted cursor-pointer",
-          )}
-        >
-          {page}
-        </button>
-      ))}
+      {visiblePages.map((page, idx) =>
+        typeof page === "string" ? (
+          <span
+            key={page}
+            className="h-9 w-9 flex items-center justify-center text-sm text-muted-foreground"
+          >
+            …
+          </span>
+        ) : (
+          <button
+            key={page}
+            onClick={() => onPageChange(page)}
+            className={cn(
+              "h-9 w-9 rounded-full text-sm font-medium transition-colors",
+              page === currentPage
+                ? "bg-foreground text-background"
+                : "text-muted-foreground hover:bg-muted cursor-pointer",
+            )}
+          >
+            {page}
+          </button>
+        ),
+      )}
 
       <button
         onClick={() => onPageChange(currentPage + 1)}
@@ -200,10 +233,16 @@ export default function OpenJobsPage() {
     const list = Array.isArray(jobOpenings) ? jobOpenings : [];
     list.forEach((opening: any) => {
       const fields = displayColumns
-        .map((col) => ({
-          label: col.label,
-          value: String(opening[col.value_key] ?? ""),
-        }))
+        .map((col) => {
+          let val = String(opening[col.value_key] ?? "");
+          if ((col.value_key === "posted_on" || col.value_key.toLowerCase().includes("date")) && val) {
+            val = formatDateDDMMYYYY(val, "-");
+          }
+          return {
+            label: col.label,
+            value: val,
+          };
+        })
         .filter((f) => f.value !== "" && f.value !== "null");
       map.set(opening.name, fields);
     });
@@ -220,9 +259,7 @@ export default function OpenJobsPage() {
   };
 
   // Total pages from API response
-  // Adjust the key (total_pages / pageCount / etc.) to match your API shape
-  const totalPages =
-    mappedJobs.length < JOBS_PER_PAGE ? currentPage : currentPage + 1;
+  const totalPages = jobOpeningsResponse?.pagination?.total_pages ?? 1;
 
   // 🔍 CLIENT-SIDE FILTER — search is now server-side, no local filtering needed
   const filteredJobs = useMemo(() => {
@@ -337,7 +374,7 @@ export default function OpenJobsPage() {
               </div>
 
               {/* PAGINATION */}
-              {totalPages > 0 && (
+              {totalPages > 1 && (
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}

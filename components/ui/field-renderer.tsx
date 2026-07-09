@@ -956,6 +956,30 @@ export interface DynamicFieldRendererProps<T extends FormField> {
   document?: Record<string, unknown>;
 }
 
+export function formatIndianFormat(value: unknown): string {
+  if (value === null || value === undefined || value === "") return "";
+  const str = String(value);
+  // Clean all characters except digits and decimal point
+  const clean = str.replace(/[^0-9.]/g, "");
+  if (!clean) return "";
+
+  const parts = clean.split(".");
+  const integerPart = parts[0];
+  const decimalPart = parts.length > 1 ? parts.slice(1).join("") : "";
+
+  let lastThree = integerPart.substring(integerPart.length - 3);
+  const otherNumbers = integerPart.substring(0, integerPart.length - 3);
+  if (otherNumbers !== "") {
+    lastThree = "," + lastThree;
+  }
+  const formattedInteger =
+    otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + lastThree;
+
+  return clean.includes(".")
+    ? `${formattedInteger}.${decimalPart}`
+    : formattedInteger;
+}
+
 export function DynamicFieldRenderer<T extends FormField>({
   field,
   value,
@@ -987,7 +1011,39 @@ export function DynamicFieldRenderer<T extends FormField>({
 
   let element: React.ReactNode;
 
-  if (!fieldConfig) {
+  const isCtcField = field.fieldname === "custom_current_ctc" || field.fieldname === "custom_expected_ctc";
+
+  if (isCtcField) {
+    const baseClass = getFieldClass(fieldForRender, value, error, disabled);
+    element = (
+      <div className="space-y-1.5">
+        <Label className="text-sm font-medium text-foreground">
+          {fieldForRender.label}{" "}
+          {required && (
+            <span className="text-destructive">*</span>
+          )}
+        </Label>
+        <div className="relative">
+          <Input
+            type="text"
+            value={formatIndianFormat(value)}
+            onChange={(e) => {
+              const clean = e.target.value.replace(/[^0-9.]/g, "");
+              const parts = clean.split(".");
+              const cleaned = parts.length > 1 ? `${parts[0]}.${parts.slice(1).join("")}` : clean;
+              onChange(cleaned);
+            }}
+            onBlur={onBlur}
+            placeholder={fieldForRender.label}
+            disabled={disabled || isReadOnly}
+            className={baseClass}
+          />
+          <FieldStatusTooltip field={fieldForRender} value={value} error={error} disabled={disabled} />
+        </div>
+        {error && <p className="text-xs text-destructive">{error}</p>}
+      </div>
+    );
+  } else if (!fieldConfig) {
     element = (
       <div className="space-y-1.5">
         <Label className="text-sm font-medium text-foreground">

@@ -17,7 +17,10 @@ import React from "react";
 
 // Mock services
 vi.mock("@/lib/services/jobOpeningService", () => ({
-  JobOpeningService: { getJobOpening: vi.fn() },
+  JobOpeningService: { 
+    getJobOpening: vi.fn(),
+    getCampusInviteOpenings: vi.fn(),
+  },
   jobApplicationService: { submitApplication: vi.fn(), getJobApplicationForm: vi.fn() },
   draftJobApplicantService: { 
     getAllDrafts: vi.fn(),
@@ -68,6 +71,48 @@ describe("useJobOpening Hooks", () => {
     expect(JobOpeningService.getJobOpening).toHaveBeenCalledWith(1, 10, "developer", undefined);
   });
 
+  it("useJobOpening fetches campus invite openings correctly and maps job_opening to name", async () => {
+    const mockRes = {
+      success: true,
+      data: {
+        campus_invite: "CINV-2026-0001",
+        openings: [
+          {
+            job_opening: "JOB-OPENING-0007",
+            job_title: "Software Engineer",
+          },
+        ],
+      },
+    };
+    (JobOpeningService.getCampusInviteOpenings as any).mockResolvedValue(mockRes);
+
+    const { result } = renderHook(
+      () => useJobOpening({ page: 1, limit: 10, campusInvite: "CINV-2026-0001", email: "test@test.com" }),
+      { wrapper }
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toEqual({
+      columns: [],
+      search_filters: [],
+      openings: [
+        {
+          job_opening: "JOB-OPENING-0007",
+          job_title: "Software Engineer",
+          name: "JOB-OPENING-0007",
+        },
+      ],
+      pagination: {
+        total: 1,
+        page: 1,
+        limit: 1,
+        total_pages: 1,
+        has_more: false,
+      },
+    });
+    expect(JobOpeningService.getCampusInviteOpenings).toHaveBeenCalledWith("CINV-2026-0001", "test@test.com");
+  });
+
   it("useCreateJobApplicant calls service on mutate", async () => {
     const mockResponse = {
       status: "ok",
@@ -77,7 +122,7 @@ describe("useJobOpening Hooks", () => {
     (jobApplicationService.submitApplication as any).mockResolvedValue(mockResponse);
     const { result } = renderHook(() => useCreateJobApplicant(), { wrapper });
 
-    result.current.mutate({ opening: "job1", data: { name: "John" } });
+    result.current.mutate({ opening: "job1", data: { name: "John" } } as any);
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(vi.mocked(jobApplicationService.submitApplication).mock.calls[0][0]).toEqual({
       opening: "job1",
@@ -103,7 +148,18 @@ describe("useJobOpening Hooks", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual(mockForm);
-    expect(jobApplicationService.getJobApplicationForm).toHaveBeenCalledWith("job1", "test");
+    expect(jobApplicationService.getJobApplicationForm).toHaveBeenCalledWith("job1", undefined);
+  });
+
+  it("useJobApplicationForm fetches form correctly with isCampus = true", async () => {
+    const mockForm = { fields: [{ label: "Name" }] };
+    (jobApplicationService.getJobApplicationForm as any).mockResolvedValue(mockForm);
+
+    const { result } = renderHook(() => useJobApplicationForm("job1", "test", true), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toEqual(mockForm);
+    expect(jobApplicationService.getJobApplicationForm).toHaveBeenCalledWith("job1", true);
   });
 
   describe("Mutation Callbacks", () => {

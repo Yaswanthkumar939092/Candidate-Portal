@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, waitFor, fireEvent } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { useForm, FormProvider } from "react-hook-form"
-import { DynamicFieldRenderer, FormField } from "@/components/ui/field-renderer"
+import { DynamicFieldRenderer, FormField, formatIndianFormat } from "@/components/ui/field-renderer"
 
 vi.mock("@/lib/frappe-api", () => ({
   FrappeAPI: {
@@ -1401,6 +1401,43 @@ describe("DynamicFieldRenderer", () => {
       const englishChip = screen.getByRole("button", { name: "English" });
       await user.click(englishChip);
       expect(onChange).toHaveBeenCalledWith("");
+    });
+  });
+
+  describe("CTC Formatting and Indian format comma separation", () => {
+    it("formats numbers to Indian format correctly", () => {
+      expect(formatIndianFormat(1000)).toBe("1,000");
+      expect(formatIndianFormat("10000")).toBe("10,000");
+      expect(formatIndianFormat(100000)).toBe("1,00,000");
+      expect(formatIndianFormat("1000000")).toBe("10,00,000");
+      expect(formatIndianFormat("12345678")).toBe("1,23,45,678");
+      expect(formatIndianFormat("12345678.90")).toBe("1,23,45,678.90");
+      expect(formatIndianFormat("")).toBe("");
+      expect(formatIndianFormat(null)).toBe("");
+    });
+
+    it("renders CTC fields using formatted value and onChange cleans formatting", async () => {
+      const field: FormField = {
+        fieldname: "custom_current_ctc",
+        label: "Current CTC",
+        fieldtype: "Currency",
+      };
+      const onChange = vi.fn();
+
+      render(
+        <DynamicFieldRenderer
+          field={field}
+          value="1200000"
+          onChange={onChange}
+        />
+      );
+
+      const input = screen.getByPlaceholderText("Current CTC") as HTMLInputElement;
+      expect(input).toBeTruthy();
+      expect(input.value).toBe("12,00,000");
+
+      fireEvent.change(input, { target: { value: "15,00,000" } });
+      expect(onChange).toHaveBeenCalledWith("1500000");
     });
   });
 });
