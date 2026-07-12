@@ -6,7 +6,9 @@ import {
   useJobOfferPdf,
   useJobOfferStatus,
   useRejectionReasons,
-  useUpdateJobOfferStatus
+  useUpdateJobOfferStatus,
+  useConsentForm,
+  useSubmitConsent
 } from "@/lib/hooks/useJobOffer";
 import { jobOfferService } from "@/lib/services/jobOffer";
 import React from "react";
@@ -19,6 +21,8 @@ vi.mock("@/lib/services/jobOffer", () => ({
     getJobOfferStatus: vi.fn(),
     getRejectionReasons: vi.fn(),
     updateJobOfferStatus: vi.fn(),
+    getConsentForm: vi.fn(),
+    submitConsent: vi.fn(),
   },
 }));
 
@@ -55,7 +59,25 @@ describe("useJobOffer Hooks", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual(mockData);
-    expect(jobOfferService.getJobOfferSummary).toHaveBeenCalledWith("test@example.com");
+    expect(jobOfferService.getJobOfferSummary).toHaveBeenCalledWith("test@example.com", undefined);
+  });
+
+  it("useJobOfferSummary hook passes token to the service", async () => {
+    const mockData = {
+      applicant_name: "Test User",
+      designation: "Software Engineer",
+      duration_display: "6 Months",
+      expected_doj_display: "2026-05-01",
+      stipend_display: "₹50,000",
+      expiry_display: "2 Days"
+    };
+    vi.mocked(jobOfferService.getJobOfferSummary).mockResolvedValue(mockData);
+
+    const { result } = renderHook(() => useJobOfferSummary("test@example.com", true, "my-token"), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toEqual(mockData);
+    expect(jobOfferService.getJobOfferSummary).toHaveBeenCalledWith("test@example.com", "my-token");
   });
 
   it("useJobOfferStatus fetches data correctly", async () => {
@@ -66,6 +88,18 @@ describe("useJobOffer Hooks", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual(mockData);
+    expect(jobOfferService.getJobOfferStatus).toHaveBeenCalledWith("test@example.com", undefined);
+  });
+
+  it("useJobOfferStatus hook passes token to the service", async () => {
+    const mockData = { status: "Awaiting Response" };
+    vi.mocked(jobOfferService.getJobOfferStatus).mockResolvedValue(mockData);
+
+    const { result } = renderHook(() => useJobOfferStatus("test@example.com", "my-token"), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toEqual(mockData);
+    expect(jobOfferService.getJobOfferStatus).toHaveBeenCalledWith("test@example.com", "my-token");
   });
 
   it("useJobOfferPdf returns a URL string when appl and enabled are set", () => {
@@ -79,6 +113,20 @@ describe("useJobOffer Hooks", () => {
     expect(result.current.pdfUrl).toContain("download_job_offer_pdf");
     expect(result.current.isLoading).toBe(false);
     expect(result.current.error).toBeNull();
+    expect(jobOfferService.getJobOfferPdfUrl).toHaveBeenCalledWith("test@example.com", undefined);
+  });
+
+  it("useJobOfferPdf forwards the token parameter when provided", () => {
+    vi.mocked(jobOfferService.getJobOfferPdfUrl).mockReturnValue("https://frappe.example.com/api/method/recruitment.job_offer_utils.download_job_offer_pdf?appl=test%40example.com&token=my-token");
+
+    const { result } = renderHook(
+      () => useJobOfferPdf("test@example.com", true, "my-token"),
+      { wrapper }
+    );
+
+    expect(result.current.pdfUrl).toContain("download_job_offer_pdf");
+    expect(result.current.pdfUrl).toContain("token=my-token");
+    expect(jobOfferService.getJobOfferPdfUrl).toHaveBeenCalledWith("test@example.com", "my-token");
   });
 
   it("useJobOfferPdf returns null when disabled", () => {
@@ -101,8 +149,9 @@ describe("useJobOffer Hooks", () => {
     expect(result.current.data).toEqual(mockData);
   });
 
-  it("useUpdateJobOfferStatus calls service and invalidates queries", async () => {
+  it("useUpdateJobOfferStatus calls service and updates cache directly", async () => {
     vi.mocked(jobOfferService.updateJobOfferStatus).mockResolvedValue({ jo_id: "test-id", webform: "" });
+    const setQueryDataSpy = vi.spyOn(queryClient, "setQueryData");
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
 
     const { result } = renderHook(() => useUpdateJobOfferStatus(), { wrapper });
@@ -116,8 +165,34 @@ describe("useJobOffer Hooks", () => {
       }),
       expect.anything()
     );
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["jobOfferSummary", "test@example.com"] });
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["jobOfferStatus", "test@example.com"] });
+    expect(setQueryDataSpy).toHaveBeenCalledWith(
+      ["jobOfferStatus", "test@example.com", undefined],
+      { status: "Accepted" }
+    );
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["dashboard"] });
+  });
+
+  it("useConsentForm fetches data correctly", async () => {
+    const mockData = { html: "<div>Consent Form</div>" } as any;
+    vi.mocked(jobOfferService.getConsentForm).mockResolvedValue(mockData);
+
+    const { result } = renderHook(() => useConsentForm("test@example.com", "my-token"), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toEqual(mockData);
+    expect(jobOfferService.getConsentForm).toHaveBeenCalledWith("test@example.com", "my-token");
+  });
+
+  it("useSubmitConsent calls service method on mutateAsync", async () => {
+    const mockRes = { success: true };
+    vi.mocked(jobOfferService.submitConsent).mockResolvedValue(mockRes);
+
+    const { result } = renderHook(() => useSubmitConsent(), { wrapper });
+
+    const payload = { appl: "test@example.com", token: "my-token", consented: true };
+    const response = await result.current.mutateAsync(payload);
+
+    expect(response).toEqual(mockRes);
+    expect(jobOfferService.submitConsent).toHaveBeenCalledWith(payload, expect.anything());
   });
 });

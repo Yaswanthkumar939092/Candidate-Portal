@@ -1,5 +1,6 @@
 import { FrappeAPI } from "../frappe-api";
 import { frappeApiBase } from "../frappe-base";
+import { ConsentFormResponse } from "@/types/consent";
 
 export interface JobOfferSummary {
   expiry_display: string | null;
@@ -25,11 +26,13 @@ export interface UpdateJobOfferStatusParams {
   appl: string;
   reason?: string;
   message?: string;
+  token?: string;
 }
 
 export interface UpdateJobOfferStatusResponse {
   jo_id: string;
   webform: string;
+  dpdp_consent_required?: boolean;
 }
 
 export interface RejectionReason {
@@ -38,11 +41,13 @@ export interface RejectionReason {
 }
 
 export const jobOfferService = {
-  getJobOfferSummary: async (appl: string): Promise<JobOfferSummary> => {
+  getJobOfferSummary: async (appl: string, token?: string): Promise<JobOfferSummary> => {
     try {
-      const result = await FrappeAPI.get("recruitment.job_offer_utils.get_job_offer_summary", {
-        appl,
-      });
+      const params: Record<string, string> = { appl };
+      if (token) {
+        params.token = token;
+      }
+      const result = await FrappeAPI.get("recruitment.job_offer_utils.get_job_offer_summary", params);
       return result;
     } catch (error) {
       console.error("Failed to fetch job offer summary:", error);
@@ -70,8 +75,12 @@ export const jobOfferService = {
     }
   },
 
-  getJobOfferPdfUrl: (appl: string): string => {
-    const params = new URLSearchParams({ appl }).toString();
+  getJobOfferPdfUrl: (appl: string, token?: string): string => {
+    const paramsObj: Record<string, string> = { appl };
+    if (token) {
+      paramsObj.token = token;
+    }
+    const params = new URLSearchParams(paramsObj).toString();
     // Same-origin proxy in the browser so the PDF request carries the
     // first-party session cookie (iOS Safari ITP-safe).
     return `${frappeApiBase()}/api/method/recruitment.job_offer_utils.download_job_offer_pdf?${params}`;
@@ -92,14 +101,45 @@ export const jobOfferService = {
     }
   },
 
-  getJobOfferStatus: async (appl: string): Promise<{ status: string }> => {
+  getJobOfferStatus: async (appl: string, token?: string): Promise<{ status: string }> => {
     try {
-      const result = await FrappeAPI.get("recruitment.job_offer_utils.get_job_offer_status", {
-        appl,
-      });
+      const params: Record<string, string> = { appl };
+      if (token) {
+        params.token = token;
+      }
+      const result = await FrappeAPI.get("recruitment.job_offer_utils.get_job_offer_status", params);
       return result;
     } catch (error) {
       console.error("Failed to fetch job offer status:", error);
+      throw error;
+    }
+  },
+
+  getConsentForm: async (appl: string, token: string): Promise<ConsentFormResponse> => {
+    try {
+      const result = await FrappeAPI.get(
+        "recruitment.recruitment.doctype.dpdp_act_settings.dpdp_act_settings.get_consent_form",
+        {
+          appl,
+          token,
+        }
+      );
+      return result;
+    } catch (error) {
+      console.error("Failed to fetch consent form:", error);
+      throw error;
+    }
+  },
+
+  submitConsent: async (payload: Record<string, unknown>): Promise<any> => {
+    try {
+      const result = await FrappeAPI.post(
+        "recruitment.dpdp_consent.submit_dpdp_consent",
+        payload
+      );
+      return result;
+    } catch (error) {
+      console.error("Failed to submit consent:", error);
       throw error;
     }
   },

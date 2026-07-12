@@ -186,9 +186,28 @@ describe("JobOfferPage", () => {
 
   it("uses applicant email from search params if available", () => {
     const paramEmail = "param@example.com";
-    mockGet.mockReturnValue(paramEmail);
+    mockGet.mockImplementation((key: string) => {
+      if (key === "appl") return paramEmail;
+      return null;
+    });
     render(<JobOfferPage />);
-    expect(mockUseJobOfferStatus).toHaveBeenCalledWith(paramEmail);
+    expect(mockUseJobOfferStatus).toHaveBeenCalledWith(paramEmail, undefined);
+    expect(mockUseJobOfferSummary).toHaveBeenCalledWith(paramEmail, true, undefined);
+    expect(mockUseJobOfferPdf).toHaveBeenCalledWith(paramEmail, true, undefined);
+  });
+
+  it("uses token from search params if available", () => {
+    const paramEmail = "param@example.com";
+    const token = "my-token-123";
+    mockGet.mockImplementation((key: string) => {
+      if (key === "appl") return paramEmail;
+      if (key === "token") return token;
+      return null;
+    });
+    render(<JobOfferPage />);
+    expect(mockUseJobOfferStatus).toHaveBeenCalledWith(paramEmail, token);
+    expect(mockUseJobOfferSummary).toHaveBeenCalledWith(paramEmail, true, token);
+    expect(mockUseJobOfferPdf).toHaveBeenCalledWith(paramEmail, true, token);
   });
 
   it("checks terms and conditions and allows accepting offer", async () => {
@@ -395,5 +414,65 @@ describe("JobOfferPage", () => {
     const retryBtn = screen.getByRole("button", { name: /Retry/i });
     fireEvent.click(retryBtn);
     expect(window.location.reload).toHaveBeenCalled();
+  });
+
+  it("includes token in updateStatus call if token query param is present", async () => {
+    const paramEmail = "param@example.com";
+    const token = "my-token-123";
+    mockGet.mockImplementation((key: string) => {
+      if (key === "appl") return paramEmail;
+      if (key === "token") return token;
+      return null;
+    });
+
+    const mutateAsync = vi.fn().mockResolvedValue({});
+    mockUseUpdateJobOfferStatus.mockReturnValue({ mutateAsync });
+
+    render(<JobOfferPage />);
+
+    const checkbox = screen.getByRole("checkbox");
+    fireEvent.click(checkbox);
+
+    const acceptBtn = screen.getByRole("button", { name: /Accept Offer/i });
+    fireEvent.click(acceptBtn);
+
+    await waitFor(() => {
+      expect(mutateAsync).toHaveBeenCalledWith({
+        status: "Accepted",
+        appl: paramEmail,
+        token: token,
+      });
+    });
+  });
+
+  it("redirects to consent page if dpdp_consent_required is true", async () => {
+    const paramEmail = "param@example.com";
+    const token = "my-token-123";
+    mockGet.mockImplementation((key: string) => {
+      if (key === "appl") return paramEmail;
+      if (key === "token") return token;
+      return null;
+    });
+
+    const mutateAsync = vi.fn().mockResolvedValue({
+      jo_id: "JO1",
+      webform: "",
+      dpdp_consent_required: true,
+    });
+    mockUseUpdateJobOfferStatus.mockReturnValue({ mutateAsync });
+
+    render(<JobOfferPage />);
+
+    const checkbox = screen.getByRole("checkbox");
+    fireEvent.click(checkbox);
+
+    const acceptBtn = screen.getByRole("button", { name: /Accept Offer/i });
+    fireEvent.click(acceptBtn);
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith(
+        expect.stringMatching(/\/job_offer\/consent\?appl=param%40example.com&token=my-token-123/)
+      );
+    });
   });
 });

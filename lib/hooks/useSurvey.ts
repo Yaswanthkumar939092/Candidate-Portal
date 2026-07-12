@@ -6,7 +6,7 @@ export function useSurvey() {
   return useQuery<PostLoginRouteResponse>({
     queryKey: ["post-login-route"],
     queryFn: () => surveyService.getPostLoginRoute(),
-    staleTime: 0,
+    staleTime: 1000 * 60 * 10, // 10 minutes
   });
 }
 
