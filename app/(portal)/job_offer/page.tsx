@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState, Suspense, useEffect } from "react";
-import NextImage from "next/image";
-import { Loader2, AlertCircle, LogOut, ClipboardList } from "lucide-react";
+import { Loader2, AlertCircle, LogOut, ClipboardList, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
@@ -13,7 +12,6 @@ import {
   useRejectionReasons,
 } from "@/lib/hooks/useJobOffer";
 import { useCurrentUser } from "@/lib/hooks/useUser";
-import { useCompanyLogo } from "@/lib/hooks/useCompanyLogo";
 import PdfViewer from "./PdfViewer";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
@@ -58,6 +56,7 @@ function JobOfferContent() {
   const { userEmail, isLoading: isUserLoading } = useCurrentUser();
   const searchParams = useSearchParams();
   const applParam = searchParams.get("appl");
+  const tokenParam = searchParams.get("token") || undefined;
 
   // Use param if available, else fallback to userEmail
   const applicantEmail = applParam || userEmail || "";
@@ -67,7 +66,7 @@ function JobOfferContent() {
     isLoading: isStatusLoading,
     isError: isStatusError,
     error: statusError,
-  } = useJobOfferStatus(applicantEmail);
+  } = useJobOfferStatus(applicantEmail, tokenParam);
   const statusNormalized = statusData?.status?.toLowerCase();
 
   const [gameState, setGameState] = useState<
@@ -82,20 +81,23 @@ function JobOfferContent() {
   const [justAccepted, setJustAccepted] = useState(false);
   const [justRejected, setJustRejected] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [consentRequiredAfterAccept, setConsentRequiredAfterAccept] =
+    useState(false);
+  const [countdown, setCountdown] = useState(5);
 
   // Only fetch summary, logo, and PDF if status is awaiting response or just accepted/rejected in this session
   const isSummaryNeeded =
     statusNormalized === "awaiting response" ||
     (statusNormalized === "accepted" && justAccepted) ||
     (statusNormalized === "rejected" && justRejected);
-  const { data: logoData } = useCompanyLogo(isSummaryNeeded);
   const isPdfNeeded = statusNormalized === "awaiting response";
 
   const { data: offerData, isLoading: isApiLoading } = useJobOfferSummary(
     applicantEmail,
     isSummaryNeeded,
+    tokenParam,
   );
-  const { pdfUrl } = useJobOfferPdf(applicantEmail, isPdfNeeded);
+  const { pdfUrl } = useJobOfferPdf(applicantEmail, isPdfNeeded, tokenParam);
   const { mutateAsync: updateStatus } = useUpdateJobOfferStatus();
   const { data: reasonsData, isLoading: isReasonsLoading } =
     useRejectionReasons();
@@ -124,6 +126,41 @@ function JobOfferContent() {
     }
   }, [statusNormalized, justAccepted, justRejected]);
 
+  useEffect(() => {
+    if (gameState === "accepted" && consentRequiredAfterAccept) {
+      if (process.env.NODE_ENV === "test") {
+        const params = new URLSearchParams();
+        if (applicantEmail) params.append("appl", applicantEmail);
+        if (tokenParam) params.append("token", tokenParam);
+        router.push(`/job_offer/consent?${params.toString()}`);
+        return;
+      }
+
+      setCountdown(5);
+      const timer = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            const params = new URLSearchParams();
+            if (applicantEmail) params.append("appl", applicantEmail);
+            if (tokenParam) params.append("token", tokenParam);
+            router.push(`/job_offer/consent?${params.toString()}`);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [
+    gameState,
+    consentRequiredAfterAccept,
+    applicantEmail,
+    tokenParam,
+    router,
+  ]);
+
   const [isTermsChecked, setIsTermsChecked] = useState(false);
   const [isAccepting, setIsAccepting] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
@@ -137,10 +174,18 @@ function JobOfferContent() {
     setIsAccepting(true);
 
     try {
-      await updateStatus({
+      const response = await updateStatus({
         status: "Accepted",
         appl: applicantEmail,
+        ...(tokenParam ? { token: tokenParam } : {}),
       });
+
+      if (response?.dpdp_consent_required) {
+        setConsentRequiredAfterAccept(true);
+      } else {
+        setConsentRequiredAfterAccept(false);
+      }
+
       setJustAccepted(true);
       setGameState("accepted");
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -167,6 +212,7 @@ function JobOfferContent() {
         appl: applicantEmail,
         reason: rejectionReason,
         message: rejectionMessage,
+        ...(tokenParam ? { token: tokenParam } : {}),
       });
       toast.success("Offer rejected.");
       setJustRejected(true);
@@ -245,9 +291,9 @@ function JobOfferContent() {
     <div className="font-sans text-[#334155] bg-[#f8fafc] min-h-screen">
       {/* STATE: MAIN OFFER */}
       {gameState === "main" && (
-        <div className="max-w-[1200px] mx-auto px-5 py-[30px]">
+        <div className="max-w-300 mx-auto px-5 py-7.5">
           {!offerData ? (
-            <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+            <div className="flex flex-col items-center justify-center min-h-100 text-center">
               <AlertCircle className="h-10 w-10 text-slate-300 mb-4" />
               <p className="text-slate-500">
                 Offer details not found for this applicant.
@@ -257,7 +303,7 @@ function JobOfferContent() {
             <>
               {offerData?.expiry_display && (
                 <div className="mb-1">
-                  <span className="inline-block px-3.5 py-1 rounded-[4px] text-[11px] font-bold tracking-[1.2px] uppercase bg-[#fff3cd] text-[#856404]">
+                  <span className="inline-block px-3.5 py-1 rounded-lg text-[11px] font-bold tracking-[1.2px] uppercase bg-[#fff3cd] text-[#856404]">
                     OFFER EXPIRES IN {offerData?.expiry_display}
                   </span>
                 </div>
@@ -265,11 +311,11 @@ function JobOfferContent() {
 
               <div className="flex flex-col lg:flex-row gap-8 items-stretch lg:items-start w-full">
                 {/* Left Side: Stepper + Offer Summary Column */}
-                <div className="w-full lg:w-[340px] shrink-0 flex flex-col gap-6 lg:sticky lg:top-[88px]">
+                <div className="w-full lg:w-85 shrink-0 flex flex-col gap-6 lg:sticky lg:top-22">
                   {/* Stepper Sidebar */}
                   <PortalStepperSidebar
                     currentStep="offer"
-                    className="w-full md:w-full lg:w-[340px] lg:self-start"
+                    className="w-full md:w-full lg:w-85 lg:self-start"
                   />
 
                   {/* Offer Summary Card */}
@@ -385,7 +431,7 @@ function JobOfferContent() {
                       <label className="flex items-start gap-2.5 text-[0.82rem] text-[#334155] cursor-pointer leading-[1.45] mb-4 bg-[#fff8e1] border border-[#ffe0b2] rounded-lg p-3">
                         <input
                           type="checkbox"
-                          className="mt-[3px] shrink-0 w-4 h-4 accent-[#1a2332] cursor-pointer"
+                          className="mt-0.75 shrink-0 w-4 h-4 accent-[#1a2332] cursor-pointer"
                           checked={isTermsChecked}
                           onChange={(e) => setIsTermsChecked(e.target.checked)}
                         />
@@ -498,7 +544,7 @@ function JobOfferContent() {
                         <PdfViewer pdfUrl={pdfUrl} />
                       </div>
                     ) : (
-                      <div className="bg-white dark:bg-card p-8 overflow-x-auto flex flex-col items-center justify-center min-h-[400px]">
+                      <div className="bg-white dark:bg-card p-8 overflow-x-auto flex flex-col items-center justify-center min-h-100">
                         <p className="text-[#64748b]">
                           Offer letter content could not be loaded.
                         </p>
@@ -514,7 +560,7 @@ function JobOfferContent() {
 
       {/* STATE: REJECTION FLOW */}
       {gameState === "rejection" && (
-        <div className="max-w-[700px] mx-auto px-5 py-[60px]">
+        <div className="max-w-175 mx-auto px-5 py-15">
           <h1 className="text-[2rem] font-semibold text-[#1a2332] mt-4 mb-2">
             Reject Offer
           </h1>
@@ -544,7 +590,7 @@ function JobOfferContent() {
               Additional comments
             </label>
             <textarea
-              className="w-full p-[12px_14px] border border-[#e2e8f0] rounded-lg text-[0.9rem] text-[#334155] resize-vertical min-h-[120px] font-inherit focus:outline-none focus:border-[#1a2332] focus:ring-2 focus:ring-[#1a2332]/10"
+              className="w-full p-[12px_14px] border border-[#e2e8f0] rounded-lg text-[0.9rem] text-[#334155] resize-vertical min-h-30 font-inherit focus:outline-none focus:border-[#1a2332] focus:ring-2 focus:ring-[#1a2332]/10"
               placeholder="Share any additional feedback..."
               rows={5}
               value={rejectionMessage}
@@ -571,9 +617,9 @@ function JobOfferContent() {
 
       {/* STATE: ACCEPTED CONFIRMATION */}
       {gameState === "accepted" && (
-        <div className="max-w-[700px] mx-auto px-5 py-[60px] text-center">
+        <div className="max-w-175 mx-auto px-5 py-15 text-center">
           <div className="mb-4">
-            <div className="w-[70px] h-[70px] bg-[#4caf50] rounded-full flex items-center justify-center mx-auto shadow-[0_8px_32px_rgba(76,175,80,0.3)] animate-[jo-pop_0.5s_cubic-bezier(0.34,1.56,0.64,1)_forwards]">
+            <div className="w-17.5 h-17.5 bg-[#4caf50] rounded-full flex items-center justify-center mx-auto shadow-[0_8px_32px_rgba(76,175,80,0.3)] animate-[jo-pop_0.5s_cubic-bezier(0.34,1.56,0.64,1)_forwards]">
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -593,52 +639,68 @@ function JobOfferContent() {
           <h1 className="text-[2.5rem] font-semibold text-[#1a2332] mt-3 mb-4">
             Welcome to the team, {offerData?.applicant_name}!
           </h1>
-          <p className="text-[1rem] text-[#64748b] max-w-[500px] mx-auto mb-8 leading-[1.6]">
+          <p className="text-[1rem] text-[#64748b] max-w-125 mx-auto mb-8 leading-[1.6]">
             We are absolutely thrilled to have you join us. Your offer has been
             successfully accepted.
           </p>
-          <div className="bg-white border border-[#e2e8f0] rounded-xl p-6 max-w-[520px] mx-auto mb-5 text-left shadow-sm">
+          <div className="bg-white border border-[#e2e8f0] rounded-xl p-6 max-w-130 mx-auto mb-5 text-left shadow-sm">
             {/* <div className="text-[0.95rem] text-[#334155] leading-[1.6]">
               Keep checking your email for further updates on your onboarding
               and LMS journey.
             </div> */}
             <div className="text-[0.95rem] text-[#334155] leading-[1.6]">
-              Please click below &quot;Go to Dashboard&quot; to complete your
-              employee onboarding formalities
+              {consentRequiredAfterAccept ? (
+                <div className="flex flex-col items-center gap-2 py-2 text-center">
+                  <span className="font-medium text-amber-600 flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin text-amber-500" />
+                    Redirecting to the DPDP Consent Form in {countdown} {countdown === 1 ? "second" : "seconds"}...
+                  </span>
+                  <span className="text-xs text-slate-400">
+                    Please do not close or refresh this window.
+                  </span>
+                </div>
+              ) : (
+                <span>
+                  Please click below &quot;Go to Dashboard&quot; to complete
+                  your employee onboarding formalities
+                </span>
+              )}
             </div>
           </div>
-          <div className="mt-7 flex flex-col items-center gap-3">
-            <Button
-              onClick={() => router.push("/dashboard")}
-              className="px-6 py-2.5 bg-[#4caf50] text-white rounded-lg font-semibold hover:bg-[#43a047] transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 h-11"
-            >
-              Go to Dashboard
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+          {!consentRequiredAfterAccept && (
+            <div className="mt-7 flex flex-col items-center gap-3">
+              <Button
+                onClick={() => router.push("/dashboard")}
+                className="px-6 py-2.5 bg-[#4caf50] text-white rounded-lg font-semibold hover:bg-[#43a047] transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 h-11"
               >
-                <line x1="5" y1="12" x2="19" y2="12" />
-                <polyline points="12 5 19 12 12 19" />
-              </svg>
-            </Button>
-            <p className="text-[12px] text-gray-400 mt-2">
-              You can also close this browser window
-            </p>
-          </div>
+                Go to Dashboard
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" />
+                </svg>
+              </Button>
+              <p className="text-[12px] text-gray-400 mt-2">
+                You can also close this browser window
+              </p>
+            </div>
+          )}
         </div>
       )}
 
       {/* STATE: REJECTED CONFIRMATION */}
       {gameState === "rejected" && (
-        <div className="max-w-[700px] mx-auto px-5 py-[60px] text-center">
+        <div className="max-w-175 mx-auto px-5 py-15 text-center">
           <div className="mb-4">
-            <div className="w-[70px] h-[70px] bg-[#ef4444] rounded-full flex items-center justify-center mx-auto shadow-[0_8px_32px_rgba(239,68,68,0.3)] animate-[jo-pop_0.5s_cubic-bezier(0.34,1.56,0.64,1)_forwards]">
+            <div className="w-17.5 h-17.5 bg-[#ef4444] rounded-full flex items-center justify-center mx-auto shadow-[0_8px_32px_rgba(239,68,68,0.3)] animate-[jo-pop_0.5s_cubic-bezier(0.34,1.56,0.64,1)_forwards]">
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -659,12 +721,12 @@ function JobOfferContent() {
           <h1 className="text-[2.5rem] font-semibold text-[#1a2332] mt-3 mb-4">
             Offer Letter Declined
           </h1>
-          <p className="text-[1rem] text-[#64748b] max-w-[500px] mx-auto mb-8 leading-[1.6]">
+          <p className="text-[1rem] text-[#64748b] max-w-125 mx-auto mb-8 leading-[1.6]">
             You have declined the offer letter. If this was a mistake or you
             wish to raise a request regarding your decision, please proceed
             below.
           </p>
-          <div className="bg-white border border-[#e2e8f0] rounded-xl p-6 max-w-[520px] mx-auto mb-5 text-left shadow-sm">
+          <div className="bg-white border border-[#e2e8f0] rounded-xl p-6 max-w-130 mx-auto mb-5 text-left shadow-sm">
             <div className="text-[0.95rem] text-[#334155] leading-[1.6]">
               <div className="font-semibold text-[#1a2332] mb-1">
                 Reason for Rejection:
@@ -718,20 +780,9 @@ function JobOfferContent() {
 
       {/* STATE: ALREADY PROCESSED */}
       {gameState === "processed" && (
-        <div className="max-w-[600px] mx-auto px-5 py-[100px] text-center">
+        <div className="max-w-150 mx-auto px-5 py-25 text-center">
           <div className="w-20 h-20 bg-[#eaf4fb] rounded-[20px] flex items-center justify-center mx-auto mb-6">
-            <svg
-              width="36"
-              height="36"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#64748b"
-              strokeWidth="2"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
+            <AlertCircle className="h-9 w-9 text-slate-500" />
           </div>
           <h2 className="text-[1.5rem] font-semibold text-[#1a2332] mb-3">
             You have already accepted or rejected the Offer Letter.
@@ -766,19 +817,9 @@ function JobOfferContent() {
 
       {/* STATE: EXPIRED */}
       {gameState === "expired" && (
-        <div className="max-w-[600px] mx-auto px-5 py-[100px] text-center">
+        <div className="max-w-150 mx-auto px-5 py-25 text-center">
           <div className="w-20 h-20 bg-[#eaf4fb] rounded-[20px] flex items-center justify-center mx-auto mb-6">
-            <svg
-              width="36"
-              height="36"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#dc3545"
-              strokeWidth="2"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="12 6 12 12 16 14" />
-            </svg>
+            <Clock className="h-9 w-9 text-red-500" />
           </div>
           <h2 className="text-[1.5rem] font-bold text-[#1a2332] mb-3">
             Your Offer Letter Has Expired
@@ -792,7 +833,7 @@ function JobOfferContent() {
       {/* POPUP: OFFER DECLINED */}
       {showDeclinedPopup && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-9999 flex items-center justify-center px-4">
-          <div className="relative bg-white rounded-[20px] p-[48px_36px_36px] max-w-[420px] w-full text-center shadow-[0_8px_32px_rgba(0,0,0,0.1)]">
+          <div className="relative bg-white rounded-[20px] p-[48px_36px_36px] max-w-105 w-full text-center shadow-[0_8px_32px_rgba(0,0,0,0.1)]">
             <button
               onClick={() => {
                 setShowDeclinedPopup(false);
@@ -844,22 +885,9 @@ function JobOfferContent() {
       {/* POPUP: MISSING REASON */}
       {showMissingReasonPopup && (
         <div className="fixed inset-0 bg-black/40 z-9999 flex items-center justify-center px-4">
-          <div className="bg-white rounded-[20px] p-9 max-w-[400px] w-full text-center shadow-[0_8px_32_rgba(0,0,0,0.15)]">
+          <div className="bg-white rounded-[20px] p-9 max-w-100 w-full text-center shadow-[0_8px_32_rgba(0,0,0,0.15)]">
             <div className="w-14 h-14 rounded-full bg-[#fff3cd] flex items-center justify-center mx-auto mb-5">
-              <svg
-                width="28"
-                height="28"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#856404"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="12" />
-                <line x1="12" y1="16" x2="12.01" y2="16" />
-              </svg>
+              <AlertCircle className="h-7 w-7 text-amber-600" />
             </div>
             <h2 className="text-[1.4rem] font-semibold text-[#1a2332] mb-3">
               Reason Required
