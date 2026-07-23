@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils"
 
 interface JourneyCountdownProps {
   /** ISO date string for the joining date. */
-  joiningDate: string
+  joiningDate?: string | null
   className?: string
 }
 
@@ -37,10 +37,14 @@ export function JourneyCountdown({ joiningDate, className }: JourneyCountdownPro
   const [daysLeft, setDaysLeft] = useState<number | null>(null)
 
   useEffect(() => {
+    if (!joiningDate) {
+      setDaysLeft(null)
+      return
+    }
     setDaysLeft(getDaysUntil(joiningDate))
   }, [joiningDate])
 
-  if (daysLeft === null) return null
+  if (daysLeft === null || !joiningDate) return null
 
   return (
     <span

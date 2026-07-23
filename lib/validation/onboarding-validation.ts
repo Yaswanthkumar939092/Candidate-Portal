@@ -205,41 +205,61 @@ export function validateOnboardingStep(
   });
   Object.assign(doc, values);
 
+  const IS_FRESHER_FIELDNAME = "is_fresher";
+  const EMPLOYMENT_TABLE_FIELDNAME = "custom_jf_employment";
+
   tab.sections.forEach((section) => {
     section.fields.forEach((field) => {
+      // Skip employment table entirely when is_fresher is checked
+      if (field.fieldname === EMPLOYMENT_TABLE_FIELDNAME && doc[IS_FRESHER_FIELDNAME]) {
+        return;
+      }
+
       const isFieldVisible = !field.hidden && (!field.depends_on || evaluateDependsOn(field.depends_on, doc));
       if (!isFieldVisible) {
         return;
       }
 
-      const fieldValue = values[field.fieldname];
+      // When is_fresher is NOT checked, enrich employment table to be mandatory
+      const effectiveField = (field.fieldname === EMPLOYMENT_TABLE_FIELDNAME && !doc[IS_FRESHER_FIELDNAME])
+        ? {
+            ...field,
+            is_mandatory: 1,
+            child_fields: field.child_fields?.map((cf) => ({
+              ...cf,
+              is_mandatory: 1,
+            })),
+          }
+        : field;
+
+      const fieldValue = values[effectiveField.fieldname];
       const normalizedValue =
         typeof fieldValue === "string" ? fieldValue.trim() : fieldValue;
       const isEmailField =
-        field.fieldtype.toLowerCase() === "email" ||
-        field.label.toLowerCase().includes("email") ||
-        field.fieldname.toLowerCase().includes("email");
+        effectiveField.fieldtype.toLowerCase() === "email" ||
+        effectiveField.label.toLowerCase().includes("email") ||
+        effectiveField.fieldname.toLowerCase().includes("email");
       const isPhoneField =
-        field.label.toLowerCase().includes("mobile") ||
-        field.label.toLowerCase().includes("contact number") ||
-        field.label.toLowerCase().includes("contact no") ||
-        field.label.toLowerCase().includes("phone") ||
-        field.fieldname.toLowerCase().includes("mobile") ||
-        field.fieldname.toLowerCase().includes("phone") ||
-        field.fieldname.toLowerCase().includes("contact_no") ||
-        field.fieldname.toLowerCase().includes("contactnumber") ||
-        field.fieldname.toLowerCase().includes("contact_number");
+        effectiveField.label.toLowerCase().includes("mobile") ||
+        effectiveField.label.toLowerCase().includes("contact number") ||
+        effectiveField.label.toLowerCase().includes("contact no") ||
+        effectiveField.label.toLowerCase().includes("phone") ||
+        effectiveField.fieldname.toLowerCase().includes("mobile") ||
+        effectiveField.fieldname.toLowerCase().includes("phone") ||
+        effectiveField.fieldname.toLowerCase().includes("contact_no") ||
+        effectiveField.fieldname.toLowerCase().includes("contactnumber") ||
+        effectiveField.fieldname.toLowerCase().includes("contact_number");
 
-      const isTable = field.fieldtype === "Table";
+      const isTable = effectiveField.fieldtype === "Table";
       const isMandatory =
-        field.is_mandatory ||
-        field.reqd ||
-        (field.mandatory_depends_on && evaluateDependsOn(field.mandatory_depends_on, doc));
+        effectiveField.is_mandatory ||
+        effectiveField.reqd ||
+        (effectiveField.mandatory_depends_on && evaluateDependsOn(effectiveField.mandatory_depends_on, doc));
 
       if (isTable) {
         const rows = Array.isArray(normalizedValue) ? (normalizedValue as Record<string, unknown>[]) : [];
         const visibleChildFieldsForRow = (row: Record<string, unknown>) => {
-          return field.child_fields?.filter((childField) => {
+          return effectiveField.child_fields?.filter((childField) => {
             return !childField.hidden &&
               (!childField.depends_on || evaluateDependsOn(childField.depends_on, row));
           }) || [];
@@ -269,7 +289,7 @@ export function validateOnboardingStep(
           const originalIndex = rows.indexOf(row);
           mandatoryChildFieldsForRow(row).forEach((childField) => {
             if (!isFilled(row[childField.fieldname])) {
-              setNestedTableError(errorList, field.fieldname, originalIndex, childField.fieldname, {
+              setNestedTableError(errorList, effectiveField.fieldname, originalIndex, childField.fieldname, {
                 type: "required",
                 message: `${childField.label || "This field"} is required`,
               });
@@ -286,25 +306,25 @@ export function validateOnboardingStep(
                 val
               );
               if (patternError) {
-                setNestedTableError(errorList, field.fieldname, originalIndex, childField.fieldname, patternError);
+                setNestedTableError(errorList, effectiveField.fieldname, originalIndex, childField.fieldname, patternError);
               }
             }
           });
         });
 
         if (isMandatory && nonEmptyRows.length === 0) {
-          setTableRootError(errorList, field.fieldname, {
+          setTableRootError(errorList, effectiveField.fieldname, {
             type: "required",
-            message: `${field.label || "This field"} is required`,
+            message: `${effectiveField.label || "This field"} is required`,
           });
-        } else if (rowsToValidate.length > 0 && errorList[field.fieldname]) {
-          setTableRootError(errorList, field.fieldname, {
+        } else if (rowsToValidate.length > 0 && errorList[effectiveField.fieldname]) {
+          setTableRootError(errorList, effectiveField.fieldname, {
             type: "required",
-            message: `Please complete all required fields in ${field.label}`,
+            message: `Please complete all required fields in ${effectiveField.label}`,
           });
         }
 
-        if (field.fieldname === "custom_education_details") {
+        if (effectiveField.fieldname === "custom_education_details") {
           const EDUCATION_LEVEL_ORDER: Record<string, number> = {
             "10th": 1,
             "12th": 2,
@@ -327,7 +347,7 @@ export function validateOnboardingStep(
           );
 
           if (missingEducationLevels.length > 0) {
-            setTableRootError(errorList, field.fieldname, {
+            setTableRootError(errorList, effectiveField.fieldname, {
               type: "required",
               message: `Please add education details for: ${missingEducationLevels.join(", ")}`,
             });
@@ -351,7 +371,7 @@ export function validateOnboardingStep(
               const current = eduRows[i];
               const next = eduRows[i + 1];
               if (current.year >= next.year) {
-                setTableRootError(errorList, field.fieldname, {
+                setTableRootError(errorList, effectiveField.fieldname, {
                   type: "validate",
                   message: `Year of passing for ${next.level} must be after ${current.level} (${current.year})`,
                 });
@@ -362,9 +382,9 @@ export function validateOnboardingStep(
         }
 
         // Validate that every nomination category is filled and totals exactly 100%.
-        if (field.fieldname === "custom_nomination_details") {
+        if (effectiveField.fieldname === "custom_nomination_details") {
           const nominationTypeOptions = getSelectOptions(
-            field.child_fields?.find(
+            effectiveField.child_fields?.find(
               (childField) => childField.fieldname === "nomination_type",
             )?.options,
           );
@@ -384,7 +404,7 @@ export function validateOnboardingStep(
           );
 
           if (missingTypes.length > 0) {
-            setTableRootError(errorList, field.fieldname, {
+            setTableRootError(errorList, effectiveField.fieldname, {
               type: "required",
               message: `Please add nomination details for: ${missingTypes.join(", ")}`,
             });
@@ -393,7 +413,7 @@ export function validateOnboardingStep(
 
           for (const [type, total] of Object.entries(typeTotals)) {
             if (Math.abs(total - 100) > 0.001) {
-              setTableRootError(errorList, field.fieldname, {
+              setTableRootError(errorList, effectiveField.fieldname, {
                 type: "validate",
                 message: `Total percentage for ${type} nomination must be exactly 100% (currently ${total}%)`,
               });
