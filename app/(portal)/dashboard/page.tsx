@@ -15,7 +15,8 @@ import type { DashboardData, DashboardKeyContact } from "@/types/dashboard";
 
 const TOTAL_STEPS = 8;
 
-function formatDisplayDate(iso: string): string {
+function formatDisplayDate(iso?: string | null): string {
+  if (!iso) return "";
   const date = new Date(iso);
 
   if (Number.isNaN(date.getTime())) {
@@ -49,7 +50,8 @@ function getOfficeAddress(data: DashboardData) {
 
 function mapContacts(contacts: DashboardKeyContact[]) {
   return contacts.map((contact) => ({
-    name: contact.employee_name || contact.name || contact.role || contact.email,
+    name:
+      contact.employee_name || contact.name || contact.role || contact.email,
     role: contact.role,
     email: contact.email || undefined,
     phone: contact.phone_number || undefined,
@@ -175,8 +177,6 @@ export default function DashboardPage() {
     );
   }
 
-
-
   const completedSteps = getCompletedSteps(dashboardData);
   const officeAddress = getOfficeAddress(dashboardData);
   const contacts = mapContacts(dashboardData?.key_contacts || []);
@@ -205,8 +205,15 @@ export default function DashboardPage() {
             <InfoCard
               icon={<CalendarDays className="h-5 w-5" />}
               label="Joining Date"
-              value={formatDisplayDate(dashboardData?.date_of_joining)}
-              tag={<JourneyCountdown joiningDate={dashboardData?.date_of_joining} />}
+              value={
+                formatDisplayDate(dashboardData?.date_of_joining) ||
+                " Not available"
+              }
+              tag={
+                <JourneyCountdown
+                  joiningDate={dashboardData?.date_of_joining}
+                />
+              }
               tagVariant="green"
             />
 

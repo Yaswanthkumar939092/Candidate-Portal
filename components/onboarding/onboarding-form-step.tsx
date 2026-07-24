@@ -15,6 +15,7 @@ import {
 } from "react-hook-form";
 
 import { useOnboarding } from "@/lib/contexts/onboarding-context";
+import { useAuth } from "@/lib/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -26,6 +27,25 @@ import { DynamicFieldRenderer } from "@/components/ui/field-renderer";
 import { DynamicTableField } from "@/components/onboarding/dynamic-table-field";
 import { evaluateDependsOn } from "@/lib/onboarding-utils";
 import { validateOnboardingStep } from "@/lib/validation/onboarding-validation";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+const IS_FRESHER_FIELDNAME = "is_fresher";
+const EMPLOYMENT_TABLE_FIELDNAME = "custom_jf_employment";
+const DECLARATION_DATE_FIELDNAME = "custom_jf_declaration_date";
+
+function getTodayISO(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** Formats an ISO date string (yyyy-mm-dd) as dd-mm-yyyy for display. */
+function formatDateDMY(iso: string): string {
+  const parts = iso.split("-");
+  if (parts.length !== 3) return iso;
+  return `${parts[2]}-${parts[1]}-${parts[0]}`;
+}
+
 interface OnboardingFormStepProps {
   tab: OnboardingTab;
   stepKey: string;
@@ -131,6 +151,16 @@ export function OnboardingFormStep({
     submitAll,
     registerSubmitTrigger,
   } = useOnboarding();
+
+  let userEmail = "";
+  try {
+    const auth = useAuth();
+    userEmail = auth?.user?.email || auth?.profile?.email || "";
+  } catch {
+    // Fallback when rendered outside AuthProvider in unit tests
+    userEmail = "";
+  }
+
   const existingData = useMemo(
     () => (stepData[stepKey] ?? {}) as Record<string, unknown>,
     [stepData, stepKey],
@@ -141,7 +171,16 @@ export function OnboardingFormStep({
     const values: Record<string, unknown> = { ...existingData };
     tab.sections.forEach((section) => {
       section.fields.forEach((field) => {
-        if (values[field.fieldname] === undefined) {
+        // Always set declaration date to today
+        if (field.fieldname === DECLARATION_DATE_FIELDNAME) {
+          values[field.fieldname] = getTodayISO();
+        } else if (field.fieldname === "custom_email_id") {
+          values[field.fieldname] =
+            values[field.fieldname] ||
+            field.value ||
+            field.default ||
+            userEmail;
+        } else if (values[field.fieldname] === undefined) {
           const fieldValue =
             field.value !== undefined ? field.value : field.default;
           if (fieldValue !== undefined && fieldValue !== null) {
@@ -155,7 +194,7 @@ export function OnboardingFormStep({
       });
     });
     return values;
-  }, [tab, existingData]);
+  }, [tab, existingData, userEmail]);
 
   const validationResolver = useCallback<Resolver<OnboardingFormValues>>(
     (values) => {
@@ -278,6 +317,40 @@ export function OnboardingFormStep({
     }
   }, [dobValue, setValue, getValues]);
 
+  // Always set declaration date to today's date
+  useEffect(() => {
+    const hasDeclarationDateField = tab.sections.some((section) =>
+      section.fields.some((f) => f.fieldname === DECLARATION_DATE_FIELDNAME),
+    );
+    if (hasDeclarationDateField) {
+      const today = getTodayISO();
+      const current = getValues(DECLARATION_DATE_FIELDNAME);
+      if (current !== today) {
+        setValue(DECLARATION_DATE_FIELDNAME, today, {
+          shouldValidate: false,
+          shouldDirty: true,
+        });
+      }
+    }
+  }, [tab, setValue, getValues]);
+
+  // Automatically prefill custom_email_id with current user's email if empty
+  useEffect(() => {
+    if (userEmail) {
+      const currentEmail = getValues("custom_email_id");
+      if (
+        currentEmail === undefined ||
+        currentEmail === null ||
+        currentEmail === ""
+      ) {
+        setValue("custom_email_id", userEmail, {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
+      }
+    }
+  }, [userEmail, setValue, getValues]);
+
   // Automatically sync permanent address to communication address if custom_same_as_permanent is checked
   const sameAsPermanentChecked = !!currentFormValues.custom_same_as_permanent;
   useEffect(() => {
@@ -311,6 +384,18 @@ export function OnboardingFormStep({
   useEffect(() => {
     tab.sections.forEach((section) => {
       section.fields.forEach((field) => {
+        // Handle is_fresher -> hide employment table
+        if (field.fieldname === EMPLOYMENT_TABLE_FIELDNAME && doc[IS_FRESHER_FIELDNAME]) {
+          const val = getValues(field.fieldname);
+          if (Array.isArray(val) && val.length > 0) {
+            setValue(field.fieldname, [], {
+              shouldValidate: false,
+              shouldDirty: true,
+            });
+          }
+          return;
+        }
+
         if (field.depends_on) {
           const isVisible = evaluateDependsOn(field.depends_on, doc);
           if (!isVisible) {
@@ -509,15 +594,15 @@ export function OnboardingFormStep({
       <form onSubmit={onNext} className={cn("space-y-8", className)}>
       {tab.sections.map((section, idx) => {
         // Check if there is at least one visible field in this section
-        const hasVisibleFields = section.fields.some((field) => {
+        const isFieldVisibleInSection = (field: OnboardingField) => {
+          if (field.fieldname === EMPLOYMENT_TABLE_FIELDNAME && doc[IS_FRESHER_FIELDNAME]) return false;
           return !field.hidden && (!field.depends_on || evaluateDependsOn(field.depends_on, doc));
-        });
+        };
+        const hasVisibleFields = section.fields.some(isFieldVisibleInSection);
 
         if (!hasVisibleFields) return null;
 
-        const visibleFields = section.fields.filter((field) => {
-          return !field.hidden && (!field.depends_on || evaluateDependsOn(field.depends_on, doc));
-        });
+        const visibleFields = section.fields.filter(isFieldVisibleInSection);
         const totalFields = visibleFields.length;
         const filledFields = visibleFields.filter((field) => {
           const val = doc[field.fieldname];
@@ -551,13 +636,33 @@ export function OnboardingFormStep({
                 )}
               >
                 {section.fields.map((field) => {
+                  // Hide employment table when is_fresher is checked
+                  if (field.fieldname === EMPLOYMENT_TABLE_FIELDNAME && doc[IS_FRESHER_FIELDNAME]) {
+                    return null;
+                  }
+
                   const isVisible = !field.hidden && (!field.depends_on || evaluateDependsOn(field.depends_on, doc));
                   if (!isVisible) return null;
 
-                  return field.fieldtype === "Table" ? (
+                  // When is_fresher is NOT checked, make employment table child fields mandatory
+                  const enrichedField = (field.fieldname === EMPLOYMENT_TABLE_FIELDNAME && !doc[IS_FRESHER_FIELDNAME])
+                    ? {
+                        ...field,
+                        is_mandatory: 1,
+                        child_fields: field.child_fields?.map((cf) => ({
+                          ...cf,
+                          is_mandatory: 1,
+                        })),
+                      }
+                    // Make declaration date read-only
+                    : field.fieldname === DECLARATION_DATE_FIELDNAME
+                      ? { ...field, read_only: 1 }
+                      : field;
+
+                  return enrichedField.fieldtype === "Table" ? (
                     <DynamicTableField
-                      key={field.fieldname}
-                      field={field}
+                      key={enrichedField.fieldname}
+                      field={enrichedField}
                       control={control}
                       setValue={setValue as UseFormSetValue<FieldValues>}
                       trigger={trigger as UseFormTrigger<FieldValues>}
@@ -566,14 +671,28 @@ export function OnboardingFormStep({
                       onAttachChange={handleFileUpload}
                       overrides={fieldOverrides}
                     />
+                  ) : enrichedField.fieldname === DECLARATION_DATE_FIELDNAME ? (
+                    <div key={enrichedField.fieldname} className="space-y-1.5">
+                      <Label className="text-sm font-medium text-foreground">
+                        {enrichedField.label}{" "}
+                        {!!(enrichedField.is_mandatory || enrichedField.reqd) && (
+                          <span className="text-destructive">*</span>
+                        )}
+                      </Label>
+                      <Input
+                        value={formatDateDMY(getTodayISO())}
+                        disabled
+                        className="bg-muted/50 text-foreground"
+                      />
+                    </div>
                   ) : (
                     <FormStepField
-                      key={field.fieldname}
-                      field={field}
+                      key={enrichedField.fieldname}
+                      field={enrichedField}
                       control={control}
                       setValue={setValue}
                       trigger={trigger}
-                      error={errors[field.fieldname]?.message as string}
+                      error={errors[enrichedField.fieldname]?.message as string}
                       doc={doc}
                       handleFileUpload={handleFileUpload}
                       overrides={fieldOverrides}

@@ -49,6 +49,16 @@ vi.mock("@/lib/contexts/onboarding-context", () => ({
   useOnboarding: vi.fn(),
 }));
 
+vi.mock("@/lib/contexts/auth-context", () => ({
+  useAuth: () => ({
+    user: { id: "user-123", email: "candidate@example.com" },
+    profile: null,
+    isLoading: false,
+    isOnboardingComplete: false,
+    refreshProfile: vi.fn(),
+  }),
+}));
+
 vi.mock("sonner", () => ({
   toast: {
     error: vi.fn(),
@@ -1354,6 +1364,25 @@ describe("OnboardingFormStep", () => {
                   some_sub_field: "some_url"
                })
             );
+         });
+      });
+
+      it("prefills custom_email_id with the current user email if empty", async () => {
+         const emailTab: OnboardingTab = {
+            tab: "Email Tab",
+            sections: [{
+               section: "Personal Details",
+               fields: [
+                  { fieldname: "custom_email_id", label: "Email ID", fieldtype: "Data", is_mandatory: 1, read_only: 0, hidden: 0 }
+               ]
+            }]
+         };
+
+         render(<OnboardingFormStep tab={emailTab} stepKey="email_test" />);
+
+         await waitFor(() => {
+            const input = screen.getByTestId("input-custom_email_id") as HTMLInputElement;
+            expect(input.value).toBe("candidate@example.com");
          });
       });
     });
