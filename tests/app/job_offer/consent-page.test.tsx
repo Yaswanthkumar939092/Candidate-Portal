@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import DpdpConsentPage from "@/app/(portal)/job_offer/consent/page";
 import { toast } from "sonner";
 import React from "react";
@@ -85,6 +85,10 @@ describe("DpdpConsentPage", () => {
     vi.clearAllMocks();
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("renders the consent page correctly", () => {
     render(<DpdpConsentPage />);
 
@@ -141,13 +145,21 @@ describe("DpdpConsentPage", () => {
     });
 
     expect(screen.getByText("Consent Submitted")).toBeTruthy();
+    
+    vi.useFakeTimers();
+    expect(screen.getByText(/Redirecting to Onboarding in 3 seconds\.\.\./i)).toBeTruthy();
 
-    const dashboardBtn = screen.getByRole("button", { name: /Go to Dashboard/i });
-    fireEvent.click(dashboardBtn);
-    expect(mockPush).toHaveBeenCalledWith("/");
+    // Fast-forward timers to trigger redirect
+    for (let i = 0; i < 3; i++) {
+      act(() => {
+        vi.advanceTimersByTime(1000);
+      });
+    }
+    expect(mockPush).toHaveBeenCalledWith("/onboarding?appl=test%40example.com&token=my-token");
   });
 
   it("renders success screen immediately if already consented", () => {
+    vi.useFakeTimers();
     mockUseConsentForm.mockReturnValueOnce({
       data: {
         ...mockConsentData,
@@ -159,7 +171,13 @@ describe("DpdpConsentPage", () => {
     render(<DpdpConsentPage />);
 
     expect(screen.getByText("Consent Submitted")).toBeTruthy();
-    const dashboardBtn = screen.getByRole("button", { name: /Go to Dashboard/i });
-    expect(dashboardBtn).toBeTruthy();
+    expect(screen.getByText(/Redirecting to Onboarding in 3 seconds\.\.\./i)).toBeTruthy();
+
+    for (let i = 0; i < 3; i++) {
+      act(() => {
+        vi.advanceTimersByTime(1000);
+      });
+    }
+    expect(mockPush).toHaveBeenCalledWith("/onboarding?appl=test%40example.com&token=my-token");
   });
 });
