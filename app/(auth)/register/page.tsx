@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AuthForm, AuthFormData } from "@/components/auth-form";
 import { auth } from "@/lib/auth";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertTriangle, MailCheck, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function RegisterPage() {
   return (
@@ -37,6 +38,16 @@ function RegisterContent() {
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
   const [otp, setOtp] = useState("");
 
+  const campusEmail = useMemo(() => {
+    if (redirectParam && redirectParam.includes("/campus-apply")) {
+      const emailMatch = redirectParam.match(/[?&]email=([^&]+)/);
+      if (emailMatch) {
+        return decodeURIComponent(emailMatch[1]);
+      }
+    }
+    return "";
+  }, [redirectParam]);
+
   const displayError = settingsError
     ? (settingsError instanceof Error ? settingsError.message : "Failed to load auth settings")
     : error;
@@ -63,6 +74,13 @@ function RegisterContent() {
       const redirectPathname = redirectParam?.split("?")[0];
       const isCampusApply = redirectPathname === "/campus-apply" || redirectPathname?.startsWith("/campus-apply/");
       const candidateSource = isCampusApply ? "Campus" : undefined;
+
+      if (isCampusApply && campusEmail && formData.email !== campusEmail) {
+        toast.error("The registered email mismatched");
+        setError("The registered email mismatched");
+        setIsLoading(false);
+        return;
+      }
 
       const result = await auth.signUp({
         email: formData.email,
@@ -166,6 +184,7 @@ function RegisterContent() {
           type="register"
           onSubmit={handleRegister}
           isLoading={isLoading}
+          defaultEmail={campusEmail}
         />
       )}
     </div>
