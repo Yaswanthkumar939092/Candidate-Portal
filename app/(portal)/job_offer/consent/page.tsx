@@ -50,6 +50,7 @@ function ConsentContent() {
   >({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [countdown, setCountdown] = useState(3);
 
   // Pre-populate name and date when consentData finishes loading
   useEffect(() => {
@@ -74,6 +75,20 @@ function ConsentContent() {
       }
     }
   }, [consentData]);
+
+  useEffect(() => {
+    if (isSubmitted) {
+      if (countdown > 0) {
+        const timer = setTimeout(() => setCountdown((prev) => prev - 1), 1000);
+        return () => clearTimeout(timer);
+      } else {
+        const params = new URLSearchParams();
+        if (appl) params.append("appl", appl);
+        if (token) params.append("token", token);
+        router.push(`/onboarding?${params.toString()}`);
+      }
+    }
+  }, [isSubmitted, countdown, appl, token, router]);
 
   if (isConsentLoading) {
     return (
@@ -100,12 +115,10 @@ function ConsentContent() {
             {consentData?.confirmation_note ||
               "Thank you. Your DPDP consent declaration has been successfully submitted and recorded. You can now proceed to your onboarding dashboard."}
           </p>
-          <Button
-            onClick={() => router.push("/")}
-            className="w-full bg-primary hover:bg-primary/90 text-white font-medium py-2.5 rounded-lg shadow-sm transition-all"
-          >
-            Go to Dashboard
-          </Button>
+          <div className="w-full flex items-center justify-center py-2.5 rounded-lg text-sm text-slate-600 bg-slate-50 border border-slate-100">
+            <Loader2 className="h-4 w-4 animate-spin mr-2 text-primary" />
+            Redirecting to Onboarding in {countdown} {countdown === 1 ? "second" : "seconds"}...
+          </div>
         </div>
       </div>
     );

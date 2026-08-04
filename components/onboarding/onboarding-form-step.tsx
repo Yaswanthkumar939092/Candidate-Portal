@@ -606,6 +606,7 @@ export function OnboardingFormStep({
         const totalFields = visibleFields.length;
         const filledFields = visibleFields.filter((field) => {
           const val = doc[field.fieldname];
+          if (field.fieldname === "custom_age" && (val === 0 || val === "0")) return false;
           if (field.approval_status === "Approved") return true;
           if (field.fieldtype === "Table") {
             const rows = Array.isArray(val) ? val : [];

@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@/lib/contexts/theme-context";
 import { DynamicFavicon } from "@/components/dynamic-favicon";
 import { DynamicTitle } from "@/components/dynamic-title";
+import { DynamicPrimaryColor } from "@/components/dynamic-primary-color";
 import "./globals.css";
 
 const queryClient = new QueryClient();
@@ -14,6 +15,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <DynamicFavicon />
         <DynamicTitle />
+        <DynamicPrimaryColor />
         {children}
       </QueryClientProvider>
     </ThemeProvider>
