@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AuthForm, AuthFormData } from "@/components/auth-form";
 import { auth } from "@/lib/auth";
@@ -38,6 +38,16 @@ function LoginFormContent() {
   const [isSettingPassword, setIsSettingPassword] = useState(false);
   const [receivedOtpLog, setReceivedOtpLog] = useState<string | null>(null);
   const [receivedPurpose, setReceivedPurpose] = useState<string | null>(null);
+
+  const campusEmail = useMemo(() => {
+    if (redirectParam && redirectParam.includes("/campus-apply")) {
+      const emailMatch = redirectParam.match(/[?&]email=([^&]+)/);
+      if (emailMatch) {
+        return decodeURIComponent(emailMatch[1]);
+      }
+    }
+    return "";
+  }, [redirectParam]);
 
   const handlePostLoginRouting = async () => {
     try {
@@ -211,6 +221,7 @@ function LoginFormContent() {
               enableEmailSignup={settings.enable_email_signup === 1}
               isPasswordless={isPasswordless}
               onPasswordlessToggle={setIsPasswordless}
+              defaultEmail={campusEmail}
             />
           )}
 
