@@ -18,6 +18,7 @@ interface ChildField {
   reqd?: number | boolean;
   read_only?: number | boolean;
   hidden?: number | boolean;
+  exclude_values?: string[];
 }
 
 interface TableFieldDef {
@@ -29,6 +30,11 @@ interface TableFieldDef {
   child_fields?: ChildField[];
   reqd?: number | boolean;
   read_only?: number | boolean;
+  stage_requirement?: {
+    fieldname: string;
+    doctype: string;
+    required_stages: string[];
+  };
 }
 
 interface JobApplicationTableFieldProps {
@@ -190,10 +196,40 @@ export function JobApplicationTableField({
           <div className="grid grid-cols-1 gap-x-4 gap-y-4 pt-1 md:grid-cols-2">
             {columns.map((col) => {
               if (col.hidden) return null;
+
+              // Filter out stages already used in other rows
+              let renderedCol = col;
+              if (
+                field.stage_requirement &&
+                col.fieldname === field.stage_requirement.fieldname
+              ) {
+                const usedStages = rows
+                  .filter((_, i) => i !== rowIndex)
+                  .map((r) => r[col.fieldname])
+                  .filter(Boolean) as string[];
+
+                if (col.fieldtype === "Link") {
+                  // For Link fields, pass used stages as exclude_values
+                  renderedCol = {
+                    ...col,
+                    exclude_values: usedStages,
+                  };
+                } else if (col.fieldtype === "Select" && col.options) {
+                  const allOptions = typeof col.options === 'string' ? col.options.split('\n') : [];
+                  const filteredOptions = allOptions.filter(
+                    (opt: string) => !usedStages.includes(opt) || opt === row[col.fieldname]
+                  );
+                  renderedCol = {
+                    ...col,
+                    options: filteredOptions.join('\n'),
+                  };
+                }
+              }
+
               return (
                 <DynamicFieldRenderer
                   key={col.fieldname}
-                  field={col}
+                  field={renderedCol}
                   value={row[col.fieldname]}
                   onChange={(val) =>
                     handleCellChange(rowIndex, col.fieldname, val)

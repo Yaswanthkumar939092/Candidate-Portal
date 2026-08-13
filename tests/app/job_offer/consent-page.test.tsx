@@ -146,20 +146,14 @@ describe("DpdpConsentPage", () => {
 
     expect(screen.getByText("Consent Submitted")).toBeTruthy();
     
-    vi.useFakeTimers();
     expect(screen.getByText(/Redirecting to Onboarding in 3 seconds\.\.\./i)).toBeTruthy();
 
-    // Fast-forward timers to trigger redirect
-    for (let i = 0; i < 3; i++) {
-      act(() => {
-        vi.advanceTimersByTime(1000);
-      });
-    }
-    expect(mockPush).toHaveBeenCalledWith("/onboarding?appl=test%40example.com&token=my-token");
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith("/onboarding?appl=test%40example.com&token=my-token");
+    }, { timeout: 4000 });
   });
 
-  it("renders success screen immediately if already consented", () => {
-    vi.useFakeTimers();
+  it("renders success screen immediately if already consented", async () => {
     mockUseConsentForm.mockReturnValueOnce({
       data: {
         ...mockConsentData,
@@ -173,11 +167,8 @@ describe("DpdpConsentPage", () => {
     expect(screen.getByText("Consent Submitted")).toBeTruthy();
     expect(screen.getByText(/Redirecting to Onboarding in 3 seconds\.\.\./i)).toBeTruthy();
 
-    for (let i = 0; i < 3; i++) {
-      act(() => {
-        vi.advanceTimersByTime(1000);
-      });
-    }
-    expect(mockPush).toHaveBeenCalledWith("/onboarding?appl=test%40example.com&token=my-token");
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith("/onboarding?appl=test%40example.com&token=my-token");
+    }, { timeout: 4000 });
   });
 });

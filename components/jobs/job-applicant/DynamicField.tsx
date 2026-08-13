@@ -35,6 +35,11 @@ interface JobField {
   hidden?: number | boolean;
   child_doctype?: string;
   child_fields?: JobField[];
+  stage_requirement?: {
+    fieldname: string;
+    doctype: string;
+    required_stages: string[];
+  };
 }
 
 interface JobSection {
@@ -111,13 +116,17 @@ const TableFieldWrapper = ({
 
   return (
     <div className="md:col-span-full">
+      {error && (
+        <div className="mb-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+          <p className="text-sm font-medium text-destructive">{error}</p>
+        </div>
+      )}
       <JobApplicationTableField
         field={field}
         value={value}
         onChange={handleChange}
         onAttachChange={handleFileUpload}
       />
-      {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
     </div>
   );
 };
@@ -177,9 +186,30 @@ export function JobApplicationStep({
   const validateRequiredFields = (): boolean => {
     const currentValues = watch();
     const newErrors: Record<string, string> = {};
+    const allMissingStages: string[] = [];
 
     allTabFields.forEach((field) => {
       if (field.hidden) return;
+
+      // Stage requirement validation for Table fields
+      if (field.fieldtype === "Table" && field.stage_requirement) {
+        const { fieldname: stageFieldName, required_stages } = field.stage_requirement;
+        const tableRows = currentValues[field.fieldname];
+        const rows = Array.isArray(tableRows) ? tableRows : [];
+        const filledStages = rows
+          .map((row: Record<string, unknown>) => row[stageFieldName])
+          .filter(Boolean) as string[];
+
+        const missingStages = required_stages.filter(
+          (stage) => !filledStages.includes(stage)
+        );
+
+        if (missingStages.length > 0) {
+          allMissingStages.push(...missingStages);
+          newErrors[field.fieldname] = `Please add rows for the following required education stages: ${missingStages.join(", ")}`;
+          return;
+        }
+      }
 
       // Required check
       if (field.reqd || field.is_mandatory) {
@@ -215,7 +245,10 @@ export function JobApplicationStep({
             return v === undefined || v === null || v === "" || (Array.isArray(v) && v.length === 0);
           })()
       );
-      if (hasRequired) {
+      if (allMissingStages.length > 0) {
+        const uniqueMissing = Array.from(new Set(allMissingStages));
+        toast.warning(`Please fill the required education stages: ${uniqueMissing.join(", ")}`);
+      } else if (hasRequired) {
         toast.warning("Please fill all required fields before proceeding.");
       } else {
         toast.warning("Please fix the validation errors before proceeding.");
@@ -287,7 +320,7 @@ export function JobApplicationStep({
     // Optionally update context, but the form data itself is already centralized
     setStepData(stepKey, data);
 
-    if (!isCampus && !validateRequiredFields()) return;
+    if (!validateRequiredFields()) return;
 
     if (isLastStep) {
       const submitPayload = buildSubmitPayload(data, "Open");

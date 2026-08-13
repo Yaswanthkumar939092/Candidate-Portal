@@ -78,11 +78,11 @@ export const useDeleteDraftJobApplicant = () => {
   });
 };
 
-export function useJobApplicationForm(job_opening?: string, form_name?: string, isCampus?: boolean) {
+export function useJobApplicationForm(job_opening?: string, form_name?: string, isCampus?: boolean, email?: string, campusInvite?: string) {
   return useQuery({
-    queryKey: ["job-application-form", job_opening, form_name, isCampus],
+    queryKey: ["job-application-form", job_opening, form_name, isCampus, email, campusInvite],
     queryFn: async () => {
-      const data = await jobApplicationService.getJobApplicationForm(job_opening, isCampus);
+      const data = await jobApplicationService.getJobApplicationForm(job_opening, isCampus, email, campusInvite);
       return data ?? { fields: [] };
     },
   });

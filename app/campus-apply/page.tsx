@@ -36,6 +36,7 @@ function CampusApplyContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const campusInvite = searchParams.get("campus_invite");
+  const emailParam = searchParams.get("email");
 
   useEffect(() => {
     if (!isAuthLoading && !user) {
@@ -338,6 +339,8 @@ function CampusApplyContent() {
                 job_opening={selectedJobName}
                 form_name=""
                 isCampus={true}
+                email={emailParam || undefined}
+                campusInvite={campusInvite || undefined}
               >
                 <CampusApplyWizardInner
                   selectedJobName={selectedJobName}
@@ -404,7 +407,7 @@ function CampusApplyWizardInner({
     }
   }, [defaultValues, initializeAllStepsFromDraft]);
 
-  // Pre-fill fields from user details
+  // Pre-fill fields from user details (only if no value from API)
   useEffect(() => {
     if (!user || !allFields.length) return;
     const firstName = user.first_name || "";
@@ -416,6 +419,9 @@ function CampusApplyWizardInner({
       email;
 
     allFields.forEach((field: any) => {
+      // Skip if the API already provided a value for this field
+      if (field.value !== undefined && field.value !== null && field.value !== "") return;
+
       const label = (field.label || "").toLowerCase();
       const fname = field.fieldname || "";
       let val: string | undefined;

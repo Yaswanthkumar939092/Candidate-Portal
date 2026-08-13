@@ -102,10 +102,14 @@ export const jobApplicationService = {
   getJobApplicationForm: async (
     job_opening?: string,
     isCampus?: boolean,
+    email?: string,
+    campus_invite?: string,
   ): Promise<any> => {
     try {
       const params: Record<string, string> = {};
       if (job_opening) params.opening = job_opening;
+      if (isCampus && email) params.email = email;
+      if (isCampus && campus_invite) params.campus_invite = campus_invite;
 
       const endpoint = isCampus
         ? "recruitment.api.channels.campus.get_application_fields"
@@ -124,6 +128,7 @@ export const jobApplicationService = {
         section_label: "Details",
         child_fields: field.table_fields,
         value: field.value,
+        stage_requirement: field.stage_requirement,
       }));
 
       return { fields };

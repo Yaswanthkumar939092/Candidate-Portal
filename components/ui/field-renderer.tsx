@@ -42,6 +42,7 @@ export interface FormField {
   depends_on?: string;
   mandatory_depends_on?: string;
   value?: unknown;
+  exclude_values?: string[];
 }
 
 export interface FieldRendererProps<T extends FormField> {
@@ -736,6 +737,7 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
       const comboboxOptions = React.useMemo(() => {
         const finalOptions: Array<{ value: string; label: string }> = [];
         const seen = new Set<string>();
+        const excludeSet = new Set(field.exclude_values || []);
 
         const matchingResult = results.find((r) => r.id === displayValue);
 
@@ -756,6 +758,9 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
         }
 
         results.forEach((opt) => {
+          // Filter out excluded values (already used in other rows)
+          if (excludeSet.has(opt.id)) return;
+
           const optYear = parseInt(opt.id, 10);
           if (!isNaN(optYear)) {
             if (minYear !== null && optYear <= minYear) return;
@@ -768,7 +773,7 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
         });
 
         return finalOptions;
-      }, [results, displayValue, minYear, maxYear]);
+      }, [results, displayValue, minYear, maxYear, field.exclude_values]);
 
       return (
         <div className={cn("space-y-1.5", className)}>

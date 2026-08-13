@@ -21,16 +21,20 @@ export function JobAppProvider({
   children,
   job_opening,
   form_name,
-  isCampus
+  isCampus,
+  email,
+  campusInvite,
 }: {
   children: React.ReactNode;
   job_opening?: string;
   form_name?: string;
   isCampus?: boolean;
+  email?: string;
+  campusInvite?: string;
 }) {
   const [stepData, setStepDataState] = useState<Record<string, Record<string, unknown>>>({});
 
-  const { data, isLoading } = useJobApplicationForm(job_opening, form_name, isCampus);
+  const { data, isLoading } = useJobApplicationForm(job_opening, form_name, isCampus, email, campusInvite);
 
   // ✅ API se flat fields array — data se seedha lo, useState ki zaroorat nahi
   const allFields = useMemo(() => {
