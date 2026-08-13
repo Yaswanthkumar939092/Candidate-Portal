@@ -327,110 +327,95 @@ export function PortalNavigation({
           </div> */}
 
           {/* User dropdown */}
-          {disableUserDropdown ? (
-            <div className="flex items-center gap-2 px-2 select-none">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={avatarUrl} alt={displayName} />
-                <AvatarFallback className="bg-primary text-primary-foreground text-sm">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              <div className="hidden max-w-30 flex-col items-start md:flex">
-                <span className="truncate text-sm font-medium text-foreground w-full text-left">
-                  {displayName}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {userRole}
-                </span>
-              </div>
-            </div>
-          ) : (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-2 px-2">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={avatarUrl} alt={displayName} />
-                    <AvatarFallback className="bg-primary text-primary-foreground text-sm">
-                      {initials}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="hidden max-w-30 flex-col items-start md:flex">
-                    <span className="truncate text-sm font-medium text-foreground w-full text-left">
-                      {displayName}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {userRole}
-                    </span>
-                  </div>
-                  <ChevronDown className="hidden h-4 w-4 text-muted-foreground md:block" />
-                </Button>
-              </DropdownMenuTrigger>
-
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                {/* User info header */}
-                <div className="flex items-center gap-2 p-2">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={avatarUrl} alt={displayName} />
-                    <AvatarFallback className="bg-primary text-primary-foreground text-sm">
-                      {initials}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col space-y-1 leading-none truncate">
-                    <p className="text-sm font-medium">{displayName}</p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {user?.email}
-                    </p>
-                    {profile?.lifecycle_stage && (
-                      <Badge variant="secondary" className="mt-1 w-fit text-xs">
-                        {formatRole(profile.lifecycle_stage)}
-                      </Badge>
-                    )}
-                  </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="flex items-center gap-2 px-2">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={avatarUrl} alt={displayName} />
+                  <AvatarFallback className="bg-primary text-primary-foreground text-sm">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="hidden max-w-30 flex-col items-start md:flex">
+                  <span className="truncate text-sm font-medium text-foreground w-full text-left">
+                    {displayName}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {userRole}
+                  </span>
                 </div>
+                <ChevronDown className="hidden h-4 w-4 text-muted-foreground md:block" />
+              </Button>
+            </DropdownMenuTrigger>
 
-                <DropdownMenuSeparator />
-
-                {/* Profile link */}
-                <DropdownMenuItem asChild>
-                  <Link href="/profile" className="flex items-center">
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
-                  </Link>
-                </DropdownMenuItem>
-
-                {/* Settings link */}
-                {/* <DropdownMenuItem asChild>
-                  <Link href="/settings" className="flex items-center">
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
-                  </Link>
-                </DropdownMenuItem> */}
-
-                <DropdownMenuItem
-                  onClick={toggleTheme}
-                  className="cursor-pointer"
-                >
-                  {isDark ? (
-                    <Sun className="mr-2 h-4 w-4" />
-                  ) : (
-                    <Moon className="mr-2 h-4 w-4" />
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+              {/* User info header */}
+              <div className="flex items-center gap-2 p-2">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={avatarUrl} alt={displayName} />
+                  <AvatarFallback className="bg-primary text-primary-foreground text-sm">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col space-y-1 leading-none truncate">
+                  <p className="text-sm font-medium">{displayName}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {user?.email}
+                  </p>
+                  {profile?.lifecycle_stage && (
+                    <Badge variant="secondary" className="mt-1 w-fit text-xs">
+                      {formatRole(profile.lifecycle_stage)}
+                    </Badge>
                   )}
-                  <span>{isDark ? "Light mode" : "Dark mode"}</span>
-                </DropdownMenuItem>
+                </div>
+              </div>
 
-                <DropdownMenuSeparator />
+              <DropdownMenuSeparator />
 
-                {/* Sign out */}
-                <DropdownMenuItem
-                  onClick={handleSignOut}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Sign Out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+              {!disableUserDropdown && (
+                <>
+                  {/* Profile link */}
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile" className="flex items-center">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Profile</span>
+                    </Link>
+                  </DropdownMenuItem>
+
+                  {/* Settings link */}
+                  {/* <DropdownMenuItem asChild>
+                    <Link href="/settings" className="flex items-center">
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Settings</span>
+                    </Link>
+                  </DropdownMenuItem> */}
+
+                  <DropdownMenuItem
+                    onClick={toggleTheme}
+                    className="cursor-pointer"
+                  >
+                    {isDark ? (
+                      <Sun className="mr-2 h-4 w-4" />
+                    ) : (
+                      <Moon className="mr-2 h-4 w-4" />
+                    )}
+                    <span>{isDark ? "Light mode" : "Dark mode"}</span>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator />
+                </>
+              )}
+
+              {/* Sign out */}
+              <DropdownMenuItem
+                onClick={handleSignOut}
+                className="text-destructive focus:text-destructive"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Sign Out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>

@@ -25,6 +25,11 @@ export interface JobAppField {
   reqd?: number | boolean;
   is_mandatory?: number | boolean;
   hidden?: number | boolean;
+  stage_requirement?: {
+    fieldname: string;
+    doctype: string;
+    required_stages: string[];
+  };
 }
 
 // ─── Regex patterns ───────────────────────────────────────────────────────────
@@ -101,6 +106,58 @@ export function validateJobAppField(
         type: "date",
         message: "Expected date of joining cannot be before today",
       };
+    }
+  }
+
+  // ── Table validation: Chronological checks ─────────────────────────────────
+  if (field.fieldtype === "Table" && Array.isArray(value)) {
+    const stageFieldName = field.stage_requirement?.fieldname;
+    
+    // Check if this table actually tracks education stages and years of passing
+    // (by inspecting the first row for a year_of_passing field, if any)
+    const tracksYears = value.some((row) => 'year_of_passing' in row);
+    
+    if (stageFieldName && tracksYears) {
+      const EDUCATION_LEVEL_ORDER: Record<string, number> = {
+        "10th": 1,
+        "12th": 2,
+        Graduation: 3,
+        "Post Graduation": 4,
+      };
+
+      for (let i = 0; i < value.length; i++) {
+        const row = value[i];
+        const currentLevel = String(row?.[stageFieldName] || "").trim();
+        const currentYearStr = String(row?.year_of_passing || "").trim();
+        const currentRank = EDUCATION_LEVEL_ORDER[currentLevel];
+        const currentYear = parseInt(currentYearStr, 10);
+
+        if (currentRank && !isNaN(currentYear)) {
+          let maxLowerYear = 0;
+          let maxLowerLevel = "";
+          for (let j = 0; j < value.length; j++) {
+            if (i === j) continue;
+            const otherRow = value[j];
+            const otherLevel = String(otherRow?.[stageFieldName] || "").trim();
+            const otherYearStr = String(otherRow?.year_of_passing || "").trim();
+            const otherRank = EDUCATION_LEVEL_ORDER[otherLevel];
+            const otherYear = parseInt(otherYearStr, 10);
+
+            if (otherRank && otherRank < currentRank && !isNaN(otherYear)) {
+              if (otherYear > maxLowerYear) {
+                maxLowerYear = otherYear;
+                maxLowerLevel = otherLevel;
+              }
+            }
+          }
+          if (maxLowerYear > 0 && currentYear <= maxLowerYear) {
+            return {
+              type: "table",
+              message: `Year for ${currentLevel} must be after ${maxLowerLevel} (${maxLowerYear})`,
+            };
+          }
+        }
+      }
     }
   }
 

@@ -361,6 +361,7 @@ export function JobApplicationReviewStep({
           <div className="flex items-start gap-3">
             <Checkbox
               id="declaration_accepted"
+              className="border-primary mt-0.5"
               checked={declarationAccepted === true}
               onCheckedChange={(checked) =>
                 setValue(
