@@ -471,7 +471,7 @@ describe("RegisterPage – Edge Cases", () => {
   });
 
   it("attaches candidateSource: 'Campus' when redirect query param has query parameters", async () => {
-    mockGet.mockReturnValue("/campus-apply?campus_invite=CINV-2026-0001&email=deepakrajput0006@gmail.com");
+    mockGet.mockReturnValue("/campus-apply?campus_invite=CINV-2026-0001");
     await renderRegisterPage();
     await fillRegisterForm();
     submitForm();
