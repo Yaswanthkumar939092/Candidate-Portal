@@ -226,6 +226,45 @@ export function JobApplicationTableField({
                 }
               }
 
+              let cellError: string | undefined = undefined;
+
+              const stageFieldName = field.stage_requirement?.fieldname || "qualification";
+
+              if (col.fieldname === "year_of_passing" && columns.some(c => c.fieldname === stageFieldName)) {
+                const EDUCATION_LEVEL_ORDER: Record<string, number> = {
+                  "10th": 1,
+                  "12th": 2,
+                  "Graduation": 3,
+                  "Post Graduation": 4,
+                };
+                const currentLevel = String(row?.[stageFieldName] || "").trim();
+                const currentYearStr = String(row?.year_of_passing || "").trim();
+                const currentRank = EDUCATION_LEVEL_ORDER[currentLevel];
+                const currentYear = parseInt(currentYearStr, 10);
+
+                if (currentRank && !isNaN(currentYear)) {
+                  let maxLowerYear = 0;
+                  let maxLowerLevel = "";
+                  rows.forEach((otherRow: any, otherIndex: number) => {
+                    if (otherIndex === rowIndex) return;
+                    const otherLevel = String(otherRow?.[stageFieldName] || "").trim();
+                    const otherYearStr = String(otherRow?.year_of_passing || "").trim();
+                    const otherRank = EDUCATION_LEVEL_ORDER[otherLevel];
+                    const otherYear = parseInt(otherYearStr, 10);
+
+                    if (otherRank && otherRank < currentRank && !isNaN(otherYear)) {
+                      if (otherYear > maxLowerYear) {
+                        maxLowerYear = otherYear;
+                        maxLowerLevel = otherLevel;
+                      }
+                    }
+                  });
+                  if (maxLowerYear > 0 && currentYear <= maxLowerYear) {
+                    cellError = `Year must be after ${maxLowerLevel} (${maxLowerYear})`;
+                  }
+                }
+              }
+
               return (
                 <DynamicFieldRenderer
                   key={col.fieldname}
@@ -234,6 +273,7 @@ export function JobApplicationTableField({
                   onChange={(val) =>
                     handleCellChange(rowIndex, col.fieldname, val)
                   }
+                  error={cellError}
                   disabled={!!col.read_only}
                   onAttachChange={
                     onAttachChange
