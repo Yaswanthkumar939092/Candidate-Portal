@@ -1,7 +1,18 @@
-import { describe, it, expect, vi } from "vitest"
-import { render, screen } from "@testing-library/react"
+import { describe, it, expect, vi, beforeEach } from "vitest"
+import { render, screen, fireEvent, waitFor } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { ProfileHeader } from "@/components/profile/profile-header"
 import type { Profile } from "@/types/database"
+import { toast } from "sonner"
+import { useFileUpload } from "@/lib/hooks/useFileUpload"
+import { useUpdateProfile } from "@/lib/hooks/useUpdateProfile"
+
+vi.mock("sonner", () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}))
 
 vi.mock("@/lib/hooks/useFileUpload", () => ({
   useFileUpload: vi.fn().mockReturnValue({
@@ -135,3 +146,141 @@ describe("ProfileHeader – Bio", () => {
     expect(screen.queryByText("Passionate developer.")).toBeNull()
   })
 })
+
+// =====================================================================
+//  PROFILE HEADER – EDITING & AVATAR UPLOAD
+// =====================================================================
+describe("ProfileHeader – Editing & Avatar Upload", () => {
+  let mockUpdateMutateAsync: any;
+  let mockUploadMutate: any;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUpdateMutateAsync = vi.fn().mockResolvedValue({});
+    (useUpdateProfile as any).mockReturnValue({
+      mutateAsync: mockUpdateMutateAsync,
+      isPending: false,
+    });
+
+    mockUploadMutate = vi.fn((file, options) => {
+      // default mock calls onSuccess
+      options.onSuccess({ file_url: "/files/avatar.png" });
+    });
+    (useFileUpload as any).mockReturnValue({
+      mutate: mockUploadMutate,
+      isPending: false,
+    });
+    
+    // Stub URL.createObjectURL since it's not in JSDOM
+    URL.createObjectURL = vi.fn().mockReturnValue("blob:fake-url");
+  });
+
+  it("toggles edit mode and saves name successfully", async () => {
+    render(<ProfileHeader profile={BASE_PROFILE} />)
+    
+    // Click name to edit
+    const nameHeading = screen.getByText("Alex Smith");
+    fireEvent.click(nameHeading);
+    
+    const input = await screen.findByRole("textbox");
+    expect(input).toBeTruthy();
+    
+    // Cancel editing
+    const cancelBtn = screen.getByText("Cancel");
+    fireEvent.click(cancelBtn);
+    expect(screen.queryByRole("textbox")).toBeNull();
+    
+    // Open edit mode again
+    fireEvent.click(screen.getByText("Alex Smith"));
+    const input2 = await screen.findByRole("textbox");
+    
+    // Type new name
+    fireEvent.change(input2, { target: { value: "Alexander" } });
+    const saveBtn = screen.getByText("Save");
+    fireEvent.click(saveBtn);
+    
+    await waitFor(() => {
+      expect(mockUpdateMutateAsync).toHaveBeenCalledWith({
+        full_name: "Alexander",
+        mobile_no: "",
+        avatar_url: ""
+      });
+      expect(toast.success).toHaveBeenCalledWith("Name updated successfully");
+    });
+  });
+
+  it("handles error when saving name", async () => {
+    mockUpdateMutateAsync.mockRejectedValue(new Error("Failed"));
+    render(<ProfileHeader profile={BASE_PROFILE} />)
+    
+    fireEvent.click(screen.getByText("Alex Smith"));
+    const input = await screen.findByRole("textbox");
+    fireEvent.change(input, { target: { value: "Alexander" } });
+    fireEvent.click(screen.getByText("Save"));
+    
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Failed to update name");
+    });
+  });
+
+  it("handles avatar file selection and upload correctly", async () => {
+    const { container } = render(<ProfileHeader profile={BASE_PROFILE} />)
+    
+    // Click avatar to cover line 206
+    const avatarFallback = screen.getByText("AS");
+    fireEvent.click(avatarFallback);
+
+    // We fire change on the hidden input directly
+    const fileInput = container.querySelector("input[type='file']") as HTMLInputElement;
+    expect(fileInput).toBeTruthy();
+    
+    // Test invalid file type
+    const invalidFile = new File(["test"], "test.txt", { type: "text/plain" });
+    fireEvent.change(fileInput, { target: { files: [invalidFile] } });
+    expect(toast.error).toHaveBeenCalledWith("Only JPG and PNG files are allowed");
+    
+    // Test valid file type
+    const validFile = new File(["image"], "avatar.png", { type: "image/png" });
+    fireEvent.change(fileInput, { target: { files: [validFile] } });
+    
+    await waitFor(() => {
+      expect(URL.createObjectURL).toHaveBeenCalledWith(validFile);
+      expect(mockUploadMutate).toHaveBeenCalled();
+      expect(mockUpdateMutateAsync).toHaveBeenCalledWith({
+        full_name: "Alex Smith",
+        mobile_no: "",
+        avatar_url: "/files/avatar.png"
+      });
+      expect(toast.success).toHaveBeenCalledWith("Avatar updated successfully");
+    });
+  });
+
+  it("handles error during file upload", async () => {
+    mockUploadMutate = vi.fn((file, options) => {
+      options.onError(new Error("Upload failed"));
+    });
+    (useFileUpload as any).mockReturnValue({ mutate: mockUploadMutate, isPending: false });
+    
+    const { container } = render(<ProfileHeader profile={BASE_PROFILE} />)
+    const fileInput = container.querySelector("input[type='file']") as HTMLInputElement;
+    const validFile = new File(["image"], "avatar.png", { type: "image/png" });
+    fireEvent.change(fileInput, { target: { files: [validFile] } });
+    
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Upload failed");
+    });
+  });
+  
+  it("handles error during profile update after file upload", async () => {
+    mockUpdateMutateAsync.mockRejectedValue(new Error("Update failed"));
+    
+    const { container } = render(<ProfileHeader profile={BASE_PROFILE} />)
+    const fileInput = container.querySelector("input[type='file']") as HTMLInputElement;
+    const validFile = new File(["image"], "avatar.png", { type: "image/png" });
+    fireEvent.change(fileInput, { target: { files: [validFile] } });
+    
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Update failed");
+    });
+  });
+});

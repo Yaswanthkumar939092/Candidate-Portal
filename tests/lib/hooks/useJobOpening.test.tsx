@@ -148,7 +148,7 @@ describe("useJobOpening Hooks", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual(mockForm);
-    expect(jobApplicationService.getJobApplicationForm).toHaveBeenCalledWith("job1", undefined);
+    expect(jobApplicationService.getJobApplicationForm).toHaveBeenCalledWith("job1", undefined, undefined, undefined);
   });
 
   it("useJobApplicationForm fetches form correctly with isCampus = true", async () => {
@@ -159,7 +159,7 @@ describe("useJobOpening Hooks", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual(mockForm);
-    expect(jobApplicationService.getJobApplicationForm).toHaveBeenCalledWith("job1", true);
+    expect(jobApplicationService.getJobApplicationForm).toHaveBeenCalledWith("job1", true, undefined, undefined);
   });
 
   describe("Mutation Callbacks", () => {

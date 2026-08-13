@@ -61,6 +61,11 @@ export interface ApplicationField {
   editability: string;
   value?: string;
   table_fields?: any[];
+  stage_requirement?: {
+    fieldname: string;
+    doctype: string;
+    required_stages: string[];
+  };
 }
 
 export interface SubmitApplicationPayload {
@@ -92,4 +97,9 @@ export interface JobField {
   tab_label?: string;
   section_label?: string;
   value?: string;
+  stage_requirement?: {
+    fieldname: string;
+    doctype: string;
+    required_stages: string[];
+  };
 }
