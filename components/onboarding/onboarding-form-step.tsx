@@ -396,6 +396,18 @@ export function OnboardingFormStep({
           return;
         }
 
+        // Handle custom_same_as_permanent -> hide custom_communication_address_proof
+        if (field.fieldname === "custom_communication_address_proof" && doc["custom_same_as_permanent"]) {
+          const val = getValues(field.fieldname);
+          if (val !== undefined && val !== "" && val !== null) {
+            setValue(field.fieldname, "", {
+              shouldValidate: false,
+              shouldDirty: true,
+            });
+          }
+          return;
+        }
+
         if (field.depends_on) {
           const isVisible = evaluateDependsOn(field.depends_on, doc);
           if (!isVisible) {
@@ -533,6 +545,13 @@ export function OnboardingFormStep({
           <FileUploadField
             label={field.label}
             required={!!(field.is_mandatory || field.reqd)}
+            helpText={
+              field.fieldname === "custom_bank_statement_attachment"
+                ? "Upload proof with visible account number and IFSC code (max. 5MB)"
+                : field.fieldname === "custom_communication_address_proof"
+                ? "Proof can be anything including lease agreement, electricity bill, etc. (max. 5MB)"
+                : undefined
+            }
             value={value as string}
             onChange={(url) => onChange(url || "")}
             disabled={disabled || !!field.read_only}
@@ -565,6 +584,13 @@ export function OnboardingFormStep({
           <FileUploadField
             label={field.label}
             required={!!(field.is_mandatory || field.reqd)}
+            helpText={
+              field.fieldname === "custom_bank_statement_attachment"
+                ? "Upload proof with visible account number and IFSC code (max. 5MB)"
+                : field.fieldname === "custom_communication_address_proof"
+                ? "Proof can be anything including lease agreement, electricity bill, etc. (max. 5MB)"
+                : undefined
+            }
             value={value as string}
             onChange={(url) => onChange(url || "")}
             disabled={disabled || !!field.read_only}
@@ -596,6 +622,7 @@ export function OnboardingFormStep({
         // Check if there is at least one visible field in this section
         const isFieldVisibleInSection = (field: OnboardingField) => {
           if (field.fieldname === EMPLOYMENT_TABLE_FIELDNAME && doc[IS_FRESHER_FIELDNAME]) return false;
+          if (field.fieldname === "custom_communication_address_proof" && doc["custom_same_as_permanent"]) return false;
           return !field.hidden && (!field.depends_on || evaluateDependsOn(field.depends_on, doc));
         };
         const hasVisibleFields = section.fields.some(isFieldVisibleInSection);
@@ -639,6 +666,11 @@ export function OnboardingFormStep({
                 {section.fields.map((field) => {
                   // Hide employment table when is_fresher is checked
                   if (field.fieldname === EMPLOYMENT_TABLE_FIELDNAME && doc[IS_FRESHER_FIELDNAME]) {
+                    return null;
+                  }
+
+                  // Hide communication address proof when same as permanent is checked
+                  if (field.fieldname === "custom_communication_address_proof" && doc["custom_same_as_permanent"]) {
                     return null;
                   }
 

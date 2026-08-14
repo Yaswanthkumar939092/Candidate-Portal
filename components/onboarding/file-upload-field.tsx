@@ -59,6 +59,7 @@ export function FileUploadField({
 }: FileUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [internalError, setInternalError] = useState<string | null>(null);
 
   const { mutateAsync: uploadFile, isPending } = useFileUpload();
 
@@ -75,11 +76,20 @@ export function FileUploadField({
   const uploadAndSetFile = useCallback(
     async (file: File | null) => {
       if (!file) return;
+      
+      setInternalError(null);
+      
+      if (file.size > 5 * 1024 * 1024) {
+        setInternalError("File size must be less than 5MB");
+        return;
+      }
+
       try {
         const response = await uploadFile(file);
         onChange?.(response.file_url);
       } catch (error) {
         console.error("Upload failed", error);
+        setInternalError("Upload failed. Please try again.");
       }
     },
     [uploadFile, onChange],
@@ -247,7 +257,7 @@ export function FileUploadField({
           aria-label={label}
         />
 
-        {error && <p className="text-xs text-destructive">{error}</p>}
+        {(error || internalError) && <p className="text-xs text-destructive">{error || internalError}</p>}
       </div>
     </TooltipProvider>
   );
