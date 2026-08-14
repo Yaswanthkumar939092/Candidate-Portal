@@ -16,6 +16,9 @@ const EDUCATION_LEVEL_FIELDNAME = "education_level"
 const POST_GRADUATION_FIELDNAME = "custom_has_post_graduation_degree"
 const EDUCATION_LEVELS = ["10th", "12th", "Graduation", "Post Graduation"] as const
 
+const FAMILY_DETAILS_FIELDNAME = "custom_family_details"
+const RELATION_FIELDNAME = "relation"
+
 function isYes(value: unknown) {
   return String(value ?? "").trim().toLowerCase() === "yes"
 }
@@ -196,6 +199,42 @@ export function DynamicTableField({
     return requiredEducationLevels.every((level) => selectedEducationLevels.has(level))
   }, [isEducationDetailsTable, requiredEducationLevels, selectedEducationLevels])
 
+  const isFamilyDetailsTable = field.fieldname === FAMILY_DETAILS_FIELDNAME
+  const selectedRelations = React.useMemo(() => {
+    if (!isFamilyDetailsTable) return new Set<string>()
+
+    return new Set(
+      rowValues
+        .map((row: any) => String(row?.[RELATION_FIELDNAME] || "").trim())
+        .filter(Boolean),
+    )
+  }, [isFamilyDetailsTable, rowValues])
+
+  const hasAllAvailableRelations = React.useMemo(() => {
+    if (!isFamilyDetailsTable) return false
+    const relationField = field.child_fields?.find(f => f.fieldname === RELATION_FIELDNAME)
+    const allOptions = parseTableOptions(relationField?.options)
+    if (!allOptions.length) return false
+    
+    // Check if every available option has been selected
+    // Note: since we allow multiple "Child" selections, we shouldn't hide the add button 
+    // if "Child" is an option, unless we really want to limit it to exactly one of each.
+    // Based on requirements, "Child" can be multiple, so we'll never hide the button if "Child" is present.
+    if (allOptions.includes("Child")) return false;
+    
+    return allOptions.every((opt) => selectedRelations.has(opt))
+  }, [isFamilyDetailsTable, field.child_fields, selectedRelations])
+
+  const canAddMoreRows = React.useMemo(() => {
+    if (isEducationDetailsTable) {
+      return !hasAllApplicableEducationLevels;
+    }
+    if (isFamilyDetailsTable) {
+      return !hasAllAvailableRelations;
+    }
+    return true;
+  }, [isEducationDetailsTable, hasAllApplicableEducationLevels, isFamilyDetailsTable, hasAllAvailableRelations]);
+
   // Automatically clear child fields when they become hidden or violate year sequence
   React.useEffect(() => {
     fields.forEach((item, index) => {
@@ -324,6 +363,25 @@ export function DynamicTableField({
                       };
                     }
 
+                    if (
+                      isFamilyDetailsTable &&
+                      childField.fieldname === RELATION_FIELDNAME
+                    ) {
+                      const currentRelation = String(rowDoc?.[RELATION_FIELDNAME] || "").trim();
+                      const optionSource = parseTableOptions(childField.options);
+                      
+                      // Filter out relations that are already selected, unless it's the one currently selected in this row
+                      // Exclude "Child" from being filtered out in case they have multiple children
+                      const availableOptions = optionSource.filter(
+                        (option) => option === "Child" || option === currentRelation || !selectedRelations.has(option)
+                      );
+
+                      fieldForRow = {
+                        ...childField,
+                        options: availableOptions.join("\n"),
+                      };
+                    }
+
                     return (
                       <TableRowField
                         key={childField.fieldname}
@@ -350,7 +408,7 @@ export function DynamicTableField({
         })}
       </div>
 
-      {!field.read_only && !hasAllApplicableEducationLevels && (
+      {!field.read_only && canAddMoreRows && (
         <Button
           type="button"
           variant="outline"

@@ -369,6 +369,13 @@ export function JobApplicationStep({
         <FileUploadField
           label={field.label}
           required={!!(field.is_mandatory || field.reqd)}
+          helpText={
+            field.fieldname === "custom_bank_statement_attachment"
+              ? "Upload proof with visible account number and IFSC code (max. 5MB)"
+              : field.fieldname === "custom_communication_address_proof"
+              ? "Proof can be anything including lease agreement, electricity bill, etc. (max. 5MB)"
+              : undefined
+          }
           value={value as string}
           onChange={handleFileUpload(field.fieldname)}
           disabled={disabled || !!field.read_only}
@@ -388,6 +395,13 @@ export function JobApplicationStep({
         <FileUploadField
           label={field.label}
           required={!!(field.is_mandatory || field.reqd)}
+          helpText={
+            field.fieldname === "custom_bank_statement_attachment"
+              ? "Upload proof with visible account number and IFSC code (max. 5MB)"
+              : field.fieldname === "custom_communication_address_proof"
+              ? "Proof can be anything including lease agreement, electricity bill, etc. (max. 5MB)"
+              : undefined
+          }
           value={value as string}
           onChange={handleFileUpload(field.fieldname)}
           disabled={disabled || !!field.read_only}

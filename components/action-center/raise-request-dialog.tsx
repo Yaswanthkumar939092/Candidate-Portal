@@ -98,6 +98,13 @@ export function RaiseRequestDialog({
       return
     }
 
+    setError(null)
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError("File size must be less than 5MB")
+      return
+    }
+
     setFileName(file.name)
 
     uploadMutation.mutate(file, {
