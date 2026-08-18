@@ -20,6 +20,15 @@ export const useJobOfferPdf = (appl: string, enabled = true, token?: string) => 
   return { pdfUrl, isLoading: false, error: null };
 };
 
+export const useJobOfferLetters = (appl: string, enabled = true, token?: string) => {
+  return useQuery({
+    queryKey: ["jobOfferLetters", appl, token],
+    queryFn: () => jobOfferService.getJobOfferLetters(appl, token),
+    enabled: !!appl && enabled,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+};
+
 export const useUpdateJobOfferStatus = () => {
   const queryClient = useQueryClient();
 

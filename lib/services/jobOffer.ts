@@ -19,6 +19,7 @@ export interface JobOfferSummary {
   fixed_formatted?: string | null;
   variable_formatted?: string | null;
   total_formatted?: string | null;
+  count?: number;
 }
 
 export interface UpdateJobOfferStatusParams {
@@ -140,6 +141,20 @@ export const jobOfferService = {
       return result;
     } catch (error) {
       console.error("Failed to submit consent:", error);
+      throw error;
+    }
+  },
+
+  getJobOfferLetters: async (appl: string, token?: string): Promise<{ count: number, letters: { index: number, print_format: string, filename: string, pdf_base64: string }[] }> => {
+    try {
+      const params: Record<string, string> = { appl, separate: "1" };
+      if (token) {
+        params.token = token;
+      }
+      const result = await FrappeAPI.get("recruitment.job_offer_utils.download_job_offer_pdf", params);
+      return result;
+    } catch (error) {
+      console.error("Failed to fetch job offer letters:", error);
       throw error;
     }
   },
