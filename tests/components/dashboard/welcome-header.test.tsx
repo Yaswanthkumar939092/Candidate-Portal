@@ -73,4 +73,33 @@ describe('WelcomeHeader', () => {
     render(<WelcomeHeader name="Test" />)
     expect(screen.getByText('Profile Active')).toBeTruthy()
   })
+
+  it('shows User when name is omitted', () => {
+    render(<WelcomeHeader />)
+    expect(screen.getByText(/User/)).toBeTruthy()
+  })
+
+  it('shows Good morning before 12 PM', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2024, 1, 1, 10, 0, 0))
+    render(<WelcomeHeader name="Test" />)
+    expect(screen.getByText(/Good morning/)).toBeTruthy()
+    vi.useRealTimers()
+  })
+
+  it('shows Good afternoon between 12 PM and 5 PM', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2024, 1, 1, 14, 0, 0))
+    render(<WelcomeHeader name="Test" />)
+    expect(screen.getByText(/Good afternoon/)).toBeTruthy()
+    vi.useRealTimers()
+  })
+
+  it('shows Good evening after 5 PM', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2024, 1, 1, 19, 0, 0))
+    render(<WelcomeHeader name="Test" />)
+    expect(screen.getByText(/Good evening/)).toBeTruthy()
+    vi.useRealTimers()
+  })
 })

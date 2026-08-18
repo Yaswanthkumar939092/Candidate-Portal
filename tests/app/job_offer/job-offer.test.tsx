@@ -48,6 +48,7 @@ vi.mock("next/navigation", () => ({
 
 const mockUseJobOfferSummary = vi.fn();
 const mockUseJobOfferPdf = vi.fn();
+const mockUseJobOfferLetters = vi.fn();
 const mockUseUpdateJobOfferStatus = vi.fn();
 const mockUseJobOfferStatus = vi.fn();
 const mockUseRejectionReasons = vi.fn();
@@ -55,6 +56,7 @@ const mockUseRejectionReasons = vi.fn();
 vi.mock("@/lib/hooks/useJobOffer", () => ({
   useJobOfferSummary: (...args: unknown[]) => mockUseJobOfferSummary(...args),
   useJobOfferPdf: (...args: unknown[]) => mockUseJobOfferPdf(...args),
+  useJobOfferLetters: (...args: unknown[]) => mockUseJobOfferLetters(...args),
   useUpdateJobOfferStatus: () => mockUseUpdateJobOfferStatus(),
   useJobOfferStatus: (...args: unknown[]) => mockUseJobOfferStatus(...args),
   useRejectionReasons: (...args: unknown[]) => mockUseRejectionReasons(...args),
@@ -114,6 +116,10 @@ describe("JobOfferPage", () => {
     });
     mockUseJobOfferPdf.mockReturnValue({
       pdfUrl: "http://test.com/pdf",
+      isLoading: false,
+    });
+    mockUseJobOfferLetters.mockReturnValue({
+      data: { count: 0, letters: [] },
       isLoading: false,
     });
     mockUseUpdateJobOfferStatus.mockReturnValue({ mutateAsync: vi.fn() });

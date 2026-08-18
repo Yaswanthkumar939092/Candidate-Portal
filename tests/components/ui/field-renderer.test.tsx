@@ -323,7 +323,7 @@ describe("DynamicFieldRenderer", () => {
       expect(input.inputMode).toBe("numeric")
 
       rerender(
-        <DynamicFieldRenderer field={field} value="123456" onChange={vi.fn()} />
+        <DynamicFieldRenderer field={field} value="123abc4567" onChange={vi.fn()} />
       )
 
       expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("123456")
@@ -467,6 +467,17 @@ describe("DynamicFieldRenderer", () => {
 
       await user.type(screen.getByRole("spinbutton"), "9")
       expect(onChange).toHaveBeenLastCalledWith("9")
+    })
+
+    it("handles multiple decimal points in float", () => {
+      const field: FormField = {
+        fieldname: "price",
+        label: "Price",
+        fieldtype: "Float",
+      }
+      render(<DynamicFieldRenderer field={field} value="1.2.3" onChange={vi.fn()} />)
+      const input = screen.getByRole("spinbutton") as HTMLInputElement
+      expect(input.value).toBe("1.23")
     })
 
     it("normalizes percentage fields to at most 3 digits", async () => {
@@ -763,6 +774,118 @@ describe("DynamicFieldRenderer", () => {
 
       await user.click(screen.getByText("HR"))
       expect(onChange).toHaveBeenCalledWith("HR")
+    })
+
+    it("handles custom_communication_city depending on state", async () => {
+      vi.mocked(useLinkFieldOptions).mockReturnValue({
+        data: {
+          status: "success",
+          doctype: "City",
+          title_field: "name",
+          total: 1,
+          results: [{ id: "Pune", label: "Pune" }],
+        },
+        isLoading: false,
+      } as any)
+
+      const field: FormField = {
+        fieldname: "custom_communication_city",
+        label: "City",
+        fieldtype: "Link",
+        options: "City",
+      }
+      
+      const TestForm = () => {
+        const methods = useForm({
+          defaultValues: {
+            custom_communication_state: "Maharashtra"
+          }
+        })
+        return (
+          <FormProvider {...methods}>
+            <DynamicFieldRenderer field={field} value={{ id: "Pune" }} onChange={vi.fn()} />
+            <button onClick={() => methods.setValue("custom_communication_state", "Gujarat")}>Change State</button>
+          </FormProvider>
+        )
+      }
+
+      render(<TestForm />)
+      expect(useLinkFieldOptions).toHaveBeenCalledWith("City", expect.any(String), { state: "Maharashtra" })
+
+      await user.click(screen.getByText("Change State"))
+      await waitFor(() => {
+        expect(useLinkFieldOptions).toHaveBeenCalledWith("City", expect.any(String), { state: "Gujarat" })
+      })
+    })
+
+    it("handles primitive value as displayValue", async () => {
+      vi.mocked(useLinkFieldOptions).mockReturnValue({
+        data: {
+          results: [{ id: "1234", label: "Option 1234" }],
+        },
+        isLoading: false,
+      } as any)
+
+      const field: FormField = {
+        fieldname: "some_link",
+        label: "Link",
+        fieldtype: "Link",
+        options: "Doctype",
+      }
+      render(<DynamicFieldRenderer field={field} value={1234} onChange={vi.fn()} />)
+      const trigger = screen.getByRole("combobox")
+      expect(trigger.textContent).toContain("Option 1234")
+    })
+
+    it("handles minYear and maxYear in custom_education_details", async () => {
+      vi.mocked(useLinkFieldOptions).mockReturnValue({
+        data: {
+          results: [
+            { id: "2010", label: "2010" },
+            { id: "2015", label: "2015" },
+            { id: "2020", label: "2020" },
+          ],
+        },
+        isLoading: false,
+      } as any)
+
+      const field: FormField = {
+        fieldname: "year_of_passing",
+        label: "Year",
+        fieldtype: "Link",
+        options: "Year",
+      }
+      
+      const TestForm = () => {
+        const methods = useForm({
+          defaultValues: {
+            custom_education_details: [
+              { education_level: "10th", year_of_passing: "2010" },
+              { education_level: "12th", year_of_passing: "2015" },
+              { education_level: "Graduation", year_of_passing: "2020" },
+            ]
+          }
+        })
+        return (
+          <FormProvider {...methods}>
+            <DynamicFieldRenderer 
+              field={field} 
+              value="2015" 
+              onChange={vi.fn()} 
+              tableFieldname="custom_education_details"
+              rowIndex={1}
+            />
+          </FormProvider>
+        )
+      }
+
+      render(<TestForm />)
+      
+      const combobox = screen.getByRole("combobox")
+      await user.click(combobox)
+
+      expect(screen.queryByRole("option", { name: "2010" })).toBeNull()
+      expect(screen.queryByRole("option", { name: "2020" })).toBeNull()
     })
   })
 

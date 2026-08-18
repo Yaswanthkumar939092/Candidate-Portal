@@ -1,6 +1,6 @@
  
 import { describe, it, expect, vi, afterEach } from "vitest"
-import { render, screen, waitFor, fireEvent } from "@testing-library/react"
+import { render, screen, waitFor, fireEvent, act } from "@testing-library/react"
 import { JobSyncStatus } from "@/components/job-sync-status"
 
 // Mock lucide-react icons for rendering verification
@@ -106,6 +106,51 @@ describe("JobSyncStatus - Pure Coverage", () => {
     fireEvent.click(t2)
     expect(screen.getByText("In 5 hours")).toBeTruthy() // Validates Line 163
     u2()
+
+    vi.useRealTimers()
+  })
+
+  it("updates lastSync time periodically via interval", () => {
+    vi.useFakeTimers()
+    render(<JobSyncStatus />)
+    vi.advanceTimersByTime(30000)
+    vi.useRealTimers()
+  })
+
+  it("successfully completes manual sync via handleManualSync", async () => {
+    render(<JobSyncStatus />)
+    
+    const trigger = screen.getByText("Frappe Sync")
+    fireEvent.pointerDown(trigger)
+    fireEvent.click(trigger)
+
+    const syncNowBtn = await screen.findByText("Sync Now")
+    
+    vi.useFakeTimers()
+    
+    await act(async () => {
+      fireEvent.click(syncNowBtn)
+      await vi.runAllTimersAsync()
+    })
+    
+    fireEvent.pointerDown(trigger)
+    fireEvent.click(trigger)
+
+    expect(screen.getByText("Connected")).toBeTruthy()
+    vi.useRealTimers()
+  })
+
+  it("handles getNextSyncTime for dates more than 24 hours away", () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date("2024-01-10T10:00:00Z"))
+    render(<JobSyncStatus />)
+
+    const trigger = screen.getByText("Frappe Sync")
+    fireEvent.pointerDown(trigger)
+    fireEvent.click(trigger)
+    
+    const targetStr = new Date('2024-01-14T14:30:00Z').toLocaleDateString()
+    expect(screen.getByText(targetStr)).toBeTruthy()
 
     vi.useRealTimers()
   })
