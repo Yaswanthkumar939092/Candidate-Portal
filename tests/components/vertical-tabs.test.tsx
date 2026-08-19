@@ -8,12 +8,22 @@ vi.mock("@hugeicons/react", () => ({
   HugeiconsIcon: ({ icon }: any) => <div data-testid="hugeicon" data-icon={icon?.name} />
 }))
 
-// Mock motion/react
 vi.mock("motion/react", () => ({
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+    div: ({ children, variants, custom, ...props }: any) => {
+      if (variants) {
+        if (typeof variants.enter === 'function') {
+          variants.enter(custom || 1)
+          variants.enter(-1)
+        }
+        if (typeof variants.exit === 'function') {
+          variants.exit(custom || 1)
+          variants.exit(-1)
+        }
+      }
+      return <div {...props}>{children}</div>
+    },
   },
-   
   AnimatePresence: ({ children }: any) => <>{children}</>,
 }))
 

@@ -72,4 +72,36 @@ describe("DynamicFavicon", () => {
     expect(link.getAttribute("href")).toBe("https://external.cdn/logo.svg");
     expect(link.getAttribute("type")).toBe("image/svg+xml");
   });
+
+  it("updates existing link elements when branding logo is fetched as SVG", () => {
+    const initialLink = document.createElement("link");
+    initialLink.rel = "icon";
+    initialLink.href = "/initial.ico";
+    document.head.appendChild(initialLink);
+
+    vi.mocked(candidateBrandingHook.useCandidateBranding).mockReturnValue({
+      data: { app_logo: "/files/logo.svg" },
+    } as any);
+
+    render(<DynamicFavicon />);
+
+    const link = document.head.querySelector("link[rel*='icon']") as HTMLLinkElement;
+    expect(link.getAttribute("type")).toBe("image/svg+xml");
+  });
+
+  it("updates existing link elements when branding logo is fetched as ICO", () => {
+    const initialLink = document.createElement("link");
+    initialLink.rel = "icon";
+    initialLink.href = "/initial.png";
+    document.head.appendChild(initialLink);
+
+    vi.mocked(candidateBrandingHook.useCandidateBranding).mockReturnValue({
+      data: { app_logo: "/files/logo.ico" },
+    } as any);
+
+    render(<DynamicFavicon />);
+
+    const link = document.head.querySelector("link[rel*='icon']") as HTMLLinkElement;
+    expect(link.getAttribute("type")).toBe("image/x-icon");
+  });
 });

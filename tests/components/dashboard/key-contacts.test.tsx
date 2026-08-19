@@ -52,4 +52,37 @@ describe("KeyContacts", () => {
     const { container } = render(<KeyContacts contacts={[]} />);
     expect(container.firstChild).toBeNull();
   });
+
+  it("renders fallbacks for missing name, role, and calculates initials for single word names", () => {
+    const incompleteContacts = [
+      {
+        name: "", // empty name
+        email: "missing@example.com",
+        phone: "000",
+        avatar: "https://example.com/avatar.png"
+      },
+      {
+        name: "Prince", // single word
+        role: ""
+      }
+    ];
+
+    render(<KeyContacts contacts={incompleteContacts as any} />);
+    
+    // Avatar image logic is handled by Radix which requires onLoad in DOM to show the image.
+    // Initials "U" for missing name, "P" for Prince
+    expect(screen.getByText("U")).toBeTruthy();
+    expect(screen.getByText("P")).toBeTruthy();
+
+    // Fallback texts
+    expect(screen.getByText("Unknown Contact")).toBeTruthy();
+    expect(screen.getAllByText("Role not assigned")).toHaveLength(2);
+
+    // Fallback aria labels
+    const emailLink = screen.getByRole("link", { name: "Email Contact" });
+    expect(emailLink).toBeTruthy();
+
+    const phoneLink = screen.getByRole("link", { name: "Call Contact" });
+    expect(phoneLink).toBeTruthy();
+  });
 });

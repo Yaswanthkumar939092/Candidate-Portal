@@ -41,4 +41,9 @@ describe("JourneyCountdown", () => {
     render(<JourneyCountdown joiningDate="2026-04-10" />);
     expect(screen.getAllByText("In 0 Days")).toHaveLength(2);
   });
+
+  it("returns null and renders nothing if joiningDate is falsy", () => {
+    const { container } = render(<JourneyCountdown joiningDate={"" as any} />);
+    expect(container.firstChild).toBeNull();
+  });
 });

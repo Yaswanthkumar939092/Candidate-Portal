@@ -7,6 +7,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import {
   useJobOfferSummary,
   useJobOfferPdf,
+  useJobOfferLetters,
   useUpdateJobOfferStatus,
   useJobOfferStatus,
   useRejectionReasons,
@@ -97,7 +98,23 @@ function JobOfferContent() {
     isSummaryNeeded,
     tokenParam,
   );
-  const { pdfUrl } = useJobOfferPdf(applicantEmail, isPdfNeeded, tokenParam);
+
+  const [selectedLetterIndex, setSelectedLetterIndex] = useState(0);
+
+  const isSeparate = offerData?.employment_type === "Trainee" || offerData?.compensation_type === "both";
+
+  const { pdfUrl } = useJobOfferPdf(applicantEmail, isPdfNeeded && !isSeparate, tokenParam);
+
+  const { data: lettersData, isLoading: isLettersLoading } = useJobOfferLetters(
+    applicantEmail,
+    isPdfNeeded && isSeparate,
+    tokenParam
+  );
+
+  const activePdfUrl = isSeparate && lettersData?.letters?.[selectedLetterIndex]?.pdf_base64
+    ? `data:application/pdf;base64,${lettersData.letters[selectedLetterIndex].pdf_base64}`
+    : pdfUrl;
+
   const { mutateAsync: updateStatus } = useUpdateJobOfferStatus();
   const { data: reasonsData, isLoading: isReasonsLoading } =
     useRejectionReasons();
@@ -352,9 +369,9 @@ function JobOfferContent() {
                           </span>
                         </div>
                       )}
-                      {offerData.stipend_formatted ||
-                      offerData.stipend ||
-                      offerData.stipend_display ? (
+                      {(offerData.stipend_formatted ||
+                        offerData.stipend ||
+                        offerData.stipend_display) && (
                         <div className="flex justify-between items-center py-1.5">
                           <span className="text-[0.85rem] text-[#64748b]">
                             Stipend
@@ -364,50 +381,48 @@ function JobOfferContent() {
                               offerData.stipend_display}
                           </span>
                         </div>
-                      ) : (
-                        <>
-                          {offerData.fixed_formatted !== undefined &&
-                            offerData.fixed_formatted !== null && (
-                              <div className="flex justify-between items-center py-1.5">
-                                <span className="text-[0.85rem] text-[#64748b]">
-                                  Fixed Pay
-                                </span>
-                                <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right">
-                                  {offerData.fixed_formatted}
-                                </span>
-                              </div>
-                            )}
-                          {offerData.variable_formatted !== undefined &&
-                            offerData.variable_formatted !== null && (
-                              <div className="flex justify-between items-center py-1.5">
-                                <span className="text-[0.85rem] text-[#64748b]">
-                                  Variable Pay
-                                </span>
-                                <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right">
-                                  {offerData.variable_formatted}
-                                </span>
-                              </div>
-                            )}
-                          {offerData.total_formatted !== undefined &&
-                            offerData.total_formatted !== null && (
-                              <div className="flex justify-between items-center py-1.5">
-                                <span className="text-[0.85rem] text-[#64748b]">
-                                  Total
-                                </span>
-                                <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right">
-                                  {offerData.total_formatted}
-                                </span>
-                              </div>
-                            )}
-                        </>
                       )}
+                      
+                      {offerData.fixed_formatted !== undefined &&
+                        offerData.fixed_formatted !== null && (
+                          <div className="flex justify-between items-center py-1.5">
+                            <span className="text-[0.85rem] text-[#64748b]">
+                              Fixed Pay
+                            </span>
+                            <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right">
+                              {offerData.fixed_formatted}
+                            </span>
+                          </div>
+                        )}
+                      {offerData.variable_formatted !== undefined &&
+                        offerData.variable_formatted !== null && (
+                          <div className="flex justify-between items-center py-1.5">
+                            <span className="text-[0.85rem] text-[#64748b]">
+                              Variable Pay
+                            </span>
+                            <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right">
+                              {offerData.variable_formatted}
+                            </span>
+                          </div>
+                        )}
+                      {offerData.total_formatted !== undefined &&
+                        offerData.total_formatted !== null && (
+                          <div className="flex justify-between items-center py-1.5">
+                            <span className="text-[0.85rem] text-[#64748b]">
+                              Total
+                            </span>
+                            <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right">
+                              {offerData.total_formatted}
+                            </span>
+                          </div>
+                        )}
                     </div>
 
                     <div className="p-5">
                       <div className="block lg:hidden">
                         <button
-                          onClick={() => pdfUrl && downloadPdf(pdfUrl)}
-                          disabled={!pdfUrl}
+                          onClick={() => activePdfUrl && downloadPdf(activePdfUrl)}
+                          disabled={!activePdfUrl}
                           className="flex items-center justify-center gap-2 w-full p-2.5 bg-transparent text-[#2563eb] border-[1.5px] border-[#2563eb] rounded-lg text-[0.85rem] font-semibold mb-2.5 text-center transition-colors duration-200 hover:bg-[#2563eb]/6 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <svg
@@ -445,10 +460,10 @@ function JobOfferContent() {
                       <div className="hidden lg:block">
                         <button
                           onClick={() =>
-                            pdfUrl &&
-                            window.open(pdfUrl, "_blank", "noopener,noreferrer")
+                            activePdfUrl &&
+                            window.open(activePdfUrl, "_blank", "noopener,noreferrer")
                           }
-                          disabled={!pdfUrl}
+                          disabled={!activePdfUrl}
                           className="flex items-center justify-center gap-2 w-full p-2.5 bg-transparent text-[#2563eb] border-[1.5px] border-[#2563eb] rounded-lg text-[0.85rem] font-semibold mb-2.5 text-center transition-colors duration-200 hover:bg-[#2563eb]/6 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <svg
@@ -524,24 +539,44 @@ function JobOfferContent() {
                 <div className="w-full lg:flex-1 lg:min-w-0 overflow-hidden hidden sm:block">
                   <div className="rounded-2xl border border-border bg-card/75 backdrop-blur-md shadow-lg overflow-hidden">
                     {/* Header attached inside the card */}
-                    <div className="py-3.5 px-6 sm:px-8 flex items-center gap-3">
-                      <div className="p-2 bg-primary/10 rounded-xl text-primary shrink-0">
-                        <ClipboardList className="w-5 h-5" />
+                    <div className="py-3.5 px-6 sm:px-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary/10 rounded-xl text-primary shrink-0">
+                          <ClipboardList className="w-5 h-5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h1 className="text-lg font-bold text-foreground truncate">
+                            Offer of Employment
+                          </h1>
+                        </div>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <h1 className="text-lg font-bold text-foreground truncate">
-                          Offer of Employment
-                        </h1>
-                      </div>
+
+                      {isSeparate && lettersData?.letters && (
+                        <div className="flex gap-2 mt-2 sm:mt-0 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
+                          {lettersData.letters.map((letter, index) => (
+                            <button
+                              key={index}
+                              onClick={() => setSelectedLetterIndex(index)}
+                              className={`px-3 py-1.5 text-sm font-medium rounded-lg whitespace-nowrap transition-colors ${
+                                selectedLetterIndex === index
+                                  ? "bg-primary text-primary-foreground shadow-sm"
+                                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                              }`}
+                            >
+                              {letter.print_format}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     {/* PDF Document body */}
-                    {pdfUrl ? (
+                    {activePdfUrl ? (
                       <div
                         className="bg-[#f1f5f9] dark:bg-slate-900 overflow-hidden shadow-[inset_0_1px_4px_rgba(0,0,0,0.05)]"
                         style={{ height: "80vh", minHeight: "600px" }}
                       >
-                        <PdfViewer pdfUrl={pdfUrl} />
+                        <PdfViewer pdfUrl={activePdfUrl} />
                       </div>
                     ) : (
                       <div className="bg-white dark:bg-card p-8 overflow-x-auto flex flex-col items-center justify-center min-h-100">
