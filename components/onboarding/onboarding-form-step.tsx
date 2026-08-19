@@ -677,20 +677,21 @@ export function OnboardingFormStep({
                   const isVisible = !field.hidden && (!field.depends_on || evaluateDependsOn(field.depends_on, doc));
                   if (!isVisible) return null;
 
-                  // When is_fresher is NOT checked, make employment table child fields mandatory
-                  const enrichedField = (field.fieldname === EMPLOYMENT_TABLE_FIELDNAME && !doc[IS_FRESHER_FIELDNAME])
-                    ? {
-                        ...field,
+                  let enrichedField = field;
+                  if (field.fieldname === EMPLOYMENT_TABLE_FIELDNAME && !doc[IS_FRESHER_FIELDNAME]) {
+                    enrichedField = {
+                      ...field,
+                      is_mandatory: 1,
+                      child_fields: field.child_fields?.map((cf) => ({
+                        ...cf,
                         is_mandatory: 1,
-                        child_fields: field.child_fields?.map((cf) => ({
-                          ...cf,
-                          is_mandatory: 1,
-                        })),
-                      }
-                    // Make declaration date read-only
-                    : field.fieldname === DECLARATION_DATE_FIELDNAME
-                      ? { ...field, read_only: 1 }
-                      : field;
+                      })),
+                    };
+                  } else if (field.fieldname === DECLARATION_DATE_FIELDNAME) {
+                    enrichedField = { ...field, read_only: 1 };
+                  } else if (field.fieldname === "custom_communication_address_proof" && !doc["custom_same_as_permanent"]) {
+                    enrichedField = { ...field, is_mandatory: 1 };
+                  }
 
                   return enrichedField.fieldtype === "Table" ? (
                     <DynamicTableField

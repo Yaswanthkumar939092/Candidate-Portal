@@ -220,17 +220,19 @@ export function validateOnboardingStep(
         return;
       }
 
-      // When is_fresher is NOT checked, enrich employment table to be mandatory
-      const effectiveField = (field.fieldname === EMPLOYMENT_TABLE_FIELDNAME && !doc[IS_FRESHER_FIELDNAME])
-        ? {
-            ...field,
+      let effectiveField = field;
+      if (field.fieldname === EMPLOYMENT_TABLE_FIELDNAME && !doc[IS_FRESHER_FIELDNAME]) {
+        effectiveField = {
+          ...field,
+          is_mandatory: 1,
+          child_fields: field.child_fields?.map((cf) => ({
+            ...cf,
             is_mandatory: 1,
-            child_fields: field.child_fields?.map((cf) => ({
-              ...cf,
-              is_mandatory: 1,
-            })),
-          }
-        : field;
+          })),
+        };
+      } else if (field.fieldname === "custom_communication_address_proof" && !doc["custom_same_as_permanent"]) {
+        effectiveField = { ...field, is_mandatory: 1 };
+      }
 
       const fieldValue = values[effectiveField.fieldname];
       const normalizedValue =
