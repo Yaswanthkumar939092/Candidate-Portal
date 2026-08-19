@@ -120,4 +120,73 @@ describe("OnboardingSnapshot", () => {
       expect(screen.getByText("50%")).toBeTruthy();
     });
   });
+
+  it("allows downloading and opening PDF offer letter", async () => {
+    const originalFetch = global.fetch;
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      blob: () => Promise.resolve(new Blob(["mock-pdf"], { type: "application/pdf" }))
+    });
+    global.fetch = fetchMock;
+
+    const originalCreateObjectURL = global.URL.createObjectURL;
+    const originalRevokeObjectURL = global.URL.revokeObjectURL;
+    global.URL.createObjectURL = vi.fn().mockReturnValue("mock-object-url");
+    global.URL.revokeObjectURL = vi.fn();
+
+    const originalOpen = window.open;
+    const openMock = vi.fn();
+    window.open = openMock;
+
+    render(
+      <OnboardingSnapshot 
+        completedSteps={8} 
+        totalSteps={8} 
+        dashboardPayload={{ ...DEFAULT_MOCK_PAYLOAD, onboarding_stage: "ONBOARDING COMPLETE" }} 
+      />
+    );
+
+    // There are 2 buttons, one for mobile, one for desktop
+    const buttons = await screen.findAllByRole("button", { name: /Preview \/ Download Offer/i });
+    expect(buttons).toHaveLength(2);
+
+    const { fireEvent } = await import("@testing-library/react");
+
+    fireEvent.click(buttons[0]);
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("mock-pdf-url", { credentials: "include" });
+      expect(global.URL.createObjectURL).toHaveBeenCalled();
+    });
+
+    fireEvent.click(buttons[1]);
+    expect(openMock).toHaveBeenCalledWith("mock-pdf-url", "_blank", "noopener,noreferrer");
+
+    global.fetch = originalFetch;
+    global.URL.createObjectURL = originalCreateObjectURL;
+    global.URL.revokeObjectURL = originalRevokeObjectURL;
+    window.open = originalOpen;
+  });
+
+  it("handles fetch error during pdf download", async () => {
+    const originalFetch = global.fetch;
+    global.fetch = vi.fn().mockRejectedValue(new Error("Network fail"));
+
+    render(
+      <OnboardingSnapshot 
+        completedSteps={8} 
+        totalSteps={8} 
+        dashboardPayload={{ ...DEFAULT_MOCK_PAYLOAD, onboarding_stage: "ONBOARDING COMPLETE" }} 
+      />
+    );
+
+    const { fireEvent } = await import("@testing-library/react");
+    const buttons = await screen.findAllByRole("button", { name: /Preview \/ Download Offer/i });
+    fireEvent.click(buttons[0]);
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalled();
+    });
+
+    global.fetch = originalFetch;
+  });
 });

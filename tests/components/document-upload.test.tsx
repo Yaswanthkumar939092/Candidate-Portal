@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { render, screen, fireEvent, waitFor } from "@testing-library/react"
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { DocumentUpload } from "@/components/document-upload"
 
@@ -214,5 +214,27 @@ describe("DocumentUpload", () => {
 
     // Verification: Status reverts to uploading spinner state
     expect(screen.getByTestId("icon-loader")).toBeTruthy()
+  })
+
+  it("handles and displays error when upload process fails", async () => {
+    vi.useFakeTimers()
+    const originalSetTimeout = global.setTimeout
+    vi.stubGlobal('setTimeout', () => { throw new Error("Upload Failed") })
+    const { container } = render(<DocumentUpload />)
+
+    const f = new File(["x"], "error.pdf", { type: "application/pdf" })
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+    
+    await act(async () => {
+      fireEvent.change(input, { target: { files: [f] } })
+    })
+
+    await act(async () => {
+      await vi.runAllTimersAsync()
+    })
+
+    expect(screen.getByText("Upload failed")).toBeTruthy()
+    vi.unstubAllGlobals()
+    vi.useRealTimers()
   })
 })
