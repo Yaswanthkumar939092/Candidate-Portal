@@ -18,20 +18,61 @@ import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
 import { PortalStepperSidebar } from "@/components/portal/portal-stepper-sidebar";
 
-/** Download the offer letter as a file. Fetches with credentials so cookies work. */
-async function downloadPdf(url: string) {
+async function downloadPdf(url: string, filename: string = "Offer_Letter.pdf") {
   try {
+    if (url.startsWith("data:")) {
+      const arr = url.split(",");
+      const mimeMatch = arr[0].match(/:(.*?);/);
+      const mime = mimeMatch ? mimeMatch[1] : "application/pdf";
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      const blob = new Blob([u8arr], { type: mime });
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(blobUrl);
+      return;
+    }
     const res = await fetch(url, { credentials: "include" });
     if (!res.ok) throw new Error("Download failed");
     const blob = await res.blob();
     const href = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = href;
-    a.download = "Offer_Letter.pdf";
+    a.download = filename;
     a.click();
     URL.revokeObjectURL(href);
   } catch {
     toast.error("Could not download the offer letter. Please try again.");
+  }
+}
+
+function openPdfPreview(url: string) {
+  if (url.startsWith("data:")) {
+    try {
+      const arr = url.split(",");
+      const mimeMatch = arr[0].match(/:(.*?);/);
+      const mime = mimeMatch ? mimeMatch[1] : "application/pdf";
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      const blob = new Blob([u8arr], { type: mime });
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, "_blank", "noopener,noreferrer");
+    } catch {
+      toast.error("Could not open the preview.");
+    }
+  } else {
+    window.open(url, "_blank", "noopener,noreferrer");
   }
 }
 
@@ -333,6 +374,16 @@ function JobOfferContent() {
                   <PortalStepperSidebar
                     currentStep="offer"
                     className="w-full md:w-full lg:w-85 lg:self-start"
+                    expandedItems={
+                      isSeparate && lettersData?.letters
+                        ? lettersData.letters.map((l, i) => ({
+                            id: `letter-${i}`,
+                            label: l.print_format || `Document ${i + 1}`,
+                          }))
+                        : undefined
+                    }
+                    activeItemIndex={selectedLetterIndex}
+                    onItemSelect={setSelectedLetterIndex}
                   />
 
                   {/* Offer Summary Card */}
@@ -421,7 +472,12 @@ function JobOfferContent() {
                     <div className="p-5">
                       <div className="block lg:hidden">
                         <button
-                          onClick={() => activePdfUrl && downloadPdf(activePdfUrl)}
+                          onClick={() => activePdfUrl && downloadPdf(
+                            activePdfUrl,
+                            isSeparate && lettersData?.letters?.[selectedLetterIndex]?.print_format 
+                              ? `${lettersData.letters[selectedLetterIndex].print_format}.pdf` 
+                              : "Offer_Letter.pdf"
+                          )}
                           disabled={!activePdfUrl}
                           className="flex items-center justify-center gap-2 w-full p-2.5 bg-transparent text-[#2563eb] border-[1.5px] border-[#2563eb] rounded-lg text-[0.85rem] font-semibold mb-2.5 text-center transition-colors duration-200 hover:bg-[#2563eb]/6 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
@@ -439,7 +495,7 @@ function JobOfferContent() {
                             <polyline points="7 10 12 15 17 10" />
                             <line x1="12" y1="15" x2="12" y2="3" />
                           </svg>
-                          Download Offer Letter
+                          Download {isSeparate && lettersData?.letters?.[selectedLetterIndex]?.print_format ? lettersData.letters[selectedLetterIndex].print_format : "Offer Letter"}
                         </button>
                       </div>
 
@@ -459,10 +515,7 @@ function JobOfferContent() {
 
                       <div className="hidden lg:block">
                         <button
-                          onClick={() =>
-                            activePdfUrl &&
-                            window.open(activePdfUrl, "_blank", "noopener,noreferrer")
-                          }
+                          onClick={() => activePdfUrl && openPdfPreview(activePdfUrl)}
                           disabled={!activePdfUrl}
                           className="flex items-center justify-center gap-2 w-full p-2.5 bg-transparent text-[#2563eb] border-[1.5px] border-[#2563eb] rounded-lg text-[0.85rem] font-semibold mb-2.5 text-center transition-colors duration-200 hover:bg-[#2563eb]/6 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
@@ -480,7 +533,7 @@ function JobOfferContent() {
                             <polyline points="15 3 21 3 21 9" />
                             <line x1="10" y1="14" x2="21" y2="3" />
                           </svg>
-                          Preview / Download Offer Letter
+                          Preview / Download {isSeparate && lettersData?.letters?.[selectedLetterIndex]?.print_format ? lettersData.letters[selectedLetterIndex].print_format : "Offer Letter"}
                         </button>
                       </div>
 
@@ -546,28 +599,12 @@ function JobOfferContent() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <h1 className="text-lg font-bold text-foreground truncate">
-                            Offer of Employment
+                            {isSeparate && lettersData?.letters && lettersData.letters[selectedLetterIndex]?.print_format 
+                              ? lettersData.letters[selectedLetterIndex].print_format 
+                              : "Offer of Employment"}
                           </h1>
                         </div>
                       </div>
-
-                      {isSeparate && lettersData?.letters && (
-                        <div className="flex gap-2 mt-2 sm:mt-0 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
-                          {lettersData.letters.map((letter, index) => (
-                            <button
-                              key={index}
-                              onClick={() => setSelectedLetterIndex(index)}
-                              className={`px-3 py-1.5 text-sm font-medium rounded-lg whitespace-nowrap transition-colors ${
-                                selectedLetterIndex === index
-                                  ? "bg-primary text-primary-foreground shadow-sm"
-                                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                              }`}
-                            >
-                              {letter.print_format}
-                            </button>
-                          ))}
-                        </div>
-                      )}
                     </div>
 
                     {/* PDF Document body */}

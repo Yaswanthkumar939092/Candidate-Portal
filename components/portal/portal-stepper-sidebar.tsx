@@ -1,6 +1,7 @@
 "use client";
 
-import { ClipboardList, ShieldCheck, UserCheck } from "lucide-react";
+import { useState } from "react";
+import { ClipboardList, ShieldCheck, UserCheck, ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useSurvey } from "@/lib/hooks/useSurvey";
@@ -13,18 +14,30 @@ interface Step {
   redirect_url?: string;
 }
 
+export interface StepperExpandedItem {
+  id: string;
+  label: string;
+}
+
 interface PortalStepperSidebarProps {
   currentStep: "survey" | "offer" | "onboarding";
   className?: string;
   isViewOnly?: boolean;
+  expandedItems?: StepperExpandedItem[];
+  activeItemIndex?: number;
+  onItemSelect?: (index: number) => void;
 }
 
 export function PortalStepperSidebar({
   currentStep,
   className,
   isViewOnly = true,
+  expandedItems,
+  activeItemIndex,
+  onItemSelect,
 }: PortalStepperSidebarProps) {
   const { data } = useSurvey();
+  const [isExpandedState, setIsExpandedState] = useState(true);
   const hasDynamicSteps = data?.steps && data.steps.length > 0;
 
   // Define steps dynamically
@@ -127,6 +140,13 @@ export function PortalStepperSidebar({
           const isCompleted = step.status === "COMPLETED";
           const Icon = step.icon;
 
+          const isCurrentStepPage = 
+            (currentStep === "survey" && step.id.toLowerCase().includes("survey")) ||
+            (currentStep === "offer" && step.id.toLowerCase().includes("offer")) ||
+            (currentStep === "onboarding" && step.id.toLowerCase().includes("onboarding"));
+
+          const hasExpandedItems = isCurrentStepPage && expandedItems && expandedItems.length > 0;
+
           const content = (
             <>
               {/* Left: Icon + Label */}
@@ -147,47 +167,89 @@ export function PortalStepperSidebar({
               </div>
 
               {/* Right: Status Pill */}
-              <span
-                className={cn(
-                  "text-[10px] font-bold px-2 py-0.5 rounded-full tracking-wider",
-                  isOngoing
-                    ? "bg-white/20 text-white"
-                    : isCompleted
-                      ? "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400"
-                      : "bg-muted text-muted-foreground",
+              <div className="flex items-center gap-2">
+                <span
+                  className={cn(
+                    "text-[10px] font-bold px-2 py-0.5 rounded-full tracking-wider",
+                    isOngoing
+                      ? "bg-white/20 text-white"
+                      : isCompleted
+                        ? "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400"
+                        : "bg-muted text-muted-foreground",
+                  )}
+                >
+                  {step.status}
+                </span>
+                {hasExpandedItems && (
+                  isExpandedState ? (
+                    <ChevronDown className="h-4 w-4 opacity-80" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 opacity-80" />
+                  )
                 )}
-              >
-                {step.status}
-              </span>
+              </div>
             </>
           );
 
           const classNameStr = cn(
-            "flex items-center justify-between p-4 rounded-xl transition-all duration-300",
+            "flex items-center justify-between p-4 rounded-xl transition-all duration-300 w-full text-left",
             isOngoing
               ? "bg-primary text-primary-foreground shadow-md scale-[1.02]"
               : "bg-white dark:bg-card border border-border/50 text-foreground",
-            !isViewOnly &&
-              step.redirect_url &&
-              !isOngoing &&
+            !isOngoing && ((!isViewOnly && step.redirect_url) || hasExpandedItems) &&
               "hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer",
+            isOngoing && hasExpandedItems &&
+              "hover:opacity-90 cursor-pointer"
           );
 
-          if (step.redirect_url && !isViewOnly) {
+          const stepElement = hasExpandedItems ? (
+            <button
+              onClick={() => setIsExpandedState(!isExpandedState)}
+              className={classNameStr}
+            >
+              {content}
+            </button>
+          ) : step.redirect_url && !isViewOnly ? (
+            <Link
+              href={step.redirect_url}
+              className={classNameStr}
+            >
+              {content}
+            </Link>
+          ) : (
+            <div className={classNameStr}>
+              {content}
+            </div>
+          );
+
+          if (hasExpandedItems && isExpandedState) {
             return (
-              <Link
-                key={step.id}
-                href={step.redirect_url}
-                className={classNameStr}
-              >
-                {content}
-              </Link>
+              <div key={step.id} className="flex flex-col gap-2">
+                {stepElement}
+                <div className="flex flex-col gap-1 ml-4 border-l-2 border-border/50 pl-3 py-1">
+                  {expandedItems.map((item, index) => (
+                    <button
+                      key={item.id}
+                      onClick={() => onItemSelect?.(index)}
+                      className={cn(
+                        "text-left px-3 py-2 text-[0.8rem] font-medium rounded-lg transition-colors truncate",
+                        activeItemIndex === index
+                          ? "bg-primary/10 text-primary"
+                          : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                      )}
+                      title={item.label}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             );
           }
 
           return (
-            <div key={step.id} className={classNameStr}>
-              {content}
+            <div key={step.id}>
+              {stepElement}
             </div>
           );
         })}
