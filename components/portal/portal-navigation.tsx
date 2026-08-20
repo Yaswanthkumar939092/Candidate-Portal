@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { useFeatureFlags } from "@/lib/contexts/feature-flags";
 import { useTheme } from "@/lib/contexts/theme-context";
@@ -121,6 +122,7 @@ export function PortalNavigation({
   const { data: branding } = useCandidateBranding();
   const { isDark, toggleTheme } = useTheme();
   const pathname = usePathname();
+  const queryClient = useQueryClient();
   const userEmail = user?.email || user?.user_metadata?.email || "";
   const { data: applicantStatus } = useApplicantStatus(userEmail);
   const myJobsCount = applicantStatus?.success
@@ -206,6 +208,13 @@ export function PortalNavigation({
                         <Link
                           key={item.href}
                           href={item.href}
+                          onClick={() => {
+                            if (item.href === "/dashboard") {
+                              queryClient.invalidateQueries({
+                                queryKey: ["dashboard", { email: userEmail }],
+                              });
+                            }
+                          }}
                           className={cn(
                             "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                             active
@@ -273,6 +282,11 @@ export function PortalNavigation({
               <Link
                 href="/dashboard"
                 className="flex shrink-0 items-center gap-2"
+                onClick={() => {
+                  queryClient.invalidateQueries({
+                    queryKey: ["dashboard", { email: userEmail }],
+                  });
+                }}
               >
                 {content}
               </Link>
@@ -291,6 +305,13 @@ export function PortalNavigation({
                 <Link
                   key={item.href}
                   href={item.href}
+                  onClick={() => {
+                    if (item.href === "/dashboard") {
+                      queryClient.invalidateQueries({
+                        queryKey: ["dashboard", { email: userEmail }],
+                      });
+                    }
+                  }}
                   className={cn(
                     "relative flex items-center gap-2 text-sm font-medium px-4 py-1.5 rounded-full transition-all duration-300 ease-in-out",
                     active

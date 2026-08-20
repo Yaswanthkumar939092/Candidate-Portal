@@ -141,8 +141,18 @@ function JobOfferContent() {
   );
 
   const [selectedLetterIndex, setSelectedLetterIndex] = useState(0);
+  const [viewedLetters, setViewedLetters] = useState<Set<number>>(new Set([0]));
 
-  const isSeparate = offerData?.employment_type === "Trainee" || offerData?.compensation_type === "both";
+  useEffect(() => {
+    setViewedLetters((prev) => {
+      if (prev.has(selectedLetterIndex)) return prev;
+      const next = new Set(prev);
+      next.add(selectedLetterIndex);
+      return next;
+    });
+  }, [selectedLetterIndex]);
+
+  const isSeparate = (offerData?.count && offerData.count > 1) || offerData?.employment_type === "Trainee" || offerData?.compensation_type === "both";
 
   const { pdfUrl } = useJobOfferPdf(applicantEmail, isPdfNeeded && !isSeparate, tokenParam);
 
@@ -151,6 +161,8 @@ function JobOfferContent() {
     isPdfNeeded && isSeparate,
     tokenParam
   );
+
+  const hasViewedAllLetters = !isSeparate || !lettersData?.letters || viewedLetters.size === lettersData.letters.length;
 
   const activePdfUrl = isSeparate && lettersData?.letters?.[selectedLetterIndex]?.pdf_base64
     ? `data:application/pdf;base64,${lettersData.letters[selectedLetterIndex].pdf_base64}`
@@ -499,14 +511,24 @@ function JobOfferContent() {
                         </button>
                       </div>
 
+                      {!hasViewedAllLetters && (
+                        <div className="text-[0.85rem] text-[#dc3545] bg-[#fdf2f2] border border-[#f8d7da] rounded-lg p-3 mb-4 flex items-start gap-2">
+                          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                          <span>
+                            Please view all the documents in the Job Offer Preview section to accept the offer letter.
+                          </span>
+                        </div>
+                      )}
+
                       <label className="flex items-start gap-2.5 text-[0.82rem] text-[#334155] cursor-pointer leading-[1.45] mb-4 bg-[#fff8e1] border border-[#ffe0b2] rounded-lg p-3">
                         <input
                           type="checkbox"
                           className="mt-0.75 shrink-0 w-4 h-4 accent-[#1a2332] cursor-pointer"
                           checked={isTermsChecked}
                           onChange={(e) => setIsTermsChecked(e.target.checked)}
+                          disabled={!hasViewedAllLetters}
                         />
-                        <span>
+                        <span className={!hasViewedAllLetters ? "opacity-70" : ""}>
                           I declare that I have read and understood the entire
                           offer letter and agree to the terms and conditions
                           outlined above.
@@ -539,7 +561,7 @@ function JobOfferContent() {
 
                       <button
                         className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#00b48a] hover:bg-[#009e78] text-white rounded-lg text-[0.95rem] font-semibold transition-colors duration-200 mb-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled={!isTermsChecked || isAccepting}
+                        disabled={!isTermsChecked || isAccepting || !hasViewedAllLetters}
                         onClick={handleAccept}
                       >
                         {isAccepting && (
