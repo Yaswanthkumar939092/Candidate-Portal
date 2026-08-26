@@ -134,7 +134,12 @@ function JobOfferContent() {
     (statusNormalized === "rejected" && justRejected);
   const isPdfNeeded = statusNormalized === "awaiting response";
 
-  const { data: offerData, isLoading: isApiLoading } = useJobOfferSummary(
+  const {
+    data: offerData,
+    isLoading: isApiLoading,
+    isError: isOfferError,
+    isFetching: isOfferFetching
+  } = useJobOfferSummary(
     applicantEmail,
     isSummaryNeeded,
     tokenParam,
@@ -156,7 +161,7 @@ function JobOfferContent() {
 
   const { pdfUrl } = useJobOfferPdf(applicantEmail, isPdfNeeded && !isSeparate, tokenParam);
 
-  const { data: lettersData, isLoading: isLettersLoading } = useJobOfferLetters(
+  const { data: lettersData, isLoading: isLettersLoading, isFetching: isLettersFetching } = useJobOfferLetters(
     applicantEmail,
     isPdfNeeded && isSeparate,
     tokenParam
@@ -363,12 +368,19 @@ function JobOfferContent() {
       {gameState === "main" && (
         <div className="max-w-300 mx-auto px-5 py-7.5">
           {!offerData ? (
-            <div className="flex flex-col items-center justify-center min-h-100 text-center">
-              <AlertCircle className="h-10 w-10 text-slate-300 mb-4" />
-              <p className="text-slate-500">
-                Offer details not found for this applicant.
-              </p>
-            </div>
+            isOfferFetching ? (
+              <div className="flex flex-col items-center justify-center min-h-100 text-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+                <p className="text-slate-500">Loading offer details...</p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center min-h-100 text-center">
+                <AlertCircle className="h-10 w-10 text-slate-300 mb-4" />
+                <p className="text-slate-500">
+                  Offer details not found for this applicant.
+                </p>
+              </div>
+            )
           ) : (
             <>
               {offerData?.expiry_display && (
@@ -647,8 +659,14 @@ function JobOfferContent() {
                       >
                         <PdfViewer pdfUrl={activePdfUrl} />
                       </div>
+                    ) : (isLettersLoading || isLettersFetching) ? (
+                      <div className="bg-[#f1f5f9] dark:bg-slate-900 flex flex-col items-center justify-center shadow-[inset_0_1px_4px_rgba(0,0,0,0.05)]" style={{ height: "80vh", minHeight: "600px" }}>
+                        <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+                        <p className="text-[#64748b]">Loading offer letter...</p>
+                      </div>
                     ) : (
                       <div className="bg-white dark:bg-card p-8 overflow-x-auto flex flex-col items-center justify-center min-h-100">
+                        <AlertCircle className="h-10 w-10 text-slate-300 mb-4" />
                         <p className="text-[#64748b]">
                           Offer letter content could not be loaded.
                         </p>
