@@ -84,7 +84,8 @@ function validateFieldPattern(
   if (fieldname === "custom_ifsc_code" && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(normalizedValue)) {
     return {
       type: "pattern",
-      message: "Please enter a valid 11-character IFSC code (e.g. BBBB0AAAAAA)",
+      message:
+        "Please enter a valid 11-character IFSC code (first 4 letters, 5th character must be '0' zero, followed by 6 alphanumeric characters, e.g. BARB0ALPHAA)",
     };
   }
 
@@ -553,7 +554,8 @@ export function validateOnboardingStep(
         if (!ifscRegex.test(normalizedValue)) {
           errorList[field.fieldname] = {
             type: "pattern",
-            message: "Please enter a valid 11-character IFSC code (e.g. BBBB0AAAAAA)",
+            message:
+              "Please enter a valid 11-character IFSC code (first 4 letters, 5th character must be '0' zero, followed by 6 alphanumeric characters, e.g. BARB0ALPHAA)",
           };
         }
       }

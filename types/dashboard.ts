@@ -44,6 +44,9 @@ export type DashboardData = {
   onboarding_stage?: string;
   form_completion?: DashboardFormCompletion;
   onboarding_status?: boolean;
+  dpdp_consent_required?: boolean;
+  dpdp_consent_submitted?: boolean;
+  dpdp_consent_url?: string;
 };
 
 export interface DashboardApiResponse {

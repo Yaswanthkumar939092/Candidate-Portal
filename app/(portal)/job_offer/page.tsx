@@ -134,23 +134,40 @@ function JobOfferContent() {
     (statusNormalized === "rejected" && justRejected);
   const isPdfNeeded = statusNormalized === "awaiting response";
 
-  const { data: offerData, isLoading: isApiLoading } = useJobOfferSummary(
+  const {
+    data: offerData,
+    isLoading: isApiLoading,
+    isError: isOfferError,
+    isFetching: isOfferFetching
+  } = useJobOfferSummary(
     applicantEmail,
     isSummaryNeeded,
     tokenParam,
   );
 
   const [selectedLetterIndex, setSelectedLetterIndex] = useState(0);
+  const [viewedLetters, setViewedLetters] = useState<Set<number>>(new Set([0]));
 
-  const isSeparate = offerData?.employment_type === "Trainee" || offerData?.compensation_type === "both";
+  useEffect(() => {
+    setViewedLetters((prev) => {
+      if (prev.has(selectedLetterIndex)) return prev;
+      const next = new Set(prev);
+      next.add(selectedLetterIndex);
+      return next;
+    });
+  }, [selectedLetterIndex]);
+
+  const isSeparate = (offerData?.count && offerData.count > 1) || offerData?.employment_type === "Trainee" || offerData?.compensation_type === "both";
 
   const { pdfUrl } = useJobOfferPdf(applicantEmail, isPdfNeeded && !isSeparate, tokenParam);
 
-  const { data: lettersData, isLoading: isLettersLoading } = useJobOfferLetters(
+  const { data: lettersData, isLoading: isLettersLoading, isFetching: isLettersFetching } = useJobOfferLetters(
     applicantEmail,
     isPdfNeeded && isSeparate,
     tokenParam
   );
+
+  const hasViewedAllLetters = !isSeparate || !lettersData?.letters || viewedLetters.size === lettersData.letters.length;
 
   const activePdfUrl = isSeparate && lettersData?.letters?.[selectedLetterIndex]?.pdf_base64
     ? `data:application/pdf;base64,${lettersData.letters[selectedLetterIndex].pdf_base64}`
@@ -351,12 +368,19 @@ function JobOfferContent() {
       {gameState === "main" && (
         <div className="max-w-300 mx-auto px-5 py-7.5">
           {!offerData ? (
-            <div className="flex flex-col items-center justify-center min-h-100 text-center">
-              <AlertCircle className="h-10 w-10 text-slate-300 mb-4" />
-              <p className="text-slate-500">
-                Offer details not found for this applicant.
-              </p>
-            </div>
+            isOfferFetching ? (
+              <div className="flex flex-col items-center justify-center min-h-100 text-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+                <p className="text-slate-500">Loading offer details...</p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center min-h-100 text-center">
+                <AlertCircle className="h-10 w-10 text-slate-300 mb-4" />
+                <p className="text-slate-500">
+                  Offer details not found for this applicant.
+                </p>
+              </div>
+            )
           ) : (
             <>
               {offerData?.expiry_display && (
@@ -417,6 +441,16 @@ function JobOfferContent() {
                           </span>
                           <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right">
                             {offerData.expected_doj_display}
+                          </span>
+                        </div>
+                      )}
+                      {offerData.trainee_doj_display && (
+                        <div className="flex justify-between items-center py-1.5">
+                          <span className="text-[0.85rem] text-[#64748b]">
+                            Trainee DOJ
+                          </span>
+                          <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right">
+                            {offerData.trainee_doj_display}
                           </span>
                         </div>
                       )}
@@ -499,14 +533,24 @@ function JobOfferContent() {
                         </button>
                       </div>
 
+                      {!hasViewedAllLetters && (
+                        <div className="text-[0.85rem] text-[#dc3545] bg-[#fdf2f2] border border-[#f8d7da] rounded-lg p-3 mb-4 flex items-start gap-2">
+                          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                          <span>
+                            Please view all the documents in the Job Offer Preview section to accept the offer letter.
+                          </span>
+                        </div>
+                      )}
+
                       <label className="flex items-start gap-2.5 text-[0.82rem] text-[#334155] cursor-pointer leading-[1.45] mb-4 bg-[#fff8e1] border border-[#ffe0b2] rounded-lg p-3">
                         <input
                           type="checkbox"
                           className="mt-0.75 shrink-0 w-4 h-4 accent-[#1a2332] cursor-pointer"
                           checked={isTermsChecked}
                           onChange={(e) => setIsTermsChecked(e.target.checked)}
+                          disabled={!hasViewedAllLetters}
                         />
-                        <span>
+                        <span className={!hasViewedAllLetters ? "opacity-70" : ""}>
                           I declare that I have read and understood the entire
                           offer letter and agree to the terms and conditions
                           outlined above.
@@ -539,7 +583,7 @@ function JobOfferContent() {
 
                       <button
                         className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#00b48a] hover:bg-[#009e78] text-white rounded-lg text-[0.95rem] font-semibold transition-colors duration-200 mb-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled={!isTermsChecked || isAccepting}
+                        disabled={!isTermsChecked || isAccepting || !hasViewedAllLetters}
                         onClick={handleAccept}
                       >
                         {isAccepting && (
@@ -615,8 +659,14 @@ function JobOfferContent() {
                       >
                         <PdfViewer pdfUrl={activePdfUrl} />
                       </div>
+                    ) : (isLettersLoading || isLettersFetching) ? (
+                      <div className="bg-[#f1f5f9] dark:bg-slate-900 flex flex-col items-center justify-center shadow-[inset_0_1px_4px_rgba(0,0,0,0.05)]" style={{ height: "80vh", minHeight: "600px" }}>
+                        <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+                        <p className="text-[#64748b]">Loading offer letter...</p>
+                      </div>
                     ) : (
                       <div className="bg-white dark:bg-card p-8 overflow-x-auto flex flex-col items-center justify-center min-h-100">
+                        <AlertCircle className="h-10 w-10 text-slate-300 mb-4" />
                         <p className="text-[#64748b]">
                           Offer letter content could not be loaded.
                         </p>

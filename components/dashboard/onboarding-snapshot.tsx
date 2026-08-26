@@ -1,29 +1,51 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, ShieldCheck } from "lucide-react";
+import { ArrowRight, CheckCircle2, ShieldCheck, ChevronDown, Download, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { CircularProgress } from "@/components/shared/circular-progress";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { useCurrentUser } from "@/lib/hooks/useUser";
-import { useJobOfferPdf } from "@/lib/hooks/useJobOffer";
+import { useJobOfferPdf, useJobOfferLetters, useJobOfferSummary } from "@/lib/hooks/useJobOffer";
 import { toast } from "sonner";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 /** Download the offer letter as a file. Fetches with credentials so cookies work. */
-async function downloadPdf(url: string) {
+async function downloadPdf(url: string, filename = "Offer_Letter.pdf") {
   try {
+    if (url.startsWith("data:")) {
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      return;
+    }
     const res = await fetch(url, { credentials: "include" });
     if (!res.ok) throw new Error("Download failed");
     const blob = await res.blob();
     const href = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = href;
-    a.download = "Offer_Letter.pdf";
+    a.download = filename;
     a.click();
     URL.revokeObjectURL(href);
   } catch {
     toast.error("Could not download the offer letter. Please try again.");
+  }
+}
+
+function openPdfPreview(url: string) {
+  if (url.startsWith("data:")) {
+    // For base64, open in an iframe in a new window or just write it
+    const newWindow = window.open();
+    if (newWindow) {
+      newWindow.document.write(
+        `<iframe src="${url}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`
+      );
+    }
+  } else {
+    window.open(url, "_blank", "noopener,noreferrer");
   }
 }
 
@@ -75,9 +97,20 @@ export function OnboardingSnapshot({
 }: OnboardingSnapshotProps) {
   const { profile } = useAuth();
   const { userEmail } = useCurrentUser();
+  const { data: offerData } = useJobOfferSummary(userEmail || "");
+  const isTraineeOrBoth = offerData?.employment_type === "Trainee" || offerData?.compensation_type === "both";
+
+  const { data: lettersData, isLoading: isLettersLoading } = useJobOfferLetters(
+    userEmail || "",
+    true, // always fetch to check if multiple letters exist
+  );
+
+  const hasMultipleLetters = lettersData?.letters && lettersData.letters.length > 1;
+  const isSeparate = hasMultipleLetters || isTraineeOrBoth;
+
   const { pdfUrl, isLoading: isPdfLoading } = useJobOfferPdf(
     userEmail || "",
-    true,
+    !isSeparate,
   );
 
   const isProfileActive = Boolean(profile);
@@ -157,62 +190,99 @@ export function OnboardingSnapshot({
 
               {isProfileActive && (
                 <>
-                  {/* Mobile: download directly */}
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    onClick={() => pdfUrl && downloadPdf(pdfUrl)}
-                    disabled={!pdfUrl}
-                    className={cn(
-                      "flex sm:hidden border-black text-black hover:bg-black/10 hover:text-black rounded-xl font-semibold justify-center",
-                    )}
-                  >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                      <polyline points="7 10 12 15 17 10" />
-                      <line x1="12" y1="15" x2="12" y2="3" />
-                    </svg>
-                    Preview / Download Offer
-                  </Button>
+                  {isSeparate && lettersData?.letters && lettersData.letters.length > 1 ? (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="lg"
+                          className="border-black bg-transparent text-black hover:bg-black/10 hover:text-black rounded-xl font-semibold justify-center flex items-center gap-2"
+                        >
+                          Preview / Download Offer
+                          <span className="flex items-center justify-center bg-black text-white text-[10px] font-bold h-5 w-5 rounded-full ml-1">
+                            {lettersData.letters.length}
+                          </span>
+                          <ChevronDown className="h-4 w-4 ml-1 opacity-70" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-64 rounded-xl shadow-lg border-slate-200">
+                        {lettersData.letters.map((letter) => (
+                          <div key={letter.index} className="flex items-center justify-between group px-2 py-1.5 hover:bg-slate-50 rounded-lg">
+                            <DropdownMenuItem
+                              className="flex-1 cursor-pointer font-medium p-2 text-sm"
+                              onClick={() => {
+                                const url = `data:application/pdf;base64,${letter.pdf_base64}`;
+                                openPdfPreview(url);
+                              }}
+                            >
+                              <span className="truncate">{letter.print_format}</span>
+                            </DropdownMenuItem>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const url = `data:application/pdf;base64,${letter.pdf_base64}`;
+                                downloadPdf(url, `${letter.filename || letter.print_format}.pdf`);
+                              }}
+                              title="Download"
+                            >
+                              <Download className="h-4 w-4 text-slate-500" />
+                            </Button>
+                          </div>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : (
+                    <>
+                      {/* Mobile: download directly */}
+                      <Button
+                        variant="outline"
+                        size="lg"
+                        onClick={() => {
+                          const url = isSeparate && lettersData?.letters?.[0]?.pdf_base64 
+                            ? `data:application/pdf;base64,${lettersData.letters[0].pdf_base64}` 
+                            : pdfUrl;
+                          if (url) downloadPdf(url);
+                        }}
+                        disabled={isLettersLoading || (!pdfUrl && (!isSeparate || !lettersData?.letters?.[0]))}
+                        className={cn(
+                          "flex sm:hidden border-black text-black hover:bg-black/10 hover:text-black rounded-xl font-semibold justify-center",
+                        )}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                          <polyline points="7 10 12 15 17 10" />
+                          <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                        Preview / Download Offer
+                      </Button>
 
-                  {/* Desktop: open PDF in new tab */}
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    onClick={() =>
-                      pdfUrl &&
-                      window.open(pdfUrl, "_blank", "noopener,noreferrer")
-                    }
-                    disabled={!pdfUrl}
-                    className={cn(
-                      "hidden sm:flex border border-black bg-transparent text-black hover:bg-black/10 hover:text-black rounded-xl font-semibold justify-center",
-                    )}
-                  >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
-                      <polyline points="15 3 21 3 21 9" />
-                      <line x1="10" y1="14" x2="21" y2="3" />
-                    </svg>
-                    Preview / Download Offer
-                  </Button>
+                      {/* Desktop: open PDF in new tab */}
+                      <Button
+                        variant="outline"
+                        size="lg"
+                        onClick={() => {
+                          const url = isSeparate && lettersData?.letters?.[0]?.pdf_base64 
+                            ? `data:application/pdf;base64,${lettersData.letters[0].pdf_base64}` 
+                            : pdfUrl;
+                          if (url) openPdfPreview(url);
+                        }}
+                        disabled={isLettersLoading || (!pdfUrl && (!isSeparate || !lettersData?.letters?.[0]))}
+                        className={cn(
+                          "hidden sm:flex border border-black bg-transparent text-black hover:bg-black/10 hover:text-black rounded-xl font-semibold justify-center",
+                        )}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
+                          <polyline points="15 3 21 3 21 9" />
+                          <line x1="10" y1="14" x2="21" y2="3" />
+                        </svg>
+                        Preview / Download Offer
+                      </Button>
+                    </>
+                  )}
                 </>
               )}
             </div>

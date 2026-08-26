@@ -8,6 +8,7 @@ export interface JobOfferSummary {
   designation: string;
   duration_display: string | null;
   expected_doj_display: string | null;
+  trainee_doj_display?: string | null;
   stipend_display: string | null;
   employment_type?: string | null;
   compensation_type?: string | null;

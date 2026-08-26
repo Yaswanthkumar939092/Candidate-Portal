@@ -197,7 +197,7 @@ describe("validateOnboardingStep", () => {
       ],
     };
 
-    it("accepts valid uppercase alphanumeric IFSC code matching BBBB0AAAAAA", () => {
+    it("accepts valid uppercase alphanumeric IFSC code matching BARB0ALPHAA", () => {
       const errors = validateOnboardingStep(
         ifscTab,
         { custom_ifsc_code: "SBIN0123456" },
