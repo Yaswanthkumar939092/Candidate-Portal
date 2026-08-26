@@ -560,7 +560,7 @@ describe("OnboardingFormStep", () => {
          fireEvent.click(screen.getByText("Save & Next"));
          
          await waitFor(() => {
-            expect(screen.getByText("Please enter a valid 11-character IFSC code (e.g. BBBB0AAAAAA)")).toBeTruthy();
+            expect(screen.getByText("Please enter a valid 11-character IFSC code (first 4 letters, 5th character must be '0' zero, followed by 6 alphanumeric characters, e.g. BARB0ALPHAA)")).toBeTruthy();
          });
 
          // Invalid format: missing 0 at 5th character
@@ -569,7 +569,7 @@ describe("OnboardingFormStep", () => {
          fireEvent.click(screen.getByText("Save & Next"));
          
          await waitFor(() => {
-            expect(screen.getByText("Please enter a valid 11-character IFSC code (e.g. BBBB0AAAAAA)")).toBeTruthy();
+            expect(screen.getByText("Please enter a valid 11-character IFSC code (first 4 letters, 5th character must be '0' zero, followed by 6 alphanumeric characters, e.g. BARB0ALPHAA)")).toBeTruthy();
          });
 
          // Valid format: SBIN0123456
@@ -578,7 +578,7 @@ describe("OnboardingFormStep", () => {
          fireEvent.click(screen.getByText("Save & Next"));
          
          await waitFor(() => {
-            expect(screen.queryByText("Please enter a valid 11-character IFSC code (e.g. BBBB0AAAAAA)")).toBeNull();
+            expect(screen.queryByText("Please enter a valid 11-character IFSC code (first 4 letters, 5th character must be '0' zero, followed by 6 alphanumeric characters, e.g. BARB0ALPHAA)")).toBeNull();
          });
       });
 
