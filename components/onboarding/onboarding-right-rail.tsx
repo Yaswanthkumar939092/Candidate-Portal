@@ -100,11 +100,12 @@ const getInitials = (name: string) => {
 export function OnboardingRightRail({
   focusedFieldname,
 }: OnboardingRightRailProps) {
-  const { formConfig, currentStep, stepData, triggerSubmit, isSaving } =
+  const { formConfig, currentStep, stepData, triggerSubmit, isSaving, submitAll } =
     useOnboarding();
 
   const tabs = formConfig?.tabs || [];
   const currentTab = tabs[currentStep];
+  const isReviewStep = currentStep >= tabs.length;
 
   const buddies = useMemo(() => {
     if (formConfig?.key_contacts && formConfig.key_contacts.length > 0) {
@@ -670,44 +671,53 @@ export function OnboardingRightRail({
       {/* Sticky Bottom Actions Card */}
       <div className="sticky bottom-0 bg-[#F4F5F7] dark:bg-zinc-950 pt-0 pb-2 z-10">
         <div className="bg-card border border-border rounded-xl p-5 shadow-md flex flex-col gap-3">
-          <Button
-            type="button"
-            onClick={async () => {
-              if (triggerSubmit) {
-                await triggerSubmit("save_continue");
-              }
-            }}
-            disabled={requiredFieldsLeft.length > 0 || isSaving}
-            className={cn(
-              "w-full h-11 rounded-md font-bold transition-all flex items-center justify-center gap-2 text-sm",
-              requiredFieldsLeft.length === 0
-                ? "bg-[#5B2EE5] text-white hover:bg-[#4B22C9] shadow-md shadow-purple-500/10 cursor-pointer"
-                : "bg-muted text-muted-foreground cursor-not-allowed",
-            )}
-          >
-            {isSaving ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Saving...
-              </>
-            ) : requiredFieldsLeft.length === 0 ? (
-              <>
-                Save & Continue
-                <ArrowRight className="w-4 h-4" />
-              </>
-            ) : (
-              <>
-                Fill {requiredFieldsLeft.length} more to continue
-                <ArrowRight className="w-4 h-4" />
-              </>
-            )}
-          </Button>
+          {!isReviewStep && (
+            <Button
+              type="button"
+              onClick={async () => {
+                if (triggerSubmit) {
+                  await triggerSubmit("save_continue");
+                }
+              }}
+              disabled={requiredFieldsLeft.length > 0 || isSaving}
+              className={cn(
+                "w-full h-11 rounded-md font-bold transition-all flex items-center justify-center gap-2 text-sm",
+                requiredFieldsLeft.length === 0
+                  ? "bg-[#5B2EE5] text-white hover:bg-[#4B22C9] shadow-md shadow-purple-500/10 cursor-pointer"
+                  : "bg-muted text-muted-foreground cursor-not-allowed",
+              )}
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Saving...
+                </>
+              ) : requiredFieldsLeft.length === 0 ? (
+                <>
+                  Save & Continue
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              ) : (
+                <>
+                  Fill {requiredFieldsLeft.length} more to continue
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </Button>
+          )}
 
           <Button
             type="button"
             variant="ghost"
             onClick={async () => {
-              if (triggerSubmit) {
+              if (isReviewStep) {
+                try {
+                  await submitAll("save");
+                  window.location.assign("/dashboard");
+                } catch {
+                  // error handled in submitAll
+                }
+              } else if (triggerSubmit) {
                 await triggerSubmit("save_draft");
               }
             }}

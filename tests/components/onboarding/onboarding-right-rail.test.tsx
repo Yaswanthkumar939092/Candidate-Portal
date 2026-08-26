@@ -321,15 +321,16 @@ describe("OnboardingRightRail", () => {
     windowMock.mockRestore();
   });
 
-  it("handles bottom action triggers (Save & Continue, Save as Draft & Exit)", async () => {
+  it("handles bottom action triggers (Save & Continue, Save as Draft & Exit) on form steps", async () => {
     const mockTriggerSubmit = vi.fn().mockResolvedValue(true);
     vi.mocked(useOnboarding).mockReturnValue({
       formConfig: {
-        tabs: [],
+        tabs: [{ tab: "Personal Info", sections: [{ section: "Basic", fields: [] }] }],
       },
       currentStep: 0,
       stepData: {},
       triggerSubmit: mockTriggerSubmit,
+      submitAll: vi.fn(),
       isSaving: false,
     } as any);
 
@@ -344,5 +345,52 @@ describe("OnboardingRightRail", () => {
     expect(saveDraftButton).toBeTruthy();
     fireEvent.click(saveDraftButton);
     expect(mockTriggerSubmit).toHaveBeenCalledWith("save_draft");
+  });
+
+  it("hides Save & Continue on review step", () => {
+    vi.mocked(useOnboarding).mockReturnValue({
+      formConfig: {
+        tabs: [{ tab: "Personal Info", sections: [{ section: "Basic", fields: [] }] }],
+      },
+      currentStep: 1, // beyond tabs.length (1 tab), so review step
+      stepData: {},
+      triggerSubmit: vi.fn(),
+      submitAll: vi.fn(),
+      isSaving: false,
+    } as any);
+
+    render(<OnboardingRightRail focusedFieldname={null} />);
+
+    expect(screen.queryByText("Save & Continue")).toBeNull();
+    expect(screen.getByText("Save as Draft & Exit")).toBeTruthy();
+  });
+
+  it("Save as Draft & Exit calls submitAll on review step", async () => {
+    const mockSubmitAll = vi.fn().mockResolvedValue(undefined);
+    const mockAssign = vi.fn();
+    Object.defineProperty(window, "location", {
+      value: { assign: mockAssign },
+      writable: true,
+    });
+
+    vi.mocked(useOnboarding).mockReturnValue({
+      formConfig: {
+        tabs: [{ tab: "Personal Info", sections: [{ section: "Basic", fields: [] }] }],
+      },
+      currentStep: 1, // review step
+      stepData: {},
+      triggerSubmit: vi.fn(),
+      submitAll: mockSubmitAll,
+      isSaving: false,
+    } as any);
+
+    render(<OnboardingRightRail focusedFieldname={null} />);
+
+    const saveDraftButton = screen.getByText("Save as Draft & Exit");
+    fireEvent.click(saveDraftButton);
+
+    await vi.waitFor(() => {
+      expect(mockSubmitAll).toHaveBeenCalledWith("save");
+    });
   });
 });
