@@ -59,6 +59,8 @@ export interface OnboardingJoining {
   boarding_begins_on?: string | null;
   days_to_joining?: number | null;
   is_set?: boolean;
+  trainee_doj?: string | null;
+  days_to_trainee_joining?: number | null;
   role?: string | null;
   role_name?: string | null;
   department?: string | null;

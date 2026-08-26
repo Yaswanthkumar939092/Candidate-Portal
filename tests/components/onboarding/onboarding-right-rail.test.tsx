@@ -69,6 +69,34 @@ describe("OnboardingRightRail", () => {
     expect(screen.queryByText("Role")).toBeNull();
     expect(screen.queryByText("Department")).toBeNull();
     expect(screen.queryByText("Date of Joining")).toBeNull();
+    expect(screen.queryByText("Trainee DOJ")).toBeNull();
+  });
+
+  it("renders Trainee DOJ when trainee_doj is provided in joining info", () => {
+    const mockFormConfig = {
+      branding: {
+        company_name: "Test Corporate LLC",
+      },
+      joining: {
+        trainee_doj: "2026-07-15",
+        role_name: "Marketing Head",
+        department_name: "Marketing",
+      },
+      tabs: [],
+    };
+
+    vi.mocked(useOnboarding).mockReturnValue({
+      formConfig: mockFormConfig,
+      currentStep: 0,
+      stepData: {},
+      triggerSubmit: vi.fn(),
+      isSaving: false,
+    } as any);
+
+    render(<OnboardingRightRail focusedFieldname={null} />);
+
+    expect(screen.getByText("Trainee DOJ")).toBeTruthy();
+    expect(screen.getByText(/15\s+Jul\s+2026/)).toBeTruthy();
   });
 
   it("calculates days to joining from days_to_joining field or custom date, including invalid date fallback", () => {

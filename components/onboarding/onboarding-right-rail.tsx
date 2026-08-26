@@ -328,7 +328,7 @@ export function OnboardingRightRail({
         </div>
 
         {/* Card Body - Candidate Info / Joining Info */}
-        {formConfig?.joining && (formConfig.joining.date_of_joining || formConfig.joining.role_name || formConfig.joining.department_name) && (
+        {formConfig?.joining && (formConfig.joining.date_of_joining || formConfig.joining.role_name || formConfig.joining.department_name || formConfig.joining.trainee_doj) && (
           <div className="border-t border-white/15 pt-3 flex flex-col gap-2.5 w-full">
             {formConfig.joining.role_name && (
               <div className="flex justify-between items-center gap-4 text-xs md:text-sm">
@@ -351,6 +351,14 @@ export function OnboardingRightRail({
                 <span className="text-white/60 font-semibold shrink-0">Date of Joining</span>
                 <span className="font-bold text-right shrink-0">
                   {formatDisplayDate(formConfig.joining.date_of_joining)}
+                </span>
+              </div>
+            )}
+            {formConfig.joining.trainee_doj && (
+              <div className="flex justify-between items-center gap-4 text-xs md:text-sm">
+                <span className="text-white/60 font-semibold shrink-0">Trainee DOJ</span>
+                <span className="font-bold text-right shrink-0">
+                  {formatDisplayDate(formConfig.joining.trainee_doj)}
                 </span>
               </div>
             )}
