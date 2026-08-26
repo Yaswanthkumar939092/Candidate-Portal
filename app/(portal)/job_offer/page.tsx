@@ -432,6 +432,16 @@ function JobOfferContent() {
                           </span>
                         </div>
                       )}
+                      {offerData.trainee_doj_display && (
+                        <div className="flex justify-between items-center py-1.5">
+                          <span className="text-[0.85rem] text-[#64748b]">
+                            Trainee DOJ
+                          </span>
+                          <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right">
+                            {offerData.trainee_doj_display}
+                          </span>
+                        </div>
+                      )}
                       {(offerData.stipend_formatted ||
                         offerData.stipend ||
                         offerData.stipend_display) && (
