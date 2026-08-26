@@ -179,6 +179,43 @@ describe("JobOfferPage", () => {
     expect(screen.queryByText("Stipend")).toBeNull();
   });
 
+  it("renders trainee_doj_display if available", () => {
+    mockUseJobOfferSummary.mockReturnValue({
+      data: {
+        applicant_name: "Chirag Joshi",
+        designation: "Marketing Head",
+        duration_display: "6 Months",
+        expected_doj_display: "30-06-2026",
+        trainee_doj_display: "15-07-2026",
+        expiry_display: null,
+      },
+      isLoading: false,
+    });
+
+    render(<JobOfferPage />);
+
+    expect(screen.getByText("Trainee DOJ")).toBeTruthy();
+    expect(screen.getByText("15-07-2026")).toBeTruthy();
+  });
+
+  it("does not render Trainee DOJ if trainee_doj_display is null or undefined", () => {
+    mockUseJobOfferSummary.mockReturnValue({
+      data: {
+        applicant_name: "Chirag Joshi",
+        designation: "Marketing Head",
+        duration_display: "6 Months",
+        expected_doj_display: "30-06-2026",
+        trainee_doj_display: null,
+        expiry_display: null,
+      },
+      isLoading: false,
+    });
+
+    render(<JobOfferPage />);
+
+    expect(screen.queryByText("Trainee DOJ")).toBeNull();
+  });
+
   it("renders the offer details loading state while summary data is being fetched", () => {
     mockUseJobOfferSummary.mockReturnValue({
       data: null,
