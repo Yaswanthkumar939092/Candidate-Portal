@@ -28,6 +28,14 @@ vi.mock("@/lib/hooks/useJobOffer", () => ({
     pdfUrl: "mock-pdf-url",
     isLoading: false,
   }),
+  useJobOfferSummary: () => ({
+    data: null,
+    isLoading: false,
+  }),
+  useJobOfferLetters: () => ({
+    data: null,
+    isLoading: false,
+  }),
 }));
 
 const DEFAULT_MOCK_PAYLOAD: DashboardData = {
