@@ -198,7 +198,8 @@ function isFieldRequired(field: FormField, doc: Record<string, unknown> = {}) {
 function normalizeInputValue(field: FormField, rawValue: string) {
   if (
     field.fieldname === "custom_name_as_per_aadhaar" ||
-    field.fieldname === "custom_name_as_per_pan"
+    field.fieldname === "custom_name_as_per_pan" ||
+    field.fieldname === "custom_account_holder_name"
   ) {
     return rawValue.replace(/[^a-zA-Z\s]/g, "");
   }
