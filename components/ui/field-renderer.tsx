@@ -656,31 +656,50 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
       const debouncedSearch = useDebounce(search, 300);
 
       const formContext = useFormContext();
-      let dependentValue = "";
+      
+      // Determine if there are dynamic filters based on other fields
+      let activeFilters: Record<string, string> | undefined = undefined;
+      let watchedDependencyValue = ""; // Value to monitor for auto-clearing
+
       if (formContext) {
+        // City fields depend on State fields
         if (field.fieldname === "custom_permanent_city") {
-          dependentValue = formContext.watch("custom_permanent_state");
+          const rawState = formContext.watch("custom_permanent_state");
+          watchedDependencyValue = (rawState && typeof rawState === "object")
+            ? ((rawState as any).id || (rawState as any).name || (rawState as any).value || "")
+            : String(rawState || "");
+          if (watchedDependencyValue) activeFilters = { state: watchedDependencyValue };
         } else if (field.fieldname === "custom_communication_city") {
-          dependentValue = formContext.watch("custom_communication_state");
+          const rawState = formContext.watch("custom_communication_state");
+          watchedDependencyValue = (rawState && typeof rawState === "object")
+            ? ((rawState as any).id || (rawState as any).name || (rawState as any).value || "")
+            : String(rawState || "");
+          if (watchedDependencyValue) activeFilters = { state: watchedDependencyValue };
+        }
+        // Degree depends on Education Level
+        else if (field.fieldname === "degree") {
+          const watchPath = (tableFieldname && rowIndex !== undefined)
+            ? `${tableFieldname}.${rowIndex}.education_level`
+            : "education_level";
+          const rawEdLevel = formContext.watch(watchPath);
+          watchedDependencyValue = (rawEdLevel && typeof rawEdLevel === "object")
+            ? ((rawEdLevel as any).id || (rawEdLevel as any).name || (rawEdLevel as any).value || "")
+            : String(rawEdLevel || "");
+          if (watchedDependencyValue) activeFilters = { education_stage: watchedDependencyValue };
         }
       }
 
-      const stateName = (dependentValue && typeof dependentValue === "object")
-        ? ((dependentValue as any).id || (dependentValue as any).name || (dependentValue as any).value || "")
-        : String(dependentValue || "");
-
-      // Clear the selected city if the state changes
-      const prevStateNameRef = React.useRef(stateName);
+      // Clear the selected value if the dependent field value changes
+      const prevDependencyRef = React.useRef(watchedDependencyValue);
       React.useEffect(() => {
-        if (prevStateNameRef.current && prevStateNameRef.current !== stateName) {
+        if (prevDependencyRef.current && prevDependencyRef.current !== watchedDependencyValue) {
           onChange("");
         }
-        prevStateNameRef.current = stateName;
-      }, [stateName, onChange]);
+        prevDependencyRef.current = watchedDependencyValue;
+      }, [watchedDependencyValue, onChange]);
 
       const doctype = field.options || "";
-      const filters = stateName ? { state: stateName } : undefined;
-      const { data, isLoading } = useLinkFieldOptions(doctype, debouncedSearch, filters);
+      const { data, isLoading } = useLinkFieldOptions(doctype, debouncedSearch, activeFilters);
       const results = data?.results ?? [];
 
       let displayValue = "";

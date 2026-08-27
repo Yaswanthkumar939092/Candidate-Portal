@@ -139,14 +139,10 @@ describe("jobOfferService", () => {
     );
   });
 
-  it("handles errors by logging and rethrowing", async () => {
+  it("throws error when API fails", async () => {
     const mockError = new Error("API Failure");
     (FrappeAPI.get as any).mockRejectedValue(mockError);
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
     await expect(jobOfferService.getJobOfferSummary("test")).rejects.toThrow(mockError);
-    expect(consoleSpy).toHaveBeenCalled();
-    
-    consoleSpy.mockRestore();
   });
 });

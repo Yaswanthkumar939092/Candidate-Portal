@@ -44,37 +44,19 @@ export interface RejectionReason {
 
 export const jobOfferService = {
   getJobOfferSummary: async (appl: string, token?: string): Promise<JobOfferSummary> => {
-    try {
-      const params: Record<string, string> = { appl };
-      if (token) {
-        params.token = token;
-      }
-      const result = await FrappeAPI.get("recruitment.job_offer_utils.get_job_offer_summary", params);
-      return result;
-    } catch (error) {
-      console.error("Failed to fetch job offer summary:", error);
-      throw error;
+    const params: Record<string, string> = { appl };
+    if (token) {
+      params.token = token;
     }
+    return await FrappeAPI.get("recruitment.job_offer_utils.get_job_offer_summary", params);
   },
 
   getRejectionReasons: async (): Promise<RejectionReason[]> => {
-    try {
-      const result = await FrappeAPI.get("recruitment.job_offer_utils.get_rejection_reasons");
-      return result;
-    } catch (error) {
-      console.error("Failed to fetch rejection reasons:", error);
-      throw error;
-    }
+    return await FrappeAPI.get("recruitment.job_offer_utils.get_rejection_reasons");
   },
 
   getCompanyLogo: async (): Promise<{ logo_url: string }> => {
-    try {
-      const result = await FrappeAPI.get("recruitment.job_offer_utils.get_company_logo");
-      return result;
-    } catch (error) {
-      console.error("Failed to fetch company logo:", error);
-      throw error;
-    }
+    return await FrappeAPI.get("recruitment.job_offer_utils.get_company_logo");
   },
 
   getJobOfferPdfUrl: (appl: string, token?: string): string => {
@@ -91,72 +73,42 @@ export const jobOfferService = {
   updateJobOfferStatus: async (
     params: UpdateJobOfferStatusParams
   ): Promise<UpdateJobOfferStatusResponse> => {
-    try {
-      const result = await FrappeAPI.post(
-        "recruitment.job_offer_utils.job_offer_update",
-        params as unknown as Record<string, unknown>
-      );
-      return result;
-    } catch (error) {
-      console.error("Failed to update job offer status:", error);
-      throw error;
-    }
+    return await FrappeAPI.post(
+      "recruitment.job_offer_utils.job_offer_update",
+      params as unknown as Record<string, unknown>
+    );
   },
 
   getJobOfferStatus: async (appl: string, token?: string): Promise<{ status: string }> => {
-    try {
-      const params: Record<string, string> = { appl };
-      if (token) {
-        params.token = token;
-      }
-      const result = await FrappeAPI.get("recruitment.job_offer_utils.get_job_offer_status", params);
-      return result;
-    } catch (error) {
-      console.error("Failed to fetch job offer status:", error);
-      throw error;
+    const params: Record<string, string> = { appl };
+    if (token) {
+      params.token = token;
     }
+    return await FrappeAPI.get("recruitment.job_offer_utils.get_job_offer_status", params);
   },
 
   getConsentForm: async (appl: string, token: string): Promise<ConsentFormResponse> => {
-    try {
-      const result = await FrappeAPI.get(
-        "recruitment.recruitment.doctype.dpdp_act_settings.dpdp_act_settings.get_consent_form",
-        {
-          appl,
-          token,
-        }
-      );
-      return result;
-    } catch (error) {
-      console.error("Failed to fetch consent form:", error);
-      throw error;
-    }
+    return await FrappeAPI.get(
+      "recruitment.recruitment.doctype.dpdp_act_settings.dpdp_act_settings.get_consent_form",
+      {
+        appl,
+        token,
+      }
+    );
   },
 
   submitConsent: async (payload: Record<string, unknown>): Promise<any> => {
-    try {
-      const result = await FrappeAPI.post(
-        "recruitment.dpdp_consent.submit_dpdp_consent",
-        payload
-      );
-      return result;
-    } catch (error) {
-      console.error("Failed to submit consent:", error);
-      throw error;
-    }
+    return await FrappeAPI.post(
+      "recruitment.dpdp_consent.submit_dpdp_consent",
+      payload
+    );
   },
 
   getJobOfferLetters: async (appl: string, token?: string): Promise<{ count: number, letters: { index: number, print_format: string, filename: string, pdf_base64: string }[] }> => {
-    try {
-      const params: Record<string, string> = { appl, separate: "1" };
-      if (token) {
-        params.token = token;
-      }
-      const result = await FrappeAPI.get("recruitment.job_offer_utils.download_job_offer_pdf", params);
-      return result;
-    } catch (error) {
-      console.error("Failed to fetch job offer letters:", error);
-      throw error;
+    const params: Record<string, string> = { appl, separate: "1" };
+    if (token) {
+      params.token = token;
     }
+    return await FrappeAPI.get("recruitment.job_offer_utils.download_job_offer_pdf", params);
   },
 };

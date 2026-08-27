@@ -7,6 +7,8 @@ import {
   useOnboarding,
 } from "@/lib/contexts/onboarding-context";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { OnboardingStepNav } from "@/components/onboarding/onboarding-step-nav";
 import { ReviewStep } from "@/components/onboarding/steps/review-step";
@@ -71,6 +73,8 @@ function AutosaveBar({
 }
 
 function OnboardingContent() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const {
     currentStep,
     completedSteps,
@@ -202,14 +206,15 @@ function OnboardingContent() {
 
           <div className="pt-4">
             <Button
-              asChild
+              onClick={() => {
+                queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+                router.push("/dashboard");
+              }}
               size="lg"
-              className="h-12 rounded-xl px-8 bg-[#101828] text-white hover:bg-[#101828]/90"
+              className="h-12 rounded-xl px-8 bg-[#101828] text-white hover:bg-[#101828]/90 flex items-center gap-2"
             >
-              <Link href="/dashboard" className="flex items-center gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                Back to Dashboard
-              </Link>
+              <ArrowLeft className="h-4 w-4" />
+              Back to Dashboard
             </Button>
           </div>
 

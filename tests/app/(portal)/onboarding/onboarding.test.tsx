@@ -11,6 +11,12 @@ vi.mock("@/lib/contexts/onboarding-context", () => ({
   useOnboarding: () => mockUseOnboarding(),
 }));
 
+vi.mock("@tanstack/react-query", () => ({
+  useQueryClient: () => ({
+    invalidateQueries: vi.fn(),
+  }),
+}));
+
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: vi.fn(),
@@ -118,7 +124,7 @@ describe("OnboardingPage", () => {
     render(<OnboardingPage />);
     
     expect(screen.getByText("Onboarding not yet started")).toBeTruthy();
-    expect(screen.getByText(/your onboarding journey hasn't been initialized yet/)).toBeTruthy();
-    expect(screen.getByRole("link", { name: /Back to Dashboard/i })).toBeTruthy();
+    expect(screen.getByText(/your onboarding journey hasn't been initialized yet/i)).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Back to Dashboard/i })).toBeTruthy();
   });
 });
