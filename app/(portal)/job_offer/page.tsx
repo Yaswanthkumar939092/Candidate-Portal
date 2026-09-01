@@ -490,6 +490,17 @@ function JobOfferContent() {
                             </span>
                           </div>
                         )}
+                      {offerData.location_allowance_formatted !== undefined &&
+                        offerData.location_allowance_formatted !== null && (
+                          <div className="flex justify-between items-center py-1.5">
+                            <span className="text-[0.85rem] text-[#64748b]">
+                              Location Allowance
+                            </span>
+                            <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right">
+                              {offerData.location_allowance_formatted}
+                            </span>
+                          </div>
+                        )}
                       {offerData.total_formatted !== undefined &&
                         offerData.total_formatted !== null && (
                           <div className="flex justify-between items-center py-1.5">

@@ -15,7 +15,7 @@ import { useOnboardingForm } from "@/lib/hooks/useOnboardingForm";
 import { OnboardingForm } from "@/lib/types/onboarding";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-
+import { evaluateDependsOn, isFieldFilled } from "@/lib/onboarding-utils";
 const DEBOUNCE_MS = 500;
 
 /**
@@ -178,11 +178,13 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
             let allMandatoryFilled = true;
             tab.sections.forEach((section) => {
               section.fields.forEach((field) => {
-                const isMandatory = field.is_mandatory || field.reqd;
-                if (isMandatory && !field.hidden) {
+                const doc = loadedStepData[key] || {};
+                const isMandatory = field.is_mandatory || field.reqd || (field.mandatory_depends_on && evaluateDependsOn(field.mandatory_depends_on, doc));
+                const isVisible = !field.hidden && (!field.depends_on || evaluateDependsOn(field.depends_on, doc));
+                
+                if (isMandatory && isVisible) {
                   hasMandatory = true;
-                  const val = loadedStepData[key]?.[field.fieldname];
-                  if (val === undefined || val === null || val === "") {
+                  if (!isFieldFilled(field, doc)) {
                     allMandatoryFilled = false;
                   }
                 }

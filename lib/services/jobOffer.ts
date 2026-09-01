@@ -19,6 +19,8 @@ export interface JobOfferSummary {
   stipend_formatted?: string | null;
   fixed_formatted?: string | null;
   variable_formatted?: string | null;
+  location_allowance?: number | null;
+  location_allowance_formatted?: string | null;
   total_formatted?: string | null;
   count?: number;
 }
@@ -68,6 +70,15 @@ export const jobOfferService = {
     // Same-origin proxy in the browser so the PDF request carries the
     // first-party session cookie (iOS Safari ITP-safe).
     return `${frappeApiBase()}/api/method/recruitment.job_offer_utils.download_job_offer_pdf?${params}`;
+  },
+
+  getCultureBookPdfUrl: (appl: string, token?: string): string => {
+    const paramsObj: Record<string, string> = { appl };
+    if (token) {
+      paramsObj.token = token;
+    }
+    const params = new URLSearchParams(paramsObj).toString();
+    return `${frappeApiBase()}/api/method/recruitment.job_offer_utils.preview_culture_book?${params}`;
   },
 
   updateJobOfferStatus: async (

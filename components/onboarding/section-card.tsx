@@ -23,12 +23,14 @@ export function SectionCard({ title, sectionTitle, children, className, id, coun
       data-section-title={sectionTitle || title}
       className={cn("shadow-sm border-none overflow-hidden bg-white dark:bg-card scroll-mt-24", className)}
     >
-      {title && (
+      {(title || counts) && (
         <CardHeader className="pt-2 px-6 pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-bold text-foreground">
-              {title}
-            </CardTitle>
+          <div className={cn("flex items-center", title ? "justify-between" : "justify-end")}>
+            {title && (
+              <CardTitle className="text-lg font-bold text-foreground">
+                {title}
+              </CardTitle>
+            )}
             {counts && (
               <span className="text-[11px] font-bold font-mono px-2 py-0.5 rounded-full bg-primary/10 text-primary select-none transition-all duration-300">
                 {counts.filled}/{counts.total}

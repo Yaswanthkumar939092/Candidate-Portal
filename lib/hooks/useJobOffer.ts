@@ -20,6 +20,11 @@ export const useJobOfferPdf = (appl: string, enabled = true, token?: string) => 
   return { pdfUrl, isLoading: false, error: null };
 };
 
+export const useCultureBookPdf = (appl: string, enabled = true, token?: string) => {
+  const pdfUrl = appl && enabled ? jobOfferService.getCultureBookPdfUrl(appl, token) : null;
+  return { pdfUrl, isLoading: false, error: null };
+};
+
 export const useJobOfferLetters = (appl: string, enabled = true, token?: string) => {
   return useQuery({
     queryKey: ["jobOfferLetters", appl, token],
