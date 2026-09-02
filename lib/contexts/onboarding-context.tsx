@@ -172,19 +172,21 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
         } else {
           // Initialize completed steps based on fields that already have values in formConfig
           const initialCompleted = new Set<string>();
+          const onboardingDoc = Object.values(loadedStepData).reduce<
+            Record<string, unknown>
+          >((document, fields) => Object.assign(document, fields), {});
           formConfig.tabs.forEach((tab) => {
             const key = tab.tab.toLowerCase().replace(/\s+/g, "_");
             let hasMandatory = false;
             let allMandatoryFilled = true;
             tab.sections.forEach((section) => {
               section.fields.forEach((field) => {
-                const doc = loadedStepData[key] || {};
-                const isMandatory = field.is_mandatory || field.reqd || (field.mandatory_depends_on && evaluateDependsOn(field.mandatory_depends_on, doc));
-                const isVisible = !field.hidden && (!field.depends_on || evaluateDependsOn(field.depends_on, doc));
+                const isMandatory = field.is_mandatory || field.reqd || (field.mandatory_depends_on && evaluateDependsOn(field.mandatory_depends_on, onboardingDoc));
+                const isVisible = !field.hidden && (!field.depends_on || evaluateDependsOn(field.depends_on, onboardingDoc));
                 
                 if (isMandatory && isVisible) {
                   hasMandatory = true;
-                  if (!isFieldFilled(field, doc)) {
+                  if (!isFieldFilled(field, onboardingDoc)) {
                     allMandatoryFilled = false;
                   }
                 }

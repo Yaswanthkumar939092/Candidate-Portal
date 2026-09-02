@@ -97,7 +97,7 @@ describe("OnboardingPage", () => {
     expect(screen.getByText("Review Step Mock")).toBeTruthy();
   });
 
-  it("hides header and mobile progress bar when status is submitted", () => {
+  it("hides header, mobile progress bar and step nav when status is submitted", () => {
     mockUseOnboarding.mockReturnValue({
       isLoading: false,
       currentStep: 2,
@@ -116,6 +116,7 @@ describe("OnboardingPage", () => {
     
     expect(screen.queryByText(/Please fill in the details below accurately/)).toBeNull();
     expect(screen.queryByTestId("progress-bar")).toBeNull();
+    expect(screen.queryByTestId("onboarding-step-nav")).toBeNull();
     expect(screen.getByTestId("review-step")).toBeTruthy();
   });
 
