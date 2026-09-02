@@ -46,10 +46,15 @@ export function isFieldFilled(field: OnboardingField, doc: Record<string, any>):
 
   if (field.fieldtype === "Table") {
     if (!Array.isArray(val) || val.length === 0) return false;
-    
-    const visibleChildFields = field.child_fields?.filter((f) => !f.hidden) || [];
 
     const isRowEmpty = (row: Record<string, any>) => {
+      const visibleChildFields = field.child_fields?.filter(
+        (childField) =>
+          !childField.hidden &&
+          (!childField.depends_on ||
+            evaluateDependsOn(childField.depends_on, row)),
+      ) || [];
+
       return !visibleChildFields.some((cf) => {
         const rowVal = row[cf.fieldname];
         return rowVal !== undefined && rowVal !== null && String(rowVal).trim() !== "";
@@ -57,8 +62,15 @@ export function isFieldFilled(field: OnboardingField, doc: Record<string, any>):
     };
 
     const isRowValid = (row: Record<string, any>) => {
-      const mandatoryChildFields = visibleChildFields.filter(
-        (f) => f.is_mandatory || f.reqd || (f.mandatory_depends_on && evaluateDependsOn(f.mandatory_depends_on, row))
+      const mandatoryChildFields = (field.child_fields || []).filter(
+        (childField) =>
+          !childField.hidden &&
+          (!childField.depends_on ||
+            evaluateDependsOn(childField.depends_on, row)) &&
+          (childField.is_mandatory ||
+            childField.reqd ||
+            (childField.mandatory_depends_on &&
+              evaluateDependsOn(childField.mandatory_depends_on, row))),
       );
       
       return mandatoryChildFields.every((cf) => {

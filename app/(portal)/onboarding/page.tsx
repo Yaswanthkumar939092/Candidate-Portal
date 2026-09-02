@@ -15,7 +15,6 @@ import { ReviewStep } from "@/components/onboarding/steps/review-step";
 import { OnboardingFormStep } from "@/components/onboarding/onboarding-form-step";
 import { OnboardingRightRail } from "@/components/onboarding/onboarding-right-rail";
 import { Progress } from "@/components/ui/progress";
-import { evaluateDependsOn } from "@/lib/onboarding-utils";
 import { cn } from "@/lib/utils";
 import type { OnboardingTab } from "@/lib/types/onboarding";
 
@@ -36,13 +35,9 @@ const getInitialSectionTitle = (tab?: OnboardingTab) =>
 
 function AutosaveBar({
   isSaving,
-  requiredFilled,
-  requiredTotal,
   activeSection,
 }: {
   isSaving: boolean;
-  requiredFilled: number;
-  requiredTotal: number;
   activeSection: string;
 }) {
   return (
@@ -61,11 +56,7 @@ function AutosaveBar({
       {activeSection && (
         <div className="text-xs text-muted-foreground font-semibold">
           Editing{" "}
-          <strong className="text-foreground font-bold">{activeSection}</strong>{" "}
-          ·{" "}
-          <span className="font-mono">
-            {requiredFilled}/{requiredTotal} required filled
-          </span>
+          <strong className="text-foreground font-bold">{activeSection}</strong>
         </div>
       )}
     </div>
@@ -82,7 +73,6 @@ function OnboardingContent() {
     formConfig,
     status,
     isError,
-    stepData,
     isSaving,
     prevStep,
     triggerSubmit,
@@ -258,7 +248,7 @@ function OnboardingContent() {
     StepComponent = <ReviewStep />;
   }
 
-  // Get active tab fields for AutosaveBar and checklist calculation
+  // Resolve the section label shown in the autosave bar
   const activeSectionBelongsToCurrentTab = currentTabConfig?.sections.some(
     (section) =>
       normalizeSectionTitle(section.section) ===
@@ -267,75 +257,6 @@ function OnboardingContent() {
   const displaySection = activeSectionBelongsToCurrentTab
     ? activeSection
     : getInitialSectionTitle(currentTabConfig);
-  const doc = {} as Record<string, any>;
-  if (stepData) {
-    Object.keys(stepData).forEach((key) => {
-      Object.assign(doc, stepData[key]);
-    });
-  }
-
-  const requiredFields = (() => {
-    if (!currentTabConfig) return [];
-
-    const activeSectionNormalized = displaySection
-      ? normalizeSectionTitle(displaySection)
-      : "";
-    const matchedSection = activeSectionNormalized
-      ? currentTabConfig.sections.find(
-          (section) =>
-            normalizeSectionTitle(section.section) === activeSectionNormalized ||
-            normalizeSectionTitle(section.section.toLowerCase().replace(/\s+/g, "_")) ===
-              activeSectionNormalized,
-        )
-      : null;
-
-    const sectionsToEvaluate = matchedSection
-      ? [matchedSection]
-      : currentTabConfig.sections;
-
-    const list: string[] = [];
-    sectionsToEvaluate.forEach((section) => {
-      section.fields.forEach((field) => {
-        const isVisible =
-          !field.hidden &&
-          (!field.depends_on || evaluateDependsOn(field.depends_on, doc));
-        if (!isVisible) return;
-
-        const isMandatory =
-          field.is_mandatory ||
-          field.reqd ||
-          (field.mandatory_depends_on &&
-            evaluateDependsOn(field.mandatory_depends_on, doc));
-
-        if (isMandatory) {
-          list.push(field.fieldname);
-        }
-      });
-    });
-    return list;
-  })();
-
-  const requiredFilledCount = requiredFields.filter((fieldname) => {
-    const val = doc[fieldname];
-    let isTable = false;
-    let isCheck = false;
-
-    currentTabConfig.sections.forEach((s) => {
-      const f = s.fields.find((field) => field.fieldname === fieldname);
-      if (f) {
-        if (f.fieldtype === "Table") isTable = true;
-        if (f.fieldtype === "Check") isCheck = true;
-      }
-    });
-
-    if (isTable) {
-      return Array.isArray(val) && val.length > 0;
-    }
-    if (isCheck) {
-      return Boolean(val);
-    }
-    return val !== undefined && val !== null && String(val).trim() !== "";
-  }).length;
 
   return (
     <div className="min-h-[calc(100vh-4rem)] lg:h-[calc(100vh-4rem)] lg:overflow-hidden flex flex-col bg-[#F4F5F7] dark:bg-zinc-950">
@@ -356,19 +277,26 @@ function OnboardingContent() {
       )}
       {/* 3-Column Responsive Grid Layout */}
       <div className="w-full max-w-[1700px] mx-auto px-4 md:px-6 lg:px-8 py-8 pt-24 pb-28 lg:pt-3 lg:pb-3 lg:h-[calc(100vh-4rem)] flex-1">
-        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] xl:grid-cols-[280px_1fr_340px] gap-8 items-start">
+        <div
+          className={cn(
+            "grid gap-8 items-start",
+            status === "submitted"
+              ? "grid-cols-1"
+              : "grid-cols-1 lg:grid-cols-[280px_1fr] xl:grid-cols-[280px_1fr_340px]",
+          )}
+        >
           {/* Column 1: Desktop sidebar */}
-          <aside className="hidden lg:block lg:sticky lg:top-16 self-start h-[calc(100vh-5.5rem)] overflow-y-auto pr-1 scrollbar-thin">
-            <OnboardingStepNav />
-          </aside>
+          {status !== "submitted" && (
+            <aside className="hidden lg:block lg:sticky lg:top-16 self-start h-[calc(100vh-5.5rem)] overflow-y-auto pr-1 scrollbar-thin">
+              <OnboardingStepNav />
+            </aside>
+          )}
 
           {/* Column 2: Main content area */}
           <div id="onboarding-form-container" className="flex flex-col gap-6 min-w-0 lg:h-[calc(100vh-5.5rem)] lg:overflow-y-auto lg:pr-1 scrollbar-thin">
             {status !== "submitted" && (
               <AutosaveBar
                 isSaving={isSaving}
-                requiredFilled={requiredFilledCount}
-                requiredTotal={requiredFields.length}
                 activeSection={displaySection}
               />
             )}
