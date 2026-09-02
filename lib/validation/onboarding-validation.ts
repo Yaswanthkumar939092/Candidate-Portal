@@ -89,6 +89,13 @@ function validateFieldPattern(
     };
   }
 
+  if (fieldname === "custom_account_holder_name" && !/^[A-Za-z\s]+$/.test(normalizedValue)) {
+    return {
+      type: "pattern",
+      message: "Account holder name can only contain alphabets and spaces",
+    };
+  }
+
   if ((fieldname === "custom_date_of_birth" || fieldname === "dob") && normalizedValue !== "") {
     const birthDate = new Date(normalizedValue);
     const today = new Date();
@@ -556,6 +563,20 @@ export function validateOnboardingStep(
             type: "pattern",
             message:
               "Please enter a valid 11-character IFSC code (first 4 letters, 5th character must be '0' zero, followed by 6 alphanumeric characters, e.g. BARB0ALPHAA)",
+          };
+        }
+      }
+
+      if (
+        field.fieldname === "custom_account_holder_name" &&
+        typeof normalizedValue === "string" &&
+        normalizedValue !== ""
+      ) {
+        const nameRegex = /^[A-Za-z\s]+$/;
+        if (!nameRegex.test(normalizedValue)) {
+          errorList[field.fieldname] = {
+            type: "pattern",
+            message: "Account holder name can only contain alphabets and spaces",
           };
         }
       }

@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useMemo, useEffect, useState } from "react";
+import React, { useMemo } from "react";
 import { useOnboarding } from "@/lib/contexts/onboarding-context";
-import { evaluateDependsOn } from "@/lib/onboarding-utils";
+import { evaluateDependsOn, isFieldFilled } from "@/lib/onboarding-utils";
+import { OnboardingField } from "@/lib/types/onboarding";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,16 +12,12 @@ import {
   Mail,
   Phone,
   Calendar,
-  User,
   Sparkles,
   Info,
-  CalendarCheck,
-  CheckSquare,
   Loader2,
   ArrowRight,
   UserRound,
   Save,
-  Asterisk,
 } from "lucide-react";
 
 // Types
@@ -100,8 +97,14 @@ const getInitials = (name: string) => {
 export function OnboardingRightRail({
   focusedFieldname,
 }: OnboardingRightRailProps) {
-  const { formConfig, currentStep, stepData, triggerSubmit, isSaving, submitAll } =
-    useOnboarding();
+  const {
+    formConfig,
+    currentStep,
+    stepData,
+    triggerSubmit,
+    isSaving,
+    submitAll,
+  } = useOnboarding();
 
   const tabs = formConfig?.tabs || [];
   const currentTab = tabs[currentStep];
@@ -129,35 +132,9 @@ export function OnboardingRightRail({
   }, [stepData]);
 
   // Extract variables for ID card
-  const firstName = (doc.first_name || "") as string;
-  const middleName = (doc.middle_name || "") as string;
-  const lastName = (doc.last_name || "") as string;
-  const hasName = firstName || lastName;
-  const initials =
-    ((firstName[0] || "") + (lastName[0] || "")).toUpperCase() || "YK";
-  const fullName = [firstName, middleName, lastName].filter(Boolean).join(" ");
-
-  const email = (doc.custom_personal_email ||
-    doc.personal_email ||
-    doc.email ||
-    "") as string;
-  const phone = (doc.custom_mobile_number ||
-    doc.mobile_no ||
-    doc.primary_contact_no ||
-    "") as string;
   const joiningDate = (doc.custom_date_of_joining ||
     doc.date_of_joining ||
     "") as string;
-
-  // Dynamic Candidate ID
-  const candidateId = useMemo(() => {
-    const seed = (firstName + lastName).toLowerCase();
-    let h = 1041;
-    for (let i = 0; i < seed.length; i++) {
-      h = ((h * 31 + seed.charCodeAt(i)) % 9000) + 1000;
-    }
-    return `CAND-2026-${String(h).padStart(4, "0")}`;
-  }, [firstName, lastName]);
 
   // Format Date Helper
   const formatDisplayDate = (d: string) => {
@@ -192,7 +169,7 @@ export function OnboardingRightRail({
   // Calculate required fields and completion in active tab
   const requiredFields = useMemo(() => {
     if (!currentTab) return [];
-    const list: Array<{ fieldname: string; label: string }> = [];
+    const list: Array<{ fieldname: string; label: string; field: OnboardingField; parentDoc: any }> = [];
 
     currentTab.sections.forEach((section) => {
       section.fields.forEach((field) => {
@@ -207,11 +184,38 @@ export function OnboardingRightRail({
           (field.mandatory_depends_on &&
             evaluateDependsOn(field.mandatory_depends_on, doc));
 
-        if (isMandatory) {
-          list.push({
-            fieldname: field.fieldname,
-            label: field.label,
+        if (field.fieldtype === "Table") {
+          let rows = Array.isArray(doc[field.fieldname]) ? doc[field.fieldname] : [];
+          if (rows.length === 0 && isMandatory) {
+             rows = [{}]; // Force at least one row to evaluate required child fields
+          }
+          
+          rows.forEach((row: any, rowIndex: number) => {
+            field.child_fields?.forEach((childField) => {
+              const childVisible = !childField.hidden && (!childField.depends_on || evaluateDependsOn(childField.depends_on, row));
+              if (!childVisible) return;
+              
+              const childMandatory = childField.is_mandatory || childField.reqd || (childField.mandatory_depends_on && evaluateDependsOn(childField.mandatory_depends_on, row));
+              
+              if (childMandatory) {
+                list.push({
+                  fieldname: `${field.fieldname}_${rowIndex}_${childField.fieldname}`,
+                  label: rows.length > 1 ? `${field.label} (${rowIndex + 1}) - ${childField.label}` : `${field.label} - ${childField.label}`,
+                  field: childField,
+                  parentDoc: row
+                });
+              }
+            });
           });
+        } else {
+          if (isMandatory) {
+            list.push({
+              fieldname: field.fieldname,
+              label: field.label,
+              field,
+              parentDoc: doc
+            });
+          }
         }
       });
     });
@@ -220,52 +224,12 @@ export function OnboardingRightRail({
   }, [currentTab, doc]);
 
   const requiredFilled = useMemo(() => {
-    return requiredFields.filter((f) => {
-      const val = doc[f.fieldname];
-      let isTable = false;
-      let isCheck = false;
-
-      currentTab?.sections.forEach((s) => {
-        const field = s.fields.find((fld) => fld.fieldname === f.fieldname);
-        if (field) {
-          if (field.fieldtype === "Table") isTable = true;
-          if (field.fieldtype === "Check") isCheck = true;
-        }
-      });
-
-      if (isTable) {
-        return Array.isArray(val) && val.length > 0;
-      }
-      if (isCheck) {
-        return Boolean(val);
-      }
-      return val !== undefined && val !== null && String(val).trim() !== "";
-    });
-  }, [requiredFields, doc, currentTab]);
+    return requiredFields.filter((f) => isFieldFilled(f.field, f.parentDoc));
+  }, [requiredFields]);
 
   const requiredFieldsLeft = useMemo(() => {
-    return requiredFields.filter((f) => {
-      const val = doc[f.fieldname];
-      let isTable = false;
-      let isCheck = false;
-
-      currentTab?.sections.forEach((s) => {
-        const field = s.fields.find((fld) => fld.fieldname === f.fieldname);
-        if (field) {
-          if (field.fieldtype === "Table") isTable = true;
-          if (field.fieldtype === "Check") isCheck = true;
-        }
-      });
-
-      if (isTable) {
-        return !Array.isArray(val) || val.length === 0;
-      }
-      if (isCheck) {
-        return !val;
-      }
-      return val === undefined || val === null || String(val).trim() === "";
-    });
-  }, [requiredFields, doc, currentTab]);
+    return requiredFields.filter((f) => !isFieldFilled(f.field, f.parentDoc));
+  }, [requiredFields]);
 
   const completionPct =
     requiredFields.length > 0
@@ -312,14 +276,14 @@ export function OnboardingRightRail({
   return (
     <aside className="w-full flex flex-col gap-6 h-full select-none">
       {/* 1. ID Card Preview */}
-      <div className="bg-linear-to-br from-[#6E3AE8] to-[#4B22C9] rounded-2xl p-4.5 flex flex-col gap-4 shadow-md text-white">
+      <div className="bg-linear-to-br from-primary/85 to-primary rounded-2xl p-4.5 flex flex-col gap-4 shadow-md text-white">
         {/* Header Row */}
         <div className="flex gap-2 items-center w-full">
           <div className="w-5.5 h-5.5 rounded-md bg-white/20 flex items-center justify-center shrink-0">
             <Sparkles className="w-3 h-3 text-white" />
           </div>
 
-          <span className="text-white font-bold text-xs tracking-wider uppercase truncate max-w-[170px]">
+          <span className="text-white font-bold text-xs tracking-wider uppercase truncate max-w-42.5">
             {companyName}
           </span>
           <div className="w-8 h-5.5 ml-auto rounded bg-linear-to-br from-[#F5D571] to-[#C99A2C] relative opacity-90 shadow-sm shrink-0">
@@ -329,47 +293,59 @@ export function OnboardingRightRail({
         </div>
 
         {/* Card Body - Candidate Info / Joining Info */}
-        {formConfig?.joining && (formConfig.joining.date_of_joining || formConfig.joining.role_name || formConfig.joining.department_name || formConfig.joining.trainee_doj) && (
-          <div className="border-t border-white/15 pt-3 flex flex-col gap-2.5 w-full">
-            {formConfig.joining.role_name && (
-              <div className="flex justify-between items-center gap-4 text-xs md:text-sm">
-                <span className="text-white/60 font-semibold shrink-0">Role</span>
-                <span className="font-bold text-right truncate max-w-[65%]">
-                  {formConfig.joining.role_name}
-                </span>
-              </div>
-            )}
-            {formConfig.joining.department_name && (
-              <div className="flex justify-between items-center gap-4 text-xs md:text-sm">
-                <span className="text-white/60 font-semibold shrink-0">Department</span>
-                <span className="font-bold text-right truncate max-w-[65%]">
-                  {formConfig.joining.department_name}
-                </span>
-              </div>
-            )}
-            {formConfig.joining.date_of_joining && (
-              <div className="flex justify-between items-center gap-4 text-xs md:text-sm">
-                <span className="text-white/60 font-semibold shrink-0">Date of Joining</span>
-                <span className="font-bold text-right shrink-0">
-                  {formatDisplayDate(formConfig.joining.date_of_joining)}
-                </span>
-              </div>
-            )}
-            {formConfig.joining.trainee_doj && (
-              <div className="flex justify-between items-center gap-4 text-xs md:text-sm">
-                <span className="text-white/60 font-semibold shrink-0">Trainee DOJ</span>
-                <span className="font-bold text-right shrink-0">
-                  {formatDisplayDate(formConfig.joining.trainee_doj)}
-                </span>
-              </div>
-            )}
-          </div>
-        )}
+        {formConfig?.joining &&
+          (formConfig.joining.date_of_joining ||
+            formConfig.joining.role_name ||
+            formConfig.joining.department_name ||
+            formConfig.joining.trainee_doj) && (
+            <div className="border-t border-white/15 pt-3 flex flex-col gap-2.5 w-full">
+              {formConfig.joining.role_name && (
+                <div className="flex justify-between items-center gap-4 text-xs md:text-sm">
+                  <span className="text-white/60 font-semibold shrink-0">
+                    Role
+                  </span>
+                  <span className="font-bold text-right truncate max-w-[65%]">
+                    {formConfig.joining.role_name}
+                  </span>
+                </div>
+              )}
+              {formConfig.joining.department_name && (
+                <div className="flex justify-between items-center gap-4 text-xs md:text-sm">
+                  <span className="text-white/60 font-semibold shrink-0">
+                    Department
+                  </span>
+                  <span className="font-bold text-right truncate max-w-[65%]">
+                    {formConfig.joining.department_name}
+                  </span>
+                </div>
+              )}
+              {formConfig.joining.date_of_joining && (
+                <div className="flex justify-between items-center gap-4 text-xs md:text-sm">
+                  <span className="text-white/60 font-semibold shrink-0">
+                    Date of Joining
+                  </span>
+                  <span className="font-bold text-right shrink-0">
+                    {formatDisplayDate(formConfig.joining.date_of_joining)}
+                  </span>
+                </div>
+              )}
+              {formConfig.joining.trainee_doj && (
+                <div className="flex justify-between items-center gap-4 text-xs md:text-sm">
+                  <span className="text-white/60 font-semibold shrink-0">
+                    Trainee DOJ
+                  </span>
+                  <span className="font-bold text-right shrink-0">
+                    {formatDisplayDate(formConfig.joining.trainee_doj)}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
       </div>
       {/* 2. Countdown Widget */}
       {daysToJoining !== null ? (
         <div className="bg-card border border-border rounded-2xl p-5 flex items-center gap-5 shadow-sm">
-          <div className="text-4xl font-bold bg-gradient-to-br from-[#6E3AE8] to-[#4B22C9] bg-clip-text text-transparent font-mono select-none tracking-tight shrink-0">
+          <div className="text-4xl font-bold bg-primary bg-clip-text text-transparent font-mono select-none tracking-tight shrink-0">
             {daysToJoining !== null && daysToJoining >= 0 ? daysToJoining : 0}
           </div>
           <div>
@@ -405,7 +381,7 @@ export function OnboardingRightRail({
       {requiredFields.length > 0 && (
         <div className="bg-card border border-border rounded-2xl p-5 flex items-center gap-5.5 shadow-sm">
           <div className="relative w-21 h-21 shrink-0">
-            <svg width="84" height="84" className="rotate-[-90deg]">
+            <svg width="84" height="84" className="-rotate-90">
               <circle
                 cx="42"
                 cy="42"
@@ -418,7 +394,7 @@ export function OnboardingRightRail({
                 cx="42"
                 cy="42"
                 r={radius}
-                stroke="#5B2EE5"
+                stroke="var(--primary)"
                 strokeWidth="5"
                 fill="none"
                 strokeDasharray={strokeCircumference}
@@ -427,7 +403,7 @@ export function OnboardingRightRail({
                 className="transition-all duration-500 ease-in-out"
               />
             </svg>
-            <div className="absolute inset-0 flex items-center justify-center text-lg font-black text-[#5B2EE5] font-mono">
+            <div className="absolute inset-0 flex items-center justify-center text-lg font-black text-primary font-mono">
               {Math.round(completionPct * 100)}%
             </div>
           </div>
@@ -465,7 +441,7 @@ export function OnboardingRightRail({
       {tip && (
         <div
           key={focusedFieldname || "default"}
-          className="bg-gradient-to-br from-[#FFF8E6] to-[#FFEFC2] border border-[#FAE0A8] rounded-2xl p-4.5 flex gap-3.5 shadow-sm transition-all duration-300"
+          className="bg-linear-to-br from-[#FFF8E6] to-[#FFEFC2] border border-[#FAE0A8] rounded-2xl p-4.5 flex gap-3.5 shadow-sm transition-all duration-300"
         >
           <div className="w-8 h-8 rounded-lg bg-[#F5C247] text-[#5A3D04] flex items-center justify-center shrink-0">
             <Info className="w-5.5 h-5.5" />
@@ -520,7 +496,7 @@ export function OnboardingRightRail({
         <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
           <div className="flex items-center gap-3.5 text-green-700">
             <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center text-green-500 shrink-0">
-              <Check className="w-4.5 h-4.5 stroke-[3]" />
+              <Check className="w-4.5 h-4.5 stroke-3" />
             </div>
             <div>
               <div className="text-xs font-bold">All required fields done</div>
@@ -537,7 +513,7 @@ export function OnboardingRightRail({
         {/* Onboarding Journey */}
         {formConfig?.onboarding_journey && (
           <div className="mb-5">
-            <h4 className="text-xs font-black text-foreground mb-1 text-muted-foreground">
+            <h4 className="text-xs font-black text-foreground mb-1">
               {formConfig.onboarding_journey.title || "After you're onboarded"}
             </h4>
             <p className="text-[11px] text-muted-foreground font-medium mb-4 leading-relaxed">
@@ -600,8 +576,8 @@ export function OnboardingRightRail({
 
         {/* Onboarding Buddy */}
         <div>
-          <h4 className="text-xs font-black text-foreground mb-3 flex items-center gap-1.5 uppercase tracking-wider text-muted-foreground">
-            <Sparkles className="w-3.5 h-3.5 text-[#5B2EE5]" />
+          <h4 className="text-xs font-black text-foreground mb-3 flex items-center gap-1.5 uppercase tracking-wider">
+            <Sparkles className="w-3.5 h-3.5 text-primary" />
             {buddies.length > 1 ? "Onboarding Buddies" : "Onboarding Buddy"}
           </h4>
           {buddies.length > 0 ? (
@@ -611,7 +587,7 @@ export function OnboardingRightRail({
                 return (
                   <div key={index} className="flex flex-col gap-3.5">
                     <div className="flex gap-3 items-start">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FFB347] to-[#FF7A45] text-white flex items-center justify-center font-extrabold text-sm shadow-md shadow-orange-500/10 shrink-0 select-none">
+                      <div className="w-10 h-10 rounded-full bg-linear-to-br from-[#FFB347] to-[#FF7A45] text-white flex items-center justify-center font-extrabold text-sm shadow-md shadow-orange-500/10 shrink-0 select-none">
                         {initials}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -683,7 +659,7 @@ export function OnboardingRightRail({
               className={cn(
                 "w-full h-11 rounded-md font-bold transition-all flex items-center justify-center gap-2 text-sm",
                 requiredFieldsLeft.length === 0
-                  ? "bg-[#5B2EE5] text-white hover:bg-[#4B22C9] shadow-md shadow-purple-500/10 cursor-pointer"
+                  ? "bg-primary text-white hover:bg-primary/80 shadow-md shadow-purple-500/10 cursor-pointer"
                   : "bg-muted text-muted-foreground cursor-not-allowed",
               )}
             >
@@ -722,7 +698,7 @@ export function OnboardingRightRail({
               }
             }}
             disabled={isSaving}
-            className="w-full h-11 rounded-md font-bold text-[#5B2EE5] hover:text-[#4B22C9] hover:bg-[#F6F1FE] transition-all cursor-pointer flex items-center justify-center gap-2 text-sm"
+            className="w-full h-11 rounded-md font-bold text-primary hover:text-primary/80 hover:bg-primary/10 transition-all cursor-pointer flex items-center justify-center gap-2 text-sm"
           >
             {isSaving ? (
               <>

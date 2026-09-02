@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { CircularProgress } from "@/components/shared/circular-progress";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { useCurrentUser } from "@/lib/hooks/useUser";
-import { useJobOfferPdf, useJobOfferLetters, useJobOfferSummary } from "@/lib/hooks/useJobOffer";
+import { useJobOfferPdf, useJobOfferLetters, useJobOfferSummary, useCultureBookPdf } from "@/lib/hooks/useJobOffer";
 import { toast } from "sonner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
@@ -113,6 +113,8 @@ export function OnboardingSnapshot({
     !isSeparate,
   );
 
+  const { pdfUrl: cultureBookUrl } = useCultureBookPdf(userEmail || "");
+
   const isProfileActive = Boolean(profile);
 
   const form_completion = dashboardPayload?.form_completion;
@@ -133,6 +135,25 @@ export function OnboardingSnapshot({
     percentage >= 100;
 
   const displayJoiningDate = dashboardPayload?.date_of_joining || joiningDate;
+
+  const handleCultureBookClick = async () => {
+    if (!cultureBookUrl) return;
+    try {
+      const res = await fetch(cultureBookUrl, { credentials: "include" });
+      const contentType = res.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        const data = await res.json();
+        if (data.message && data.message.available === false) {
+          toast.error("Culture book is not available.");
+          return;
+        }
+      }
+      openPdfPreview(cultureBookUrl);
+    } catch {
+      openPdfPreview(cultureBookUrl); // Fallback
+    }
+  };
+
   return (
     <div
       className={cn(
@@ -283,6 +304,21 @@ export function OnboardingSnapshot({
                       </Button>
                     </>
                   )}
+
+                  {/* Culture Book Button */}
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={handleCultureBookClick}
+                    disabled={!cultureBookUrl}
+                    className="border-black bg-transparent text-black hover:bg-black/10 hover:text-black rounded-xl font-semibold justify-center flex items-center gap-2"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                    </svg>
+                    Culture Book
+                  </Button>
                 </>
               )}
             </div>
