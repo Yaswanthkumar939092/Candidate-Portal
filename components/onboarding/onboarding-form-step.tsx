@@ -630,20 +630,52 @@ export function OnboardingFormStep({
         if (!hasVisibleFields) return null;
 
         const visibleFields = section.fields.filter(isFieldVisibleInSection);
-        const totalFields = visibleFields.length;
-        const filledFields = visibleFields.filter((field) => {
-          const val = doc[field.fieldname];
-          if (field.fieldname === "custom_age" && (val === 0 || val === "0")) return false;
-          if (field.approval_status === "Approved") return true;
+        let totalFields = 0;
+        let filledFields = 0;
+
+        visibleFields.forEach((field) => {
           if (field.fieldtype === "Table") {
-            const rows = Array.isArray(val) ? val : [];
-            return rows.length > 0;
+            let rows = Array.isArray(doc[field.fieldname]) ? doc[field.fieldname] : [];
+            const isMandatory = field.is_mandatory || field.reqd || (field.mandatory_depends_on && evaluateDependsOn(field.mandatory_depends_on, doc));
+            if (rows.length === 0 && isMandatory) {
+              rows = [{}];
+            }
+            rows.forEach((row: any) => {
+              field.child_fields?.forEach((childField) => {
+                const childVisible = !childField.hidden && (!childField.depends_on || evaluateDependsOn(childField.depends_on, row));
+                if (childVisible) {
+                  totalFields++;
+                  const val = row[childField.fieldname];
+                  let isFilled = false;
+                  if (childField.fieldname === "custom_age" && (val === 0 || val === "0")) {
+                    isFilled = false;
+                  } else if (childField.approval_status === "Approved") {
+                    isFilled = true;
+                  } else if (childField.fieldtype === "Check") {
+                    isFilled = Boolean(val);
+                  } else {
+                    isFilled = val !== undefined && val !== null && String(val).trim() !== "";
+                  }
+                  if (isFilled) filledFields++;
+                }
+              });
+            });
+          } else {
+            totalFields++;
+            const val = doc[field.fieldname];
+            let isFilled = false;
+            if (field.fieldname === "custom_age" && (val === 0 || val === "0")) {
+              isFilled = false;
+            } else if (field.approval_status === "Approved") {
+              isFilled = true;
+            } else if (field.fieldtype === "Check") {
+              isFilled = Boolean(val);
+            } else {
+              isFilled = val !== undefined && val !== null && String(val).trim() !== "";
+            }
+            if (isFilled) filledFields++;
           }
-          if (field.fieldtype === "Check") {
-            return Boolean(val);
-          }
-          return val !== undefined && val !== null && String(val).trim() !== "";
-        }).length;
+        });
 
         const sectionCounts = { filled: filledFields, total: totalFields };
 

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Check, ArrowLeft, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useOnboarding } from "@/lib/contexts/onboarding-context";
-import { evaluateDependsOn } from "@/lib/onboarding-utils";
+import { evaluateDependsOn, isFieldFilled } from "@/lib/onboarding-utils";
 
 interface OnboardingStepNavProps {
   className?: string;
@@ -55,24 +55,56 @@ export function OnboardingStepNav({ className }: OnboardingStepNavProps) {
             (!field.depends_on || evaluateDependsOn(field.depends_on, doc));
           if (!isVisible) return;
 
-          total++;
-
-          const val = doc[field.fieldname];
-          let isFilled = false;
-
           if (field.fieldtype === "Table") {
-            isFilled = Array.isArray(val) && val.length > 0;
-          } else if (field.fieldtype === "Check") {
-            isFilled = Boolean(val);
+            let rows = Array.isArray(doc[field.fieldname]) ? doc[field.fieldname] : [];
+            const isMandatory = field.is_mandatory || field.reqd || (field.mandatory_depends_on && evaluateDependsOn(field.mandatory_depends_on, doc));
+            if (rows.length === 0 && isMandatory) {
+              rows = [{}];
+            }
+            rows.forEach((row: any) => {
+              field.child_fields?.forEach((childField) => {
+                const childVisible = !childField.hidden && (!childField.depends_on || evaluateDependsOn(childField.depends_on, row));
+                if (childVisible) {
+                  total++;
+                  const val = row[childField.fieldname];
+                  let isFilled = false;
+                  if (childField.fieldname === "custom_age" && (val === 0 || val === "0")) {
+                    isFilled = false;
+                  } else if (childField.fieldtype === "Check") {
+                    isFilled = Boolean(val);
+                  } else {
+                    isFilled = val !== undefined && val !== null && String(val).trim() !== "";
+                  }
+                  
+                  if (isFilled || childField.approval_status === "Approved") {
+                    if (childField.approval_status === "Approved") {
+                      approved++;
+                    } else {
+                      filled++;
+                    }
+                  }
+                }
+              });
+            });
           } else {
-            isFilled = val !== undefined && val !== null && String(val).trim() !== "";
-          }
+            total++;
+            const val = doc[field.fieldname];
+            let isFilled = false;
 
-          if (isFilled) {
-            if (field.approval_status === "Approved") {
-              approved++;
+            if (field.fieldname === "custom_age" && (val === 0 || val === "0")) {
+              isFilled = false;
+            } else if (field.fieldtype === "Check") {
+              isFilled = Boolean(val);
             } else {
-              filled++;
+              isFilled = val !== undefined && val !== null && String(val).trim() !== "";
+            }
+
+            if (isFilled || field.approval_status === "Approved") {
+              if (field.approval_status === "Approved") {
+                approved++;
+              } else {
+                filled++;
+              }
             }
           }
         });
@@ -196,66 +228,8 @@ export function OnboardingStepNav({ className }: OnboardingStepNavProps) {
 
                   if (!isMandatory) return;
 
-                  const fieldValue = doc[field.fieldname];
-                  const normalizedValue =
-                    typeof fieldValue === "string"
-                      ? fieldValue.trim()
-                      : fieldValue;
-
-                  const isTable = field.fieldtype === "Table";
-                  if (isTable) {
-                    const rows = Array.isArray(normalizedValue)
-                      ? (normalizedValue as Record<string, unknown>[])
-                      : [];
-                    const visibleChildFields =
-                      field.child_fields?.filter((f) => !f.hidden) || [];
-                    const mandatoryChildFields = visibleChildFields.filter(
-                      (f) => f.is_mandatory || f.reqd,
-                    );
-
-                    const isRowEmpty = (row: Record<string, unknown>) => {
-                      return !visibleChildFields.some((cf) => {
-                        const val = row[cf.fieldname];
-                        return (
-                          val !== undefined &&
-                          val !== null &&
-                          String(val).trim() !== ""
-                        );
-                      });
-                    };
-
-                    const isRowValid = (row: Record<string, unknown>) => {
-                      return mandatoryChildFields.every((cf) => {
-                        const val = row[cf.fieldname];
-                        return (
-                          val !== undefined &&
-                          val !== null &&
-                          String(val).trim() !== ""
-                        );
-                      });
-                    };
-
-                    const nonEmptyRows = rows.filter((row) => !isRowEmpty(row));
-                    if (nonEmptyRows.length === 0) {
-                      allFilled = false;
-                    } else if (!nonEmptyRows.every(isRowValid)) {
-                      allFilled = false;
-                    }
-                  } else {
-                    const isCheck = field.fieldtype === "Check";
-                    if (isCheck) {
-                      if (!Boolean(normalizedValue)) {
-                        allFilled = false;
-                      }
-                    } else {
-                      if (
-                        normalizedValue === undefined ||
-                        normalizedValue === null ||
-                        normalizedValue === ""
-                      ) {
-                        allFilled = false;
-                      }
-                    }
+                  if (!isFieldFilled(field, doc)) {
+                    allFilled = false;
                   }
                 });
               });

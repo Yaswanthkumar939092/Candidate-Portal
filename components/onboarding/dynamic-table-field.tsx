@@ -125,9 +125,12 @@ export function DynamicTableField({
   })
   const addedRowSubmitCounts = React.useRef<Record<number, number>>({})
 
+  const initialized = React.useRef(false)
+
   // Initialize with one empty row if none exist.
   React.useEffect(() => {
-    if (fields.length === 0) {
+    if (fields.length === 0 && !initialized.current) {
+      initialized.current = true
       append({})
     }
   }, [append, fields.length])
