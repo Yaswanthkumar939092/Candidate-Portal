@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useFileUpload } from "@/lib/hooks/useFileUpload";
+import { frappeApiBase } from "@/lib/frappe-base";
 import {
   Tooltip,
   TooltipContent,
@@ -68,9 +69,22 @@ export function FileUploadField({
       ? value.split("/").pop() || value
       : null;
 
+  const fileUrl =
+    typeof value === "string" && value.length > 0
+      ? value.startsWith("http")
+        ? value
+        : `${frappeApiBase()}${value}`
+      : null;
+
   const handleClick = () => {
     if (disabled || isPending) return;
     inputRef.current?.click();
+  };
+
+  const handleOpenFile = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!fileUrl) return;
+    window.open(fileUrl, "_blank", "noopener,noreferrer");
   };
 
   const uploadAndSetFile = useCallback(
@@ -191,7 +205,8 @@ export function FileUploadField({
                   ? "border-success bg-success/5"
                   : "border-border bg-muted",
             )}
-            onClick={handleClick}
+            onClick={handleOpenFile}
+            title="Click to view file"
           >
             <FileText className="h-5 w-5 shrink-0 text-primary" />
             <span className="flex-1 truncate text-sm text-foreground">
