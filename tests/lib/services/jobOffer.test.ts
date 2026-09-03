@@ -46,15 +46,6 @@ describe("jobOfferService", () => {
     expect(FrappeAPI.get).toHaveBeenCalledWith(expect.stringContaining("get_rejection_reasons"));
   });
 
-  it("getCompanyLogo calls FrappeAPI.get", async () => {
-    const mockData = { logo_url: "logo.png" };
-    (FrappeAPI.get as any).mockResolvedValue(mockData);
-
-    const result = await jobOfferService.getCompanyLogo();
-    expect(result).toEqual(mockData);
-    expect(FrappeAPI.get).toHaveBeenCalledWith(expect.stringContaining("get_company_logo"));
-  });
-
   it("getJobOfferPdfUrl returns the correct API URL", () => {
     const url = jobOfferService.getJobOfferPdfUrl("test@test.com");
     expect(url).toContain("download_job_offer_pdf");

@@ -18,6 +18,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCandidateBranding } from "@/lib/hooks/useCandidateBranding";
+import { cn } from "@/lib/utils";
 
 export interface AuthFormData {
   email: string;
@@ -62,6 +63,7 @@ export function AuthForm({
   defaultEmail,
 }: AuthFormProps) {
   const { data: branding } = useCandidateBranding();
+  const showCompanyName = Boolean(branding?.logo_includes_company_name);
   const searchParams = useSearchParams();
   const redirectParam = searchParams.get("redirect");
   const redirectQuery = redirectParam ? `&redirect=${encodeURIComponent(redirectParam)}` : "";
@@ -102,7 +104,14 @@ export function AuthForm({
         <div className="absolute top-[30%] left-[50%] translate-x-[-50%] translate-y-[-50%] size-60 bg-[#1E85FF] blur-[5rem] rounded-full opacity-10"></div>
         <div className="absolute top-[60%] left-[50%] translate-x-[-50%] translate-y-[-50%] size-72 bg-[#12B76A] blur-[5rem] rounded-full opacity-10"></div>
         <div className="flex items-center gap-2 text-white absolute md:top-6 md:left-6 lg:top-10 lg:left-10 top-12 left-12">
-          <div className="md:w-12 md:h-12 lg:w-16 lg:h-16 w-16 h-16 bg-none rounded-full flex items-center justify-center overflow-hidden">
+          <div
+            className={cn(
+              "bg-none flex items-center justify-center overflow-hidden",
+              showCompanyName
+                ? "md:w-12 md:h-12 lg:w-16 lg:h-16 w-16 h-16 rounded-full"
+                : "md:h-12 lg:h-16 h-16 w-auto",
+            )}
+          >
             <Image
               src={
                 branding?.app_logo
@@ -112,14 +121,20 @@ export function AuthForm({
                   : "/fallback.png"
               }
               alt="Logo"
-              width={100}
+              width={showCompanyName ? 100 : 320}
               height={100}
-              className="object-cover"
+              className={cn(
+                showCompanyName
+                  ? "object-cover"
+                  : "h-full w-auto max-w-[220px] object-contain",
+              )}
             />
           </div>
-          <span className="md:text-[18px] lg:text-[22px] text-[22px] font-[800] tracking-tight">
-            {branding?.title_prefix || ""}
-          </span>
+          {showCompanyName && (
+            <span className="md:text-[18px] lg:text-[22px] text-[22px] font-[800] tracking-tight">
+              {branding?.title_prefix || ""}
+            </span>
+          )}
         </div>
 
         <div className="flex-1 flex flex-col justify-center md:px-6 lg:px-10 md:mt-4 md:mb-4 mt-12 mb-12">
@@ -350,7 +365,7 @@ export function AuthForm({
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#0F172A]"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                     >
                       {showPassword ? (
                         <EyeOff className="h-4 w-4" />
@@ -400,7 +415,7 @@ export function AuthForm({
                       onClick={() =>
                         setShowConfirmPassword(!showConfirmPassword)
                       }
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#0F172A]"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                     >
                       {showConfirmPassword ? (
                         <EyeOff className="h-4 w-4" />
@@ -494,7 +509,7 @@ export function AuthForm({
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#0F172A]"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                       >
                         {showPassword ? (
                           <EyeOff className="h-4 w-4" />
@@ -546,7 +561,7 @@ export function AuthForm({
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#0F172A]"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   >
                     {showConfirmPassword ? (
                       <EyeOff className="h-4 w-4" />
@@ -576,7 +591,7 @@ export function AuthForm({
                 </div>
                 <Link
                   href={`/verify-email?purpose=Password%20Reset${formData.email ? `&email=${encodeURIComponent(formData.email)}` : ""}${redirectQuery}`}
-                  className="font-semibold text-[#2563EB] hover:text-[#1D4ED8] transition-colors"
+                  className="font-semibold text-accent-foreground hover:text-accent-foreground/80 transition-colors"
                 >
                   Forgot password?
                 </Link>
@@ -613,7 +628,7 @@ export function AuthForm({
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full h-10 bg-[#0F172A] hover:bg-[#1E293B] text-white font-medium rounded-[8px] transition-colors duration-200 mt-4 flex items-center justify-center gap-2"
+              className="w-full h-10 font-medium transition-colors duration-200 mt-4 flex items-center justify-center gap-2"
             >
               {isLoading ? (
                 <>
@@ -688,7 +703,7 @@ export function AuthForm({
                   <div>
                     <Link
                       href={`/login${redirectQueryQuestion}`}
-                      className="font-semibold text-[#2563EB] hover:text-[#1D4ED8] transition-colors"
+                      className="font-semibold text-accent-foreground hover:text-accent-foreground/80 transition-colors"
                     >
                       Back to login
                     </Link>
@@ -700,7 +715,7 @@ export function AuthForm({
                         {"Don't have an account? "}
                         <Link
                           href={`/register${redirectQueryQuestion}`}
-                          className="font-semibold text-[#2563EB] hover:text-[#1D4ED8] transition-colors"
+                          className="font-semibold text-accent-foreground hover:text-accent-foreground/80 transition-colors"
                         >
                           Create account
                         </Link>
@@ -710,7 +725,7 @@ export function AuthForm({
                       <button
                         type="button"
                         onClick={() => onPasswordlessToggle?.(true)}
-                        className="font-semibold text-[#2563EB] hover:text-[#1D4ED8] transition-colors"
+                        className="font-semibold text-accent-foreground hover:text-accent-foreground/80 transition-colors"
                       >
                         Access Candidate portal
                       </button>
@@ -722,7 +737,7 @@ export function AuthForm({
                   Already have an account?{" "}
                   <Link
                     href={`/login${redirectQueryQuestion}`}
-                    className="font-semibold text-[#2563EB] hover:text-[#1D4ED8] transition-colors"
+                    className="font-semibold text-accent-foreground hover:text-accent-foreground/80 transition-colors"
                   >
                     Sign in
                   </Link>

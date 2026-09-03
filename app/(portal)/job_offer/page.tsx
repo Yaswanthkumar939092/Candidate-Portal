@@ -80,7 +80,7 @@ export default function JobOfferPage() {
   return (
     <Suspense
       fallback={
-        <div className="font-sans text-[#334155] bg-[#f8fafc] min-h-screen flex items-center justify-center">
+        <div className="font-sans text-foreground bg-background min-h-screen flex items-center justify-center">
           <div className="flex flex-col items-center gap-3">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <p className="text-sm text-[#64748b]">Loading offer...</p>
@@ -127,7 +127,7 @@ function JobOfferContent() {
     useState(false);
   const [countdown, setCountdown] = useState(5);
 
-  // Only fetch summary, logo, and PDF if status is awaiting response or just accepted/rejected in this session
+  // Only fetch summary and PDF if status is awaiting response or just accepted/rejected in this session
   const isSummaryNeeded =
     statusNormalized === "awaiting response" ||
     (statusNormalized === "accepted" && justAccepted) ||
@@ -317,7 +317,7 @@ function JobOfferContent() {
 
   if (isUserLoading || isStatusLoading) {
     return (
-      <div className="font-sans text-[#334155] bg-[#f8fafc] min-h-screen flex items-center justify-center">
+      <div className="font-sans text-foreground bg-background min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <p className="text-sm text-[#64748b]">Loading offer...</p>
@@ -328,7 +328,7 @@ function JobOfferContent() {
 
   if (isStatusError || !applicantEmail) {
     return (
-      <div className="font-sans text-[#334155] bg-[#f8fafc] min-h-screen flex items-center justify-center">
+      <div className="font-sans text-foreground bg-background min-h-screen flex items-center justify-center">
         <div className="bg-white p-8 rounded-xl shadow-sm border border-red-100 flex flex-col items-center gap-4 max-w-md text-center">
           <AlertCircle className="h-12 w-12 text-red-500" />
           <h2 className="text-xl font-semibold text-slate-800">
@@ -342,7 +342,7 @@ function JobOfferContent() {
           </p>
           <button
             onClick={() => window.location.reload()}
-            className="mt-2 px-6 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors"
+            className="mt-2 px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors"
           >
             Retry
           </button>
@@ -353,7 +353,7 @@ function JobOfferContent() {
 
   if (isApiLoading && isSummaryNeeded) {
     return (
-      <div className="font-sans text-[#334155] bg-[#f8fafc] min-h-screen flex items-center justify-center">
+      <div className="font-sans text-foreground bg-background min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <p className="text-sm text-[#64748b]">Fetching offer details...</p>
@@ -363,7 +363,7 @@ function JobOfferContent() {
   }
 
   return (
-    <div className="font-sans text-[#334155] bg-[#f8fafc] min-h-screen">
+    <div className="font-sans text-foreground bg-background min-h-screen">
       {/* STATE: MAIN OFFER */}
       {gameState === "main" && (
         <div className="max-w-300 mx-auto px-5 py-7.5">
@@ -411,45 +411,45 @@ function JobOfferContent() {
                   />
 
                   {/* Offer Summary Card */}
-                  <div className="bg-white border border-[#e2e8f0] rounded-xl overflow-hidden shadow-sm">
-                    <div className="text-[1.1rem] font-semibold text-[#1a2332] px-5 pt-4 pb-2.5">
+                  <div className="bg-card border border-border/60 rounded-xl overflow-hidden shadow-sm">
+                    <div className="text-[1.1rem] font-semibold text-foreground px-5 pt-4 pb-2.5">
                       Offer Summary
                     </div>
-                    <div className="bg-[#eaf4fb] p-5 border border-[#e2e8f0] rounded-lg mx-5 mb-4 overflow-hidden">
+                    <div className="bg-muted p-5 border border-border/60 rounded-lg mx-5 mb-4 overflow-hidden">
                       <div className="flex justify-between items-center py-1.5 gap-4">
-                        <span className="text-[0.85rem] text-[#64748b] shrink-0">
+                        <span className="text-[0.85rem] text-muted-foreground shrink-0">
                           Role
                         </span>
-                        <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right truncate">
+                        <span className="text-[0.85rem] font-semibold text-foreground text-right truncate">
                           {offerData.designation || "Intern"}
                         </span>
                       </div>
                       {offerData.duration_display && (
                         <div className="flex justify-between items-center py-1.5">
-                          <span className="text-[0.85rem] text-[#64748b]">
+                          <span className="text-[0.85rem] text-muted-foreground">
                             Duration
                           </span>
-                          <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right">
+                          <span className="text-[0.85rem] font-semibold text-foreground text-right">
                             {offerData.duration_display}
                           </span>
                         </div>
                       )}
                       {offerData.expected_doj_display && (
                         <div className="flex justify-between items-center py-1.5">
-                          <span className="text-[0.85rem] text-[#64748b]">
+                          <span className="text-[0.85rem] text-muted-foreground">
                             Joining Date
                           </span>
-                          <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right">
+                          <span className="text-[0.85rem] font-semibold text-foreground text-right">
                             {offerData.expected_doj_display}
                           </span>
                         </div>
                       )}
                       {offerData.trainee_doj_display && (
                         <div className="flex justify-between items-center py-1.5">
-                          <span className="text-[0.85rem] text-[#64748b]">
+                          <span className="text-[0.85rem] text-muted-foreground">
                             Trainee DOJ
                           </span>
-                          <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right">
+                          <span className="text-[0.85rem] font-semibold text-foreground text-right">
                             {offerData.trainee_doj_display}
                           </span>
                         </div>
@@ -458,10 +458,10 @@ function JobOfferContent() {
                         offerData.stipend ||
                         offerData.stipend_display) && (
                         <div className="flex justify-between items-center py-1.5">
-                          <span className="text-[0.85rem] text-[#64748b]">
+                          <span className="text-[0.85rem] text-muted-foreground">
                             Stipend
                           </span>
-                          <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right">
+                          <span className="text-[0.85rem] font-semibold text-foreground text-right">
                             {offerData.stipend_formatted ||
                               offerData.stipend_display}
                           </span>
@@ -471,10 +471,10 @@ function JobOfferContent() {
                       {offerData.fixed_formatted !== undefined &&
                         offerData.fixed_formatted !== null && (
                           <div className="flex justify-between items-center py-1.5">
-                            <span className="text-[0.85rem] text-[#64748b]">
+                            <span className="text-[0.85rem] text-muted-foreground">
                               Fixed Pay
                             </span>
-                            <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right">
+                            <span className="text-[0.85rem] font-semibold text-foreground text-right">
                               {offerData.fixed_formatted}
                             </span>
                           </div>
@@ -482,10 +482,10 @@ function JobOfferContent() {
                       {offerData.variable_formatted !== undefined &&
                         offerData.variable_formatted !== null && (
                           <div className="flex justify-between items-center py-1.5">
-                            <span className="text-[0.85rem] text-[#64748b]">
+                            <span className="text-[0.85rem] text-muted-foreground">
                               Variable Pay
                             </span>
-                            <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right">
+                            <span className="text-[0.85rem] font-semibold text-foreground text-right">
                               {offerData.variable_formatted}
                             </span>
                           </div>
@@ -493,10 +493,10 @@ function JobOfferContent() {
                       {offerData.location_allowance_formatted !== undefined &&
                         offerData.location_allowance_formatted !== null && (
                           <div className="flex justify-between items-center py-1.5">
-                            <span className="text-[0.85rem] text-[#64748b]">
+                            <span className="text-[0.85rem] text-muted-foreground">
                               Location Allowance
                             </span>
-                            <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right">
+                            <span className="text-[0.85rem] font-semibold text-foreground text-right">
                               {offerData.location_allowance_formatted}
                             </span>
                           </div>
@@ -504,10 +504,10 @@ function JobOfferContent() {
                       {offerData.total_formatted !== undefined &&
                         offerData.total_formatted !== null && (
                           <div className="flex justify-between items-center py-1.5">
-                            <span className="text-[0.85rem] text-[#64748b]">
+                            <span className="text-[0.85rem] text-muted-foreground">
                               Total
                             </span>
-                            <span className="text-[0.85rem] font-semibold text-[#1a2332] text-right">
+                            <span className="text-[0.85rem] font-semibold text-foreground text-right">
                               {offerData.total_formatted}
                             </span>
                           </div>
@@ -524,7 +524,7 @@ function JobOfferContent() {
                               : "Offer_Letter.pdf"
                           )}
                           disabled={!activePdfUrl}
-                          className="flex items-center justify-center gap-2 w-full p-2.5 bg-transparent text-[#2563eb] border-[1.5px] border-[#2563eb] rounded-lg text-[0.85rem] font-semibold mb-2.5 text-center transition-colors duration-200 hover:bg-[#2563eb]/6 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="flex items-center justify-center gap-2 w-full p-2.5 bg-background text-foreground border border-foreground/40 shadow-xs rounded-lg text-[0.85rem] font-semibold mb-2.5 text-center transition-colors duration-200 hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:hover:bg-input/50 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <svg
                             width="16"
@@ -572,7 +572,7 @@ function JobOfferContent() {
                         <button
                           onClick={() => activePdfUrl && openPdfPreview(activePdfUrl)}
                           disabled={!activePdfUrl}
-                          className="flex items-center justify-center gap-2 w-full p-2.5 bg-transparent text-[#2563eb] border-[1.5px] border-[#2563eb] rounded-lg text-[0.85rem] font-semibold mb-2.5 text-center transition-colors duration-200 hover:bg-[#2563eb]/6 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="flex items-center justify-center gap-2 w-full p-2.5 bg-background text-foreground border border-foreground/40 shadow-xs rounded-lg text-[0.85rem] font-semibold mb-2.5 text-center transition-colors duration-200 hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:hover:bg-input/50 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <svg
                             width="16"
@@ -593,12 +593,12 @@ function JobOfferContent() {
                       </div>
 
                       <button
-                        className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#00b48a] hover:bg-[#009e78] text-white rounded-lg text-[0.95rem] font-semibold transition-colors duration-200 mb-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center justify-center gap-2 w-full py-2.5 bg-success hover:bg-success/90 text-success-foreground rounded-lg text-[0.95rem] font-semibold transition-colors duration-200 mb-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
                         disabled={!isTermsChecked || isAccepting || !hasViewedAllLetters}
                         onClick={handleAccept}
                       >
                         {isAccepting && (
-                          <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                          <span className="inline-block w-4 h-4 border-2 border-success-foreground/30 border-t-success-foreground rounded-full animate-spin"></span>
                         )}
                         {!isAccepting && (
                           <svg
@@ -618,7 +618,7 @@ function JobOfferContent() {
                       </button>
 
                       <button
-                        className="flex items-center justify-center gap-2 w-full p-2.5 bg-transparent text-[#dc3545] border-2 border-[#dc3545] rounded-lg text-[0.95rem] font-semibold transition-all duration-200 hover:bg-[#dc3545]/6"
+                        className="flex items-center justify-center gap-2 w-full p-2.5 bg-transparent text-destructive border-2 border-destructive rounded-lg text-[0.95rem] font-semibold transition-all duration-200 hover:bg-destructive/10"
                         onClick={() => {
                           setGameState("rejection");
                           window.scrollTo({ top: 0, behavior: "smooth" });
@@ -645,7 +645,7 @@ function JobOfferContent() {
 
                 {/* Right Side: Offer Document (PDF Preview Card) */}
                 <div className="w-full lg:flex-1 lg:min-w-0 overflow-hidden hidden sm:block">
-                  <div className="rounded-2xl border border-border bg-card/75 backdrop-blur-md shadow-lg overflow-hidden">
+                  <div className="rounded-2xl border border-border bg-card shadow-lg overflow-hidden">
                     {/* Header attached inside the card */}
                     <div className="py-3.5 px-6 sm:px-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
@@ -694,19 +694,19 @@ function JobOfferContent() {
       {/* STATE: REJECTION FLOW */}
       {gameState === "rejection" && (
         <div className="max-w-175 mx-auto px-5 py-15">
-          <h1 className="text-[2rem] font-semibold text-[#1a2332] mt-4 mb-2">
+          <h1 className="text-[2rem] font-semibold text-foreground mt-4 mb-2">
             Reject Offer
           </h1>
-          <p className="text-[0.95rem] text-[#64748b] mb-7">
+          <p className="text-[0.95rem] text-muted-foreground mb-7">
             We&apos;re sorry to see you go. Please let us know why you are
             declining this offer.
           </p>
-          <div className="bg-white border border-[#e2e8f0] rounded-xl p-7 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-            <div className="flex items-center gap-2.5 text-[1.15rem] font-semibold text-[#1a2332] mb-5">
-              Reason for rejection <span className="text-[#dc3545]">*</span>
+          <div className="bg-card border border-border/60 rounded-xl p-7 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+            <div className="flex items-center gap-2.5 text-[1.15rem] font-semibold text-foreground mb-5">
+              Reason for rejection <span className="text-destructive">*</span>
             </div>
             <select
-              className="w-full p-[10px_14px] border border-[#e2e8f0] rounded-lg text-[0.9rem] text-[#334155] bg-white appearance-auto mb-5 focus:outline-none focus:border-[#1a2332] focus:ring-2 focus:ring-[#1a2332]/10"
+              className="w-full p-[10px_14px] border border-border rounded-lg text-[0.9rem] text-foreground bg-background appearance-auto mb-5 focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
               value={rejectionReason}
               onChange={(e) => setRejectionReason(e.target.value)}
             >
@@ -719,30 +719,34 @@ function JobOfferContent() {
                 </option>
               ))}
             </select>
-            <label className="text-[0.9rem] font-semibold text-[#1a2332] block mb-2">
+            <label className="text-[0.9rem] font-semibold text-foreground block mb-2">
               Additional comments
             </label>
             <textarea
-              className="w-full p-[12px_14px] border border-[#e2e8f0] rounded-lg text-[0.9rem] text-[#334155] resize-vertical min-h-30 font-inherit focus:outline-none focus:border-[#1a2332] focus:ring-2 focus:ring-[#1a2332]/10"
+              className="w-full p-[12px_14px] border border-border rounded-lg text-[0.9rem] text-foreground bg-background placeholder:text-muted-foreground resize-vertical min-h-30 font-inherit focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
               placeholder="Share any additional feedback..."
               rows={5}
               value={rejectionMessage}
               onChange={(e) => setRejectionMessage(e.target.value)}
             />
             <div className="flex flex-col-reverse sm:flex-row justify-between items-center mt-6 gap-3">
-              <button
-                className="w-full sm:w-auto text-[0.9rem] font-semibold text-[#1a2332] bg-none border border-[#e2e8f0] rounded-lg px-8 py-2.5 transition-colors hover:bg-[#f8fafc]"
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full sm:w-auto px-8 font-semibold"
                 onClick={() => setGameState("main")}
               >
                 Cancel
-              </button>
-              <button
-                className="w-full sm:w-auto px-8 py-2.5 bg-[#dc3545] text-white rounded-lg text-[0.95rem] font-semibold transition-colors duration-200 hover:bg-[#c82333] disabled:opacity-50 disabled:cursor-not-allowed"
+              </Button>
+              <Button
+                variant="destructive"
+                size="lg"
+                className="w-full sm:w-auto px-8 font-semibold"
                 disabled={isRejecting}
                 onClick={handleConfirmReject}
               >
                 {isRejecting ? "Confirming..." : "Confirm Rejection"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -752,7 +756,7 @@ function JobOfferContent() {
       {gameState === "accepted" && (
         <div className="max-w-175 mx-auto px-5 py-15 text-center">
           <div className="mb-4">
-            <div className="w-17.5 h-17.5 bg-[#4caf50] rounded-full flex items-center justify-center mx-auto shadow-[0_8px_32px_rgba(76,175,80,0.3)] animate-[jo-pop_0.5s_cubic-bezier(0.34,1.56,0.64,1)_forwards]">
+            <div className="w-17.5 h-17.5 bg-success rounded-full flex items-center justify-center mx-auto shadow-[0_8px_32px_rgba(76,175,80,0.3)] animate-[jo-pop_0.5s_cubic-bezier(0.34,1.56,0.64,1)_forwards]">
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -766,29 +770,29 @@ function JobOfferContent() {
               </svg>
             </div>
           </div>
-          <span className="inline-block px-7 py-2.5 rounded-sm text-[1.3rem] font-semibold tracking-[2px] uppercase bg-[#e8f5e9] text-[#2e7d32] mb-4">
+          <span className="inline-block px-7 py-2.5 rounded-sm text-[1.3rem] font-semibold tracking-[2px] uppercase bg-success-bg text-success-text mb-4">
             OFFER ACCEPTED
           </span>
-          <h1 className="text-[2.5rem] font-semibold text-[#1a2332] mt-3 mb-4">
+          <h1 className="text-[2.5rem] font-semibold text-foreground mt-3 mb-4">
             Welcome to the team, {offerData?.applicant_name}!
           </h1>
-          <p className="text-[1rem] text-[#64748b] max-w-125 mx-auto mb-8 leading-[1.6]">
+          <p className="text-[1rem] text-muted-foreground max-w-125 mx-auto mb-8 leading-[1.6]">
             We are absolutely thrilled to have you join us. Your offer has been
             successfully accepted.
           </p>
-          <div className="bg-white border border-[#e2e8f0] rounded-xl p-6 max-w-130 mx-auto mb-5 text-left shadow-sm">
-            {/* <div className="text-[0.95rem] text-[#334155] leading-[1.6]">
+          <div className="bg-card border border-border/60 rounded-xl p-6 max-w-130 mx-auto mb-5 text-left shadow-sm">
+            {/* <div className="text-[0.95rem] text-foreground leading-[1.6]">
               Keep checking your email for further updates on your onboarding
               and LMS journey.
             </div> */}
-            <div className="text-[0.95rem] text-[#334155] leading-[1.6]">
+            <div className="text-[0.95rem] text-foreground leading-[1.6]">
               {consentRequiredAfterAccept ? (
                 <div className="flex flex-col items-center gap-2 py-2 text-center">
-                  <span className="font-medium text-amber-600 flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin text-amber-500" />
+                  <span className="font-medium text-warning flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin text-warning" />
                     Redirecting to the DPDP Consent Form in {countdown} {countdown === 1 ? "second" : "seconds"}...
                   </span>
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-muted-foreground">
                     Please do not close or refresh this window.
                   </span>
                 </div>
@@ -804,7 +808,7 @@ function JobOfferContent() {
             <div className="mt-7 flex flex-col items-center gap-3">
               <Button
                 onClick={() => router.push("/dashboard")}
-                className="px-6 py-2.5 bg-[#4caf50] text-white rounded-lg font-semibold hover:bg-[#43a047] transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 h-11"
+                className="px-6 py-2.5 bg-success text-success-foreground font-semibold hover:bg-success/90 transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 h-11"
               >
                 Go to Dashboard
                 <svg
@@ -821,7 +825,7 @@ function JobOfferContent() {
                   <polyline points="12 5 19 12 12 19" />
                 </svg>
               </Button>
-              <p className="text-[12px] text-gray-400 mt-2">
+              <p className="text-[12px] text-muted-foreground mt-2">
                 You can also close this browser window
               </p>
             </div>
@@ -848,29 +852,29 @@ function JobOfferContent() {
               </svg>
             </div>
           </div>
-          <span className="inline-block px-7 py-2.5 rounded-sm text-[1.3rem] font-semibold tracking-[2px] uppercase bg-[#fef2f2] text-[#ef4444] mb-4">
+          <span className="inline-block px-7 py-2.5 rounded-sm text-[1.3rem] font-semibold tracking-[2px] uppercase bg-destructive/10 text-destructive mb-4">
             OFFER DECLINED
           </span>
-          <h1 className="text-[2.5rem] font-semibold text-[#1a2332] mt-3 mb-4">
+          <h1 className="text-[2.5rem] font-semibold text-foreground mt-3 mb-4">
             Offer Letter Declined
           </h1>
-          <p className="text-[1rem] text-[#64748b] max-w-125 mx-auto mb-8 leading-[1.6]">
+          <p className="text-[1rem] text-muted-foreground max-w-125 mx-auto mb-8 leading-[1.6]">
             You have declined the offer letter. If this was a mistake or you
             wish to raise a request regarding your decision, please proceed
             below.
           </p>
-          <div className="bg-white border border-[#e2e8f0] rounded-xl p-6 max-w-130 mx-auto mb-5 text-left shadow-sm">
-            <div className="text-[0.95rem] text-[#334155] leading-[1.6]">
-              <div className="font-semibold text-[#1a2332] mb-1">
+          <div className="bg-card border border-border/60 rounded-xl p-6 max-w-130 mx-auto mb-5 text-left shadow-sm">
+            <div className="text-[0.95rem] text-foreground leading-[1.6]">
+              <div className="font-semibold text-foreground mb-1">
                 Reason for Rejection:
               </div>
-              <div className="text-[#64748b] mb-3">{rejectionReason}</div>
+              <div className="text-muted-foreground mb-3">{rejectionReason}</div>
               {rejectionMessage && (
                 <>
-                  <div className="font-semibold text-[#1a2332] mb-1">
+                  <div className="font-semibold text-foreground mb-1">
                     Additional Message:
                   </div>
-                  <div className="text-[#64748b] italic">
+                  <div className="text-muted-foreground italic">
                     &ldquo;{rejectionMessage}&rdquo;
                   </div>
                 </>
@@ -880,7 +884,7 @@ function JobOfferContent() {
           <div className="mt-7 flex flex-row flex-wrap items-center justify-center gap-4">
             <Button
               onClick={() => router.push("/action-center?tab=requests")}
-              className="px-6 py-2.5 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90 transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 h-11"
+              className="px-6 py-2.5 bg-primary text-primary-foreground font-semibold hover:bg-primary-hover transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 h-11"
             >
               Raise Request
               <svg
@@ -902,7 +906,7 @@ function JobOfferContent() {
               onClick={handleLogout}
               disabled={isLoggingOut}
               variant="outline"
-              className="px-6 py-2.5 border border-[#e2e8f0] text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all duration-200 flex items-center justify-center gap-2 h-11"
+              className="px-6 py-2.5 font-semibold transition-all duration-200 flex items-center justify-center gap-2 h-11"
             >
               {isLoggingOut ? "Logging out..." : "Logout"}
               <LogOut className="h-4.5 w-4.5" />
@@ -927,7 +931,7 @@ function JobOfferContent() {
           <div className="flex flex-col items-center gap-3">
             <Button
               onClick={() => router.push("/dashboard")}
-              className="px-6 py-2.5 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90 transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 h-11"
+              className="px-6 py-2.5 bg-primary text-primary-foreground font-semibold hover:bg-primary-hover transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 h-11"
             >
               Go to Dashboard
               <svg
@@ -972,7 +976,7 @@ function JobOfferContent() {
                 setShowDeclinedPopup(false);
                 router.push("/dashboard");
               }}
-              className="absolute top-4 right-4 bg-transparent border-none cursor-pointer text-[#64748b] hover:text-[#1a2332]"
+              className="absolute top-4 right-4 bg-transparent border-none cursor-pointer text-muted-foreground hover:text-foreground"
             >
               <svg
                 width="24"
@@ -1030,7 +1034,7 @@ function JobOfferContent() {
             </p>
             <button
               onClick={() => setShowMissingReasonPopup(false)}
-              className="bg-[#1a2332] text-white border-none px-6 py-2.5 rounded-lg font-semibold cursor-pointer hover:bg-[#1a2332]/90"
+              className="bg-primary text-primary-foreground border-none px-6 py-2.5 rounded-lg font-semibold cursor-pointer hover:bg-primary-hover"
             >
               OK
             </button>

@@ -41,7 +41,7 @@ function AutosaveBar({
   activeSection: string;
 }) {
   return (
-    <div className="sticky top-32 lg:top-0 z-40 flex flex-col sm:flex-row items-start sm:items-center justify-between bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border border-border px-4 py-3 rounded-xl gap-2 shadow-sm select-none">
+    <div className="sticky top-32 lg:top-0 z-40 flex flex-col sm:flex-row items-start sm:items-center justify-between bg-white/95 dark:bg-input/30 backdrop-blur-md border border-border px-4 py-3 rounded-xl gap-2 shadow-sm select-none">
       <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
         <span
           className={cn(
@@ -201,7 +201,7 @@ function OnboardingContent() {
                 router.push("/dashboard");
               }}
               size="lg"
-              className="h-12 rounded-xl px-8 bg-[#101828] text-white hover:bg-[#101828]/90 flex items-center gap-2"
+              className="h-12 px-8 flex items-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
               Back to Dashboard

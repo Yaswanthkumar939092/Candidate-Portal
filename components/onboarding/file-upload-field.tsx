@@ -151,7 +151,7 @@ export function FileUploadField({
           <TooltipTrigger asChild>
             <button
               type="button"
-              className="flex cursor-help items-center justify-center text-destructive bg-transparent rounded-full z-10 transition-colors hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-destructive focus:ring-offset-2"
+              className="flex cursor-help items-center justify-center text-destructive bg-transparent rounded-full z-10 transition-colors hover:text-destructive/80 focus:outline-none focus:ring-2 focus:ring-destructive focus:ring-offset-2"
               onClick={(e) => e.stopPropagation()}
               aria-label="Rejection reason"
             >

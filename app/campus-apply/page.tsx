@@ -177,7 +177,7 @@ function CampusApplyContent() {
                             <Button
                               onClick={handleContinue}
                               disabled={!selectedJobName}
-                              className="rounded-lg h-10 px-8 bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/20 text-sm font-semibold transition-all shrink-0 flex items-center justify-center gap-2"
+                              className="h-10 px-8 bg-primary text-primary-foreground hover:bg-primary-hover shadow-lg shadow-primary/20 text-sm font-semibold transition-all shrink-0 flex items-center justify-center gap-2"
                             >
                               Continue to Application
                               <ArrowRight className="w-4.5 h-4.5" />
@@ -287,7 +287,7 @@ function CampusApplyContent() {
                             <div className="pt-6 border-t border-border/60 flex justify-end">
                               <Button
                                 onClick={handleContinue}
-                                className="rounded-lg h-10 px-8 bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/20 text-sm font-semibold transition-all hover:scale-[1.02]"
+                                className="h-10 px-8 bg-primary text-primary-foreground hover:bg-primary-hover shadow-lg shadow-primary/20 text-sm font-semibold transition-all hover:scale-[1.02]"
                               >
                                 Continue to Application
                                 <ArrowRight className="ml-2 h-4.5 w-4.5" />
@@ -611,7 +611,7 @@ function CampusApplyWizardInner({
         </p>
         <Button
           onClick={onBackToSelect}
-          className="mt-4 rounded-xl"
+          className="mt-4 "
           variant="outline"
         >
           Back to Selection
@@ -662,7 +662,7 @@ function CampusApplyWizardInner({
                 router.push("/login");
               }}
               variant="outline"
-              className="flex items-center gap-2 px-6 h-10 rounded-lg hover:bg-destructive/5 hover:text-destructive hover:border-destructive transition-all duration-200"
+              className="flex items-center gap-2 px-6 h-10 hover:bg-destructive/5 hover:text-destructive hover:border-destructive transition-all duration-200"
             >
               <LogOut className="h-4 w-4" />
               Logout

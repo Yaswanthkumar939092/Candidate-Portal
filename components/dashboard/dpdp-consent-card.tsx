@@ -72,7 +72,7 @@ export function DpdpConsentCard({ className, consentUrl }: DpdpConsentCardProps)
       <Button
         asChild
         size="lg"
-        className="font-semibold rounded-lg px-8 py-3 text-base shadow-md hover:shadow-lg transition-all duration-200 w-full sm:w-auto"
+        className="font-semibold px-8 py-3 text-base shadow-md hover:shadow-lg transition-all duration-200 w-full sm:w-auto"
       >
         <Link href={consentUrl || "/job_offer/consent"}>
           Go to Consent Form

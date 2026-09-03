@@ -95,7 +95,7 @@ function getFieldClass(field: FormField, value: unknown, error?: string, disable
   if (isReadOnly) return "bg-muted";
 
   if (field.approval_status === "Approved") {
-    return "bg-field-success-bg border-field-success border-2 focus-visible:bg-field-success-bg focus-visible:border-field-success focus-visible:ring-field-success/8 dark:bg-emerald-950/10 dark:border-emerald-600 dark:focus-visible:ring-emerald-600/20 pr-10";
+    return "bg-field-success-bg border-field-success border-2 focus-visible:bg-field-success-bg focus-visible:border-field-success focus-visible:ring-field-success/8 pr-10";
   }
 
   const isValueChanged = (curr: unknown, orig: unknown) => {
@@ -112,10 +112,10 @@ function getFieldClass(field: FormField, value: unknown, error?: string, disable
   const isValid = isFilled && !error && !disabled;
 
   if (isValid) {
-    return "bg-field-success-bg border-field-success border-2 focus-visible:bg-field-success-bg focus-visible:border-field-success focus-visible:ring-field-success/8 dark:bg-emerald-950/10 dark:border-emerald-600 dark:focus-visible:ring-emerald-600/20 pr-10";
+    return "bg-field-success-bg border-field-success border-2 focus-visible:bg-field-success-bg focus-visible:border-field-success focus-visible:ring-field-success/8 pr-10";
   }
 
-  return "bg-[#F1F3F6] border-transparent focus-visible:bg-white focus-visible:border-ring focus-visible:ring-ring/8 dark:bg-zinc-800";
+  return "bg-[#F1F3F6] border-transparent focus-visible:bg-white focus-visible:border-ring focus-visible:ring-ring/8 dark:bg-input/30 dark:focus-visible:bg-input/50";
 }
 
 function isEmailField(field: FormField) {
@@ -375,7 +375,7 @@ function FieldInput({
 
   if (isPhone) {
     const containerClass = cn(
-      "flex items-center rounded-md border transition-all duration-200 w-full bg-[#F1F3F6] dark:bg-zinc-800 border-transparent",
+      "flex items-center rounded-md border transition-all duration-200 w-full bg-[#F1F3F6] dark:bg-input/30 border-transparent",
       baseClass.replace(/focus-visible:/g, "focus-within:").replace(/focus:/g, "focus-within:")
     );
 
@@ -497,8 +497,8 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
                     className={cn(
                       "text-xs px-3 py-1.5 rounded-full font-semibold border transition-all duration-200 cursor-pointer",
                       isSelected
-                        ? "bg-[#5B2EE5] text-white border-transparent shadow-sm shadow-purple-500/10"
-                        : "bg-white dark:bg-zinc-900 text-muted-foreground border-border hover:bg-muted dark:hover:bg-zinc-800",
+                        ? "bg-primary text-primary-foreground border-transparent shadow-sm shadow-primary/10"
+                        : "bg-card text-muted-foreground border-border hover:bg-muted",
                     )}
                   >
                     {lang}

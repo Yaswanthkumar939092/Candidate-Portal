@@ -302,13 +302,13 @@ export function DocumentUpload({
                   {file.status === "uploading" && (
                     <div className="mt-1">
                       <div className="flex items-center space-x-2">
-                        <div className="flex-1 bg-gray-200 rounded-full h-1.5">
+                        <div className="flex-1 bg-secondary rounded-full h-1.5">
                           <div
                             className="bg-primary h-1.5 rounded-full transition-all"
                             style={{ width: `${file.uploadProgress || 0}%` }}
                           />
                         </div>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-muted-foreground">
                           {file.uploadProgress || 0}%
                         </span>
                       </div>
@@ -349,7 +349,7 @@ export function DocumentUpload({
                     size="sm"
                     variant="ghost"
                     onClick={() => handleRemove(file.id)}
-                    className="text-gray-400 hover:text-red-600 p-1"
+                    className="text-muted-foreground hover:text-destructive p-1"
                   >
                     <X className="w-4 h-4" />
                   </Button>

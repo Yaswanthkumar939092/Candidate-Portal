@@ -13,7 +13,7 @@ export default function VerifyEmailPage() {
     <Suspense fallback={
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-0 md:p-8">
         <div className="flex flex-col items-center justify-center py-12">
-          <div className="w-8 h-8 border-4 border-[#2563EB] border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
           <p className="mt-4 text-sm text-[#64748B]">Loading...</p>
         </div>
       </div>
@@ -147,7 +147,7 @@ function VerifyEmailContent() {
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-0 md:p-8 w-full">
       {isSettingsLoading ? (
         <div className="flex flex-col items-center justify-center py-12">
-          <div className="w-8 h-8 border-4 border-[#2563EB] border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
           <p className="mt-4 text-sm text-[#64748B]">Loading settings...</p>
         </div>
       ) : (

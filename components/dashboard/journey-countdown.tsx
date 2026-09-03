@@ -49,7 +49,7 @@ export function JourneyCountdown({ joiningDate, className }: JourneyCountdownPro
   return (
     <span
       className={cn(
-        "text-xs font-medium text-green-600 dark:text-green-400",
+        "text-xs font-medium text-accent-foreground",
         className
       )}
     >

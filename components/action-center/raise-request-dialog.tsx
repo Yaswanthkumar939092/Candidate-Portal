@@ -226,7 +226,7 @@ export function RaiseRequestDialog({
       </span>
 
       <button
-        className="text-slate-400 hover:text-red-500 font-medium text-xs whitespace-nowrap flex-shrink-0"
+        className="text-muted-foreground hover:text-destructive font-medium text-xs whitespace-nowrap flex-shrink-0"
         onClick={(e) => {
           e.stopPropagation()
           setAttachment("")
@@ -247,7 +247,7 @@ export function RaiseRequestDialog({
           <div className="flex flex-col-reverse sm:flex-row items-center gap-3 pt-[2px] justify-between sm:justify-end">
             <Button
               variant="outline"
-              className="w-full sm:w-auto px-[18px] py-2.5 h-11 rounded-lg font-bold text-[#344054] hover:bg-slate-50 border border-slate-200 shadow-xs text-[14px]"
+              className="w-full sm:w-auto px-[18px] py-2.5 h-11 font-bold shadow-xs text-[14px]"
               onClick={() => {
                 resetForm()
                 onOpenChange(false)
@@ -256,7 +256,7 @@ export function RaiseRequestDialog({
               Cancel
             </Button>
             <Button
-              className="w-full sm:w-auto px-[18px] py-2.5 h-11 rounded-lg font-bold bg-[#101828] hover:bg-[#101828]/90 text-white shadow-xs text-[14px]"
+              className="w-full sm:w-auto px-[18px] py-2.5 h-11 font-bold shadow-xs text-[14px]"
               onClick={handleSubmit}
               disabled={isSubmitting}
             >

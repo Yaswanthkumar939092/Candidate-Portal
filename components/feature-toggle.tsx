@@ -70,12 +70,12 @@ export function FeatureToggle({
 
   const getEnabledStatus = () => {
     if (!flag.is_enabled) {
-      return { color: 'bg-red-100 text-red-800', text: 'Disabled' }
+      return { color: 'bg-destructive/10 text-destructive', text: 'Disabled' }
     }
     if (flag.rollout_percentage < 100) {
-      return { color: 'bg-yellow-100 text-yellow-800', text: `${flag.rollout_percentage}% Rollout` }
+      return { color: 'bg-warning-bg text-warning', text: `${flag.rollout_percentage}% Rollout` }
     }
-    return { color: 'bg-green-100 text-green-800', text: 'Enabled' }
+    return { color: 'bg-success-bg text-success-text', text: 'Enabled' }
   }
 
   const status = getEnabledStatus()
@@ -256,7 +256,7 @@ export function FeatureToggle({
                 variant="outline"
                 size="sm"
                 onClick={handleDelete}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
               >
                 <Trash2 className="w-4 h-4" />
               </Button>

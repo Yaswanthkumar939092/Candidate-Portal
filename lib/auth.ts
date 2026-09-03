@@ -93,8 +93,14 @@ export interface FrappeAuthSettings {
   enable_mobile_otp: 0 | 1;
   mobile_delivery_mode: "Disabled" | "Frappe SMS Settings";
   enable_email_signup?: 0 | 1;
+  require_otp_on_password_login?: 0 | 1;
   redirect_to?: string;
   primary_color?: string | null;
+  /**
+   * Selects the palette. 0/absent keeps the default palette (with
+   * `primary_color` recoloring the accent); 1 mounts the NOVA palette.
+   */
+  enable_theme_mode?: 0 | 1;
 }
 
 export type AuthChangeEvent = "SIGNED_IN" | "SIGNED_OUT" | "TOKEN_REFRESHED";

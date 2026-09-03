@@ -276,14 +276,14 @@ export function OnboardingRightRail({
   return (
     <aside className="w-full flex flex-col gap-6 h-full select-none">
       {/* 1. ID Card Preview */}
-      <div className="bg-linear-to-br from-primary/85 to-primary rounded-2xl p-4.5 flex flex-col gap-4 shadow-md text-white">
+      <div className="bg-primary rounded-2xl p-4.5 flex flex-col gap-4 shadow-md text-primary-foreground">
         {/* Header Row */}
         <div className="flex gap-2 items-center w-full">
-          <div className="w-5.5 h-5.5 rounded-md bg-white/20 flex items-center justify-center shrink-0">
-            <Sparkles className="w-3 h-3 text-white" />
+          <div className="w-5.5 h-5.5 rounded-md bg-primary-foreground/20 flex items-center justify-center shrink-0">
+            <Sparkles className="w-3 h-3 text-primary-foreground" />
           </div>
 
-          <span className="text-white font-bold text-xs tracking-wider uppercase truncate max-w-42.5">
+          <span className="text-primary-foreground font-bold text-xs tracking-wider uppercase truncate max-w-42.5">
             {companyName}
           </span>
           <div className="w-8 h-5.5 ml-auto rounded bg-linear-to-br from-[#F5D571] to-[#C99A2C] relative opacity-90 shadow-sm shrink-0">
@@ -298,10 +298,10 @@ export function OnboardingRightRail({
             formConfig.joining.role_name ||
             formConfig.joining.department_name ||
             formConfig.joining.trainee_doj) && (
-            <div className="border-t border-white/15 pt-3 flex flex-col gap-2.5 w-full">
+            <div className="border-t border-primary-foreground/15 pt-3 flex flex-col gap-2.5 w-full">
               {formConfig.joining.role_name && (
                 <div className="flex justify-between items-center gap-4 text-xs md:text-sm">
-                  <span className="text-white/60 font-semibold shrink-0">
+                  <span className="text-primary-foreground/70 font-semibold shrink-0">
                     Role
                   </span>
                   <span className="font-bold text-right truncate max-w-[65%]">
@@ -311,7 +311,7 @@ export function OnboardingRightRail({
               )}
               {formConfig.joining.department_name && (
                 <div className="flex justify-between items-center gap-4 text-xs md:text-sm">
-                  <span className="text-white/60 font-semibold shrink-0">
+                  <span className="text-primary-foreground/70 font-semibold shrink-0">
                     Department
                   </span>
                   <span className="font-bold text-right truncate max-w-[65%]">
@@ -321,7 +321,7 @@ export function OnboardingRightRail({
               )}
               {formConfig.joining.date_of_joining && (
                 <div className="flex justify-between items-center gap-4 text-xs md:text-sm">
-                  <span className="text-white/60 font-semibold shrink-0">
+                  <span className="text-primary-foreground/70 font-semibold shrink-0">
                     Date of Joining
                   </span>
                   <span className="font-bold text-right shrink-0">
@@ -331,7 +331,7 @@ export function OnboardingRightRail({
               )}
               {formConfig.joining.trainee_doj && (
                 <div className="flex justify-between items-center gap-4 text-xs md:text-sm">
-                  <span className="text-white/60 font-semibold shrink-0">
+                  <span className="text-primary-foreground/70 font-semibold shrink-0">
                     Trainee DOJ
                   </span>
                   <span className="font-bold text-right shrink-0">
@@ -345,7 +345,7 @@ export function OnboardingRightRail({
       {/* 2. Countdown Widget */}
       {daysToJoining !== null ? (
         <div className="bg-card border border-border rounded-2xl p-5 flex items-center gap-5 shadow-sm">
-          <div className="text-4xl font-bold bg-primary bg-clip-text text-transparent font-mono select-none tracking-tight shrink-0">
+          <div className="text-4xl font-bold text-primary font-mono select-none tracking-tight shrink-0">
             {daysToJoining !== null && daysToJoining >= 0 ? daysToJoining : 0}
           </div>
           <div>
@@ -403,7 +403,7 @@ export function OnboardingRightRail({
                 className="transition-all duration-500 ease-in-out"
               />
             </svg>
-            <div className="absolute inset-0 flex items-center justify-center text-lg font-black text-primary font-mono">
+            <div className="absolute inset-0 flex items-center justify-center text-lg font-black text-accent-foreground font-mono">
               {Math.round(completionPct * 100)}%
             </div>
           </div>
@@ -462,7 +462,7 @@ export function OnboardingRightRail({
         <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
           <h4 className="text-xs font-black text-foreground flex items-center justify-between mb-3.5">
             Required Fields Left
-            <span className="text-[10px] font-bold text-[#5B2EE5] bg-[#EDE6FE] px-2 py-0.5 rounded-full font-mono">
+            <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full font-mono">
               {requiredFieldsLeft.length}
             </span>
           </h4>
@@ -472,17 +472,17 @@ export function OnboardingRightRail({
                 key={field.fieldname}
                 type="button"
                 onClick={() => handleJumpToField(field.fieldname)}
-                className="group flex items-center justify-between text-left text-xs font-semibold py-2 px-2.5 rounded-lg border border-transparent hover:border-purple-100 hover:bg-[#F6F1FE] transition-colors cursor-pointer"
+                className="group flex items-center justify-between text-left text-xs font-semibold py-2 px-2.5 rounded-lg border border-transparent hover:border-border hover:bg-accent transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-4 h-4 rounded border border-border group-hover:border-purple-300 flex items-center justify-center shrink-0 bg-background transition-colors">
-                    <Check className="w-2.5 h-2.5 text-purple-600" />
+                  <div className="w-4 h-4 rounded border border-border group-hover:border-primary/40 flex items-center justify-center shrink-0 bg-background transition-colors">
+                    <Check className="w-2.5 h-2.5 text-primary" />
                   </div>
-                  <span className="truncate text-foreground group-hover:text-purple-900">
+                  <span className="truncate text-foreground group-hover:text-primary">
                     {field.label}
                   </span>
                 </div>
-                <ChevronRight className="w-4 h-4 text-purple-400 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-0.5 shrink-0" />
+                <ChevronRight className="w-4 h-4 text-primary/60 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-0.5 shrink-0" />
               </button>
             ))}
             {requiredFieldsLeft.length > 5 && (
@@ -623,7 +623,7 @@ export function OnboardingRightRail({
                       <button
                         type="button"
                         onClick={() => window.open(`mailto:${buddy.email}`)}
-                        className="w-full border border-purple-100 hover:border-purple-200 bg-[#F8F5FF] hover:bg-[#F0EAFE] text-[#5B2EE5] py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                        className="w-full border border-border hover:border-primary/30 bg-accent hover:bg-primary/15 text-accent-foreground py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                       >
                         <Mail className="w-3.5 h-3.5" />
                         Say hello to {buddy.name.split(" ")[0]}
@@ -657,9 +657,9 @@ export function OnboardingRightRail({
               }}
               disabled={requiredFieldsLeft.length > 0 || isSaving}
               className={cn(
-                "w-full h-11 rounded-md font-bold transition-all flex items-center justify-center gap-2 text-sm",
+                "w-full h-11 font-bold transition-all flex items-center justify-center gap-2 text-sm",
                 requiredFieldsLeft.length === 0
-                  ? "bg-primary text-white hover:bg-primary/80 shadow-md shadow-purple-500/10 cursor-pointer"
+                  ? "bg-primary text-primary-foreground hover:bg-primary/80 shadow-md shadow-primary/10 cursor-pointer"
                   : "bg-muted text-muted-foreground cursor-not-allowed",
               )}
             >
@@ -684,7 +684,7 @@ export function OnboardingRightRail({
 
           <Button
             type="button"
-            variant="ghost"
+            variant="outline"
             onClick={async () => {
               if (isReviewStep) {
                 try {
@@ -698,7 +698,7 @@ export function OnboardingRightRail({
               }
             }}
             disabled={isSaving}
-            className="w-full h-11 rounded-md font-bold text-primary hover:text-primary/80 hover:bg-primary/10 transition-all cursor-pointer flex items-center justify-center gap-2 text-sm"
+            className="w-full h-11 font-bold transition-all cursor-pointer flex items-center justify-center gap-2 text-sm"
           >
             {isSaving ? (
               <>

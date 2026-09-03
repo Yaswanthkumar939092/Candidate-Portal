@@ -101,7 +101,7 @@ export function JobApplicationStepNav({
                     "bg-primary/10 text-primary font-medium",
                   isCompleted &&
                     !isCurrent &&
-                    "text-green-700 dark:text-green-400",
+                    "text-success-text",
                   !isCompleted &&
                     !isCurrent &&
                     "text-muted-foreground",
@@ -115,7 +115,7 @@ export function JobApplicationStepNav({
                   className={cn(
                     "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-medium",
                     isCompleted &&
-                      "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+                      "bg-success-bg text-success-text",
                     isCurrent &&
                       !isCompleted &&
                       "bg-primary text-primary-foreground",
