@@ -61,9 +61,9 @@ export function WelcomeHeader({ name, greeting, className }: WelcomeHeaderProps)
         {isProfileActive && (
           <Badge
             variant="outline"
-            className="gap-1.5 border-green-200 bg-green-50 px-3 py-1 text-sm font-medium text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400 rounded-2xl"
+            className="gap-1.5 border-primary/30 bg-accent px-3 py-1 text-sm font-medium text-accent-foreground rounded-2xl"
           >
-            <span className="h-2 w-2 rounded-full bg-green-500" />
+            <span className="h-2 w-2 rounded-full bg-primary" />
             Profile Active
           </Badge>
         )}

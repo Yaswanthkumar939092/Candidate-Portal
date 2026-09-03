@@ -239,8 +239,8 @@ function ActionCenterContent() {
           className={cn(
             "relative pb-3 text-sm font-medium transition-colors",
             activeTab === "tasks"
-              ? "text-[#101828] dark:text-gray-100"
-              : "text-[#6A7282] hover:text-[#101828] dark:text-gray-400 dark:hover:text-gray-200"
+              ? "text-foreground"
+              : "text-muted-foreground hover:text-foreground"
           )}
           onClick={() => {
             setActiveTab("tasks")
@@ -249,15 +249,15 @@ function ActionCenterContent() {
         >
           Assigned Tasks
           {activeTab === "tasks" && (
-            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900 dark:bg-gray-100" />
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground" />
           )}
         </button>
         <button
           className={cn(
             "relative pb-3 text-sm font-medium transition-colors",
             activeTab === "requests"
-              ? "text-slate-900 dark:text-gray-100"
-              : "text-slate-500 hover:text-slate-900 dark:text-gray-400 dark:hover:text-gray-200"
+              ? "text-foreground"
+              : "text-muted-foreground hover:text-foreground"
           )}
           onClick={() => {
             setActiveTab("requests")
@@ -266,20 +266,20 @@ function ActionCenterContent() {
         >
           My Requests
           {activeTab === "requests" && (
-            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900 dark:bg-gray-100" />
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground" />
           )}
         </button>
       </div>
 
       {/* Filter pills and Raise Request Button row */}
       <div className="flex flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-1 rounded-xl bg-[#F2F4F7] p-1 w-fit border border-[#E5E7EB] dark:bg-slate-900 dark:border-slate-800">
+        <div className="flex items-center gap-1 rounded-xl bg-[#F2F4F7] p-1 w-fit border border-[#E5E7EB] dark:bg-card dark:border-border">
           <button
             className={cn(
               "inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-sm font-medium transition-all",
               filter === "pending"
-                ? "bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-gray-100"
-                : "text-slate-500 hover:text-slate-900 dark:text-gray-400 dark:hover:text-gray-300"
+                ? "bg-card dark:bg-muted text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
             )}
             onClick={() => setFilter("pending")}
           >
@@ -289,8 +289,8 @@ function ActionCenterContent() {
             className={cn(
               "inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-sm font-medium transition-all",
               filter === "accepted"
-                ? "bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-gray-100"
-                : "text-slate-500 hover:text-slate-900 dark:text-gray-400 dark:hover:text-gray-400"
+                ? "bg-card dark:bg-muted text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
             )}
             onClick={() => setFilter("accepted")}
           >
@@ -300,7 +300,7 @@ function ActionCenterContent() {
         {activeTab === "requests" && (
           <Button
             onClick={() => setRequestDialogOpen(true)}
-            className="flex items-center justify-center gap-2 bg-[#0F172A] hover:bg-[#0F172A]/90 text-white rounded-lg px-3 sm:px-4 py-2 font-semibold shrink-0"
+            className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 font-semibold shrink-0"
           >
             <Plus className="h-4 w-4 sm:mr-1 shrink-0" strokeWidth={3} />
             <span className="hidden sm:inline whitespace-nowrap">

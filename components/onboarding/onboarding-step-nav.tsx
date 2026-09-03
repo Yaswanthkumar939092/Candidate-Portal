@@ -174,7 +174,7 @@ export function OnboardingStepNav({ className }: OnboardingStepNavProps) {
     >
       {/* Blue header section */}
       <div className="bg-primary px-5 py-5 rounded-t-xl relative overflow-hidden">
-        <div className="size-32 bg-white/8 rounded-full absolute -top-5 -right-5"></div>
+        <div className="size-32 bg-primary-foreground/10 rounded-full absolute -top-5 -right-5"></div>
         <h2 className="text-lg font-bold text-primary-foreground">
           Onboarding
         </h2>
@@ -264,7 +264,7 @@ export function OnboardingStepNav({ className }: OnboardingStepNavProps) {
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-all border border-transparent select-none relative",
                   isCurrent 
-                    ? "bg-primary/5 border-primary/20 border-l-4 border-l-primary font-bold text-[#1B2124] dark:text-white" 
+                    ? "bg-primary/5 border-primary/20 border-l-4 border-l-primary font-bold text-foreground" 
                     : "hover:bg-muted text-muted-foreground",
                   !isClickable && "cursor-not-allowed opacity-50",
                 )}
@@ -275,10 +275,10 @@ export function OnboardingStepNav({ className }: OnboardingStepNavProps) {
                   className={cn(
                     "flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-all duration-300",
                     isTabFullyFilled
-                      ? "bg-[#16B364] text-white" 
+                      ? "bg-success text-success-foreground"
                       : isCurrent
                         ? "bg-primary/10 text-primary"
-                        : "bg-[#F4F5F7] text-muted-foreground dark:bg-zinc-800"
+                        : "bg-muted text-muted-foreground"
                   )}
                 >
                   {isCurrent && !isTabFullyFilled ? (
@@ -289,7 +289,7 @@ export function OnboardingStepNav({ className }: OnboardingStepNavProps) {
                 </span>
 
                 {/* Step label */}
-                <span className="truncate flex-1 font-semibold text-[#1B2124] dark:text-zinc-200">
+                <span className="truncate flex-1 font-semibold text-foreground">
                   {step.label}
                 </span>
                 
@@ -298,10 +298,10 @@ export function OnboardingStepNav({ className }: OnboardingStepNavProps) {
                   <span className={cn(
                     "text-[11px] font-bold font-mono px-2 py-0.5 rounded-full transition-all duration-300 select-none",
                     isTabFullyFilled
-                      ? "bg-[#E6F8EF] text-[#087443] dark:bg-green-950/40 dark:text-green-400"
+                      ? "bg-success-bg text-success-text"
                       : isCurrent
-                        ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-foreground"
-                        : "bg-[#F4F5F7] text-muted-foreground dark:bg-zinc-850"
+                        ? "bg-primary/10 text-primary"
+                        : "bg-muted text-muted-foreground"
                   )}>
                     {step.counts.filled + step.counts.approved}/{step.counts.total}
                   </span>

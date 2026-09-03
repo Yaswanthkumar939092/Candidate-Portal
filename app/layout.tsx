@@ -74,7 +74,7 @@ export default function RootLayout({
         {/* Runs synchronously before first paint — prevents dark→light flash */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var m=localStorage.getItem('candidate-portal-theme');if(m==='dark'){document.documentElement.setAttribute('data-theme','nova-dark');document.documentElement.classList.add('dark');}}catch(e){}})();`,
+            __html: `(function(){try{var d=document.documentElement;var m=localStorage.getItem('candidate-portal-theme');if(m==='dark'){d.setAttribute('data-theme','nova-dark');d.classList.add('dark');}var b=localStorage.getItem('candidate-portal-brand');if(b){d.setAttribute('data-brand',b);}}catch(e){}})();`,
           }}
         />
       </head>

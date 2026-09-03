@@ -3,6 +3,7 @@ import { FrappeAPI } from "../frappe-api";
 export interface CandidateBranding {
   title_prefix?: string;
   app_logo?: string;
+  logo_includes_company_name?: boolean;
 }
 
 export const candidateBrandingService = {

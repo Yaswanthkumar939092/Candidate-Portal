@@ -250,7 +250,7 @@ export function AppliedJobsTimeline({
                               <Check className="h-4 w-4 text-white" />
                             </div>
                           ) : (
-                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-gray-300 bg-white dark:bg-background text-xs text-muted-foreground">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-border bg-card dark:bg-background text-xs text-muted-foreground">
                               {idx + 1}
                             </div>
                           )}

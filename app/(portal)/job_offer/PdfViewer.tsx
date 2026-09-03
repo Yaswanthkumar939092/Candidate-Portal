@@ -58,7 +58,7 @@ export default function PdfViewer({ pdfUrl }: PdfViewerProps) {
   return (
     <div className="relative w-full h-full" style={{ height: "100%", minHeight: "600px" }}>
       {isLoading && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50 rounded-lg">
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted rounded-lg">
           <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
           <p className="text-sm text-slate-500 font-medium">Loading preview...</p>
         </div>

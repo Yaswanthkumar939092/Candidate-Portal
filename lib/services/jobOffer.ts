@@ -57,10 +57,6 @@ export const jobOfferService = {
     return await FrappeAPI.get("recruitment.job_offer_utils.get_rejection_reasons");
   },
 
-  getCompanyLogo: async (): Promise<{ logo_url: string }> => {
-    return await FrappeAPI.get("recruitment.job_offer_utils.get_company_logo");
-  },
-
   getJobOfferPdfUrl: (appl: string, token?: string): string => {
     const paramsObj: Record<string, string> = { appl };
     if (token) {
@@ -79,6 +75,36 @@ export const jobOfferService = {
     }
     const params = new URLSearchParams(paramsObj).toString();
     return `${frappeApiBase()}/api/method/recruitment.job_offer_utils.preview_culture_book?${params}`;
+  },
+
+  /**
+   * Reports whether a culture book actually exists for this application.
+   *
+   * `preview_culture_book` answers with the PDF when one is configured and with
+   * a JSON body of `{ message: { available: false } }` when it is not, so the
+   * content type tells the two apart. The PDF body is never read - the response
+   * is cancelled once the headers arrive - so this stays cheap enough to run on
+   * dashboard load.
+   */
+  isCultureBookAvailable: async (appl: string, token?: string): Promise<boolean> => {
+    if (!appl) return false;
+    const url = jobOfferService.getCultureBookPdfUrl(appl, token);
+    try {
+      const response = await fetch(url, { credentials: "include" });
+      if (!response.ok) {
+        void response.body?.cancel();
+        return false;
+      }
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        void response.body?.cancel();
+        return true;
+      }
+      const data = await response.json();
+      return data?.message?.available !== false;
+    } catch {
+      return false;
+    }
   },
 
   updateJobOfferStatus: async (

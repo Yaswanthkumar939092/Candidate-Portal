@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { OnboardingSnapshot } from "@/components/dashboard/onboarding-snapshot";
 import { DashboardData } from "@/types/dashboard";
@@ -36,7 +36,22 @@ vi.mock("@/lib/hooks/useJobOffer", () => ({
     data: null,
     isLoading: false,
   }),
+  useCultureBookPdf: () => ({
+    pdfUrl: "mock-culture-book-url",
+    isLoading: false,
+  }),
+  useCultureBookAvailability: () => ({
+    data: mockCultureBookAvailable,
+    isLoading: false,
+  }),
 }));
+
+/** Toggled per-test to drive the culture book entry point. */
+let mockCultureBookAvailable: boolean | undefined = false;
+
+beforeEach(() => {
+  mockCultureBookAvailable = false;
+});
 
 const DEFAULT_MOCK_PAYLOAD: DashboardData = {
   name: "Test User",
@@ -196,5 +211,41 @@ describe("OnboardingSnapshot", () => {
     });
 
     global.fetch = originalFetch;
+  });
+
+  describe("culture book entry point", () => {
+    const renderSnapshot = () =>
+      render(
+        <OnboardingSnapshot
+          completedSteps={8}
+          totalSteps={8}
+          dashboardPayload={DEFAULT_MOCK_PAYLOAD}
+        />,
+      );
+
+    it("is hidden when the backend reports no culture book", () => {
+      mockCultureBookAvailable = false;
+      renderSnapshot();
+      expect(screen.queryByRole("button", { name: /Culture Book/i })).toBeNull();
+    });
+
+    it("is hidden while availability is still unknown", () => {
+      mockCultureBookAvailable = undefined;
+      renderSnapshot();
+      expect(screen.queryByRole("button", { name: /Culture Book/i })).toBeNull();
+    });
+
+    it("is shown once the backend confirms a culture book", () => {
+      mockCultureBookAvailable = true;
+      renderSnapshot();
+      expect(screen.getByRole("button", { name: /Culture Book/i })).toBeTruthy();
+    });
+
+    it("is not rendered disabled - it is absent entirely", () => {
+      mockCultureBookAvailable = false;
+      const { container } = renderSnapshot();
+      const disabled = Array.from(container.querySelectorAll("button[disabled]"));
+      expect(disabled.some((b) => /Culture Book/i.test(b.textContent || ""))).toBe(false);
+    });
   });
 });

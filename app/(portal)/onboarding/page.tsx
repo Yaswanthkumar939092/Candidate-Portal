@@ -41,7 +41,7 @@ function AutosaveBar({
   activeSection: string;
 }) {
   return (
-    <div className="sticky top-32 lg:top-0 z-40 flex flex-col sm:flex-row items-start sm:items-center justify-between bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border border-border px-4 py-3 rounded-xl gap-2 shadow-sm select-none">
+    <div className="sticky top-32 lg:top-0 z-40 flex flex-col sm:flex-row items-start sm:items-center justify-between bg-white/95 dark:bg-input/30 backdrop-blur-md border border-border px-4 py-3 rounded-xl gap-2 shadow-sm select-none">
       <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
         <span
           className={cn(
@@ -178,7 +178,7 @@ function OnboardingContent() {
           <div className="flex justify-center">
             <div className="relative">
               <div className="absolute -inset-4 rounded-full bg-red-500/10 blur-xl" />
-              <div className="relative flex h-24 w-24 items-center justify-center rounded-3xl bg-white shadow-2xl shadow-red-500/10">
+              <div className="relative flex h-24 w-24 items-center justify-center rounded-3xl bg-card shadow-2xl shadow-red-500/10">
                 <ClipboardX className="h-12 w-12 text-red-500" />
               </div>
             </div>
@@ -201,7 +201,7 @@ function OnboardingContent() {
                 router.push("/dashboard");
               }}
               size="lg"
-              className="h-12 rounded-xl px-8 bg-[#101828] text-white hover:bg-[#101828]/90 flex items-center gap-2"
+              className="h-12 px-8 flex items-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
               Back to Dashboard
@@ -259,7 +259,7 @@ function OnboardingContent() {
     : getInitialSectionTitle(currentTabConfig);
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] lg:h-[calc(100vh-4rem)] lg:overflow-hidden flex flex-col bg-[#F4F5F7] dark:bg-zinc-950">
+    <div className="min-h-[calc(100vh-4rem)] lg:h-[calc(100vh-4rem)] lg:overflow-hidden flex flex-col bg-background">
       {/* Mobile progress indicator */}
       {status !== "submitted" && (
         <div className="fixed left-0 right-0 top-16 z-45 border-b border-border bg-card px-4 py-3 lg:hidden">

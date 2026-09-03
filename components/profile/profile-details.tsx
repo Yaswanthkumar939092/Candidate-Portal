@@ -79,9 +79,9 @@ export function ProfileDetails({ profile, className }: ProfileDetailsProps) {
       {/* ── Account Info ── */}
       <div className="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden">
         {/* Colored section header */}
-        <div className="flex items-center gap-2.5 px-6 py-4 bg-linear-to-r from-slate-50 to-cyan-50 dark:from-slate-900/40 dark:to-cyan-950/30 border-b">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-100 dark:bg-cyan-900/50">
-            <CircleUserRound className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
+        <div className="flex items-center gap-2.5 px-6 py-4 bg-muted/50 border-b">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+            <CircleUserRound className="h-4 w-4 text-primary" />
           </div>
           <h3 className="font-semibold text-foreground">Account Info</h3>
         </div>

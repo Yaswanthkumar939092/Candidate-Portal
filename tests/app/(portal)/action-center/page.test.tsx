@@ -264,8 +264,8 @@ describe("ActionCenterPage – Filter Pills", () => {
   it("Pending filter is active by default", () => {
     renderWithProviders(<ActionCenterPage />);
     const pendingBtn = screen.getByText(/Pending/);
-    // Active pill has 'bg-white' class
-    expect(pendingBtn.classList.contains("bg-white")).toBe(true);
+    // Active pill uses the themed surface token
+    expect(pendingBtn.classList.contains("bg-card")).toBe(true);
   });
 
   it("switches to Completed filter when clicked", async () => {
@@ -274,7 +274,7 @@ describe("ActionCenterPage – Filter Pills", () => {
     await user.click(screen.getByRole('button', { name: /Completed/ }));
 
 const CompletedBtn = screen.getByRole('button', { name: /Completed/ });
-expect(CompletedBtn.classList.contains('bg-white')).toBe(true);
+expect(CompletedBtn.classList.contains('bg-card')).toBe(true);
   });
 
   it("switches back to Pending filter when clicked", async () => {
@@ -284,7 +284,7 @@ expect(CompletedBtn.classList.contains('bg-white')).toBe(true);
     await user.click(screen.getByText(/Pending/));
 
     const pendingBtn = screen.getByText(/Pending/);
-    expect(pendingBtn.classList.contains("bg-white")).toBe(true);
+    expect(pendingBtn.classList.contains("bg-card")).toBe(true);
   });
 
   it("shows correct task pending count (1 action_required task)", () => {
