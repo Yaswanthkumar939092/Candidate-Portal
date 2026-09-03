@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { CircularProgress } from "@/components/shared/circular-progress";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { useCurrentUser } from "@/lib/hooks/useUser";
-import { useJobOfferPdf, useJobOfferLetters, useJobOfferSummary, useCultureBookPdf } from "@/lib/hooks/useJobOffer";
+import { useJobOfferPdf, useJobOfferLetters, useJobOfferSummary, useCultureBookPdf, useCultureBookAvailability } from "@/lib/hooks/useJobOffer";
 import { toast } from "sonner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
@@ -83,10 +83,12 @@ function formatJoiningDateLong(iso: string): string {
 /**
  * Onboarding snapshot card for the candidate dashboard.
  *
- * Renders a large card with a light gradient background showing onboarding
- * status, a contextual message, a circular progress indicator, and a
- * call-to-action button. The circular progress ring turns green when
- * onboarding reaches 100 percent, and shows primary blue otherwise.
+ * Renders a large card whose banner gradient is mixed from the brand color and
+ * composited over the surface token, so it reads correctly in light and dark.
+ * Shows onboarding status, a contextual message, a circular progress ring, and a
+ * call-to-action button. The progress ring, completion badge and status pill
+ * all render in the active theme's brand color, so they follow the configured
+ * palette rather than signalling completion with a separate hue.
  */
 export function OnboardingSnapshot({
   completedSteps,
@@ -114,6 +116,7 @@ export function OnboardingSnapshot({
   );
 
   const { pdfUrl: cultureBookUrl } = useCultureBookPdf(userEmail || "");
+  const { data: hasCultureBook } = useCultureBookAvailability(userEmail || "");
 
   const isProfileActive = Boolean(profile);
 
@@ -157,32 +160,32 @@ export function OnboardingSnapshot({
   return (
     <div
       className={cn(
-        "space-y-4 border border-[#E5E7EB] rounded-3xl p-2 bg-white shadow-sm",
+        "space-y-4 border border-border rounded-3xl p-2 bg-card shadow-sm",
         className,
       )}
     >
       {/* Main onboarding card */}
 
-      <div className="relative overflow-hidden rounded-xl bg-linear-to-b from-[#F0F9FF] to-[#E0F2FE]  p-6  sm:p-8">
+      <div className="relative overflow-hidden rounded-xl bg-linear-to-b from-primary/6 to-primary/18 p-6 sm:p-8">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           {/* Left content */}
           <div className="flex-1 space-y-4">
             {/* Status badge */}
             <span
               className={cn(
-                "inline-flex w-fit items-center gap-1.5 rounded-full bg-white px-3 py-1 text-[12px] font-bold uppercase tracking-wider shadow-[0_2px_10px_rgb(0,0,0,0.02)]",
+                "inline-flex w-fit items-center gap-1.5 rounded-full bg-card px-3 py-1 text-[12px] font-bold uppercase tracking-wider shadow-[0_2px_10px_rgb(0,0,0,0.02)]",
                 isComplete
-                  ? "text-[#026AA2] border border-[#026AA2]/10"
-                  : "text-gray-600 border border-gray-200",
+                  ? "text-accent-foreground border border-primary/20"
+                  : "text-muted-foreground border border-border",
               )}
             >
-              {isComplete && <ShieldCheck className="h-4 w-4 text-[#12B76A]" />}
+              {isComplete && <ShieldCheck className="h-4 w-4 text-primary" />}
               {onboardingStage ||
                 (isComplete ? "ONBOARDING COMPLETE" : "ONBOARDING IN PROGRESS")}
             </span>
 
             {/* Heading */}
-            <h2 className="text-[30px] font-bold text-[#101828] leading-tight">
+            <h2 className="text-[30px] font-bold text-foreground leading-tight">
               {isComplete && displayJoiningDate
                 ? `You are ready to join us on ${formatJoiningDateLong(displayJoiningDate)}!`
                 : `${completedSteps} of ${totalSteps} steps completed`}
@@ -200,7 +203,7 @@ export function OnboardingSnapshot({
               <Button
                 asChild
                 size="lg"
-                className="bg-black text-white font-semibold hover:bg-black/80 rounded-xl text-center"
+                className="font-semibold text-center cursor-default"
               >
                 <Link href="/onboarding">
                   {/* View Your Journey */}
@@ -217,18 +220,18 @@ export function OnboardingSnapshot({
                         <Button
                           variant="outline"
                           size="lg"
-                          className="border-black bg-transparent text-black hover:bg-black/10 hover:text-black rounded-xl font-semibold justify-center flex items-center gap-2"
+                          className="font-semibold justify-center flex items-center gap-2"
                         >
                           Preview / Download Offer
-                          <span className="flex items-center justify-center bg-black text-white text-[10px] font-bold h-5 w-5 rounded-full ml-1">
+                          <span className="flex items-center justify-center bg-primary text-primary-foreground text-[10px] font-bold h-5 w-5 rounded-full ml-1">
                             {lettersData.letters.length}
                           </span>
                           <ChevronDown className="h-4 w-4 ml-1 opacity-70" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-64 rounded-xl shadow-lg border-slate-200">
+                      <DropdownMenuContent align="end" className="w-64 rounded-xl shadow-lg border-border">
                         {lettersData.letters.map((letter) => (
-                          <div key={letter.index} className="flex items-center justify-between group px-2 py-1.5 hover:bg-slate-50 rounded-lg">
+                          <div key={letter.index} className="flex items-center justify-between group px-2 py-1.5 hover:bg-accent rounded-lg">
                             <DropdownMenuItem
                               className="flex-1 cursor-pointer font-medium p-2 text-sm"
                               onClick={() => {
@@ -249,7 +252,7 @@ export function OnboardingSnapshot({
                               }}
                               title="Download"
                             >
-                              <Download className="h-4 w-4 text-slate-500" />
+                              <Download className="h-4 w-4 text-muted-foreground" />
                             </Button>
                           </div>
                         ))}
@@ -269,7 +272,7 @@ export function OnboardingSnapshot({
                         }}
                         disabled={isLettersLoading || (!pdfUrl && (!isSeparate || !lettersData?.letters?.[0]))}
                         className={cn(
-                          "flex sm:hidden border-black text-black hover:bg-black/10 hover:text-black rounded-xl font-semibold justify-center",
+                          "flex sm:hidden font-semibold justify-center",
                         )}
                       >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -292,7 +295,7 @@ export function OnboardingSnapshot({
                         }}
                         disabled={isLettersLoading || (!pdfUrl && (!isSeparate || !lettersData?.letters?.[0]))}
                         className={cn(
-                          "hidden sm:flex border border-black bg-transparent text-black hover:bg-black/10 hover:text-black rounded-xl font-semibold justify-center",
+                          "hidden sm:flex font-semibold justify-center",
                         )}
                       >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -305,13 +308,13 @@ export function OnboardingSnapshot({
                     </>
                   )}
 
-                  {/* Culture Book Button */}
+                  {/* Culture Book Button - only when the backend has one */}
+                  {hasCultureBook && cultureBookUrl && (
                   <Button
                     variant="outline"
                     size="lg"
                     onClick={handleCultureBookClick}
-                    disabled={!cultureBookUrl}
-                    className="border-black bg-transparent text-black hover:bg-black/10 hover:text-black rounded-xl font-semibold justify-center flex items-center gap-2"
+                    className="font-semibold justify-center flex items-center gap-2"
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
@@ -319,6 +322,7 @@ export function OnboardingSnapshot({
                     </svg>
                     Culture Book
                   </Button>
+                  )}
                 </>
               )}
             </div>
@@ -326,28 +330,23 @@ export function OnboardingSnapshot({
 
           {/* Right side: Circular progress */}
           <div className="relative flex shrink-0 items-center justify-center pt-8 sm:pt-0">
-            <div className="relative flex items-center justify-center rounded-full bg-white p-8 shadow-[0_10px_10px_rgb(0,0,0,0.08)]">
+            <div className="relative flex items-center justify-center rounded-full bg-card p-8 shadow-[0_10px_10px_rgb(0,0,0,0.08)]">
               <CircularProgress
                 value={percentage}
                 size={140}
                 strokeWidth={10}
-                className={cn(
-                  "[&_span]:text-[#101828] [&_span]:text-3xl [&_span]:font-bold",
-                  isComplete
-                    ? "[&_circle:last-of-type]:text-[#12B76A]"
-                    : "[&_circle:last-of-type]:text-[#026AA2]",
-                )}
+                className="[&_span]:text-foreground [&_span]:text-3xl [&_span]:font-bold [&_circle:last-of-type]:text-primary"
               />
               {/* "Ready" label below percentage inside the circle */}
               {isComplete && (
-                <span className="absolute inset-0 flex items-center justify-center pt-12 text-[12px] font-medium text-[#475467]">
+                <span className="absolute inset-0 flex items-center justify-center pt-12 text-[12px] font-medium text-muted-foreground">
                   Ready
                 </span>
               )}
             </div>
-            {/* Small green check badge at bottom-right of circle */}
+            {/* Completion check badge at bottom-right of circle */}
             {isComplete && (
-              <div className="absolute bottom-1 right-5 flex size-10 items-center justify-center rounded-full bg-[#12B76A] border-[3px] border-white text-white shadow-sm">
+              <div className="absolute bottom-1 right-5 flex size-10 items-center justify-center rounded-full bg-primary border-[3px] border-card text-primary-foreground shadow-sm">
                 <CheckCircle2 className="size-5" />
               </div>
             )}

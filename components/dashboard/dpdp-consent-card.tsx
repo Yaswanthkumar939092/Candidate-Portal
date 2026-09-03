@@ -17,7 +17,7 @@ interface DpdpConsentCardProps {
 export function DpdpConsentCard({ className, consentUrl }: DpdpConsentCardProps) {
   return (
     <div
-      className={`w-full rounded-3xl border border-[#E5E7EB] bg-white p-8 sm:p-12 text-center shadow-sm ${className || ""}`}
+      className={`w-full rounded-3xl border border-border bg-card p-8 sm:p-12 text-center shadow-sm ${className || ""}`}
     >
       {/* Shield icon with rotating dotted border */}
       <div className="flex justify-center mb-6">
@@ -72,7 +72,7 @@ export function DpdpConsentCard({ className, consentUrl }: DpdpConsentCardProps)
       <Button
         asChild
         size="lg"
-        className="font-semibold rounded-lg px-8 py-3 text-base shadow-md hover:shadow-lg transition-all duration-200 w-full sm:w-auto"
+        className="font-semibold px-8 py-3 text-base shadow-md hover:shadow-lg transition-all duration-200 w-full sm:w-auto"
       >
         <Link href={consentUrl || "/job_offer/consent"}>
           Go to Consent Form

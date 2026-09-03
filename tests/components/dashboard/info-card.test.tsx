@@ -51,10 +51,10 @@ describe("InfoCard", () => {
         label="Joining Date"
         value="Mon, 8 Sep 2025"
         tag="Tomorrow"
-        tagVariant="green"
+        tagVariant="brand"
       />
     );
-    expect(screen.getByText("Tomorrow").className).toContain("text-green-600");
+    expect(screen.getByText("Tomorrow").className).toContain("text-accent-foreground");
 
     rerender(
       <InfoCard 

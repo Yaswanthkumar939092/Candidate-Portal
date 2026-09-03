@@ -217,7 +217,7 @@ export default function DashboardPage() {
                   joiningDate={dashboardData?.date_of_joining}
                 />
               }
-              tagVariant="green"
+              tagVariant="brand"
             />
 
             <InfoCard

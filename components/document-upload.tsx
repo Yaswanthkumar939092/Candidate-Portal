@@ -259,7 +259,7 @@ export function DocumentUpload({
         onClick={() => fileInputRef.current?.click()}
       >
         <CardContent className="flex flex-col items-center justify-center py-8 px-4 text-center">
-          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+          <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
             <Upload className="w-6 h-6 text-gray-400" />
           </div>
           <p className="text-sm font-medium text-gray-900 mb-1">{placeholder}</p>
@@ -285,7 +285,7 @@ export function DocumentUpload({
             {files.map((file) => (
               <div
                 key={file.id}
-                className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border"
+                className="flex items-center space-x-3 p-3 bg-muted rounded-lg border"
               >
                 <div className="flex-shrink-0">
                   {getFileIcon(file.type)}
@@ -302,13 +302,13 @@ export function DocumentUpload({
                   {file.status === "uploading" && (
                     <div className="mt-1">
                       <div className="flex items-center space-x-2">
-                        <div className="flex-1 bg-gray-200 rounded-full h-1.5">
+                        <div className="flex-1 bg-secondary rounded-full h-1.5">
                           <div
                             className="bg-primary h-1.5 rounded-full transition-all"
                             style={{ width: `${file.uploadProgress || 0}%` }}
                           />
                         </div>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-muted-foreground">
                           {file.uploadProgress || 0}%
                         </span>
                       </div>
@@ -349,7 +349,7 @@ export function DocumentUpload({
                     size="sm"
                     variant="ghost"
                     onClick={() => handleRemove(file.id)}
-                    className="text-gray-400 hover:text-red-600 p-1"
+                    className="text-muted-foreground hover:text-destructive p-1"
                   >
                     <X className="w-4 h-4" />
                   </Button>

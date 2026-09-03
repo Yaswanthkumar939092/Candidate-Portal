@@ -252,6 +252,9 @@ export function PortalNavigation({
               pathname.startsWith("/job_offer") ||
               pathname === "/campus-apply" ||
               pathname.startsWith("/campus-apply/");
+            const showCompanyName = Boolean(
+              branding?.logo_includes_company_name,
+            );
             const content = (
               <>
                 <Image
@@ -263,14 +266,21 @@ export function PortalNavigation({
                       : "/fallback.png"
                   }
                   alt={branding?.title_prefix || "Logo"}
-                  width={32}
+                  width={showCompanyName ? 32 : 120}
                   height={32}
                   priority
-                  className="shrink-0"
+                  className={cn(
+                    "shrink-0",
+                    showCompanyName
+                      ? "size-8 rounded-full object-cover"
+                      : "h-8 w-auto max-w-[140px] object-contain",
+                  )}
                 />
-                <span className="text-[14px] sm:text-base font-extrabold text-black uppercase hidden sm:block">
-                  {branding?.title_prefix || ""}
-                </span>
+                {showCompanyName && (
+                  <span className="text-[14px] sm:text-base font-extrabold text-black uppercase hidden sm:block">
+                    {branding?.title_prefix || ""}
+                  </span>
+                )}
               </>
             );
 

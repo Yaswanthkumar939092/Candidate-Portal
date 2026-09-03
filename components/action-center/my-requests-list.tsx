@@ -35,25 +35,25 @@ const STATUS_STYLES: Record<
 > = {
   pending_approval: {
     label: "Pending Approval",
-    badgeClass: "bg-[#FFFAEB] text-[#B54708] hover:bg-[#FFFAEB] dark:bg-orange-900/30 dark:text-orange-400 border border-[#FEDF89] font-medium text-[12px] px-2.5 py-0.5 rounded-full shadow-none",
+    badgeClass: "bg-[#FFFAEB] text-[#B54708] hover:bg-[#FFFAEB] dark:bg-amber-950/40 dark:text-amber-300 dark:hover:bg-amber-950/40 border border-[#FEDF89] dark:border-amber-900 font-medium text-[12px] px-2.5 py-0.5 rounded-full shadow-none",
     iconBgColor: "bg-[#F79009]",
     icon: CalendarClock,
   },
   approved: {
     label: "Approved",
-    badgeClass: "bg-[#ECFDF3] text-[#027A48] hover:bg-[#ECFDF3] dark:bg-green-900/30 dark:text-green-400 border border-[#A6F4C5] font-medium text-[12px] px-2.5 py-0.5 rounded-full shadow-none",
+    badgeClass: "bg-[#ECFDF3] text-[#027A48] hover:bg-[#ECFDF3] dark:bg-green-950/40 dark:text-green-300 dark:hover:bg-green-950/40 border border-[#A6F4C5] dark:border-green-900 font-medium text-[12px] px-2.5 py-0.5 rounded-full shadow-none",
     iconBgColor: "bg-[#12B76A]",
     icon: CalendarClock,
   },
   rejected: {
     label: "Rejected",
-    badgeClass: "bg-red-50 text-[#B42318] hover:bg-red-50 dark:bg-red-900/30 dark:text-red-400 border border-[#FECDCA] font-medium text-[12px] px-2.5 py-0.5 rounded-full shadow-none",
+    badgeClass: "bg-red-50 text-[#B42318] hover:bg-red-50 dark:bg-red-950/40 dark:text-red-300 dark:hover:bg-red-950/40 border border-[#FECDCA] dark:border-red-900 font-medium text-[12px] px-2.5 py-0.5 rounded-full shadow-none",
     iconBgColor: "bg-[#F04438]",
     icon: CalendarClock,
   },
   in_review: {
     label: "In Review",
-    badgeClass: "bg-[#EFF8FF] text-[#175CD3] hover:bg-[#EFF8FF] dark:bg-blue-900/30 dark:text-blue-400 border border-[#B2DDFF] font-medium text-[12px] px-2.5 py-0.5 rounded-full shadow-none",
+    badgeClass: "bg-[#EFF8FF] text-[#175CD3] hover:bg-[#EFF8FF] dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-950/40 border border-[#B2DDFF] dark:border-blue-900 font-medium text-[12px] px-2.5 py-0.5 rounded-full shadow-none",
     iconBgColor: "bg-[#12B76A]",
     icon: CalendarClock,
   },
@@ -95,7 +95,7 @@ export function MyRequestsList({
 
   if (filteredRequests.length === 0) {
     return (
-      <div className="mt-6 rounded-2xl border border-dashed border-slate-200 p-12 text-center dark:border-slate-800">
+      <div className="mt-6 rounded-2xl border border-dashed border-border p-12 text-center">
         <p className="text-sm text-slate-500 dark:text-gray-400">
           No requests found for the selected filter.
         </p>
@@ -117,7 +117,7 @@ export function MyRequestsList({
   return (
     <div className={cn("space-y-6 mt-6", className)}>
       {Object.entries(grouped).map(([category, categoryRequests]) => (
-        <Card key={category} className="rounded-2xl border-slate-200 shadow-sm overflow-hidden dark:border-slate-800 bg-white dark:bg-slate-950 p-0 gap-0">
+        <Card key={category} className="rounded-2xl border-border shadow-sm overflow-hidden bg-card p-0 gap-0">
           <CardHeader className="px-6 pt-6 pb-0 border-none">
             <CardTitle className="text-lg font-bold text-slate-900 tracking-tight dark:text-gray-100 font-sans">
               {category}
@@ -131,7 +131,7 @@ export function MyRequestsList({
                 const bgClass = req.iconColor || statusConfig.iconBgColor
 
                 return (
-                  <Card key={req.id} className="flex flex-col rounded-2xl border border-slate-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950 transition-shadow hover:shadow-md p-0 gap-0 py-0 w-full md:max-w-142.5">
+                  <Card key={req.id} className="flex flex-col rounded-2xl border border-border bg-card shadow-sm dark:bg-muted/30 transition-shadow hover:shadow-md p-0 gap-0 py-0 w-full md:max-w-142.5">
                     <CardContent className="p-5 pb-0">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex items-start gap-4 min-w-0">
@@ -153,7 +153,7 @@ export function MyRequestsList({
                                     setPdfUrl(`${req.attachment}`)// base url lagana padega
                                     setIsOpen(true)
                                   }}
-                                  className="text-blue-600 underline hover:text-blue-800 transition-colors"
+                                  className="text-accent-foreground underline hover:text-accent-foreground/80 transition-colors"
                                 >
                                   View
                                 </button>
@@ -179,7 +179,7 @@ export function MyRequestsList({
                       </div>
                     </CardContent>
 
-                    <div className="mx-5 my-4.5 h-px bg-slate-100 dark:bg-slate-800" />
+                    <div className="mx-5 my-4.5 h-px bg-border" />
                   </Card>
                 )
               })}
@@ -189,11 +189,11 @@ export function MyRequestsList({
       ))}
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-lg w-[80%] h-[80%] p-8 relative">
+          <div className="bg-card rounded-lg w-[80%] h-[80%] p-8 relative">
 
             <button
               onClick={() => setIsOpen(false)}
-              className="absolute top-1 right-3 text-gray-500"
+              className="absolute top-1 right-3 text-muted-foreground hover:text-foreground"
             >
               ✕
             </button>
@@ -201,7 +201,7 @@ export function MyRequestsList({
             {pdfUrl ? (
               <iframe
                 src={`${BASE_URL}${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0`}
-                className="w-full h-full bg-white"
+                className="w-full h-full bg-card"
               />
             ) : (
               <p className="text-center text-gray-500 mt-10">No document available</p>

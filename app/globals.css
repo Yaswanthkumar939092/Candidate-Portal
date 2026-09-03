@@ -25,7 +25,9 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -33,6 +35,7 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
   --color-primary: var(--primary);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
@@ -57,6 +60,10 @@
   --color-border-soft: var(--border-soft);
   --color-nav-active-bg: var(--nav-active-bg);
   --color-nav-active-text: var(--nav-active-text);
+
+  /* NOVA brand */
+  --color-brand: var(--brand);
+  --color-brand-deep: var(--brand-deep);
 }
 
 /* ── Violet (light, default) ──────────────────────────────────── */
@@ -108,6 +115,14 @@
   --border-soft:   #F3EFFB;
   --nav-active-bg:   #7B2CF1;
   --nav-active-text: #FFFFFF;
+
+  /* Tokens added for the retokenised components. --brand/--primary-hover
+     follow --primary so buttons and brand accents track the picker. */
+  --brand:                var(--primary);
+  --brand-deep:           color-mix(in srgb, var(--primary) 45%, #05070C);
+  --primary-hover:        color-mix(in srgb, var(--primary) 85%, var(--foreground));
+  --success-foreground:   #FFFFFF;
+  --destructive-foreground: #FFFFFF;
 }
 
 /* ── Nova-dark ────────────────────────────────────────────────── */
@@ -152,6 +167,93 @@
   --border-soft:   #221C36;
   --nav-active-bg:   #8B5CF6;
   --nav-active-text: #FFFFFF;
+
+  --brand:                var(--primary);
+  --brand-deep:           color-mix(in srgb, var(--primary) 40%, #05070C);
+  --primary-hover:        color-mix(in srgb, var(--primary) 85%, var(--foreground));
+  --success-foreground:   #FFFFFF;
+  --destructive-foreground: #FFFFFF;
+}
+
+/* ── NOVA — opt-in palette, applied only when the backend sends
+      enable_theme_mode = 1 (sets data-brand="nova" on <html>).
+      Nova Cyan #18D9FF is the action color; Nebula Blue #103448
+      anchors the identity and is the ink that reads on top of cyan. ── */
+[data-brand="nova"] {
+  --brand:                #18D9FF;
+  --brand-deep:           #103448;
+
+  --background:           #F6FBFF;
+  --foreground:           #0B1724;
+  --card:                 #FFFFFF;
+  --card-foreground:      #0B1724;
+  --popover:              #FFFFFF;
+  --popover-foreground:   #0B1724;
+  --primary:              #18D9FF;
+  --primary-foreground:   #103448;
+  --secondary:            #E6F1F8;
+  --secondary-foreground: #0B1724;
+  --muted:                #E9F3F8;
+  --muted-foreground:     #6D7E8A;
+  --accent:               #E3F8FF;
+  --accent-foreground:    #103448;
+  --border:               #DDEAF0;
+  --input:                #DDEAF0;
+  --ring:                 #18D9FF;
+  --sidebar:              #FFFFFF;
+  --sidebar-foreground:   #0B1724;
+  --sidebar-primary:      #18D9FF;
+  --sidebar-primary-foreground: #103448;
+  --sidebar-accent:       #E3F8FF;
+  --sidebar-accent-foreground: #103448;
+  --sidebar-border:       #DDEAF0;
+  --sidebar-ring:         #18D9FF;
+
+  --info:          #103448;
+  --info-bg:       #E3F8FF;
+  --text-subtle:   #8EA1AE;
+  --border-soft:   #EFF7FB;
+  --nav-active-bg:   #18D9FF;
+  --nav-active-text: #103448;
+}
+
+/* ── NOVA dark (Cosmic Black canvas) ──────────────────────────── */
+[data-brand="nova"][data-theme="nova-dark"] {
+  --brand:                #18D9FF;
+  --brand-deep:           #103448;
+
+  --background:           #040B12;
+  --foreground:           #F6FBFF;
+  --card:                 #0B1724;
+  --card-foreground:      #F6FBFF;
+  --popover:              #0B1724;
+  --popover-foreground:   #F6FBFF;
+  --primary:              #18D9FF;
+  --primary-foreground:   #04121C;
+  --secondary:            #12293A;
+  --secondary-foreground: #F6FBFF;
+  --muted:                #12293A;
+  --muted-foreground:     #93A7B4;
+  --accent:               #103448;
+  --accent-foreground:    #18D9FF;
+  --border:               #173343;
+  --input:                #173343;
+  --ring:                 #18D9FF;
+  --sidebar:              #0B1724;
+  --sidebar-foreground:   #F6FBFF;
+  --sidebar-primary:      #18D9FF;
+  --sidebar-primary-foreground: #04121C;
+  --sidebar-accent:       #103448;
+  --sidebar-accent-foreground: #18D9FF;
+  --sidebar-border:       #173343;
+  --sidebar-ring:         #18D9FF;
+
+  --info:          #18D9FF;
+  --info-bg:       #103448;
+  --text-subtle:   #6D7E8A;
+  --border-soft:   #12283A;
+  --nav-active-bg:   #18D9FF;
+  --nav-active-text: #103448;
 }
 
 @layer base {
@@ -164,10 +266,11 @@
   }
 }
 
-/* Custom Ultra-Thin Scrollbars */
+/* Custom Ultra-Thin Scrollbars — derived from the active palette, so they
+   follow whichever brand theme (and runtime primary override) is in effect. */
 .scrollbar-thin {
   scrollbar-width: thin;
-  scrollbar-color: rgba(123, 44, 241, 0.2) transparent;
+  scrollbar-color: color-mix(in srgb, var(--primary) 40%, transparent) transparent;
 }
 
 .scrollbar-thin::-webkit-scrollbar {
@@ -180,20 +283,11 @@
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: rgba(86, 76, 110, 0.15);
+  background: color-mix(in srgb, var(--muted-foreground) 25%, transparent);
   border-radius: 9999px;
   transition: background 0.2s ease;
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: rgba(123, 44, 241, 0.4);
-}
-
-/* Dark mode adjustment */
-.dark .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: rgba(163, 156, 189, 0.2);
-}
-
-.dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: rgba(139, 92, 246, 0.55);
+  background: color-mix(in srgb, var(--primary) 55%, transparent);
 }

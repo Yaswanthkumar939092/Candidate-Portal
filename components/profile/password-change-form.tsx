@@ -52,9 +52,9 @@ export function PasswordChangeForm() {
   return (
     <div className="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden">
       {/* Colored section header */}
-      <div className="flex items-center gap-2.5 px-6 py-4 bg-linear-to-r from-violet-50 to-blue-50 dark:from-violet-950/30 dark:to-blue-950/30 border-b">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-900/50">
-          <ShieldCheck className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+      <div className="flex items-center gap-2.5 px-6 py-4 bg-muted/50 border-b">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+          <ShieldCheck className="h-4 w-4 text-primary" />
         </div>
         <h3 className="font-semibold text-foreground">
           Account Security

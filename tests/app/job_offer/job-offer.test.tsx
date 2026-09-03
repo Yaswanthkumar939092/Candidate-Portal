@@ -67,11 +67,6 @@ vi.mock("@/lib/hooks/useUser", () => ({
   useCurrentUser: () => mockUseCurrentUser(),
 }));
 
-const mockUseCompanyLogo = vi.fn();
-vi.mock("@/lib/hooks/useCompanyLogo", () => ({
-  useCompanyLogo: (...args: unknown[]) => mockUseCompanyLogo(...args),
-}));
-
 vi.mock("@/lib/hooks/useSurvey", () => ({
   useSurvey: () => ({
     data: null,
@@ -125,10 +120,6 @@ describe("JobOfferPage", () => {
     mockUseUpdateJobOfferStatus.mockReturnValue({ mutateAsync: vi.fn() });
     mockUseRejectionReasons.mockReturnValue({
       data: [{ reason: "Salary", name: "Salary too low" }],
-      isLoading: false,
-    });
-    mockUseCompanyLogo.mockReturnValue({
-      data: { logo_url: "/logo.png" },
       isLoading: false,
     });
     mockGet.mockReturnValue(null); // No ?appl= param by default

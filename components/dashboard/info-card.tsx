@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface InfoCardProps {
-  /** Icon element rendered inside a blue circle. */
+  /** Icon element rendered inside a brand-tinted circle. */
   icon: React.ReactNode;
   /** Short label describing the value (e.g. "Joining Date"). */
   label: string;
@@ -13,14 +13,14 @@ interface InfoCardProps {
   /** Optional tag or React node displayed in the top-right corner (e.g. "Full Time", "In 24 Days"). */
   tag?: React.ReactNode;
   /** Visual style of the tag. */
-  tagVariant?: "default" | "green" | "link";
+  tagVariant?: "default" | "brand" | "link";
   className?: string;
 }
 
 /**
  * A compact information card for the dashboard.
  *
- * Shows an icon in a blue circle, a label, a primary value, an optional
+ * Shows an icon in a brand-tinted circle, a label, a primary value, an optional
  * subtitle, and an optional tag/badge in the top-right area. Used to display
  * data points like Joining Date, Office Location, and Role & Department.
  */
@@ -38,14 +38,14 @@ export function InfoCard({
       <CardContent className="space-y-3 py-3">
         {/* Top row: icon + tag */}
         <div className="flex items-start justify-between gap-2">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-accent-foreground">
             {icon}
           </div>
           {tag && (
             <span
               className={cn(
                 "shrink-0 text-xs font-medium",
-                tagVariant === "green" && "text-green-600 dark:text-green-400",
+                tagVariant === "brand" && "text-accent-foreground",
                 tagVariant === "link" &&
                   "cursor-pointer text-primary hover:underline",
                 tagVariant === "default" &&

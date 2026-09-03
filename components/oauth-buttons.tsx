@@ -56,7 +56,7 @@ export function OAuthButtons({ mode = "signin", className = "" }: OAuthButtonsPr
             variant="outline"
             onClick={() => handleOAuthSignIn("google")}
             disabled={loadingProvider !== null}
-            className="w-full h-11 border-gray-300 hover:border-gray-400 hover:bg-gray-50 transition-colors duration-200"
+            className="w-full h-11 transition-colors duration-200"
           >
             {loadingProvider === "google" ? (
               <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -73,7 +73,7 @@ export function OAuthButtons({ mode = "signin", className = "" }: OAuthButtonsPr
             variant="outline"
             onClick={() => handleOAuthSignIn("linkedin")}
             disabled={loadingProvider !== null}
-            className="w-full h-11 border-gray-300 hover:border-gray-400 hover:bg-gray-50 transition-colors duration-200"
+            className="w-full h-11 transition-colors duration-200"
           >
             {loadingProvider === "linkedin" ? (
               <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -91,7 +91,7 @@ export function OAuthButtons({ mode = "signin", className = "" }: OAuthButtonsPr
             <span className="w-full border-t border-gray-300" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white px-2 text-gray-500">Or continue with email</span>
+            <span className="bg-card px-2 text-muted-foreground">Or continue with email</span>
           </div>
         </div>
       )}

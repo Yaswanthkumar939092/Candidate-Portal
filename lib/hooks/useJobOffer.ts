@@ -25,6 +25,20 @@ export const useCultureBookPdf = (appl: string, enabled = true, token?: string) 
   return { pdfUrl, isLoading: false, error: null };
 };
 
+/**
+ * Whether a culture book exists for this application. `useCultureBookPdf` only
+ * builds a URL and is always truthy, so callers that need to hide the entry
+ * point entirely must ask the endpoint.
+ */
+export const useCultureBookAvailability = (appl: string, enabled = true, token?: string) => {
+  return useQuery({
+    queryKey: ["cultureBookAvailability", appl, token],
+    queryFn: () => jobOfferService.isCultureBookAvailable(appl, token),
+    enabled: !!appl && enabled,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+};
+
 export const useJobOfferLetters = (appl: string, enabled = true, token?: string) => {
   return useQuery({
     queryKey: ["jobOfferLetters", appl, token],

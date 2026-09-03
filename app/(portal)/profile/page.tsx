@@ -78,7 +78,7 @@ export default function ProfilePage() {
           variant="outline"
           onClick={handleSignOut}
           disabled={isSigningOut}
-          className="gap-2 border-rose-200 text-rose-600 hover:bg-rose-50 hover:border-rose-300 hover:text-rose-700 dark:border-rose-800 dark:text-rose-400 dark:hover:bg-rose-950/40"
+          className="gap-2 border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive/50 hover:text-destructive"
         >
           {isSigningOut ? (
             <Loader2 className="h-4 w-4 animate-spin" />

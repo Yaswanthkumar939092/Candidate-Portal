@@ -129,7 +129,7 @@ export function PortalStepperSidebar({
   return (
     <div
       className={cn(
-        "w-full md:w-85 md:self-stretch shrink-0 bg-[#f8fafc] dark:bg-[#111827] border border-border/60 rounded-2xl p-5 flex flex-col gap-6 shadow-sm",
+        "w-full md:w-85 md:self-stretch shrink-0 bg-card border border-border/60 rounded-2xl p-5 flex flex-col gap-6 shadow-sm",
         className,
       )}
     >
@@ -157,7 +157,7 @@ export function PortalStepperSidebar({
                     isOngoing
                       ? "text-primary-foreground"
                       : isCompleted
-                        ? "text-emerald-500"
+                        ? "text-success"
                         : "text-muted-foreground",
                   )}
                 />
@@ -172,9 +172,9 @@ export function PortalStepperSidebar({
                   className={cn(
                     "text-[10px] font-bold px-2 py-0.5 rounded-full tracking-wider",
                     isOngoing
-                      ? "bg-white/20 text-white"
+                      ? "bg-primary-foreground/20 text-primary-foreground"
                       : isCompleted
-                        ? "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400"
+                        ? "bg-success-bg text-success-text"
                         : "bg-muted text-muted-foreground",
                   )}
                 >
@@ -195,9 +195,9 @@ export function PortalStepperSidebar({
             "flex items-center justify-between p-4 rounded-xl transition-all duration-300 w-full text-left",
             isOngoing
               ? "bg-primary text-primary-foreground shadow-md scale-[1.02]"
-              : "bg-white dark:bg-card border border-border/50 text-foreground",
+              : "bg-muted border border-border/50 text-foreground",
             !isOngoing && ((!isViewOnly && step.redirect_url) || hasExpandedItems) &&
-              "hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer",
+              "hover:bg-accent cursor-pointer",
             isOngoing && hasExpandedItems &&
               "hover:opacity-90 cursor-pointer"
           );
@@ -232,10 +232,10 @@ export function PortalStepperSidebar({
                       key={item.id}
                       onClick={() => onItemSelect?.(index)}
                       className={cn(
-                        "text-left px-3 py-2 text-[0.8rem] font-medium rounded-lg transition-colors truncate",
+                        "text-left px-3 py-2 text-[0.8rem] font-medium rounded-lg border transition-colors truncate",
                         activeItemIndex === index
-                          ? "bg-primary/10 text-primary"
-                          : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                          ? "bg-primary/10 border-primary/30 text-primary"
+                          : "bg-muted border-border/50 text-foreground hover:bg-accent"
                       )}
                       title={item.label}
                     >
@@ -259,11 +259,11 @@ export function PortalStepperSidebar({
       <div className="hidden md:block flex-1 min-h-10" />
 
       {/* Bottom Card: Next Step */}
-      <div className="bg-[#eaf2ff] dark:bg-[#1e293b]/40 rounded-xl p-4 border border-blue-100/50 dark:border-slate-800">
-        <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider block mb-1">
+      <div className="bg-muted rounded-xl p-4 border border-border/50">
+        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-1">
           Next Step
         </span>
-        <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+        <span className="text-sm font-semibold text-foreground">
           {nextStepText}
         </span>
       </div>
