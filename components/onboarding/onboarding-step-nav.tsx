@@ -50,9 +50,17 @@ export function OnboardingStepNav({ className }: OnboardingStepNavProps) {
 
       tab.sections.forEach((section) => {
         section.fields.forEach((field) => {
-          const isVisible =
+          let isVisible =
             !field.hidden &&
             (!field.depends_on || evaluateDependsOn(field.depends_on, doc));
+
+          if (field.fieldname === "custom_communication_address_proof" && doc["custom_same_as_permanent"]) {
+            isVisible = false;
+          }
+          if (field.fieldname === "custom_jf_employment" && doc["is_fresher"]) {
+            isVisible = false;
+          }
+
           if (!isVisible) return;
 
           if (field.fieldtype === "Table") {
@@ -214,10 +222,18 @@ export function OnboardingStepNav({ className }: OnboardingStepNavProps) {
               let allFilled = true;
               currentTab.sections.forEach((section) => {
                 section.fields.forEach((field) => {
-                  const isVisible =
+                  let isVisible =
                     !field.hidden &&
                     (!field.depends_on ||
                       evaluateDependsOn(field.depends_on, doc));
+
+                  if (field.fieldname === "custom_communication_address_proof" && doc["custom_same_as_permanent"]) {
+                    isVisible = false;
+                  }
+                  if (field.fieldname === "custom_jf_employment" && doc["is_fresher"]) {
+                    isVisible = false;
+                  }
+
                   if (!isVisible) return;
 
                   const isMandatory =
