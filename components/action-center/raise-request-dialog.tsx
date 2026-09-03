@@ -191,7 +191,7 @@ export function RaiseRequestDialog({
     className="flex cursor-pointer flex-col items-center gap-[12px] rounded-lg border-dashed border-2 border-slate-200 dark:border-slate-800 bg-white hover:bg-slate-50 dark:bg-slate-950 px-6 py-8 text-center transition-colors shadow-xs"
     onClick={() => fileInputRef.current?.click()} // ✅ FIX
   >
-    <div className="flex size-[42px] items-center justify-center rounded-full bg-[#F2F4F7] dark:bg-slate-800 border-[6px] box-content border-[#F9FAFB] dark:border-slate-900 mt-1">
+    <div className="flex size-[42px] items-center justify-center rounded-full bg-muted border-[6px] box-content border-[#F9FAFB] dark:border-slate-900 mt-1">
       <Upload
         className="h-[18px] w-[18px] text-[#475467] dark:text-slate-400"
         strokeWidth={2.5}
@@ -216,7 +216,7 @@ export function RaiseRequestDialog({
   <div className="mt-3">
     <div
       style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "8px", alignItems: "center" }}
-      className="rounded-md bg-slate-50 border border-slate-200 px-3 py-2 text-sm w-full"
+      className="rounded-md bg-muted border border-border px-3 py-2 text-sm w-full"
     >
       <span
         className="text-slate-700 font-medium text-xs truncate block min-w-0"

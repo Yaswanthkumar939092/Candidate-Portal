@@ -523,7 +523,7 @@ export function OnboardingRightRail({
             <div className="flex flex-col gap-4">
               {formConfig.onboarding_journey.steps?.map((step, idx) => (
                 <div key={idx} className="flex gap-3 items-start">
-                  <div className="w-8 h-8 rounded-lg bg-[#F5F2FF] text-[#5B2EE5] flex items-center justify-center shrink-0 select-none">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 select-none">
                     {(() => {
                       const IconComponent = (() => {
                         switch (idx % 5) {
@@ -637,7 +637,7 @@ export function OnboardingRightRail({
               })}
             </div>
           ) : (
-            <div className="text-xs text-muted-foreground font-medium mt-3 text-center py-4 bg-[#F9F9FB] rounded-xl border border-dashed border-border/60">
+            <div className="text-xs text-muted-foreground font-medium mt-3 text-center py-4 bg-muted rounded-xl border border-dashed border-border/60">
               No onboarding buddy assigned yet.
             </div>
           )}
@@ -645,7 +645,7 @@ export function OnboardingRightRail({
       </div>
 
       {/* Sticky Bottom Actions Card */}
-      <div className="sticky bottom-0 bg-[#F4F5F7] dark:bg-zinc-950 pt-0 pb-2 z-10">
+      <div className="sticky bottom-0 bg-background pt-0 pb-2 z-10">
         <div className="bg-card border border-border rounded-xl p-5 shadow-md flex flex-col gap-3">
           {!isReviewStep && (
             <Button

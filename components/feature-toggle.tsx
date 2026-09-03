@@ -64,7 +64,7 @@ export function FeatureToggle({
       case 'string': return 'bg-green-100 text-green-800'
       case 'number': return 'bg-purple-100 text-purple-800'
       case 'json': return 'bg-orange-100 text-orange-800'
-      default: return 'bg-gray-100 text-gray-800'
+      default: return 'bg-muted text-foreground'
     }
   }
 
@@ -98,7 +98,7 @@ export function FeatureToggle({
               {flag.description || 'No description provided'}
             </CardDescription>
             <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-              <span className="font-mono bg-gray-100 px-1 py-0.5 rounded">{flag.key}</span>
+              <span className="font-mono bg-muted px-1 py-0.5 rounded">{flag.key}</span>
             </div>
           </div>
           <div className="flex items-center space-x-2">
@@ -151,7 +151,7 @@ export function FeatureToggle({
         {/* Default Value */}
         <div className="space-y-1">
           <Label className="text-sm font-medium">Default Value</Label>
-          <div className="text-sm text-muted-foreground font-mono bg-gray-50 p-2 rounded border">
+          <div className="text-sm text-muted-foreground font-mono bg-muted p-2 rounded border">
             {typeof flag.default_value === 'object'
               ? JSON.stringify(flag.default_value)
               : String(flag.default_value)

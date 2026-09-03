@@ -189,7 +189,7 @@ export function MyRequestsList({
       ))}
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-lg w-[80%] h-[80%] p-8 relative">
+          <div className="bg-card rounded-lg w-[80%] h-[80%] p-8 relative">
 
             <button
               onClick={() => setIsOpen(false)}
@@ -201,7 +201,7 @@ export function MyRequestsList({
             {pdfUrl ? (
               <iframe
                 src={`${BASE_URL}${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0`}
-                className="w-full h-full bg-white"
+                className="w-full h-full bg-card"
               />
             ) : (
               <p className="text-center text-gray-500 mt-10">No document available</p>

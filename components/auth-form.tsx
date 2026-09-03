@@ -93,7 +93,7 @@ export function AuthForm({
   };
 
   return (
-    <div className="w-full max-w-[1240px] mx-auto flex flex-col md:flex-row bg-white md:rounded-[24px] md:shadow-2xl overflow-hidden min-h-screen md:min-h-[580px] lg:min-h-[640px]">
+    <div className="w-full max-w-[1240px] mx-auto flex flex-col md:flex-row bg-card md:rounded-[24px] md:shadow-2xl overflow-hidden min-h-screen md:min-h-[580px] lg:min-h-[640px]">
       {/* Left Pane - 50% */}
       <div
         className="hidden md:flex flex-col w-[50%] relative"

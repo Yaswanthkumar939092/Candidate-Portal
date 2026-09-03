@@ -178,7 +178,7 @@ function OnboardingContent() {
           <div className="flex justify-center">
             <div className="relative">
               <div className="absolute -inset-4 rounded-full bg-red-500/10 blur-xl" />
-              <div className="relative flex h-24 w-24 items-center justify-center rounded-3xl bg-white shadow-2xl shadow-red-500/10">
+              <div className="relative flex h-24 w-24 items-center justify-center rounded-3xl bg-card shadow-2xl shadow-red-500/10">
                 <ClipboardX className="h-12 w-12 text-red-500" />
               </div>
             </div>
@@ -259,7 +259,7 @@ function OnboardingContent() {
     : getInitialSectionTitle(currentTabConfig);
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] lg:h-[calc(100vh-4rem)] lg:overflow-hidden flex flex-col bg-[#F4F5F7] dark:bg-zinc-950">
+    <div className="min-h-[calc(100vh-4rem)] lg:h-[calc(100vh-4rem)] lg:overflow-hidden flex flex-col bg-background">
       {/* Mobile progress indicator */}
       {status !== "submitted" && (
         <div className="fixed left-0 right-0 top-16 z-45 border-b border-border bg-card px-4 py-3 lg:hidden">

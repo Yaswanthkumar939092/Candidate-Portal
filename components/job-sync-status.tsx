@@ -100,8 +100,8 @@ export function JobSyncStatus() {
         return {
           icon: XCircle,
           color: 'text-gray-600',
-          bg: 'bg-gray-50',
-          badge: 'bg-gray-100 text-gray-800',
+          bg: 'bg-muted',
+          badge: 'bg-muted text-foreground',
           label: 'Disconnected',
           description: 'Not connected to Frappe'
         }
