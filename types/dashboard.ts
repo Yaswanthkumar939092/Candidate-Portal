@@ -1,3 +1,5 @@
+import type { ConsentMode } from "./consent";
+
 export type DashboardWorkLocationDetails = {
   name: string;
   branch: string;
@@ -47,6 +49,11 @@ export type DashboardData = {
   dpdp_consent_required?: boolean;
   dpdp_consent_submitted?: boolean;
   dpdp_consent_url?: string;
+  /**
+   * Which consent journey the candidate is on. Absent on an older backend,
+   * which the consent card reads as the in-app form - the original behaviour.
+   */
+  dpdp_consent_mode?: ConsentMode | string | null;
 };
 
 export interface DashboardApiResponse {

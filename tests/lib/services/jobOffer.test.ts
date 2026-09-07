@@ -136,4 +136,41 @@ describe("jobOfferService", () => {
 
     await expect(jobOfferService.getJobOfferSummary("test")).rejects.toThrow(mockError);
   });
+
+  it("startConsentSession posts to the external consent endpoint", async () => {
+    const mockRes = { already_consented: false, session_id: "s1", consent_url: "https://l.hffc.in/x" };
+    (FrappeAPI.post as any).mockResolvedValue(mockRes);
+
+    const result = await jobOfferService.startConsentSession("test@test.com", "my-token");
+
+    expect(result).toEqual(mockRes);
+    expect(FrappeAPI.post).toHaveBeenCalledWith(
+      expect.stringContaining("start_consent_session"),
+      { appl: "test@test.com", token: "my-token" }
+    );
+  });
+
+  it("startConsentSession omits the token when there isn't one", async () => {
+    (FrappeAPI.post as any).mockResolvedValue({ already_consented: false });
+
+    await jobOfferService.startConsentSession("test@test.com");
+
+    expect(FrappeAPI.post).toHaveBeenCalledWith(
+      expect.stringContaining("start_consent_session"),
+      { appl: "test@test.com" }
+    );
+  });
+
+  it("getConsentSessionStatus calls the status endpoint", async () => {
+    const mockRes = { enabled: true, consent_given: true, consent_log: "DPDP-CONSENT-2026-00007" };
+    (FrappeAPI.get as any).mockResolvedValue(mockRes);
+
+    const result = await jobOfferService.getConsentSessionStatus("test@test.com", "my-token");
+
+    expect(result).toEqual(mockRes);
+    expect(FrappeAPI.get).toHaveBeenCalledWith(
+      expect.stringContaining("get_consent_session_status"),
+      { appl: "test@test.com", token: "my-token" }
+    );
+  });
 });

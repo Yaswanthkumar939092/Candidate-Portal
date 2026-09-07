@@ -192,7 +192,11 @@ export default function DashboardPage() {
       />
 
       {dashboardData?.dpdp_consent_required && dashboardData?.dpdp_consent_submitted === false ? (
-        <DpdpConsentCard consentUrl={dashboardData?.dpdp_consent_url} />
+        <DpdpConsentCard
+          consentUrl={dashboardData?.dpdp_consent_url}
+          consentMode={dashboardData?.dpdp_consent_mode}
+          appl={user?.email}
+        />
       ) : dashboardData?.onboarding_status === false ? (
         <EmptyState />
       ) : (
