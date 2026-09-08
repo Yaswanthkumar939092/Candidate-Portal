@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { jobOfferService } from "../services/jobOffer";
+import type { ConsentSessionStatusResponse } from "@/types/consent";
 
 export const useJobOfferSummary = (appl: string, enabled = true, token?: string) => {
   return useQuery({
@@ -93,5 +94,56 @@ export const useConsentForm = (appl: string, token: string) => {
 export const useSubmitConsent = () => {
   return useMutation({
     mutationFn: jobOfferService.submitConsent,
+  });
+};
+
+/** How often the return page asks whether the external portal's callback landed. */
+export const CONSENT_STATUS_POLL_MS = 3000;
+
+/**
+ * Issues or re-issues an external consent link.
+ *
+ * Deliberately not retried by react-query: the endpoint hands back an in-flight
+ * link (`reused: true`) rather than minting a new one, so a retry would only add
+ * load without changing the answer.
+ */
+export const useStartConsentSession = () => {
+  return useMutation({
+    mutationFn: ({ appl, token }: { appl: string; token?: string }) =>
+      jobOfferService.startConsentSession(appl, token),
+    retry: false,
+  });
+};
+
+/**
+ * Polls whether the external portal's consent callback has reached our backend.
+ *
+ * The candidate's browser can beat the callback home, so the return page keeps
+ * asking until `consent_given` flips true - at which point polling stops on its
+ * own and the dashboard cache is dropped so the consent card disappears.
+ */
+export const useConsentSessionStatus = (
+  appl: string,
+  token?: string,
+  enabled = true,
+) => {
+  const queryClient = useQueryClient();
+
+  return useQuery<ConsentSessionStatusResponse>({
+    queryKey: ["consentSessionStatus", appl, token],
+    queryFn: async () => {
+      const status = await jobOfferService.getConsentSessionStatus(appl, token);
+      if (status?.consent_given) {
+        // The dashboard's dpdp_consent_submitted flag is now stale.
+        queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      }
+      return status;
+    },
+    enabled: !!appl && enabled,
+    // Consent state changes out of band, so a cached answer is never good enough.
+    staleTime: 0,
+    refetchInterval: (query) =>
+      query.state.data?.consent_given ? false : CONSENT_STATUS_POLL_MS,
+    refetchIntervalInBackground: false,
   });
 };

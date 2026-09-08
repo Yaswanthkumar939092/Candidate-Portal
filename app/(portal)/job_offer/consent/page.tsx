@@ -2,10 +2,12 @@
 
 import React, { useState, Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2, ShieldCheck, ArrowLeft, Check } from "lucide-react";
+import { Loader2, ShieldCheck, ArrowLeft, Check, AlertCircle, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useConsentForm, useSubmitConsent } from "@/lib/hooks/useJobOffer";
+import { useExternalConsentHandoff } from "@/lib/hooks/useExternalConsentHandoff";
+import { isExternalConsentMode } from "@/types/consent";
 
 export default function DpdpConsentPage() {
   return (
@@ -36,13 +38,12 @@ function ConsentContent() {
     token,
   );
   const { mutateAsync: submitConsent } = useSubmitConsent();
-  console.log("Consent Form data:", consentData);
 
-  useEffect(() => {
-    if (consentData) {
-      console.log("Consent Form response:", consentData);
-    }
-  }, [consentData]);
+  // In External Portal mode the backend returns no form to render - just the
+  // mode and a link - so this page hands the candidate off instead.
+  const isExternalMode = isExternalConsentMode(consentData?.consent_mode);
+  const { handoff: handoffToExternalConsent, failed: handoffFailed } =
+    useExternalConsentHandoff(appl, token);
 
   const [consents, setConsents] = useState<Record<string, boolean>>({});
   const [acknowledgement, setAcknowledgement] = useState<
@@ -89,6 +90,18 @@ function ConsentContent() {
       }
     }
   }, [isSubmitted, countdown, appl, token, router]);
+
+  /**
+   * External mode: leave for the consent portal as soon as we know the mode.
+   *
+   * Runs once - `handoff` is stable and `handoffFailed` is deliberately not a
+   * dependency, so a failure lands on the retry panel instead of looping.
+   */
+  useEffect(() => {
+    if (!isExternalMode || isSubmitted) return;
+    void handoffToExternalConsent(consentData?.consent_url);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isExternalMode, isSubmitted, consentData?.consent_url]);
 
   if (isConsentLoading) {
     return (
@@ -169,6 +182,64 @@ function ConsentContent() {
     if (token) params.append("token", token);
     router.push(`/job_offer?${params.toString()}`);
   };
+
+  // External mode returns no form, so rendering the declaration below would
+  // produce an empty page. Show the hand-off instead - or a retry if it failed.
+  if (isExternalMode) {
+    return (
+      <div className="font-sans text-foreground bg-background min-h-[calc(100vh-4rem)] flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-card rounded-2xl border border-border/60 shadow-sm p-6 sm:p-8 text-center flex flex-col items-center">
+          {handoffFailed ? (
+            <>
+              <div className="p-4 bg-destructive/10 rounded-full text-destructive mb-5 border border-destructive/20">
+                <AlertCircle className="h-10 w-10 stroke-2" />
+              </div>
+              <h2 className="text-xl sm:text-2xl font-semibold text-foreground mb-3">
+                Consent portal unavailable
+              </h2>
+              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-6">
+                We couldn&apos;t open the secure consent portal just now. Your
+                offer is unaffected - please try again, or contact your HR
+                contact if this keeps happening.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                <Button
+                  variant="outline"
+                  onClick={handleBack}
+                  className="w-full sm:w-auto"
+                >
+                  Back to Offer
+                </Button>
+                <Button
+                  onClick={() => void handoffToExternalConsent(consentData?.consent_url)}
+                  className="w-full sm:w-auto"
+                >
+                  Try again
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="p-4 bg-primary/10 rounded-full text-primary mb-5 border border-primary/20">
+                <ExternalLink className="h-10 w-10 stroke-2" />
+              </div>
+              <h2 className="text-xl sm:text-2xl font-semibold text-foreground mb-3">
+                Taking you to the consent portal
+              </h2>
+              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-6">
+                Your DPDP consent is collected on a secure partner portal. You
+                will be brought back here once it is complete.
+              </p>
+              <div className="w-full flex items-center justify-center py-2.5 rounded-lg text-sm text-muted-foreground bg-muted border border-border/60">
+                <Loader2 className="h-4 w-4 animate-spin mr-2 text-primary" />
+                Redirecting...
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   const headerInfo = consentData?.header;
   const introContent = consentData?.intro_content;

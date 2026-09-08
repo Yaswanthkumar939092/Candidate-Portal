@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import JobOfferPage from "@/app/(portal)/job_offer/page";
 import { toast } from "sonner";
@@ -53,6 +53,11 @@ const mockUseUpdateJobOfferStatus = vi.fn();
 const mockUseJobOfferStatus = vi.fn();
 const mockUseRejectionReasons = vi.fn();
 
+const mockStartConsentSession = vi.fn();
+const mockUseStartConsentSession = vi.fn(() => ({
+  mutateAsync: mockStartConsentSession,
+}));
+
 vi.mock("@/lib/hooks/useJobOffer", () => ({
   useJobOfferSummary: (...args: unknown[]) => mockUseJobOfferSummary(...args),
   useJobOfferPdf: (...args: unknown[]) => mockUseJobOfferPdf(...args),
@@ -60,6 +65,7 @@ vi.mock("@/lib/hooks/useJobOffer", () => ({
   useUpdateJobOfferStatus: () => mockUseUpdateJobOfferStatus(),
   useJobOfferStatus: (...args: unknown[]) => mockUseJobOfferStatus(...args),
   useRejectionReasons: (...args: unknown[]) => mockUseRejectionReasons(...args),
+  useStartConsentSession: () => mockUseStartConsentSession(),
 }));
 
 const mockUseCurrentUser = vi.fn();
@@ -507,6 +513,166 @@ describe("JobOfferPage", () => {
       expect(mockPush).toHaveBeenCalledWith(
         expect.stringMatching(/\/job_offer\/consent\?appl=param%40example.com&token=my-token-123/)
       );
+    });
+  });
+
+  describe("external DPDP consent mode", () => {
+    const paramEmail = "param@example.com";
+    const token = "my-token-123";
+    let assign: ReturnType<typeof vi.fn>;
+    let originalLocation: Location;
+
+    beforeEach(() => {
+      mockGet.mockImplementation((key: string) => {
+        if (key === "appl") return paramEmail;
+        if (key === "token") return token;
+        return null;
+      });
+
+      assign = vi.fn();
+      originalLocation = window.location;
+      Object.defineProperty(window, "location", {
+        configurable: true,
+        value: { ...originalLocation, assign },
+      });
+    });
+
+    afterEach(() => {
+      Object.defineProperty(window, "location", {
+        configurable: true,
+        value: originalLocation,
+      });
+    });
+
+    const acceptOffer = () => {
+      render(<JobOfferPage />);
+      fireEvent.click(screen.getByRole("checkbox"));
+      fireEvent.click(screen.getByRole("button", { name: /Accept Offer/i }));
+    };
+
+    it("leaves the site for the handed-over consent URL", async () => {
+      mockUseUpdateJobOfferStatus.mockReturnValue({
+        mutateAsync: vi.fn().mockResolvedValue({
+          jo_id: "JO1",
+          webform: "",
+          dpdp_consent_required: true,
+          dpdp_consent_mode: "External Portal",
+          dpdp_consent_url: "https://l.hffc.in/HFFCIN/gqsPk",
+          dpdp_consent_session: "sess-1",
+        }),
+      });
+
+      acceptOffer();
+
+      await waitFor(() => {
+        expect(assign).toHaveBeenCalledWith("https://l.hffc.in/HFFCIN/gqsPk");
+      });
+      // The in-app consent form is for Internal Form mode only.
+      expect(mockPush).not.toHaveBeenCalledWith(
+        expect.stringContaining("/job_offer/consent"),
+      );
+      expect(mockStartConsentSession).not.toHaveBeenCalled();
+    });
+
+    it("re-issues a link when acceptance came back without one", async () => {
+      mockUseUpdateJobOfferStatus.mockReturnValue({
+        mutateAsync: vi.fn().mockResolvedValue({
+          jo_id: "JO1",
+          webform: "",
+          dpdp_consent_required: true,
+          dpdp_consent_mode: "External Portal",
+          dpdp_consent_url: null,
+        }),
+      });
+      mockStartConsentSession.mockResolvedValue({
+        already_consented: false,
+        session_id: "sess-2",
+        consent_url: "https://l.hffc.in/HFFCIN/reissued",
+        reused: true,
+      });
+
+      acceptOffer();
+
+      await waitFor(() => {
+        expect(mockStartConsentSession).toHaveBeenCalledWith({
+          appl: paramEmail,
+          token,
+        });
+      });
+      await waitFor(() => {
+        expect(assign).toHaveBeenCalledWith("https://l.hffc.in/HFFCIN/reissued");
+      });
+    });
+
+    it("navigates nowhere when no link can be obtained", async () => {
+      mockUseUpdateJobOfferStatus.mockReturnValue({
+        mutateAsync: vi.fn().mockResolvedValue({
+          jo_id: "JO1",
+          webform: "",
+          dpdp_consent_required: true,
+          dpdp_consent_mode: "External Portal",
+          dpdp_consent_url: null,
+        }),
+      });
+      mockStartConsentSession.mockRejectedValue(new Error("portal down"));
+
+      acceptOffer();
+
+      await waitFor(() => {
+        expect(mockStartConsentSession).toHaveBeenCalled();
+      });
+      // The offer is still accepted; the candidate is left on the page with a
+      // retry rather than being sent to a broken link or a blank consent form.
+      expect(assign).not.toHaveBeenCalled();
+      expect(mockPush).not.toHaveBeenCalledWith(
+        expect.stringContaining("/job_offer/consent"),
+      );
+    });
+
+    it("skips the portal when the session says consent is already recorded", async () => {
+      mockUseUpdateJobOfferStatus.mockReturnValue({
+        mutateAsync: vi.fn().mockResolvedValue({
+          jo_id: "JO1",
+          webform: "",
+          dpdp_consent_required: true,
+          dpdp_consent_mode: "External Portal",
+          dpdp_consent_url: null,
+        }),
+      });
+      mockStartConsentSession.mockResolvedValue({
+        already_consented: true,
+        consent_log: "DPDP-CONSENT-2026-00007",
+        redirect_url: null,
+      });
+
+      acceptOffer();
+
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith(
+          expect.stringContaining("/onboarding"),
+        );
+      });
+      expect(assign).not.toHaveBeenCalled();
+    });
+
+    it("still uses the in-app form when the mode is Internal Form", async () => {
+      mockUseUpdateJobOfferStatus.mockReturnValue({
+        mutateAsync: vi.fn().mockResolvedValue({
+          jo_id: "JO1",
+          webform: "",
+          dpdp_consent_required: true,
+          dpdp_consent_mode: "Internal Form",
+        }),
+      });
+
+      acceptOffer();
+
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith(
+          expect.stringContaining("/job_offer/consent"),
+        );
+      });
+      expect(assign).not.toHaveBeenCalled();
     });
   });
 });

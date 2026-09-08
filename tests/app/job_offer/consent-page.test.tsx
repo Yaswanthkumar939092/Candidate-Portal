@@ -75,9 +75,15 @@ const mockSubmitConsentMutate = vi.fn().mockResolvedValue({});
 const mockUseSubmitConsent = vi.fn().mockReturnValue({
   mutateAsync: mockSubmitConsentMutate,
 });
+const mockStartConsentSession = vi.fn();
+const mockUseStartConsentSession = vi.fn(() => ({
+  mutateAsync: mockStartConsentSession,
+}));
+
 vi.mock("@/lib/hooks/useJobOffer", () => ({
   useConsentForm: (...args: unknown[]) => mockUseConsentForm(...args),
   useSubmitConsent: () => mockUseSubmitConsent(),
+  useStartConsentSession: () => mockUseStartConsentSession(),
 }));
 
 describe("DpdpConsentPage", () => {
@@ -170,5 +176,114 @@ describe("DpdpConsentPage", () => {
     await waitFor(() => {
       expect(mockPush).toHaveBeenCalledWith("/onboarding?appl=test%40example.com&token=my-token");
     }, { timeout: 4000 });
+  });
+
+  describe("External Portal mode", () => {
+    let assign: ReturnType<typeof vi.fn>;
+    let originalLocation: Location;
+
+    const externalPayload = {
+      enabled: true,
+      consent_mode: "External Portal",
+      consent_url: "https://l.hffc.in/HFFCIN/gqsPk",
+      already_consented: false,
+    };
+
+    beforeEach(() => {
+      assign = vi.fn();
+      originalLocation = window.location;
+      Object.defineProperty(window, "location", {
+        configurable: true,
+        value: { ...originalLocation, assign },
+      });
+    });
+
+    afterEach(() => {
+      Object.defineProperty(window, "location", {
+        configurable: true,
+        value: originalLocation,
+      });
+      // Leave the shared form mock as the other tests expect to find it.
+      mockUseConsentForm.mockReturnValue({
+        data: mockConsentData,
+        isLoading: false,
+      });
+    });
+
+    it("hands off to the consent portal instead of rendering an empty form", async () => {
+      mockUseConsentForm.mockReturnValue({
+        data: externalPayload,
+        isLoading: false,
+      });
+
+      render(<DpdpConsentPage />);
+
+      await waitFor(() => {
+        expect(assign).toHaveBeenCalledWith("https://l.hffc.in/HFFCIN/gqsPk");
+      });
+      expect(screen.getByText(/Taking you to the consent portal/i)).toBeInTheDocument();
+      // The in-app declaration must not render in external mode.
+      expect(screen.queryByRole("button", { name: /Submit Consent/i })).toBeNull();
+    });
+
+    it("re-issues a link when the backend sent none", async () => {
+      mockUseConsentForm.mockReturnValue({
+        data: { ...externalPayload, consent_url: null },
+        isLoading: false,
+      });
+      mockStartConsentSession.mockResolvedValue({
+        already_consented: false,
+        consent_url: "https://l.hffc.in/HFFCIN/reissued",
+        reused: true,
+      });
+
+      render(<DpdpConsentPage />);
+
+      await waitFor(() => {
+        expect(mockStartConsentSession).toHaveBeenCalledWith({
+          appl: "test@example.com",
+          token: "my-token",
+        });
+      });
+      await waitFor(() => {
+        expect(assign).toHaveBeenCalledWith("https://l.hffc.in/HFFCIN/reissued");
+      });
+    });
+
+    it("shows a retry when the portal cannot be reached", async () => {
+      mockUseConsentForm.mockReturnValue({
+        data: { ...externalPayload, consent_url: null },
+        isLoading: false,
+      });
+      mockStartConsentSession.mockRejectedValue(new Error("portal down"));
+
+      render(<DpdpConsentPage />);
+
+      await waitFor(() => {
+        expect(screen.getByText(/Consent portal unavailable/i)).toBeInTheDocument();
+      });
+
+      mockStartConsentSession.mockResolvedValue({
+        already_consented: false,
+        consent_url: "https://l.hffc.in/HFFCIN/retry-worked",
+      });
+      fireEvent.click(screen.getByRole("button", { name: /Try again/i }));
+
+      await waitFor(() => {
+        expect(assign).toHaveBeenCalledWith("https://l.hffc.in/HFFCIN/retry-worked");
+      });
+    });
+
+    it("keeps rendering the in-app form when the mode is Internal Form", () => {
+      mockUseConsentForm.mockReturnValue({
+        data: { ...mockConsentData, consent_mode: "Internal Form" },
+        isLoading: false,
+      });
+
+      render(<DpdpConsentPage />);
+
+      expect(screen.getByRole("button", { name: /Submit Consent/i })).toBeInTheDocument();
+      expect(assign).not.toHaveBeenCalled();
+    });
   });
 });
