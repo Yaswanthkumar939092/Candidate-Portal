@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, Suspense, useEffect } from "react";
+import React, { useState, Suspense, useEffect, useCallback } from "react";
 import { Loader2, AlertCircle, LogOut, ClipboardList, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -12,6 +12,9 @@ import {
   useJobOfferStatus,
   useRejectionReasons,
 } from "@/lib/hooks/useJobOffer";
+import { useExternalConsentHandoff } from "@/lib/hooks/useExternalConsentHandoff";
+import { isExternalConsentMode } from "@/types/consent";
+import { CONSENT_FORM_PATH, buildConsentPath } from "@/lib/utils/dpdp-consent";
 import { useCurrentUser } from "@/lib/hooks/useUser";
 import PdfViewer from "./PdfViewer";
 import { Button } from "@/components/ui/button";
@@ -76,6 +79,19 @@ function openPdfPreview(url: string) {
   }
 }
 
+/**
+ * The consent hand-over returned by `job_offer_update` on acceptance.
+ *
+ * `url` is null when the backend's call to the external consent portal failed;
+ * the offer page then re-issues a link rather than dead-ending the candidate.
+ */
+type ConsentHandoff = {
+  required: boolean;
+  mode?: string | null;
+  url?: string | null;
+  session?: string | null;
+};
+
 export default function JobOfferPage() {
   return (
     <Suspense
@@ -123,9 +139,19 @@ function JobOfferContent() {
   const [justAccepted, setJustAccepted] = useState(false);
   const [justRejected, setJustRejected] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [consentRequiredAfterAccept, setConsentRequiredAfterAccept] =
-    useState(false);
+  // Everything acceptance handed back about the consent journey. Null until the
+  // offer is accepted in this session; `required: false` keeps the old flow.
+  const [consentHandoff, setConsentHandoff] = useState<ConsentHandoff | null>(
+    null,
+  );
   const [countdown, setCountdown] = useState(5);
+
+  const consentRequiredAfterAccept = consentHandoff?.required === true;
+  const isExternalConsent = isExternalConsentMode(consentHandoff?.mode);
+  // `failed` is set only when neither the handed-over link nor a re-issued one
+  // could be used; the countdown is then swapped for a retry.
+  const { handoff: handoffToExternalConsent, failed: consentLinkFailed } =
+    useExternalConsentHandoff(applicantEmail, tokenParam);
 
   // Only fetch summary and PDF if status is awaiting response or just accepted/rejected in this session
   const isSummaryNeeded =
@@ -201,40 +227,53 @@ function JobOfferContent() {
     }
   }, [statusNormalized, justAccepted, justRejected]);
 
-  useEffect(() => {
-    if (gameState === "accepted" && consentRequiredAfterAccept) {
-      if (process.env.NODE_ENV === "test") {
-        const params = new URLSearchParams();
-        if (applicantEmail) params.append("appl", applicantEmail);
-        if (tokenParam) params.append("token", tokenParam);
-        router.push(`/job_offer/consent?${params.toString()}`);
-        return;
-      }
-
-      setCountdown(5);
-      const timer = setInterval(() => {
-        setCountdown((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            const params = new URLSearchParams();
-            if (applicantEmail) params.append("appl", applicantEmail);
-            if (tokenParam) params.append("token", tokenParam);
-            router.push(`/job_offer/consent?${params.toString()}`);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      return () => clearInterval(timer);
+  /**
+   * Sends the candidate wherever their consent mode says to go.
+   *
+   * `Internal Form` (and any backend that sends no mode at all) keeps the
+   * original in-app route. `External Portal` leaves the site for the link
+   * acceptance handed us; when that link is missing - the backend's own call to
+   * the consent portal failed - we re-issue one before giving up.
+   */
+  const startConsentJourney = useCallback(async () => {
+    if (!isExternalConsent) {
+      router.push(buildConsentPath(CONSENT_FORM_PATH, applicantEmail, tokenParam));
+      return;
     }
+    await handoffToExternalConsent(consentHandoff?.url);
   }, [
-    gameState,
-    consentRequiredAfterAccept,
+    isExternalConsent,
+    consentHandoff?.url,
     applicantEmail,
     tokenParam,
     router,
+    handoffToExternalConsent,
   ]);
+
+  useEffect(() => {
+    if (gameState !== "accepted" || !consentRequiredAfterAccept) return;
+
+    if (process.env.NODE_ENV === "test") {
+      void startConsentJourney();
+      return;
+    }
+
+    setCountdown(5);
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          void startConsentJourney();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+    // Intentionally not keyed on the failure flag: the retry button re-runs the
+    // journey directly, so a failed hand-off must not restart this countdown.
+  }, [gameState, consentRequiredAfterAccept, startConsentJourney]);
 
   const [isTermsChecked, setIsTermsChecked] = useState(false);
   const [isAccepting, setIsAccepting] = useState(false);
@@ -255,11 +294,14 @@ function JobOfferContent() {
         ...(tokenParam ? { token: tokenParam } : {}),
       });
 
-      if (response?.dpdp_consent_required) {
-        setConsentRequiredAfterAccept(true);
-      } else {
-        setConsentRequiredAfterAccept(false);
-      }
+      // Acceptance now carries the consent hand-over, so the happy path needs
+      // no extra call. Keep the whole shape - the redirect target depends on it.
+      setConsentHandoff({
+        required: response?.dpdp_consent_required === true,
+        mode: response?.dpdp_consent_mode ?? null,
+        url: response?.dpdp_consent_url ?? null,
+        session: response?.dpdp_consent_session ?? null,
+      });
 
       setJustAccepted(true);
       setGameState("accepted");
@@ -786,11 +828,37 @@ function JobOfferContent() {
               and LMS journey.
             </div> */}
             <div className="text-[0.95rem] text-foreground leading-[1.6]">
-              {consentRequiredAfterAccept ? (
+              {consentRequiredAfterAccept && consentLinkFailed ? (
+                <div className="flex flex-col items-center gap-3 py-2 text-center">
+                  <span className="font-medium text-destructive flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 text-destructive" />
+                    We couldn&apos;t open the consent portal just now.
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    Your offer is safely accepted. Consent is still pending, so
+                    please try again - or come back to it from your dashboard.
+                  </span>
+                  <div className="flex flex-col sm:flex-row items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => router.push("/dashboard")}
+                    >
+                      Go to Dashboard
+                    </Button>
+                    <Button size="sm" onClick={() => void startConsentJourney()}>
+                      Try again
+                    </Button>
+                  </div>
+                </div>
+              ) : consentRequiredAfterAccept ? (
                 <div className="flex flex-col items-center gap-2 py-2 text-center">
                   <span className="font-medium text-warning flex items-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin text-warning" />
-                    Redirecting to the DPDP Consent Form in {countdown} {countdown === 1 ? "second" : "seconds"}...
+                    {isExternalConsent
+                      ? "Taking you to the secure consent portal"
+                      : "Redirecting to the DPDP Consent Form"}{" "}
+                    in {countdown} {countdown === 1 ? "second" : "seconds"}...
                   </span>
                   <span className="text-xs text-muted-foreground">
                     Please do not close or refresh this window.

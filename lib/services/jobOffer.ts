@@ -1,6 +1,11 @@
 import { FrappeAPI } from "../frappe-api";
 import { frappeApiBase } from "../frappe-base";
-import { ConsentFormResponse } from "@/types/consent";
+import {
+  ConsentFormResponse,
+  ConsentMode,
+  ConsentSessionStartResponse,
+  ConsentSessionStatusResponse,
+} from "@/types/consent";
 
 export interface JobOfferSummary {
   expiry_display: string | null;
@@ -36,7 +41,17 @@ export interface UpdateJobOfferStatusParams {
 export interface UpdateJobOfferStatusResponse {
   jo_id: string;
   webform: string;
+  /** False (or absent) means the offer flow ends here, exactly as it always has. */
   dpdp_consent_required?: boolean;
+  /** Which consent journey to run. Absent on an older backend - treat as internal. */
+  dpdp_consent_mode?: ConsentMode | string | null;
+  /**
+   * The external consent link, handed over on the happy path so no extra call is
+   * needed. Null means the portal call failed on the backend - fall back to
+   * `startConsentSession`.
+   */
+  dpdp_consent_url?: string | null;
+  dpdp_consent_session?: string | null;
 }
 
 export interface RejectionReason {
@@ -131,6 +146,47 @@ export const jobOfferService = {
         appl,
         token,
       }
+    );
+  },
+
+  /**
+   * Issues - or re-issues - an external consent link.
+   *
+   * Used when the candidate abandoned the journey, the link expired, or the
+   * acceptance response carried no `dpdp_consent_url`. A `reused: true` reply is
+   * the in-flight link rather than a new one and must not be retried away.
+   */
+  startConsentSession: async (
+    appl: string,
+    token?: string
+  ): Promise<ConsentSessionStartResponse> => {
+    const payload: Record<string, unknown> = { appl };
+    if (token) {
+      payload.token = token;
+    }
+    return await FrappeAPI.post(
+      "recruitment.dpdp_external_consent.start_consent_session",
+      payload
+    );
+  },
+
+  /**
+   * Whether the external portal's callback has landed yet.
+   *
+   * The candidate's browser can arrive back before the callback does, so this is
+   * polled on the return page and `consent_given` is the only field to gate on.
+   */
+  getConsentSessionStatus: async (
+    appl: string,
+    token?: string
+  ): Promise<ConsentSessionStatusResponse> => {
+    const params: Record<string, string> = { appl };
+    if (token) {
+      params.token = token;
+    }
+    return await FrappeAPI.get(
+      "recruitment.dpdp_external_consent.get_consent_session_status",
+      params
     );
   },
 
