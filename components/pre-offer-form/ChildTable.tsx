@@ -181,7 +181,7 @@ export function PreOfferTableField({
     <div className={cn("space-y-3", className)}>
       <Label className="text-sm font-medium text-foreground">
         {field.label}
-        {field.reqd && <span className="text-destructive"> *</span>}
+        {!!field.reqd && <span className="text-destructive"> *</span>}
       </Label>
 
       {/* Rows */}
