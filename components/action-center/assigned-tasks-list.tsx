@@ -8,6 +8,10 @@ import {
   Hourglass,
   FileText,
   Check,
+  Briefcase,
+  Building2,
+  MapPin,
+  BadgeCheck,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -16,6 +20,13 @@ import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { frappeApiBase } from "@/lib/frappe-base"
+
+/** A single job detail rendered as a chip on the task card. */
+export interface TaskJobChip {
+  label: string
+  value: string
+  icon: "job" | "designation" | "department" | "location" | "employmentType"
+}
 
 export interface Task {
   attachment: string
@@ -29,6 +40,8 @@ export interface Task {
   completedDate?: string
   icon?: string
   iconColor?: string
+  /** Job details (title, designation, department, location, type) shown as chips */
+  jobChips?: TaskJobChip[]
 }
 
 const STATUS_STYLES: Record<string, { label: string; badgeClass: string; iconBgColor: string; icon: React.ElementType }> = {
@@ -56,6 +69,15 @@ const STATUS_STYLES: Record<string, { label: string; badgeClass: string; iconBgC
     iconBgColor: "bg-[#F79009]",
     icon: Hourglass,
   },
+}
+
+/** Icons for the job detail chips shown on a task card. */
+const JOB_CHIP_ICONS: Record<TaskJobChip["icon"], React.ElementType> = {
+  job: Briefcase,
+  designation: BadgeCheck,
+  department: Building2,
+  location: MapPin,
+  employmentType: Clock,
 }
 
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -141,6 +163,24 @@ export function AssignedTasksList({
                             <div className="flex flex-col pt-0.5 min-w-0">
                               <h4 className="font-bold text-base text-slate-900 dark:text-gray-100 leading-tight ">{task.title}</h4>
                               <span className="text-xs text-[#667085] mt-1.5 font-medium dark:text-gray-400 leading-none ">{task?.description || "No description available"}</span>
+
+                              {task.jobChips && task.jobChips.length > 0 && (
+                                <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                                  {task.jobChips.map((chip) => {
+                                    const ChipIcon = JOB_CHIP_ICONS[chip.icon] ?? Briefcase
+                                    return (
+                                      <span
+                                        key={`${chip.icon}-${chip.value}`}
+                                        title={`${chip.label}: ${chip.value}`}
+                                        className="inline-flex max-w-full items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground"
+                                      >
+                                        <ChipIcon className="h-3 w-3 shrink-0" />
+                                        <span className="truncate">{chip.value}</span>
+                                      </span>
+                                    )
+                                  })}
+                                </div>
+                              )}
 
                               {task.attachment && (<span className="text-xs text-[#667085] mt-1.5 font-medium dark:text-gray-400 leading-none truncate">
                                 Document:<button

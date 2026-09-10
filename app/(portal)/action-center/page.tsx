@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import {
   AssignedTasksList,
   type Task,
+  type TaskJobChip,
 } from "@/components/action-center/assigned-tasks-list"
 import {
   MyRequestsList,
@@ -37,6 +38,53 @@ function mapApiStatusToTaskStatus(
     default:
       return "action_required"
   }
+}
+
+/**
+ * Builds the job detail chips (title, designation, department, location,
+ * employment type) from an item's `job` object. Fields that are missing or
+ * blank are skipped, and duplicate values (e.g. job title == designation)
+ * are only shown once.
+ */
+function mapJobToChips(job: any): TaskJobChip[] {
+  if (!job) return []
+
+  const candidates: TaskJobChip[] = [
+    { label: "Job", value: job.job_title, icon: "job" },
+    {
+      label: "Designation",
+      value: job.designation_name || job.designation,
+      icon: "designation",
+    },
+    {
+      label: "Department",
+      value: job.department_name || job.department,
+      icon: "department",
+    },
+    {
+      label: "Location",
+      value: job.location_name || job.location,
+      icon: "location",
+    },
+    {
+      label: "Employment Type",
+      value: job.employment_type_name || job.employment_type,
+      icon: "employmentType",
+    },
+  ]
+
+  const seen = new Set<string>()
+  return candidates.reduce<TaskJobChip[]>((acc, chip) => {
+    const value = typeof chip.value === "string" ? chip.value.trim() : ""
+    if (!value) return acc
+
+    const key = value.toLowerCase()
+    if (seen.has(key)) return acc
+    seen.add(key)
+
+    acc.push({ ...chip, value })
+    return acc
+  }, [])
 }
 
 /**
@@ -74,6 +122,7 @@ function mapApiItemsToTasks(items: any[]): Task[] {
       ...(isCompleted
         ? { completedDate: formattedDate }
         : { dueDate: formattedDate }),
+      jobChips: mapJobToChips(item.job),
       // Optionally carry through redirect for click handling
       redirectUrl: item.redirect_url,
     } satisfies Task & { redirectUrl?: string }
