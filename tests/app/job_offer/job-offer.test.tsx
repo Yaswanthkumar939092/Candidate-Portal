@@ -141,7 +141,7 @@ describe("JobOfferPage", () => {
     render(<JobOfferPage />);
     expect(screen.getAllByText("Offer of Employment")[0]).toBeTruthy();
     expect(screen.getByText("Software Engineer")).toBeTruthy();
-    expect(screen.getByText("$5000")).toBeTruthy();
+    expect(screen.getByText("$5,000")).toBeTruthy();
     expect(screen.getByText(/OFFER EXPIRES IN 48 HOURS/)).toBeTruthy();
   });
 
@@ -158,9 +158,9 @@ describe("JobOfferPage", () => {
         variable: 0,
         total: 0,
         stipend_formatted: null,
-        fixed_formatted: "$10000",
-        variable_formatted: "$2000",
-        total_formatted: "$12000",
+        fixed_formatted: "₹1000000",
+        variable_formatted: "₹ 200,000.00",
+        total_formatted: "₹1200000",
       },
       isLoading: false,
     });
@@ -168,11 +168,11 @@ describe("JobOfferPage", () => {
     render(<JobOfferPage />);
 
     expect(screen.getByText("Fixed Pay")).toBeTruthy();
-    expect(screen.getByText("$10000")).toBeTruthy();
+    expect(screen.getByText("₹10,00,000")).toBeTruthy();
     expect(screen.getByText("Variable Pay")).toBeTruthy();
-    expect(screen.getByText("$2000")).toBeTruthy();
+    expect(screen.getByText("₹ 2,00,000.00")).toBeTruthy();
     expect(screen.getByText("Total")).toBeTruthy();
-    expect(screen.getByText("$12000")).toBeTruthy();
+    expect(screen.getByText("₹12,00,000")).toBeTruthy();
     expect(screen.queryByText("Stipend")).toBeNull();
   });
 

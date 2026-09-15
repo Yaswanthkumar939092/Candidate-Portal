@@ -20,6 +20,7 @@ import PdfViewer from "./PdfViewer";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
 import { PortalStepperSidebar } from "@/components/portal/portal-stepper-sidebar";
+import { formatIndianAmount } from "@/lib/utils";
 
 async function downloadPdf(url: string, filename: string = "Offer_Letter.pdf") {
   try {
@@ -504,8 +505,10 @@ function JobOfferContent() {
                             Stipend
                           </span>
                           <span className="text-[0.85rem] font-semibold text-foreground text-right">
-                            {offerData.stipend_formatted ||
-                              offerData.stipend_display}
+                            {formatIndianAmount(
+                              offerData.stipend_formatted ||
+                                offerData.stipend_display
+                            )}
                           </span>
                         </div>
                       )}
@@ -517,7 +520,7 @@ function JobOfferContent() {
                               Fixed Pay
                             </span>
                             <span className="text-[0.85rem] font-semibold text-foreground text-right">
-                              {offerData.fixed_formatted}
+                              {formatIndianAmount(offerData.fixed_formatted)}
                             </span>
                           </div>
                         )}
@@ -528,7 +531,7 @@ function JobOfferContent() {
                               Variable Pay
                             </span>
                             <span className="text-[0.85rem] font-semibold text-foreground text-right">
-                              {offerData.variable_formatted}
+                              {formatIndianAmount(offerData.variable_formatted)}
                             </span>
                           </div>
                         )}
@@ -539,7 +542,7 @@ function JobOfferContent() {
                               Location Allowance
                             </span>
                             <span className="text-[0.85rem] font-semibold text-foreground text-right">
-                              {offerData.location_allowance_formatted}
+                              {formatIndianAmount(offerData.location_allowance_formatted)}
                             </span>
                           </div>
                         )}
@@ -550,7 +553,7 @@ function JobOfferContent() {
                               Total
                             </span>
                             <span className="text-[0.85rem] font-semibold text-foreground text-right">
-                              {offerData.total_formatted}
+                              {formatIndianAmount(offerData.total_formatted)}
                             </span>
                           </div>
                         )}
