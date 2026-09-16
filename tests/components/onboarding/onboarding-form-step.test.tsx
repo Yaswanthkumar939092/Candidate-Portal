@@ -286,6 +286,43 @@ describe("OnboardingFormStep", () => {
     // 4. Update permanent address field while checkbox is checked, expect automatic sync
     fireEvent.change(screen.getByTestId("input-custom_permanent_address"), { target: { value: "456 New Permanent Rd" } });
     expect(commAddressInput.value).toBe("456 New Permanent Rd");
+
+    // 5. Unchecking clears the copied communication address fields
+    fireEvent.change(screen.getByTestId("input-custom_same_as_permanent"), { target: { value: "" } });
+    expect(commAddressInput.value).toBe("");
+    expect(commCityInput.value).toBe("");
+    // Permanent fields are untouched
+    expect((screen.getByTestId("input-custom_permanent_address") as HTMLInputElement).value).toBe("456 New Permanent Rd");
+  });
+
+  it("keeps saved communication address when custom_same_as_permanent starts unchecked", () => {
+    const addressTab: OnboardingTab = {
+      tab: "Address",
+      sections: [
+        {
+          section: "Addresses",
+          fields: [
+            { fieldname: "custom_same_as_permanent", label: "Same as Permanent", fieldtype: "Check", is_mandatory: 0, read_only: 0, hidden: 0 },
+            { fieldname: "custom_permanent_address", label: "Permanent Address", fieldtype: "Data", is_mandatory: 0, read_only: 0, hidden: 0 },
+            { fieldname: "custom_communication_address", label: "Communication Address", fieldtype: "Data", is_mandatory: 0, read_only: 0, hidden: 0 }
+          ]
+        }
+      ]
+    };
+
+    vi.mocked(useOnboarding).mockReturnValue({
+      ...defaultContext,
+      stepData: {
+        address_sync: {
+          custom_same_as_permanent: 0,
+          custom_permanent_address: "123 Permanent Rd",
+          custom_communication_address: "999 Different Rd",
+        },
+      },
+    });
+    render(<OnboardingFormStep tab={addressTab} stepKey="address_sync" />);
+
+    expect((screen.getByTestId("input-custom_communication_address") as HTMLInputElement).value).toBe("999 Different Rd");
   });
 
   it("disables buttons when isSaving is true", () => {

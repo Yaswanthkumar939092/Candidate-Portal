@@ -53,6 +53,48 @@ function createEducationTab(): OnboardingTab {
   };
 }
 
+function createFamilyTab(): OnboardingTab {
+  return {
+    tab: "Family Details",
+    sections: [
+      {
+        section: "Family Details",
+        fields: [
+          {
+            fieldname: "custom_family_details",
+            label: "Family Details",
+            fieldtype: "Table",
+            is_mandatory: 1,
+            read_only: 0,
+            hidden: 0,
+            child_fields: [
+              {
+                fieldname: "relation",
+                label: "Relation",
+                fieldtype: "Select",
+                options: "Father\nMother\nSpouse\nChild",
+                is_mandatory: 1,
+                reqd: 1,
+                read_only: 0,
+                hidden: 0,
+              },
+              {
+                fieldname: "member_name",
+                label: "Name",
+                fieldtype: "Data",
+                is_mandatory: 1,
+                reqd: 1,
+                read_only: 0,
+                hidden: 0,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+}
+
 describe("validateOnboardingStep", () => {
   it("returns nested errors for required child fields in rendered table rows", () => {
     const tab: OnboardingTab = {
@@ -107,6 +149,60 @@ describe("validateOnboardingStep", () => {
     expect((tableErrors as typeof tableErrors & { message?: string }).message).toBe(
       "Please complete all required fields in Education Details",
     );
+  });
+
+  it("requires a Spouse row in family details when marital status is Married", () => {
+    const errors = validateOnboardingStep(
+      createFamilyTab(),
+      {
+        custom_family_details: [{ relation: "Father", member_name: "Ramesh" }],
+      },
+      { personal_details: { custom_marital_status: "Married" } },
+    );
+
+    expect((errors.custom_family_details as { message?: string }).message).toBe(
+      'Your marital status is Married, so Family Details must include a row with relation "Spouse"',
+    );
+  });
+
+  it("accepts family details with a Spouse row when marital status is Married", () => {
+    const errors = validateOnboardingStep(
+      createFamilyTab(),
+      {
+        custom_family_details: [
+          { relation: "Father", member_name: "Ramesh" },
+          { relation: "Spouse", member_name: "Priya" },
+        ],
+      },
+      { personal_details: { custom_marital_status: "Married" } },
+    );
+
+    expect(errors.custom_family_details).toBeUndefined();
+  });
+
+  it("still flags an incomplete Spouse row when marital status is Married", () => {
+    const errors = validateOnboardingStep(
+      createFamilyTab(),
+      {
+        custom_family_details: [{ relation: "Spouse", member_name: "" }],
+      },
+      { personal_details: { custom_marital_status: "Married" } },
+    );
+
+    const tableErrors = errors.custom_family_details as Array<Record<string, { message?: string }>>;
+    expect(tableErrors[0].member_name.message).toBe("Name is required");
+  });
+
+  it("does not require a Spouse row when marital status is Unmarried", () => {
+    const errors = validateOnboardingStep(
+      createFamilyTab(),
+      {
+        custom_family_details: [{ relation: "Father", member_name: "Ramesh" }],
+      },
+      { personal_details: { custom_marital_status: "Unmarried" } },
+    );
+
+    expect(errors.custom_family_details).toBeUndefined();
   });
 
   it("requires 10th, 12th, and Graduation education details before continuing", () => {
