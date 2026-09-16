@@ -193,6 +193,10 @@ function setTableRootError(
 const REQUIRED_EDUCATION_LEVELS = ["10th", "12th", "Graduation"];
 const POST_GRADUATION_LEVEL = "Post Graduation";
 
+const FAMILY_DETAILS_FIELDNAME = "custom_family_details";
+const RELATION_FIELDNAME = "relation";
+const SPOUSE_RELATION = "spouse";
+
 function isYes(value: unknown) {
   return String(value ?? "").trim().toLowerCase() === "yes";
 }
@@ -386,6 +390,40 @@ export function validateOnboardingStep(
                   message: `Year of passing for ${next.level} must be after ${current.level} (${current.year})`,
                 });
                 break;
+              }
+            }
+          }
+        }
+
+        // A married candidate must declare their spouse in Family Details.
+        if (effectiveField.fieldname === FAMILY_DETAILS_FIELDNAME) {
+          const isMarried =
+            String(doc["custom_marital_status"] ?? "").trim().toLowerCase() ===
+            "married";
+
+          if (isMarried) {
+            const relationChildField = effectiveField.child_fields?.find(
+              (childField) => childField.fieldname === RELATION_FIELDNAME,
+            );
+            // Use the option as the DocType spells it, so the message matches the dropdown.
+            const spouseOption = getSelectOptions(
+              relationChildField?.options,
+            ).find((option) => option.toLowerCase() === SPOUSE_RELATION);
+
+            // If the form offers no spouse option there is nothing to enforce.
+            if (spouseOption) {
+              const hasSpouseRow = nonEmptyRows.some(
+                (row) =>
+                  String(row[RELATION_FIELDNAME] || "")
+                    .trim()
+                    .toLowerCase() === SPOUSE_RELATION,
+              );
+
+              if (!hasSpouseRow) {
+                setTableRootError(errorList, effectiveField.fieldname, {
+                  type: "required",
+                  message: `Your marital status is Married, so ${effectiveField.label || "Family Details"} must include a row with relation "${spouseOption}"`,
+                });
               }
             }
           }

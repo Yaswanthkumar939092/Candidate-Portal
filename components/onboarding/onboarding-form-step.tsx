@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useCallback } from "react";
+import React, { useEffect, useMemo, useCallback, useRef } from "react";
 import {
   Control,
   FieldErrors,
@@ -239,11 +239,14 @@ export function OnboardingFormStep({
   const currentFormValues = useWatch({ control });
 
   const addressSyncPairs = useMemo(() => {
-    const fieldnames = new Set(
+    const fieldtypes = new Map(
       tab.sections.flatMap((section) =>
-        section.fields.map((field) => field.fieldname),
+        section.fields.map(
+          (field) => [field.fieldname, field.fieldtype] as const,
+        ),
       ),
     );
+    const fieldnames = new Set(fieldtypes.keys());
 
     return [...fieldnames].flatMap((fieldname) => {
       const lowerFieldname = fieldname.toLowerCase();
@@ -265,7 +268,13 @@ export function OnboardingFormStep({
         return [];
       }
 
-      return [{ permanentFieldname: fieldname, communicationFieldname }];
+      return [
+        {
+          permanentFieldname: fieldname,
+          communicationFieldname,
+          communicationFieldtype: fieldtypes.get(communicationFieldname),
+        },
+      ];
     });
   }, [tab]);
 
@@ -379,6 +388,29 @@ export function OnboardingFormStep({
     getValues,
     setValue,
   ]);
+
+  // Clear the copied communication address when custom_same_as_permanent is
+  // unchecked. Only fires on an actual checked -> unchecked transition, so a
+  // form loaded with the box already unchecked keeps its saved values.
+  const wasSameAsPermanentChecked = useRef(sameAsPermanentChecked);
+  useEffect(() => {
+    const wasChecked = wasSameAsPermanentChecked.current;
+    wasSameAsPermanentChecked.current = sameAsPermanentChecked;
+
+    if (!wasChecked || sameAsPermanentChecked) {
+      return;
+    }
+
+    addressSyncPairs.forEach(
+      ({ communicationFieldname, communicationFieldtype }) => {
+        setValue(
+          communicationFieldname,
+          communicationFieldtype === "Table" ? [] : "",
+          { shouldValidate: false, shouldDirty: true },
+        );
+      },
+    );
+  }, [sameAsPermanentChecked, addressSyncPairs, setValue]);
 
   // Automatically clear fields when they become hidden
   useEffect(() => {
