@@ -1,6 +1,6 @@
 "use client"
 
-import { Check, Building2, MapPin, Clock, Briefcase, CalendarDays, User } from "lucide-react"
+import { Check, X, Building2, MapPin, Clock, Briefcase, CalendarDays, User } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -112,6 +112,25 @@ function mapFlagsToStage(flags: ApiFlag[]): ApplicationStage {
   return FLAG_STATUS_MAP[last?.status] ?? "pending"
 }
 
+const ACCEPTED_STATUS = "Accepted"
+const REJECTED_STATUS = "Rejected"
+
+/**
+ * The pipeline carries both possible outcomes, but only one of them can happen.
+ * Show the outcome the candidate actually reached and drop the other, so a
+ * rejected application never advertises an "Accepted" step and vice versa.
+ * While the application is still in progress neither has happened yet, so we
+ * keep "Accepted" as the pending destination and hide "Rejected".
+ */
+function visibleFlags(flags: ApiFlag[]): ApiFlag[] {
+  if (!flags || !Array.isArray(flags)) return []
+
+  const isRejected = flags.some((f) => f?.status === REJECTED_STATUS && f.flag)
+  const droppedStatus = isRejected ? ACCEPTED_STATUS : REJECTED_STATUS
+
+  return flags.filter((f) => f?.status !== droppedStatus)
+}
+
 function ApplicationStageBadge({
   stage,
   className,
@@ -145,6 +164,7 @@ export function AppliedJobsTimeline({
     <div className={cn("space-y-4", className)}>
       {applications.map((app) => {
         const stage = mapFlagsToStage(app.flags)
+        const flags = visibleFlags(app.flags)
         const { designation, company, location, experience_range, employment_type } = app.job
         return (
           <Card key={app.id} className="shadow-sm">
@@ -223,9 +243,12 @@ export function AppliedJobsTimeline({
               {/* ── Timeline from flags ── */}
               <div className="px-2">
                 <div className="grid grid-cols-6 md:grid-cols-8 xl:grid-cols-12 items-center">
-                  {app.flags.map((flag, idx) => {
+                  {flags.map((flag, idx) => {
                     const isActive = flag.flag
-                    const prevActive = idx > 0 ? app.flags[idx - 1].flag : false
+                    const prevFlag = idx > 0 ? flags[idx - 1] : undefined
+                    const prevActive = prevFlag ? prevFlag.flag : false
+                    // A reached "Rejected" node is an outcome, not a cleared step.
+                    const isFailure = isActive && flag.status === REJECTED_STATUS
 
                     return (
                       <React.Fragment key={flag.status}>
@@ -233,11 +256,13 @@ export function AppliedJobsTimeline({
                         {idx > 0 && (
                           <div className="relative h-1 flex-1">
                             <div className="absolute inset-0 rounded-full bg-muted" />
-                            {prevActive && isActive && (
-                              <div className="absolute inset-0 rounded-full bg-green-500" />
-                            )}
-                            {prevActive && !isActive && (
-                              <div className="absolute inset-0 rounded-full bg-green-500" />
+                            {prevActive && (
+                              <div
+                                className={cn(
+                                  "absolute inset-0 rounded-full",
+                                  isFailure ? "bg-red-500" : "bg-green-500"
+                                )}
+                              />
                             )}
                           </div>
                         )}
@@ -245,7 +270,11 @@ export function AppliedJobsTimeline({
                         {/* Node + label stacked, but node stays in the flex row */}
                         <div className="flex flex-col items-center mt-10">
                           {/* Node circle */}
-                          {isActive ? (
+                          {isFailure ? (
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-500">
+                              <X className="h-4 w-4 text-white" />
+                            </div>
+                          ) : isActive ? (
                             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-500">
                               <Check className="h-4 w-4 text-white" />
                             </div>
@@ -259,7 +288,11 @@ export function AppliedJobsTimeline({
                           <span
                             className={cn(
                               "mt-2 text-center text-xs font-medium whitespace-nowrap",
-                              isActive ? "text-foreground" : "text-muted-foreground/50"
+                              isFailure
+                                ? "text-red-600 dark:text-red-400"
+                                : isActive
+                                  ? "text-foreground"
+                                  : "text-muted-foreground/50"
                             )}
                           >
                             {flag.status}

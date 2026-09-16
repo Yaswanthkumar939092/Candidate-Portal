@@ -16,6 +16,7 @@ vi.mock("@/components/my-jobs/view-application-modal", () => ({
 
 vi.mock("lucide-react", () => ({
   Check: () => <div data-testid="icon-check" />,
+  X: () => <div data-testid="icon-x" />,
   Building2: () => <div data-testid="icon-building" />,
   MapPin: () => <div data-testid="icon-map-pin" />,
   Clock: () => <div data-testid="icon-clock" />,
@@ -121,6 +122,76 @@ describe("AppliedJobsTimeline", () => {
       expect(screen.getAllByText("15-01-2024").length).toBe(2)
       expect(screen.getByText("20-01-2024")).toBeTruthy()
       expect(screen.getByText("25-01-2024")).toBeTruthy()
+    })
+
+    const fullPipeline = (overrides: Record<string, { flag: boolean; date: string | null }> = {}) =>
+      ["Open", "Screening", "Interview", "Approvals", "Accepted", "Rejected"].map((status) => {
+        const reached = overrides[status]
+        return { status, flag: reached?.flag ?? false, date: reached?.date ?? null }
+      })
+
+    it("shows only Rejected when the application was rejected", () => {
+      const app = {
+        ...mockApplication,
+        flags: fullPipeline({
+          Open: { flag: true, date: "2024-01-15" },
+          Screening: { flag: true, date: "2024-01-20" },
+          Rejected: { flag: true, date: "2024-02-01" },
+        }),
+      }
+      renderTimeline([app])
+
+      // Twice: the header badge and the stepper node label
+      expect(screen.getAllByText("Rejected").length).toBe(2)
+      expect(screen.queryByText("Accepted")).toBeNull()
+      // Non-outcome stages are untouched
+      expect(screen.getByText("Approvals")).toBeTruthy()
+    })
+
+    it("shows only Accepted when the application was accepted", () => {
+      const app = {
+        ...mockApplication,
+        flags: fullPipeline({
+          Open: { flag: true, date: "2024-01-15" },
+          Screening: { flag: true, date: "2024-01-20" },
+          Interview: { flag: true, date: "2024-01-25" },
+          Approvals: { flag: true, date: "2024-01-30" },
+          Accepted: { flag: true, date: "2024-02-01" },
+        }),
+      }
+      renderTimeline([app])
+
+      expect(screen.getByText("Accepted")).toBeTruthy()
+      expect(screen.queryByText("Rejected")).toBeNull()
+    })
+
+    it("hides Rejected while the application is still in progress", () => {
+      const app = {
+        ...mockApplication,
+        flags: fullPipeline({
+          Open: { flag: true, date: "2024-01-15" },
+          Screening: { flag: true, date: "2024-01-20" },
+        }),
+      }
+      renderTimeline([app])
+
+      expect(screen.queryByText("Rejected")).toBeNull()
+      // Accepted stays as the pending destination
+      expect(screen.getByText("Accepted")).toBeTruthy()
+    })
+
+    it("renders a rejected stage as a failure rather than a cleared step", () => {
+      const app = {
+        ...mockApplication,
+        flags: fullPipeline({
+          Open: { flag: true, date: "2024-01-15" },
+          Rejected: { flag: true, date: "2024-02-01" },
+        }),
+      }
+      const { container } = renderTimeline([app])
+
+      expect(screen.getByTestId("icon-x")).toBeTruthy()
+      expect(container.querySelector(".bg-red-500")).toBeTruthy()
     })
 
     it("does not display date for future stages without date", () => {
