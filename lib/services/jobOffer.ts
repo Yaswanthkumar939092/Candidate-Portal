@@ -14,19 +14,14 @@ export interface JobOfferSummary {
   duration_display: string | null;
   expected_doj_display: string | null;
   trainee_doj_display?: string | null;
-  stipend_display: string | null;
+  stipend_display?: string | null;
   employment_type?: string | null;
   compensation_type?: string | null;
   stipend?: number | null;
   fixed?: number | null;
   variable?: number | null;
+  total_fixed?: number | null;
   total?: number | null;
-  stipend_formatted?: string | null;
-  fixed_formatted?: string | null;
-  variable_formatted?: string | null;
-  location_allowance?: number | null;
-  location_allowance_formatted?: string | null;
-  total_formatted?: string | null;
   count?: number;
 }
 
