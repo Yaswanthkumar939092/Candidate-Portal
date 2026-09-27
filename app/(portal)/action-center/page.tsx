@@ -41,7 +41,7 @@ function mapApiStatusToTaskStatus(
 }
 
 /**
- * Builds the job detail chips (title, designation, department, location,
+ * Builds the job detail chips (title, designation, department, company, location,
  * employment type) from an item's `job` object. Fields that are missing or
  * blank are skipped, and duplicate values (e.g. job title == designation)
  * are only shown once.
@@ -60,6 +60,11 @@ function mapJobToChips(job: any): TaskJobChip[] {
       label: "Department",
       value: job.department_name || job.department,
       icon: "department",
+    },
+    {
+      label: "Company",
+      value: job.company_name || job.company,
+      icon: "company",
     },
     {
       label: "Location",

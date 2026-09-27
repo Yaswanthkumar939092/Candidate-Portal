@@ -12,6 +12,7 @@ import {
   Building2,
   MapPin,
   BadgeCheck,
+  Landmark,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -25,7 +26,7 @@ import { frappeApiBase } from "@/lib/frappe-base"
 export interface TaskJobChip {
   label: string
   value: string
-  icon: "job" | "designation" | "department" | "location" | "employmentType"
+  icon: "job" | "designation" | "department" | "company" | "location" | "employmentType"
 }
 
 export interface Task {
@@ -76,6 +77,7 @@ const JOB_CHIP_ICONS: Record<TaskJobChip["icon"], React.ElementType> = {
   job: Briefcase,
   designation: BadgeCheck,
   department: Building2,
+  company: Landmark,
   location: MapPin,
   employmentType: Clock,
 }
