@@ -497,63 +497,42 @@ function JobOfferContent() {
                           </span>
                         </div>
                       )}
-                      {(offerData.stipend_formatted ||
-                        offerData.stipend ||
-                        offerData.stipend_display) && (
+                      {(offerData.stipend !== undefined &&
+                        offerData.stipend !== null) ||
+                      offerData.stipend_display ? (
                         <div className="flex justify-between items-center py-1.5">
                           <span className="text-[0.85rem] text-muted-foreground">
                             Stipend
                           </span>
                           <span className="text-[0.85rem] font-semibold text-foreground text-right">
                             {formatIndianAmount(
-                              offerData.stipend_formatted ||
-                                offerData.stipend_display
+                              offerData.stipend ?? offerData.stipend_display
                             )}
                           </span>
                         </div>
-                      )}
-                      
-                      {offerData.fixed_formatted !== undefined &&
-                        offerData.fixed_formatted !== null && (
-                          <div className="flex justify-between items-center py-1.5">
-                            <span className="text-[0.85rem] text-muted-foreground">
-                              Fixed Pay
-                            </span>
-                            <span className="text-[0.85rem] font-semibold text-foreground text-right">
-                              {formatIndianAmount(offerData.fixed_formatted)}
-                            </span>
-                          </div>
-                        )}
-                      {offerData.variable_formatted !== undefined &&
-                        offerData.variable_formatted !== null && (
+                      ) : null}
+
+                      {offerData.variable !== undefined &&
+                        offerData.variable !== null && (
                           <div className="flex justify-between items-center py-1.5">
                             <span className="text-[0.85rem] text-muted-foreground">
                               Variable Pay
                             </span>
                             <span className="text-[0.85rem] font-semibold text-foreground text-right">
-                              {formatIndianAmount(offerData.variable_formatted)}
+                              {formatIndianAmount(offerData.variable)}
                             </span>
                           </div>
                         )}
-                      {offerData.location_allowance_formatted !== undefined &&
-                        offerData.location_allowance_formatted !== null && (
-                          <div className="flex justify-between items-center py-1.5">
-                            <span className="text-[0.85rem] text-muted-foreground">
-                              Location Allowance
-                            </span>
-                            <span className="text-[0.85rem] font-semibold text-foreground text-right">
-                              {formatIndianAmount(offerData.location_allowance_formatted)}
-                            </span>
-                          </div>
-                        )}
-                      {offerData.total_formatted !== undefined &&
-                        offerData.total_formatted !== null && (
+                      {(offerData.total_fixed ?? offerData.total) !== undefined &&
+                        (offerData.total_fixed ?? offerData.total) !== null && (
                           <div className="flex justify-between items-center py-1.5">
                             <span className="text-[0.85rem] text-muted-foreground">
                               Total
                             </span>
                             <span className="text-[0.85rem] font-semibold text-foreground text-right">
-                              {formatIndianAmount(offerData.total_formatted)}
+                              {formatIndianAmount(
+                                offerData.total_fixed ?? offerData.total
+                              )}
                             </span>
                           </div>
                         )}

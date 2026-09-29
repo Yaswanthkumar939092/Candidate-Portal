@@ -145,7 +145,7 @@ describe("JobOfferPage", () => {
     expect(screen.getByText(/OFFER EXPIRES IN 48 HOURS/)).toBeTruthy();
   });
 
-  it("renders fixed, variable, and total if stipend is not available", () => {
+  it("renders variable and total (from total_fixed) if stipend is not available", () => {
     mockUseJobOfferSummary.mockReturnValue({
       data: {
         applicant_name: "Deepak Rajput",
@@ -154,25 +154,22 @@ describe("JobOfferPage", () => {
         expected_doj_display: "30-06-2026",
         expiry_display: null,
         stipend: null,
-        fixed: 0,
-        variable: 0,
-        total: 0,
-        stipend_formatted: null,
-        fixed_formatted: "₹1000000",
-        variable_formatted: "₹ 200,000.00",
-        total_formatted: "₹1200000",
+        fixed: null,
+        variable: 200000,
+        total_fixed: 1200000,
+        total: null,
       },
       isLoading: false,
     });
 
     render(<JobOfferPage />);
 
-    expect(screen.getByText("Fixed Pay")).toBeTruthy();
-    expect(screen.getByText("₹10,00,000")).toBeTruthy();
     expect(screen.getByText("Variable Pay")).toBeTruthy();
-    expect(screen.getByText("₹ 2,00,000.00")).toBeTruthy();
+    expect(screen.getByText("2,00,000")).toBeTruthy();
     expect(screen.getByText("Total")).toBeTruthy();
-    expect(screen.getByText("₹12,00,000")).toBeTruthy();
+    expect(screen.getByText("12,00,000")).toBeTruthy();
+    expect(screen.queryByText("Fixed Pay")).toBeNull();
+    expect(screen.queryByText("Location Allowance")).toBeNull();
     expect(screen.queryByText("Stipend")).toBeNull();
   });
 
