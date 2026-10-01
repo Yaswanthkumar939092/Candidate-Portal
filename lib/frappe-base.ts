@@ -7,7 +7,7 @@
 //
 // The fix is to make the cookie first-party: in the browser we send every
 // credentialed request to a SAME-ORIGIN path (`/backend/...`) that Next.js
-// rewrites to the real Frappe host (see `rewrites()` in next.config.ts). The
+// rewrites to the real Frappe host (see middleware.ts). The
 // browser then sees the session cookie as belonging to our own origin, so it
 // stores and resends it like any first-party cookie — ITP no longer applies.
 //
@@ -21,7 +21,7 @@ export function frappeApiBase(): string {
 
   // Server-side rendering / API routes: must use an absolute URL.
   if (typeof window === "undefined") {
-    return configuredUrl;
+    return (process.env.FRAPPE_BASE_URL || configuredUrl).replace(/\/$/, "");
   }
 
   // Browser: always go through the same-origin proxy so the session cookie is

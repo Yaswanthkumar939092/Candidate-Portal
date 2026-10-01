@@ -21,3 +21,13 @@ stitch_job_candidate_portal_for_job_seekers_to_find_apply_for_and_track_employme
 Screenshot*
 *.heic
 Hybrowlabs Backup Oct 24 2025.gz
+*.key
+*.p12
+*.pfx
+.npmrc
+.yarnrc
+.aws
+.ssh
+.github
+tests
+docs
