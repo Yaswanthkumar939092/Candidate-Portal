@@ -1,0 +1,92 @@
+name: UAT image evidence
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    environment: uat-image
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Validate non-secret configuration
+        env:
+          ROLE: ${{ vars.AWS_UAT_IMAGE_ROLE_ARN }}
+        run: |
+          test -n "$AWS_REGION"
+          test -n "$ECR_REPOSITORY"
+          test -n "$ROLE"
+      - name: Build once for validation and publication
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: candidate-portal:${{ github.sha }}
+          build-args: |
+            NEXT_PUBLIC_SUPABASE_URL=${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+            NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL }}
+            NEXT_PUBLIC_FRAPPE_URL=${{ vars.NEXT_PUBLIC_FRAPPE_URL }}
+            NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ vars.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
+            NEXT_PUBLIC_LINKEDIN_CLIENT_ID=${{ vars.NEXT_PUBLIC_LINKEDIN_CLIENT_ID }}
+      - name: Container contract
+        run: bash scripts/container-smoke.sh candidate-portal:${{ github.sha }}
+      - name: SBOM
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: candidate-portal:${{ github.sha }}
+          format: cyclonedx
+          output: sbom.cdx.json
+          exit-code: '0'
+      - name: Vulnerability gate
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: candidate-portal:${{ github.sha }}
+          format: json
+          output: vulnerabilities.json
+          scanners: vuln,secret
+          severity: HIGH,CRITICAL
+          ignore-unfixed: false
+          exit-code: '1'
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_UAT_IMAGE_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - uses: aws-actions/amazon-ecr-login@v2
+        id: ecr
+      - name: Publish checked image and record digest
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          set -euo pipefail
+          mode="$(aws ecr describe-repositories --repository-names "$ECR_REPOSITORY" --query 'repositories[0].imageTagMutability' --output text)"
+          test "$mode" = IMMUTABLE
+          target="$REGISTRY/$ECR_REPOSITORY"
+          docker tag "candidate-portal:$GITHUB_SHA" "$target:$GITHUB_SHA"
+          docker push "$target:$GITHUB_SHA"
+          digest="$(aws ecr describe-images --repository-name "$ECR_REPOSITORY" --image-ids imageTag="$GITHUB_SHA" --query 'imageDetails[0].imageDigest' --output text)"
+          [[ "$digest" =~ ^sha256:[a-f0-9]{64}$ ]]
+          printf '%s@%s\n' "$target" "$digest" > image-reference.txt
+          printf '%s\n' "$GITHUB_SHA" > source-commit.txt
+          sha256sum sbom.cdx.json vulnerabilities.json > evidence.sha256
+      - name: Retain evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: uat-image-${{ github.sha }}
+          path: |
+            sbom.cdx.json
+            vulnerabilities.json
+            image-reference.txt
+            source-commit.txt
+            evidence.sha256
+          if-no-files-found: error
