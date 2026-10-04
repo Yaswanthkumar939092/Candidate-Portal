@@ -33,7 +33,7 @@ ENV NEXT_PUBLIC_LINKEDIN_CLIENT_ID=$NEXT_PUBLIC_LINKEDIN_CLIENT_ID
 RUN SUPABASE_SERVICE_ROLE_KEY=build-placeholder \
   yarn run build
 
-FROM node:22-bookworm-slim AS runner
+FROM gcr.io/distroless/nodejs22-debian13:nonroot@sha256:ec2313763dd43931543bd03830466e0c409ce73a487e8d46f10db72d3b816c1c AS runner
 
 WORKDIR /app
 
@@ -41,22 +41,18 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
-
-RUN apt-get update && apt-get upgrade -y \
-  && rm -rf /var/lib/apt/lists/* \
-  && groupadd --system --gid 1001 nodejs \
-  && useradd --system --uid 1001 --gid nodejs nextjs \
-  && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
+ENV PATH=/nodejs/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=1001:1001 /app/.next/standalone ./
+COPY --from=builder --chown=1001:1001 /app/.next/static ./.next/static
 
-COPY scripts/container-health.mjs ./container-health.mjs
+COPY --chown=1001:1001 scripts/container-health.mjs ./container-health.mjs
 
 USER 1001:1001
 
 EXPOSE 3000
-HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 CMD ["node", "container-health.mjs"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 CMD ["/nodejs/bin/node", "container-health.mjs"]
 
-CMD ["node", "server.js"]
+ENTRYPOINT ["/nodejs/bin/node"]
+CMD ["server.js"]
