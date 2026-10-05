@@ -157,16 +157,16 @@ describe("AuthForm – Login UI", () => {
     expect(screen.queryByText(/or continue with/i)).toBeNull();
   });
 
-  it("renders the brand logo on desktop pane", () => {
+  it("renders the brand logo and NOVANext badge on login", () => {
     render(<AuthForm {...defaultLoginProps} />);
-    const logo = screen.getByAltText("Logo");
-    expect(logo).toBeTruthy();
+    expect(screen.getByAltText("Logo")).toBeTruthy();
+    expect(screen.getByText("NOVANext")).toBeTruthy();
   });
 
   it("renders left-pane heading for login", () => {
     render(<AuthForm {...defaultLoginProps} />);
     expect(screen.getByText(/Your Career Journey/)).toBeTruthy();
-    expect(screen.getByText(/Starts Here/)).toBeTruthy();
+    expect(screen.getByText(/Starts Right Here/)).toBeTruthy();
   });
 
   it("renders onboarding feature bullets on login", () => {
@@ -334,6 +334,11 @@ describe("AuthForm – Register UI", () => {
     ).toBeTruthy();
   });
 
+  it("renders the NOVANext badge on register", () => {
+    render(<AuthForm {...defaultRegisterProps} />);
+    expect(screen.getByText("NOVANext")).toBeTruthy();
+  });
+
   it("renders the full name input field", () => {
     render(<AuthForm {...defaultRegisterProps} />);
     expect(screen.getByLabelText("Full name")).toBeTruthy();
@@ -407,7 +412,7 @@ describe("AuthForm – Register UI", () => {
 
   it("renders left-pane heading for register", () => {
     render(<AuthForm {...defaultRegisterProps} />);
-    expect(screen.getByText(/Join Our Growing/)).toBeTruthy();
+    expect(screen.getByText(/Build Your Future/)).toBeTruthy();
   });
 
   it("renders feature descriptions on register left pane", () => {

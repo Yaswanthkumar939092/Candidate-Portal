@@ -9,10 +9,9 @@ import {
   Eye,
   EyeOff,
   CheckCircle2,
-  ArrowRight,
   MailCheck,
-  AlertCircle,
   Loader2,
+  Sparkles,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -66,8 +65,12 @@ export function AuthForm({
   const showCompanyName = Boolean(branding?.logo_includes_company_name);
   const searchParams = useSearchParams();
   const redirectParam = searchParams.get("redirect");
-  const redirectQuery = redirectParam ? `&redirect=${encodeURIComponent(redirectParam)}` : "";
-  const redirectQueryQuestion = redirectParam ? `?redirect=${encodeURIComponent(redirectParam)}` : "";
+  const redirectQuery = redirectParam
+    ? `&redirect=${encodeURIComponent(redirectParam)}`
+    : "";
+  const redirectQueryQuestion = redirectParam
+    ? `?redirect=${encodeURIComponent(redirectParam)}`
+    : "";
 
   const [formData, setFormData] = useState<AuthFormData>({
     email: defaultEmail || "",
@@ -98,11 +101,13 @@ export function AuthForm({
       <div
         className="hidden md:flex flex-col w-[50%] relative"
         style={{
-          background: "linear-gradient(to bottom, #0F172A, #1E293B, #0F172A)",
+          backgroundColor: "#1F2533",
+          backgroundImage: "url('/network.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center top",
+          backgroundRepeat: "no-repeat",
         }}
       >
-        <div className="absolute top-[30%] left-[50%] translate-x-[-50%] translate-y-[-50%] size-60 bg-[#1E85FF] blur-[5rem] rounded-full opacity-10"></div>
-        <div className="absolute top-[60%] left-[50%] translate-x-[-50%] translate-y-[-50%] size-72 bg-[#12B76A] blur-[5rem] rounded-full opacity-10"></div>
         <div className="flex items-center gap-2 text-white absolute md:top-6 md:left-6 lg:top-10 lg:left-10 top-12 left-12">
           <div
             className={cn(
@@ -140,15 +145,23 @@ export function AuthForm({
         <div className="flex-1 flex flex-col justify-center md:px-6 lg:px-10 md:mt-4 md:mb-4 mt-12 mb-12">
           {type === "login" ? (
             <>
+              <div className="mb-5 lg:mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-[#3B82F6]/30 bg-[#1E3A8A]/40 px-4 py-2 lg:px-5 lg:py-2.5 text-[#60A5FA] backdrop-blur-sm">
+                <Sparkles className="h-4 w-4 lg:h-5 lg:w-5" />
+                <span className="text-sm lg:text-base font-[700] tracking-tight">
+                  NOVANext
+                </span>
+              </div>
               <h1 className="md:text-[28px] lg:text-[36px] text-[30px] font-[700] text-white leading-[1.2] mb-4">
                 Your Career Journey
                 <br />
-                Starts Here
+                <span className="bg-gradient-to-r from-[#3B82F6] via-[#60A5FA] to-[#DBEAFE] bg-clip-text text-transparent">
+                  Starts Right Here
+                </span>
               </h1>
-              <p className="text-sm font-[400] text-[#CBD5E1] md:mb-6 lg:mb-8 mb-6">
-                Access your personalized dashboard, track your
-                <br />
-                onboarding progress, and connect with your team.
+              <p className="md:text-[15px] lg:text-[17px] text-[15px] font-[400] text-[#CBD5E1] leading-relaxed md:mb-6 lg:mb-8 mb-6">
+                Log in to preview, accept and sign offer letters, and
+                <br className="hidden lg:block" /> complete your pre-joining
+                onboarding checklist.
               </p>
 
               <ul className="md:space-y-3 lg:space-y-4 space-y-4">
@@ -168,15 +181,22 @@ export function AuthForm({
             </>
           ) : (
             <>
+              <div className="mb-5 lg:mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-[#3B82F6]/30 bg-[#1E3A8A]/40 px-4 py-2 lg:px-5 lg:py-2.5 text-[#60A5FA] backdrop-blur-sm">
+                <Sparkles className="h-4 w-4 lg:h-5 lg:w-5" />
+                <span className="text-sm lg:text-base font-[700] tracking-tight">
+                  NOVANext
+                </span>
+              </div>
               <h1 className="md:text-[28px] lg:text-[36px] text-[30px] font-[700] text-white leading-[1.2] mb-4">
-                Join Our Growing
+                Build Your Future
                 <br />
-                Team
+                <span className="bg-gradient-to-r from-[#34D399] via-[#6EE7B7] to-[#ECFDF5] bg-clip-text text-transparent">
+                  With HomeFirst
+                </span>
               </h1>
-              <p className="text-sm font-[400] text-[#CBD5E1] md:mb-6 lg:mb-8 mb-6">
-                Create your account to get started with your career
-                <br />
-                journey and unlock exclusive benefits.
+              <p className="md:text-[15px] lg:text-[17px] text-[15px] font-[400] text-[#CBD5E1] leading-relaxed md:mb-6 lg:mb-8 mb-6">
+                Create your NOVANext profile to submit online job applications,
+                receive offer letters, and submit pre-joining documentations.
               </p>
 
               <ul className="md:space-y-4 lg:space-y-6 space-y-4">

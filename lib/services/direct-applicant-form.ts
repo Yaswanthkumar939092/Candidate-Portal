@@ -3,35 +3,12 @@
 // the backend serves it only to the candidate it was sent to (session cookie).
 
 import { frappeApiBase } from "../frappe-base";
+import { frappeErrorMessage } from "../frappe-error";
 import type { DirectApplicantFormData, LinkOption } from "../types/direct-applicant-form";
 
 const API = "recruitment.api.direct_applicant_portal";
 
-/** Frappe puts frappe.throw() text in _server_messages; fall back to exception. */
-export function frappeErrorMessage(body: unknown, fallback: string): string {
-  const data = (body || {}) as Record<string, unknown>;
-  try {
-    if (typeof data._server_messages === "string") {
-      const messages = (JSON.parse(data._server_messages) as string[])
-        .map((raw) => {
-          try {
-            return String((JSON.parse(raw) as { message?: string }).message ?? raw);
-          } catch {
-            return raw;
-          }
-        })
-        .map((m) => m.replace(/<[^>]*>/g, "").trim())
-        .filter(Boolean);
-      if (messages.length) return messages.join("\n");
-    }
-  } catch {
-    /* fall through */
-  }
-  if (typeof data.exception === "string") {
-    return data.exception.replace(/^[\w.]+:\s*/, "");
-  }
-  return fallback;
-}
+export { frappeErrorMessage };
 
 async function request<T>(method: string, init: RequestInit & { params?: Record<string, string> } = {}): Promise<T> {
   const { params, ...rest } = init;
