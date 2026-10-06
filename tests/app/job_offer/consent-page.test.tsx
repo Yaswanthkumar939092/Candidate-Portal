@@ -93,6 +93,7 @@ describe("DpdpConsentPage", () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    mockUseConsentForm.mockReturnValue({ data: mockConsentData, isLoading: false });
   });
 
   it("renders the consent page correctly", () => {
@@ -106,6 +107,35 @@ describe("DpdpConsentPage", () => {
       screen.getByText(/I voluntarily consent to the collection, processing, and storage/i)
     ).toBeTruthy();
     expect(mockUseConsentForm).toHaveBeenCalledWith("test@example.com", "my-token");
+  });
+
+  it("prefills the employee name and shows today's acceptance date as read-only", () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 9, 6, 2, 30)); // 02:30 local time
+    mockUseConsentForm.mockReturnValue({
+      data: {
+        ...mockConsentData,
+        acknowledgement: [
+          ...mockConsentData.acknowledgement,
+          {
+            fieldname: "acceptance_date",
+            label: "Acceptance Date",
+            fieldtype: "Date",
+            is_mandatory: 0,
+          },
+        ],
+      },
+      isLoading: false,
+    });
+
+    const { container } = render(<DpdpConsentPage />);
+
+    expect(screen.getByDisplayValue("Deepak")).toBeTruthy();
+    const dateInput = container.querySelector<HTMLInputElement>(
+      'input[type="date"]',
+    );
+    expect(dateInput?.value).toBe("2026-10-06");
+    expect(dateInput?.readOnly).toBe(true);
   });
 
   it("navigates back to the job offer page when clicking back button", () => {
