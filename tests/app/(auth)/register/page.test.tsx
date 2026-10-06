@@ -85,6 +85,10 @@ beforeEach(() => {
   mockGet.mockReturnValue(null);
 });
 
+vi.mock("@/lib/hooks/useAuthPageContent", () => ({
+  useAuthPageContent: () => ({ data: undefined, isLoading: false }),
+}));
+
 vi.mock("@/lib/hooks/useCandidateBranding", () => ({
   useCandidateBranding: () => ({
     data: null,
