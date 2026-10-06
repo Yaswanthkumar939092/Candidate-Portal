@@ -128,14 +128,11 @@ describe("DpdpConsentPage", () => {
       isLoading: false,
     });
 
-    const { container } = render(<DpdpConsentPage />);
+    render(<DpdpConsentPage />);
 
     expect(screen.getByDisplayValue("Deepak")).toBeTruthy();
-    const dateInput = container.querySelector<HTMLInputElement>(
-      'input[type="date"]',
-    );
-    expect(dateInput?.value).toBe("2026-10-06");
-    expect(dateInput?.readOnly).toBe(true);
+    const dateInput = screen.getByDisplayValue("06-10-2026") as HTMLInputElement;
+    expect(dateInput.readOnly).toBe(true);
   });
 
   it("navigates back to the job offer page when clicking back button", () => {

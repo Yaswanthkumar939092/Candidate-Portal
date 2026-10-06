@@ -415,10 +415,11 @@ function ConsentContent() {
                           <span className="text-destructive">*</span>
                         )}
                       </label>
-                      {/* Acceptance date is always today's date - not editable. */}
+                      {/* Acceptance date is always today's date - not editable.
+                          Stored as YYYY-MM-DD for Frappe, shown as DD-MM-YYYY. */}
                       <input
-                        type="date"
-                        value={value}
+                        type="text"
+                        value={value ? value.split("-").reverse().join("-") : ""}
                         readOnly
                         aria-readonly="true"
                         className="w-full p-[10px_14px] border border-border rounded-lg text-sm text-muted-foreground bg-muted cursor-not-allowed focus:outline-none"
