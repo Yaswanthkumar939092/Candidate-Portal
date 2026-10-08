@@ -221,7 +221,7 @@ function normalizeInputValue(field: FormField, rawValue: string) {
   }
 
   if (isAccountNumberField(field)) {
-    return rawValue.replace(/\D/g, "");
+    return rawValue.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
   }
 
   if (isPanField(field)) {
@@ -414,7 +414,7 @@ function FieldInput({
       placeholder={field.label}
       disabled={disabled || !!field.read_only}
       className={baseClass}
-      inputMode={isPincodeField(field) || isAadhaarField(field) || isAccountNumberField(field) ? "numeric" : undefined}
+      inputMode={isPincodeField(field) || isAadhaarField(field) ? "numeric" : undefined}
       maxLength={isPincodeField(field) ? 6 : isAadhaarField(field) ? 12 : isPanField(field) ? 10 : field.fieldname === "custom_ifsc_code" ? 11 : undefined}
     />
   );
