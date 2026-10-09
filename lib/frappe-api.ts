@@ -1,6 +1,7 @@
 // src/lib/frappe-api.ts
 
 import { frappeApiBase } from "@/lib/frappe-base";
+import { frappeErrorMessage } from "@/lib/frappe-error";
 
 // In the browser this returns the same-origin proxy prefix ("/backend") so the
 // session cookie stays first-party (iOS Safari ITP-safe); on the server it
@@ -10,24 +11,18 @@ function getFrappeUrl() {
 }
 
 async function handleResponseError(res: Response): Promise<never> {
+  const fallback = `API request failed${res.statusText ? `: ${res.statusText}` : ` (${res.status})`}`;
+  let body: unknown;
   try {
-    const contentType = res.headers?.get("content-type");
-    if (!contentType || contentType.includes("application/json")) {
-      const errorData = await res.json();
-      const serverError = errorData?.message?.message || errorData?.message || errorData?.exception;
-      if (serverError) {
-        const msg = typeof serverError === "string" ? serverError : JSON.stringify(serverError);
-        // Strip Frappe exception prefixes like "frappe.exceptions.ValidationError: "
-        const cleanMsg = msg.replace(/^frappe\.\w+(\.\w+)*:\s*/i, "");
-        throw new Error(cleanMsg);
-      }
-    }
-  } catch (e) {
-    if (e instanceof Error && e.message !== "Unexpected end of JSON input" && !e.message.includes("is not valid JSON")) {
-      throw e;
-    }
+    body = await res.json();
+  } catch {
+    throw new Error(fallback);
   }
-  throw new Error(`API request failed: ${res.statusText}`);
+  // Custom endpoints may return { message } on error; frappe.throw() uses _server_messages.
+  const message = (body as { message?: unknown } | null)?.message;
+  const custom = (message as { message?: unknown } | null)?.message ?? message;
+  if (typeof custom === "string" && custom.trim()) throw new Error(custom);
+  throw new Error(frappeErrorMessage(body, fallback));
 }
 
 export const FrappeAPI = {
@@ -91,7 +86,7 @@ export const FrappeAPI = {
     });
 
     if (!res.ok) {
-      throw new Error(`API request failed: ${res.statusText}`);
+      await handleResponseError(res);
     }
 
     // /api/resource returns { data: [...] } instead of { message: ... }
@@ -110,7 +105,7 @@ export const FrappeAPI = {
     });
 
     if (!res.ok) {
-      throw new Error(`API request failed: ${res.statusText}`);
+      await handleResponseError(res);
     }
 
     return res.blob();
@@ -195,8 +190,7 @@ export const FrappeAPI = {
     });
 
     if (!res.ok) {
-      const err = await res.text();
-      throw new Error(err || "API request failed");
+      await handleResponseError(res);
     }
 
     return res.json();

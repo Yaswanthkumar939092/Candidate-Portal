@@ -166,7 +166,7 @@ describe("JobOfferPage", () => {
 
     expect(screen.getByText("Variable Pay")).toBeTruthy();
     expect(screen.getByText("2,00,000")).toBeTruthy();
-    expect(screen.getByText("Total")).toBeTruthy();
+    expect(screen.getByText("Total Fixed Pay")).toBeTruthy();
     expect(screen.getByText("12,00,000")).toBeTruthy();
     expect(screen.queryByText("Fixed Pay")).toBeNull();
     expect(screen.queryByText("Location Allowance")).toBeNull();

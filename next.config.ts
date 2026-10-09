@@ -36,26 +36,9 @@ function getRemoteImagePatterns() {
   }
 }
 
-function getFrappeProxyTarget() {
-  return (process.env.NEXT_PUBLIC_FRAPPE_URL || "").replace(/\/$/, "");
-}
-
 const nextConfig: NextConfig = {
   output: "standalone",
-  // Same-origin reverse proxy to Frappe. Browser requests hit `/backend/...` on
-  // our own origin and are forwarded to the Frappe host, which makes the
-  // `candidate_portal_session` cookie first-party and keeps iOS Safari (WebKit
-  // ITP) from dropping it. See lib/frappe-base.ts for the matching client base.
-  async rewrites() {
-    const target = getFrappeProxyTarget();
-    if (!target) return [];
-    return [
-      {
-        source: "/backend/:path*",
-        destination: `${target}/:path*`,
-      },
-    ];
-  },
+  // /backend/* is rewritten by Node middleware using runtime FRAPPE_BASE_URL.
   typescript: {
     ignoreBuildErrors: true,
   },

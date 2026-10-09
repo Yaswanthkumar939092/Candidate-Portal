@@ -2,6 +2,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AuthForm } from "@/components/auth-form";
+import type { AuthPageContent } from "@/lib/services/auth-page-content";
+
+const authPageContentMock = vi.hoisted(() => ({
+  data: undefined as AuthPageContent | undefined,
+}));
 
 // ─── Mocks ──────────────────────────────────────────────────────────
 vi.mock("next/navigation", () => ({
@@ -49,6 +54,16 @@ vi.mock("@/lib/hooks/useCandidateBranding", () => ({
   }),
 }));
 
+vi.mock("@/lib/hooks/useAuthPageContent", () => ({
+  useAuthPageContent: () => ({
+    data: authPageContentMock.data,
+    isLoading: false,
+  }),
+}));
+
+beforeEach(() => {
+  authPageContentMock.data = undefined;
+});
 
 // ─── Helpers ────────────────────────────────────────────────────────
 const user = userEvent.setup();
@@ -157,16 +172,14 @@ describe("AuthForm – Login UI", () => {
     expect(screen.queryByText(/or continue with/i)).toBeNull();
   });
 
-  it("renders the brand logo on desktop pane", () => {
+  it("renders the brand logo on login", () => {
     render(<AuthForm {...defaultLoginProps} />);
-    const logo = screen.getByAltText("Logo");
-    expect(logo).toBeTruthy();
+    expect(screen.getByAltText("Logo")).toBeTruthy();
   });
 
   it("renders left-pane heading for login", () => {
     render(<AuthForm {...defaultLoginProps} />);
-    expect(screen.getByText(/Your Career Journey/)).toBeTruthy();
-    expect(screen.getByText(/Starts Here/)).toBeTruthy();
+    expect(screen.getByText("Your Career Journey Starts Here")).toBeTruthy();
   });
 
   it("renders onboarding feature bullets on login", () => {
@@ -407,7 +420,7 @@ describe("AuthForm – Register UI", () => {
 
   it("renders left-pane heading for register", () => {
     render(<AuthForm {...defaultRegisterProps} />);
-    expect(screen.getByText(/Join Our Growing/)).toBeTruthy();
+    expect(screen.getByText("Join Our Growing Team")).toBeTruthy();
   });
 
   it("renders feature descriptions on register left pane", () => {
@@ -625,5 +638,97 @@ describe("AuthForm – Edge Cases", () => {
       await user.click(cancelBtn);
       expect(onBackToCredentials).toHaveBeenCalled();
     });
+  });
+});
+
+// =====================================================================
+//  LEFT PANE  – DYNAMIC CONTENT FROM get_auth_page_content
+// =====================================================================
+describe("AuthForm – Dynamic left pane content", () => {
+  const content: AuthPageContent = {
+    logo: "https://cdn.example.com/logo.png",
+    footer: "© 2026 Acme. All rights reserved.",
+    login: {
+      heading: "Welcome back to Acme",
+      subheading: "Sign in to continue.",
+      background_image: "/files/login-bg.png",
+      points: [{ title: "Login point one", description: "" }],
+    },
+    signup: {
+      heading: "Join Acme",
+      subheading: "Create your account.",
+      background_image: "https://cdn.example.com/signup-bg.png",
+      points: [{ title: "Signup point", description: "Signup detail" }],
+    },
+  };
+
+  it("renders login content from the API", () => {
+    authPageContentMock.data = content;
+    render(<AuthForm {...defaultLoginProps} />);
+    expect(screen.getByText("Welcome back to Acme")).toBeTruthy();
+    expect(screen.getByText("Sign in to continue.")).toBeTruthy();
+    expect(screen.getByText("Login point one")).toBeTruthy();
+    expect(screen.queryByTestId("auth-pane-glow")).toBeNull();
+    expect(screen.queryByText("Track your onboarding journey")).toBeNull();
+    expect(screen.getByText("© 2026 Acme. All rights reserved.")).toBeTruthy();
+    expect(screen.getByAltText("Logo").getAttribute("src")).toBe(
+      "https://cdn.example.com/logo.png",
+    );
+    expect(
+      screen.getByTestId("auth-pane-background").getAttribute("src"),
+    ).toContain("/files/login-bg.png");
+  });
+
+  it("renders signup content (with point descriptions) from the API", () => {
+    authPageContentMock.data = content;
+    render(<AuthForm {...defaultRegisterProps} />);
+    expect(screen.getByText("Join Acme")).toBeTruthy();
+    expect(screen.getByText("Signup point")).toBeTruthy();
+    expect(screen.getByText("Signup detail")).toBeTruthy();
+    expect(
+      screen.getByTestId("auth-pane-background").getAttribute("src"),
+    ).toBe("https://cdn.example.com/signup-bg.png");
+  });
+
+  it("falls back per field when the API omits values", () => {
+    authPageContentMock.data = { login: { heading: "Only heading", points: [] } };
+    render(<AuthForm {...defaultLoginProps} />);
+    expect(screen.getByText("Only heading")).toBeTruthy();
+    expect(
+      screen.getByText(/Access your personalized dashboard/),
+    ).toBeTruthy();
+    expect(screen.getByText("Track your onboarding journey")).toBeTruthy();
+    expect(screen.getByAltText("Logo").getAttribute("src")).toContain(
+      "/brand.png",
+    );
+    expect(screen.queryByTestId("auth-pane-background")).toBeNull();
+    expect(screen.getByTestId("auth-pane-glow")).toBeTruthy();
+  });
+
+  it("handles null fields, encodes spaces, and falls back to the glow when the image fails", () => {
+    authPageContentMock.data = {
+      logo: null,
+      footer: null,
+      signup: {
+        heading: null,
+        subheading: null,
+        background_image:
+          "http://localhost:8001/private/files/NOVA Network Constellation.png",
+        points: null,
+      },
+    };
+    render(<AuthForm {...defaultRegisterProps} />);
+    expect(screen.getByText("Join Our Growing Team")).toBeTruthy();
+    expect(screen.getByText("Seamless Onboarding")).toBeTruthy();
+    const bg = screen.getByTestId("auth-pane-background");
+    expect(bg.getAttribute("src")).toBe(
+      "http://localhost:8001/private/files/NOVA%20Network%20Constellation.png",
+    );
+    expect(screen.queryByTestId("auth-pane-glow")).toBeNull();
+
+    fireEvent.error(bg);
+
+    expect(screen.queryByTestId("auth-pane-background")).toBeNull();
+    expect(screen.getByTestId("auth-pane-glow")).toBeTruthy();
   });
 });

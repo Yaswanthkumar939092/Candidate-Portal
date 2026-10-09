@@ -9,16 +9,68 @@ import {
   Eye,
   EyeOff,
   CheckCircle2,
-  ArrowRight,
   MailCheck,
-  AlertCircle,
   Loader2,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCandidateBranding } from "@/lib/hooks/useCandidateBranding";
+import { useAuthPageContent } from "@/lib/hooks/useAuthPageContent";
+import type { AuthPagePoint } from "@/lib/services/auth-page-content";
 import { cn } from "@/lib/utils";
+
+// Generic left-pane content used when the backend doesn't provide it.
+// Keep these company-agnostic — no hard-coded brand names.
+const DEFAULT_LEFT_PANE: Record<
+  "login" | "signup",
+  { heading: string; subheading: string; points: AuthPagePoint[] }
+> = {
+  login: {
+    heading: "Your Career Journey Starts Here",
+    subheading:
+      "Access your personalized dashboard, track your onboarding progress, and connect with your team.",
+    points: [
+      { title: "Track your onboarding journey" },
+      { title: "Connect with your team" },
+      { title: "Access important resources" },
+    ],
+  },
+  signup: {
+    heading: "Join Our Growing Team",
+    subheading:
+      "Create your account to get started with your career journey and unlock exclusive benefits.",
+    points: [
+      {
+        title: "Seamless Onboarding",
+        description: "Step-by-step guidance for your first day",
+      },
+      {
+        title: "Team Collaboration",
+        description: "Connect with colleagues instantly",
+      },
+      {
+        title: "Career Growth",
+        description: "Track progress and achievements",
+      },
+    ],
+  },
+};
+
+function resolveFrappeAssetUrl(path?: string | null): string | undefined {
+  const value = path?.trim();
+  if (!value) return undefined;
+  const base = (process.env.NEXT_PUBLIC_FRAPPE_URL || "").replace(/\/$/, "");
+  const url = value.startsWith("http")
+    ? value
+    : `${base}${value.startsWith("/") ? value : `/${value}`}`;
+  // Frappe file names can contain spaces; encode without double-encoding.
+  try {
+    return encodeURI(decodeURI(url));
+  } catch {
+    return url;
+  }
+}
 
 export interface AuthFormData {
   email: string;
@@ -64,10 +116,37 @@ export function AuthForm({
 }: AuthFormProps) {
   const { data: branding } = useCandidateBranding();
   const showCompanyName = Boolean(branding?.logo_includes_company_name);
+  const { data: pageContent } = useAuthPageContent();
+  const sectionKey = type === "login" ? "login" : "signup";
+  const section = pageContent?.[sectionKey];
+  const fallback = DEFAULT_LEFT_PANE[sectionKey];
+  const heading = section?.heading?.trim() || fallback.heading;
+  const subheading = section?.subheading?.trim() || fallback.subheading;
+  const customBackground = resolveFrappeAssetUrl(section?.background_image);
+  const [failedBackground, setFailedBackground] = useState<string | null>(
+    null,
+  );
+  const showCustomBackground =
+    Boolean(customBackground) && failedBackground !== customBackground;
+  const apiPoints = (section?.points ?? []).filter(
+    (point): point is AuthPagePoint => Boolean(point?.title?.trim()),
+  );
+  const points = apiPoints.length ? apiPoints : fallback.points;
+  const logoSrc =
+    resolveFrappeAssetUrl(pageContent?.logo) ||
+    resolveFrappeAssetUrl(branding?.app_logo) ||
+    "/fallback.png";
+  const footer =
+    pageContent?.footer?.trim() ||
+    `© ${new Date().getFullYear()}${branding?.title_prefix ? ` ${branding.title_prefix}` : ""}. All rights reserved.`;
   const searchParams = useSearchParams();
   const redirectParam = searchParams.get("redirect");
-  const redirectQuery = redirectParam ? `&redirect=${encodeURIComponent(redirectParam)}` : "";
-  const redirectQueryQuestion = redirectParam ? `?redirect=${encodeURIComponent(redirectParam)}` : "";
+  const redirectQuery = redirectParam
+    ? `&redirect=${encodeURIComponent(redirectParam)}`
+    : "";
+  const redirectQueryQuestion = redirectParam
+    ? `?redirect=${encodeURIComponent(redirectParam)}`
+    : "";
 
   const [formData, setFormData] = useState<AuthFormData>({
     email: defaultEmail || "",
@@ -96,14 +175,31 @@ export function AuthForm({
     <div className="w-full max-w-[1240px] mx-auto flex flex-col md:flex-row bg-card md:rounded-[24px] md:shadow-2xl overflow-hidden min-h-screen md:min-h-[580px] lg:min-h-[640px]">
       {/* Left Pane - 50% */}
       <div
-        className="hidden md:flex flex-col w-[50%] relative"
-        style={{
-          background: "linear-gradient(to bottom, #0F172A, #1E293B, #0F172A)",
-        }}
+        className="hidden md:flex flex-col w-[50%] relative overflow-hidden"
+        style={{ backgroundColor: "#1B2132" }}
       >
-        <div className="absolute top-[30%] left-[50%] translate-x-[-50%] translate-y-[-50%] size-60 bg-[#1E85FF] blur-[5rem] rounded-full opacity-10"></div>
-        <div className="absolute top-[60%] left-[50%] translate-x-[-50%] translate-y-[-50%] size-72 bg-[#12B76A] blur-[5rem] rounded-full opacity-10"></div>
-        <div className="flex items-center gap-2 text-white absolute md:top-6 md:left-6 lg:top-10 lg:left-10 top-12 left-12">
+        {showCustomBackground && customBackground ? (
+          <Image
+            src={customBackground}
+            alt=""
+            aria-hidden="true"
+            data-testid="auth-pane-background"
+            fill
+            unoptimized
+            priority
+            sizes="50vw"
+            className="pointer-events-none object-cover object-top"
+            onError={() => setFailedBackground(customBackground)}
+          />
+        ) : (
+          // Fallback glow (Figma: 384×384 #12B76A ellipse, layer blur 240).
+          <div
+            aria-hidden="true"
+            data-testid="auth-pane-glow"
+            className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[384px] w-[384px] rounded-full bg-[#12B76A] opacity-20 blur-[120px]"
+          />
+        )}
+        <div className="z-10 flex items-center gap-2 text-white absolute md:top-6 md:left-6 lg:top-10 lg:left-10 top-12 left-12">
           <div
             className={cn(
               "bg-none flex items-center justify-center overflow-hidden",
@@ -113,13 +209,7 @@ export function AuthForm({
             )}
           >
             <Image
-              src={
-                branding?.app_logo
-                  ? branding.app_logo.startsWith("http")
-                    ? branding.app_logo
-                    : `${(process.env.NEXT_PUBLIC_FRAPPE_URL || "").replace(/\/$/, "")}${branding.app_logo.startsWith("/") ? branding.app_logo : `/${branding.app_logo}`}`
-                  : "/fallback.png"
-              }
+              src={logoSrc}
               alt="Logo"
               width={showCompanyName ? 100 : 320}
               height={100}
@@ -137,90 +227,49 @@ export function AuthForm({
           )}
         </div>
 
-        <div className="flex-1 flex flex-col justify-center md:px-6 lg:px-10 md:mt-4 md:mb-4 mt-12 mb-12">
-          {type === "login" ? (
-            <>
-              <h1 className="md:text-[28px] lg:text-[36px] text-[30px] font-[700] text-white leading-[1.2] mb-4">
-                Your Career Journey
-                <br />
-                Starts Here
-              </h1>
-              <p className="text-sm font-[400] text-[#CBD5E1] md:mb-6 lg:mb-8 mb-6">
-                Access your personalized dashboard, track your
-                <br />
-                onboarding progress, and connect with your team.
-              </p>
+        <div className="relative z-10 flex-1 flex flex-col justify-center md:px-6 lg:px-10 md:mt-4 md:mb-4 mt-12 mb-12">
+          <h1 className="md:text-[28px] lg:text-[36px] text-[30px] font-[700] text-white leading-[1.2] mb-4 max-w-[480px]">
+            {heading}
+          </h1>
+          <p className="md:text-[15px] lg:text-[17px] text-[15px] font-[400] text-[#CBD5E1] leading-relaxed md:mb-6 lg:mb-8 mb-6">
+            {subheading}
+          </p>
 
-              <ul className="md:space-y-3 lg:space-y-4 space-y-4">
-                {[
-                  "Track your onboarding journey",
-                  "Connect with your team",
-                  "Access important resources",
-                ].map((item, i) => (
-                  <li key={i} className="flex items-center gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-white flex-shrink-0 fill-[#22C55E]" />
-                    <span className="text-sm font-[500] text-[#E2E8F0]">
-                      {item}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </>
-          ) : (
-            <>
-              <h1 className="md:text-[28px] lg:text-[36px] text-[30px] font-[700] text-white leading-[1.2] mb-4">
-                Join Our Growing
-                <br />
-                Team
-              </h1>
-              <p className="text-sm font-[400] text-[#CBD5E1] md:mb-6 lg:mb-8 mb-6">
-                Create your account to get started with your career
-                <br />
-                journey and unlock exclusive benefits.
-              </p>
-
-              <ul className="md:space-y-4 lg:space-y-6 space-y-4">
-                <li className="flex gap-3">
+          <ul
+            className={cn(
+              "space-y-4",
+              points.some((point) => point.description)
+                ? "md:space-y-4 lg:space-y-6"
+                : "md:space-y-3 lg:space-y-4",
+            )}
+          >
+            {points.map((point, i) =>
+              point.description ? (
+                <li key={i} className="flex gap-3">
                   <CheckCircle2 className="w-5 h-5 text-white flex-shrink-0 mt-0.5 fill-[#22C55E]" />
                   <div>
                     <h3 className="text-sm font-[600] text-[#E2E8F0] mb-0.5">
-                      Seamless Onboarding
+                      {point.title}
                     </h3>
                     <p className="text-[13px] text-[#94A3B8]">
-                      Step-by-step guidance for your first day
+                      {point.description}
                     </p>
                   </div>
                 </li>
-                <li className="flex gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-white flex-shrink-0 mt-0.5 fill-[#22C55E]" />
-                  <div>
-                    <h3 className="text-sm font-[600] text-[#E2E8F0] mb-0.5">
-                      Team Collaboration
-                    </h3>
-                    <p className="text-[13px] text-[#94A3B8]">
-                      Connect with colleagues instantly
-                    </p>
-                  </div>
+              ) : (
+                <li key={i} className="flex items-center gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-white flex-shrink-0 fill-[#22C55E]" />
+                  <span className="text-sm font-[500] text-[#E2E8F0]">
+                    {point.title}
+                  </span>
                 </li>
-                <li className="flex gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-white flex-shrink-0 mt-0.5 fill-[#22C55E]" />
-                  <div>
-                    <h3 className="text-sm font-[600] text-[#E2E8F0] mb-0.5">
-                      Career Growth
-                    </h3>
-                    <p className="text-[13px] text-[#94A3B8]">
-                      Track progress and achievements
-                    </p>
-                  </div>
-                </li>
-              </ul>
-            </>
-          )}
+              ),
+            )}
+          </ul>
         </div>
 
-        <div className="absolute md:bottom-6 md:left-6 lg:bottom-10 lg:left-10 bottom-12 left-12 text-xs text-[#94A3B8]">
-          © {new Date().getFullYear()} {branding?.title_prefix || ""}. All
-          rights reserved.
+        <div className="z-10 absolute md:bottom-6 md:left-6 lg:bottom-10 lg:left-10 bottom-12 left-12 text-xs text-[#94A3B8]">
+          {footer}
         </div>
       </div>
 

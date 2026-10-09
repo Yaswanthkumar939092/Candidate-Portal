@@ -30,7 +30,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: yarn
 
       - name: Install dependencies
@@ -97,15 +97,36 @@ jobs:
             NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
             NEXT_PUBLIC_SITE_URL=${{ env.NEXT_PUBLIC_SITE_URL }}
             NEXT_PUBLIC_FRAPPE_URL=${{ env.NEXT_PUBLIC_FRAPPE_URL }}
-            FRAPPE_BASE_URL=${{ env.FRAPPE_BASE_URL }}
+
+      - name: Smoke test unprivileged container and runtime proxy
+        run: bash scripts/container-smoke.sh candidate-portal:pr-${{ github.event.pull_request.number }}
+
+      - name: Generate SBOM
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: candidate-portal:pr-${{ github.event.pull_request.number }}
+          format: cyclonedx
+          output: sbom.cdx.json
+          exit-code: '0'
 
       - name: Scan Docker image for critical vulnerabilities
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: candidate-portal:pr-${{ github.event.pull_request.number }}
-          format: table
-          scanners: vuln
+          format: json
+          output: vulnerabilities.json
+          scanners: vuln,secret
           severity: HIGH,CRITICAL
-          ignore-unfixed: true
+          ignore-unfixed: false
           hide-progress: true
           exit-code: '1'
+
+      - name: Upload image evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-evidence-${{ github.sha }}
+          path: |
+            sbom.cdx.json
+            vulnerabilities.json
+          if-no-files-found: error

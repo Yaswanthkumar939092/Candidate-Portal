@@ -173,6 +173,18 @@ describe('FrappeAPI', () => {
       await expect(FrappeAPI.post('my_method', {})).rejects.toThrow('API request failed')
     })
 
+    it('surfaces frappe.throw() text from _server_messages', async () => {
+      mockFetch(
+        {
+          exc_type: 'ValidationError',
+          _server_messages: JSON.stringify([JSON.stringify({ message: 'You have already applied for this job' })]),
+        },
+        false,
+        417,
+      )
+      await expect(FrappeAPI.post('my_method', {})).rejects.toThrow('You have already applied for this job')
+    })
+
     it('sends credentials with request', async () => {
       mockFetch({ message: 'ok' })
 

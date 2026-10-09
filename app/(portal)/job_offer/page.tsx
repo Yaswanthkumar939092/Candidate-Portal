@@ -1,7 +1,13 @@
 "use client";
 
 import React, { useState, Suspense, useEffect, useCallback } from "react";
-import { Loader2, AlertCircle, LogOut, ClipboardList, Clock } from "lucide-react";
+import {
+  Loader2,
+  AlertCircle,
+  LogOut,
+  ClipboardList,
+  Clock,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
@@ -165,12 +171,8 @@ function JobOfferContent() {
     data: offerData,
     isLoading: isApiLoading,
     isError: isOfferError,
-    isFetching: isOfferFetching
-  } = useJobOfferSummary(
-    applicantEmail,
-    isSummaryNeeded,
-    tokenParam,
-  );
+    isFetching: isOfferFetching,
+  } = useJobOfferSummary(applicantEmail, isSummaryNeeded, tokenParam);
 
   const [selectedLetterIndex, setSelectedLetterIndex] = useState(0);
   const [viewedLetters, setViewedLetters] = useState<Set<number>>(new Set([0]));
@@ -184,21 +186,32 @@ function JobOfferContent() {
     });
   }, [selectedLetterIndex]);
 
-  const isSeparate = (offerData?.count && offerData.count > 1) || offerData?.employment_type === "Trainee" || offerData?.compensation_type === "both";
+  const isSeparate =
+    (offerData?.count && offerData.count > 1) ||
+    offerData?.employment_type === "Trainee" ||
+    offerData?.compensation_type === "both";
 
-  const { pdfUrl } = useJobOfferPdf(applicantEmail, isPdfNeeded && !isSeparate, tokenParam);
-
-  const { data: lettersData, isLoading: isLettersLoading, isFetching: isLettersFetching } = useJobOfferLetters(
+  const { pdfUrl } = useJobOfferPdf(
     applicantEmail,
-    isPdfNeeded && isSeparate,
-    tokenParam
+    isPdfNeeded && !isSeparate,
+    tokenParam,
   );
 
-  const hasViewedAllLetters = !isSeparate || !lettersData?.letters || viewedLetters.size === lettersData.letters.length;
+  const {
+    data: lettersData,
+    isLoading: isLettersLoading,
+    isFetching: isLettersFetching,
+  } = useJobOfferLetters(applicantEmail, isPdfNeeded && isSeparate, tokenParam);
 
-  const activePdfUrl = isSeparate && lettersData?.letters?.[selectedLetterIndex]?.pdf_base64
-    ? `data:application/pdf;base64,${lettersData.letters[selectedLetterIndex].pdf_base64}`
-    : pdfUrl;
+  const hasViewedAllLetters =
+    !isSeparate ||
+    !lettersData?.letters ||
+    viewedLetters.size === lettersData.letters.length;
+
+  const activePdfUrl =
+    isSeparate && lettersData?.letters?.[selectedLetterIndex]?.pdf_base64
+      ? `data:application/pdf;base64,${lettersData.letters[selectedLetterIndex].pdf_base64}`
+      : pdfUrl;
 
   const { mutateAsync: updateStatus } = useUpdateJobOfferStatus();
   const { data: reasonsData, isLoading: isReasonsLoading } =
@@ -238,7 +251,9 @@ function JobOfferContent() {
    */
   const startConsentJourney = useCallback(async () => {
     if (!isExternalConsent) {
-      router.push(buildConsentPath(CONSENT_FORM_PATH, applicantEmail, tokenParam));
+      router.push(
+        buildConsentPath(CONSENT_FORM_PATH, applicantEmail, tokenParam),
+      );
       return;
     }
     await handoffToExternalConsent(consentHandoff?.url);
@@ -399,7 +414,9 @@ function JobOfferContent() {
       <div className="font-sans text-foreground bg-background min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Fetching offer details...</p>
+          <p className="text-sm text-muted-foreground">
+            Fetching offer details...
+          </p>
         </div>
       </div>
     );
@@ -506,7 +523,7 @@ function JobOfferContent() {
                           </span>
                           <span className="text-[0.85rem] font-semibold text-foreground text-right">
                             {formatIndianAmount(
-                              offerData.stipend ?? offerData.stipend_display
+                              offerData.stipend ?? offerData.stipend_display,
                             )}
                           </span>
                         </div>
@@ -523,15 +540,16 @@ function JobOfferContent() {
                             </span>
                           </div>
                         )}
-                      {(offerData.total_fixed ?? offerData.total) !== undefined &&
+                      {(offerData.total_fixed ?? offerData.total) !==
+                        undefined &&
                         (offerData.total_fixed ?? offerData.total) !== null && (
                           <div className="flex justify-between items-center py-1.5">
                             <span className="text-[0.85rem] text-muted-foreground">
-                              Total
+                              Total Fixed Pay
                             </span>
                             <span className="text-[0.85rem] font-semibold text-foreground text-right">
                               {formatIndianAmount(
-                                offerData.total_fixed ?? offerData.total
+                                offerData.total_fixed ?? offerData.total,
                               )}
                             </span>
                           </div>
@@ -541,12 +559,17 @@ function JobOfferContent() {
                     <div className="p-5">
                       <div className="block lg:hidden">
                         <button
-                          onClick={() => activePdfUrl && downloadPdf(
-                            activePdfUrl,
-                            isSeparate && lettersData?.letters?.[selectedLetterIndex]?.print_format 
-                              ? `${lettersData.letters[selectedLetterIndex].print_format}.pdf` 
-                              : "Offer_Letter.pdf"
-                          )}
+                          onClick={() =>
+                            activePdfUrl &&
+                            downloadPdf(
+                              activePdfUrl,
+                              isSeparate &&
+                                lettersData?.letters?.[selectedLetterIndex]
+                                  ?.print_format
+                                ? `${lettersData.letters[selectedLetterIndex].print_format}.pdf`
+                                : "Offer_Letter.pdf",
+                            )
+                          }
                           disabled={!activePdfUrl}
                           className="flex items-center justify-center gap-2 w-full p-2.5 bg-background text-foreground border border-foreground/40 shadow-xs rounded-lg text-[0.85rem] font-semibold mb-2.5 text-center transition-colors duration-200 hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:hover:bg-input/50 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
@@ -564,7 +587,13 @@ function JobOfferContent() {
                             <polyline points="7 10 12 15 17 10" />
                             <line x1="12" y1="15" x2="12" y2="3" />
                           </svg>
-                          Download {isSeparate && lettersData?.letters?.[selectedLetterIndex]?.print_format ? lettersData.letters[selectedLetterIndex].print_format : "Offer Letter"}
+                          Download{" "}
+                          {isSeparate &&
+                          lettersData?.letters?.[selectedLetterIndex]
+                            ?.print_format
+                            ? lettersData.letters[selectedLetterIndex]
+                                .print_format
+                            : "Offer Letter"}
                         </button>
                       </div>
 
@@ -572,7 +601,8 @@ function JobOfferContent() {
                         <div className="text-[0.85rem] text-destructive bg-destructive/10 border border-destructive/20 rounded-lg p-3 mb-4 flex items-start gap-2">
                           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                           <span>
-                            Please view all the documents in the Job Offer Preview section to accept the offer letter.
+                            Please view all the documents in the Job Offer
+                            Preview section to accept the offer letter.
                           </span>
                         </div>
                       )}
@@ -585,7 +615,9 @@ function JobOfferContent() {
                           onChange={(e) => setIsTermsChecked(e.target.checked)}
                           disabled={!hasViewedAllLetters}
                         />
-                        <span className={!hasViewedAllLetters ? "opacity-70" : ""}>
+                        <span
+                          className={!hasViewedAllLetters ? "opacity-70" : ""}
+                        >
                           I declare that I have read and understood the entire
                           offer letter and agree to the terms and conditions
                           outlined above.
@@ -594,7 +626,9 @@ function JobOfferContent() {
 
                       <div className="hidden lg:block">
                         <button
-                          onClick={() => activePdfUrl && openPdfPreview(activePdfUrl)}
+                          onClick={() =>
+                            activePdfUrl && openPdfPreview(activePdfUrl)
+                          }
                           disabled={!activePdfUrl}
                           className="flex items-center justify-center gap-2 w-full p-2.5 bg-background text-foreground border border-foreground/40 shadow-xs rounded-lg text-[0.85rem] font-semibold mb-2.5 text-center transition-colors duration-200 hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:hover:bg-input/50 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
@@ -612,13 +646,21 @@ function JobOfferContent() {
                             <polyline points="15 3 21 3 21 9" />
                             <line x1="10" y1="14" x2="21" y2="3" />
                           </svg>
-                          Preview / Download {isSeparate && lettersData?.letters?.[selectedLetterIndex]?.print_format ? lettersData.letters[selectedLetterIndex].print_format : "Offer Letter"}
+                          Preview / Download{" "}
+                          {isSeparate &&
+                          lettersData?.letters?.[selectedLetterIndex]
+                            ?.print_format
+                            ? lettersData.letters[selectedLetterIndex]
+                                .print_format
+                            : "Offer Letter"}
                         </button>
                       </div>
 
                       <button
                         className="flex items-center justify-center gap-2 w-full py-2.5 bg-success hover:bg-success/90 text-success-foreground rounded-lg text-[0.95rem] font-semibold transition-colors duration-200 mb-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled={!isTermsChecked || isAccepting || !hasViewedAllLetters}
+                        disabled={
+                          !isTermsChecked || isAccepting || !hasViewedAllLetters
+                        }
                         onClick={handleAccept}
                       >
                         {isAccepting && (
@@ -678,8 +720,12 @@ function JobOfferContent() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <h1 className="text-lg font-bold text-foreground truncate">
-                            {isSeparate && lettersData?.letters && lettersData.letters[selectedLetterIndex]?.print_format 
-                              ? lettersData.letters[selectedLetterIndex].print_format 
+                            {isSeparate &&
+                            lettersData?.letters &&
+                            lettersData.letters[selectedLetterIndex]
+                              ?.print_format
+                              ? lettersData.letters[selectedLetterIndex]
+                                  .print_format
                               : "Offer of Employment"}
                           </h1>
                         </div>
@@ -694,10 +740,15 @@ function JobOfferContent() {
                       >
                         <PdfViewer pdfUrl={activePdfUrl} />
                       </div>
-                    ) : (isLettersLoading || isLettersFetching) ? (
-                      <div className="bg-muted flex flex-col items-center justify-center shadow-[inset_0_1px_4px_rgba(0,0,0,0.05)]" style={{ height: "80vh", minHeight: "600px" }}>
+                    ) : isLettersLoading || isLettersFetching ? (
+                      <div
+                        className="bg-muted flex flex-col items-center justify-center shadow-[inset_0_1px_4px_rgba(0,0,0,0.05)]"
+                        style={{ height: "80vh", minHeight: "600px" }}
+                      >
                         <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-                        <p className="text-muted-foreground">Loading offer letter...</p>
+                        <p className="text-muted-foreground">
+                          Loading offer letter...
+                        </p>
                       </div>
                     ) : (
                       <div className="bg-card p-8 overflow-x-auto flex flex-col items-center justify-center min-h-100">
@@ -828,7 +879,10 @@ function JobOfferContent() {
                     >
                       Go to Dashboard
                     </Button>
-                    <Button size="sm" onClick={() => void startConsentJourney()}>
+                    <Button
+                      size="sm"
+                      onClick={() => void startConsentJourney()}
+                    >
                       Try again
                     </Button>
                   </div>
@@ -918,7 +972,9 @@ function JobOfferContent() {
               <div className="font-semibold text-foreground mb-1">
                 Reason for Rejection:
               </div>
-              <div className="text-muted-foreground mb-3">{rejectionReason}</div>
+              <div className="text-muted-foreground mb-3">
+                {rejectionReason}
+              </div>
               {rejectionMessage && (
                 <>
                   <div className="font-semibold text-foreground mb-1">
