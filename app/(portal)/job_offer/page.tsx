@@ -481,7 +481,12 @@ function JobOfferContent() {
                           Role
                         </span>
                         <span className="text-[0.85rem] font-semibold text-foreground text-right truncate">
-                          {offerData.designation || "Intern"}
+                          {offerData.designation ||
+                            (offerData.employment_type
+                              ?.toLowerCase()
+                              .includes("apprentice")
+                              ? "Apprentice"
+                              : "Intern")}
                         </span>
                       </div>
                       {offerData.duration_display && (

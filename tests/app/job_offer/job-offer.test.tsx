@@ -173,6 +173,52 @@ describe("JobOfferPage", () => {
     expect(screen.queryByText("Stipend")).toBeNull();
   });
 
+  it("renders apprentice role and details properly when employment_type is Apprentice", () => {
+    mockUseJobOfferSummary.mockReturnValue({
+      data: {
+        applicant_name: "Rahul Verma",
+        designation: "",
+        employment_type: "Apprentice",
+        duration_display: "1 Year",
+        expected_doj_display: "01-11-2026",
+        stipend: 15000,
+        expiry_display: null,
+      },
+      isLoading: false,
+    });
+
+    render(<JobOfferPage />);
+
+    expect(screen.getByText("Apprentice")).toBeTruthy();
+    expect(screen.getByText("Duration")).toBeTruthy();
+    expect(screen.getByText("1 Year")).toBeTruthy();
+    expect(screen.getByText("Joining Date")).toBeTruthy();
+    expect(screen.getByText("01-11-2026")).toBeTruthy();
+    expect(screen.getByText("Stipend")).toBeTruthy();
+    expect(screen.getByText("15,000")).toBeTruthy();
+    expect(screen.queryByText("Variable Pay")).toBeNull();
+    expect(screen.queryByText("Total Fixed Pay")).toBeNull();
+  });
+
+  it("renders specific designation for Apprentice when designation is provided", () => {
+    mockUseJobOfferSummary.mockReturnValue({
+      data: {
+        applicant_name: "Rahul Verma",
+        designation: "Graduate Apprentice",
+        employment_type: "Apprentice",
+        duration_display: "1 Year",
+        expected_doj_display: "01-11-2026",
+        stipend: 15000,
+        expiry_display: null,
+      },
+      isLoading: false,
+    });
+
+    render(<JobOfferPage />);
+
+    expect(screen.getByText("Graduate Apprentice")).toBeTruthy();
+  });
+
   it("renders trainee_doj_display if available", () => {
     mockUseJobOfferSummary.mockReturnValue({
       data: {
