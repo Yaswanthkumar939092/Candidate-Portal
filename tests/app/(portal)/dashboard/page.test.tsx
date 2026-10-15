@@ -1,8 +1,9 @@
+import type { ReactNode } from "react"
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import DashboardPage from "@/app/(portal)/dashboard/page"
-import { useAuth } from "@/lib/contexts/auth-context"
+import { useAuth, type AuthContextType } from "@/lib/contexts/auth-context"
 import { useDashboard } from "@/lib/hooks/useDashboard"
 import type { DashboardData } from "@/types/dashboard"
 
@@ -72,6 +73,12 @@ vi.mock("@/components/dashboard/key-contacts", () => ({
 
 vi.mock("@/components/dashboard/journey-countdown", () => ({
   JourneyCountdown: () => <div data-testid="journey-countdown">Countdown</div>,
+}))
+
+vi.mock("@/components/home/home-promo", () => ({
+  HomePromo: ({ fallback }: { fallback?: ReactNode }) => (
+    <div data-testid="home-promo">{fallback ?? "Promo"}</div>
+  ),
 }))
 
 const mockDashboardData: DashboardData = {
@@ -345,5 +352,34 @@ describe("DashboardPage", () => {
     render(<DashboardPage />)
 
     expect(screen.getByText("Something went wrong while fetching your dashboard data.")).toBeTruthy()
+  })
+
+  it("hands the empty state to the promo as a fallback when onboarding has not started", () => {
+    vi.mocked(useAuth).mockReturnValue({
+      user: { id: "user-123", email: "test@example.com" },
+      profile: null,
+    } as unknown as AuthContextType)
+    mockUseDashboardState({
+      data: { ...mockDashboardData, onboarding_status: false },
+    })
+
+    render(<DashboardPage />)
+
+    expect(screen.queryByTestId("onboarding-snapshot")).toBeNull()
+    expect(screen.queryByTestId("key-contacts")).toBeNull()
+    expect(screen.getByTestId("home-promo").textContent).toContain("No Data Available")
+  })
+
+  it("keeps the empty state out of the promo fallback once onboarding data exists", () => {
+    vi.mocked(useAuth).mockReturnValue({
+      user: { id: "user-123", email: "test@example.com" },
+      profile: null,
+    } as unknown as AuthContextType)
+    mockUseDashboardState({ data: mockDashboardData })
+
+    render(<DashboardPage />)
+
+    expect(screen.getByTestId("onboarding-snapshot")).toBeTruthy()
+    expect(screen.getByTestId("home-promo").textContent).not.toContain("No Data Available")
   })
 })
