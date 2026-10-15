@@ -609,9 +609,19 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
     },
   },
   Date: {
-    component: ({ field, value, onChange, onBlur, error, disabled, className }) => {
+    component: ({ field, value, onChange, onBlur, error, disabled, className, tableFieldname, rowIndex }) => {
       let maxDateAttr: string | undefined = undefined;
-      if (field.fieldname === "custom_date_of_birth" || field.fieldname === "dob") {
+      const formContext = useFormContext();
+      const relation =
+        tableFieldname === "custom_family_details" && rowIndex !== undefined
+          ? String(formContext?.watch(`${tableFieldname}.${rowIndex}.relation`) || "").trim().toLowerCase()
+          : "";
+      const requiresAdultDob =
+        field.fieldname === "custom_date_of_birth" ||
+        (tableFieldname === "custom_family_details" && field.fieldname === "dob" && relation !== "child");
+
+      // In Family Details, only a Child can be younger than 18.
+      if (requiresAdultDob) {
         const today = new Date();
         const eighteenYearsAgo = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
         maxDateAttr = eighteenYearsAgo.toISOString().split("T")[0];
