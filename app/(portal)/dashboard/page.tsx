@@ -9,6 +9,7 @@ import { OnboardingSnapshot } from "@/components/dashboard/onboarding-snapshot";
 import { InfoCard } from "@/components/dashboard/info-card";
 import { KeyContacts } from "@/components/dashboard/key-contacts";
 import { JourneyCountdown } from "@/components/dashboard/journey-countdown";
+import { HomePromo } from "@/components/home/home-promo";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useDashboard } from "@/lib/hooks/useDashboard";
@@ -61,11 +62,7 @@ function mapContacts(contacts: DashboardKeyContact[]) {
 
 function DashboardSkeleton() {
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-4 py-8 sm:px-6">
-      <div className="space-y-3">
-        <Skeleton className="h-8 w-52" />
-        <Skeleton className="h-4 w-72" />
-      </div>
+    <div className="space-y-6">
 
       <div className="rounded-3xl border bg-card p-2 shadow-sm">
         <div className="rounded-xl p-6 sm:p-8">
@@ -152,37 +149,80 @@ export default function DashboardPage() {
     refetch,
   } = useDashboard(user?.email);
 
-  if (isLoading) {
-    return <DashboardSkeleton />;
-  }
-
-  if (!user?.email) {
-    return (
-      <DashboardErrorState
-        message="We couldn't identify your account email for  dashboard yet."
-        onRetry={() => void refetch()}
+  const dashboardRegion = isLoading ? (
+    <DashboardSkeleton />
+  ) : !user?.email ? (
+    <DashboardErrorState
+      message="We couldn't identify your account email for  dashboard yet."
+      onRetry={() => void refetch()}
+    />
+  ) : isError || !dashboardData ? (
+    <DashboardErrorState
+      message={
+        error instanceof Error
+          ? error.message
+          : "Something went wrong while fetching your dashboard data."
+      }
+      onRetry={() => void refetch()}
+    />
+  ) : dashboardData?.dpdp_consent_required &&
+    dashboardData?.dpdp_consent_submitted === false ? (
+    <DpdpConsentCard
+      consentUrl={dashboardData?.dpdp_consent_url}
+      consentMode={dashboardData?.dpdp_consent_mode}
+      appl={user?.email}
+    />
+  ) : dashboardData?.onboarding_status === false ? null : (
+    <>
+      <OnboardingSnapshot
+        completedSteps={getCompletedSteps(dashboardData)}
+        totalSteps={TOTAL_STEPS}
+        joiningDate={dashboardData?.date_of_joining}
+        dashboardPayload={dashboardData}
       />
-    );
-  }
 
-  if (isError || !dashboardData) {
-    return (
-      <DashboardErrorState
-        message={
-          error instanceof Error
-            ? error.message
-            : "Something went wrong while fetching your dashboard data."
-        }
-        onRetry={() => void refetch()}
-      />
-    );
-  }
+      <div className="grid gap-4 sm:grid-cols-3">
+        <InfoCard
+          icon={<CalendarDays className="h-5 w-5" />}
+          label="Joining Date"
+          value={
+            formatDisplayDate(dashboardData?.date_of_joining) ||
+            " Not available"
+          }
+          tag={<JourneyCountdown joiningDate={dashboardData?.date_of_joining} />}
+          tagVariant="brand"
+        />
 
-  const completedSteps = getCompletedSteps(dashboardData);
-  const officeAddress = getOfficeAddress(dashboardData);
-  const contacts = mapContacts(dashboardData?.key_contacts || []);
-  const googleMapLink =
-    dashboardData?.work_location_details?.custom_google_map_link;
+        <InfoCard
+          icon={<MapPin className="h-5 w-5" />}
+          label="Office Location"
+          value={dashboardData?.work_location || "Not available"}
+          subtitle={getOfficeAddress(dashboardData)}
+          tag={
+            dashboardData?.work_location_details?.custom_google_map_link ? (
+              <a
+                href={dashboardData.work_location_details.custom_google_map_link}
+                target="_blank"
+                rel="noreferrer"
+              >
+                View on Map
+              </a>
+            ) : undefined
+          }
+          tagVariant="link"
+        />
+
+        <InfoCard
+          icon={<Building2 className="h-5 w-5" />}
+          label="Role & Department"
+          value={dashboardData?.designation || "Not assigned"}
+          subtitle={dashboardData?.department || "Department not available"}
+        />
+      </div>
+
+      <KeyContacts contacts={mapContacts(dashboardData?.key_contacts || [])} />
+    </>
+  );
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 py-8 sm:px-6">
@@ -190,66 +230,8 @@ export default function DashboardPage() {
         name={profile?.full_name || dashboardData?.name || "User"}
         greeting="Welcome back"
       />
-
-      {dashboardData?.dpdp_consent_required && dashboardData?.dpdp_consent_submitted === false ? (
-        <DpdpConsentCard
-          consentUrl={dashboardData?.dpdp_consent_url}
-          consentMode={dashboardData?.dpdp_consent_mode}
-          appl={user?.email}
-        />
-      ) : dashboardData?.onboarding_status === false ? (
-        <EmptyState />
-      ) : (
-        <>
-          <OnboardingSnapshot
-            completedSteps={completedSteps}
-            totalSteps={TOTAL_STEPS}
-            joiningDate={dashboardData?.date_of_joining}
-            dashboardPayload={dashboardData}
-          />
-
-          <div className="grid gap-4 sm:grid-cols-3">
-            <InfoCard
-              icon={<CalendarDays className="h-5 w-5" />}
-              label="Joining Date"
-              value={
-                formatDisplayDate(dashboardData?.date_of_joining) ||
-                " Not available"
-              }
-              tag={
-                <JourneyCountdown
-                  joiningDate={dashboardData?.date_of_joining}
-                />
-              }
-              tagVariant="brand"
-            />
-
-            <InfoCard
-              icon={<MapPin className="h-5 w-5" />}
-              label="Office Location"
-              value={dashboardData?.work_location || "Not available"}
-              subtitle={officeAddress}
-              tag={
-                googleMapLink ? (
-                  <a href={googleMapLink} target="_blank" rel="noreferrer">
-                    View on Map
-                  </a>
-                ) : undefined
-              }
-              tagVariant="link"
-            />
-
-            <InfoCard
-              icon={<Building2 className="h-5 w-5" />}
-              label="Role & Department"
-              value={dashboardData?.designation || "Not assigned"}
-              subtitle={dashboardData?.department || "Department not available"}
-            />
-          </div>
-
-          <KeyContacts contacts={contacts} />
-        </>
-      )}
+      {dashboardRegion}
+      <HomePromo fallback={dashboardRegion ? null : <EmptyState />} />
     </div>
   );
 }
