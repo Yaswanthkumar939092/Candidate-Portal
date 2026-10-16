@@ -27,6 +27,7 @@ import { useDebounce } from "@/lib/hooks/useDebounce";
 import { useLinkFieldOptions } from "@/lib/hooks/useLinkFieldOptions";
 import { useFormContext } from "react-hook-form";
 import { evaluateDependsOn } from "@/lib/onboarding-utils";
+import { JOINING_DAY_FIELDS, useNonWorkingDays } from "@/lib/hooks/useNonWorkingDays";
 
 export interface FormField {
   fieldname: string;
@@ -626,6 +627,12 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
         const eighteenYearsAgo = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
         maxDateAttr = eighteenYearsAgo.toISOString().split("T")[0];
       }
+      // Date of Joining must be a working day. A native date input cannot grey
+      // out individual days, so a holiday or weekly off is refused on pick and
+      // explained instead — the same rule the backend enforces on save.
+      const isJoiningDay = !!JOINING_DAY_FIELDS[field.fieldname];
+      const nonWorkingDays = useNonWorkingDays(isJoiningDay);
+      const [joiningDayError, setJoiningDayError] = React.useState("");
       return (
         <div className={cn("space-y-1.5", className)}>
           <Label className="text-sm font-medium text-foreground">
@@ -638,7 +645,15 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
             <Input
               type="date"
               value={(value as string) || ""}
-              onChange={(e) => onChange(e.target.value)}
+              onChange={(e) => {
+                const next = e.target.value;
+                if (next && nonWorkingDays.includes(next)) {
+                  setJoiningDayError(`${field.label} must be a working day — that date is a holiday or weekly off.`);
+                  return;
+                }
+                setJoiningDayError("");
+                onChange(next);
+              }}
               onBlur={onBlur}
               disabled={disabled || !!field.read_only}
               className={getFieldClass(field, value, error, disabled)}
@@ -646,6 +661,10 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
             />
             <FieldStatusTooltip field={field} value={value} error={error} disabled={disabled} />
           </div>
+          {isJoiningDay && !error && !joiningDayError && (
+            <p className="text-xs text-muted-foreground">Must be a working day.</p>
+          )}
+          {joiningDayError && <p className="text-xs text-destructive">{joiningDayError}</p>}
           {error && <p className="text-xs text-destructive">{error}</p>}
         </div>
       );

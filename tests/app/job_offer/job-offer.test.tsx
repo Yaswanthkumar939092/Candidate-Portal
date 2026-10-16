@@ -449,26 +449,59 @@ describe("JobOfferPage", () => {
     });
   });
 
-  it("renders processed state if offer was already accepted", () => {
+  it("shows the offer back read-only once the candidate has accepted it", () => {
     mockUseJobOfferStatus.mockReturnValue({
-      data: { status: "Accepted" },
+      data: {
+        status: "Accepted",
+        responded_on: "2026-10-05",
+      },
+      isLoading: false,
+    });
+    mockUseJobOfferSummary.mockReturnValue({
+      data: {
+        applicant_name: "Pushpa",
+        designation: "Professor",
+        expected_doj_display: "30-10-2026",
+        total_fixed: 2000000,
+      },
+      isLoading: false,
+    });
+
+    render(<JobOfferPage />);
+
+    // The decision and the offer it was made against, not a dead end.
+    expect(screen.getByText("You accepted this offer.")).toBeTruthy();
+    expect(screen.getByText("Professor")).toBeTruthy();
+    expect(screen.getByText("30-10-2026")).toBeTruthy();
+    // Accept / Decline are gone: the backend refuses a second answer anyway.
+    expect(screen.queryByRole("button", { name: /Accept Offer/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Reject Offer/i })).toBeNull();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Back to Action Center/i }),
+    );
+    expect(mockPush).toHaveBeenCalledWith("/action-center");
+  });
+
+  it("shows the reason back when the candidate declined the offer", () => {
+    mockUseJobOfferStatus.mockReturnValue({
+      data: {
+        status: "Rejected",
+        responded_on: "2026-10-03",
+        rejection_reason: "Better opportunity elsewhere",
+        rejection_message: "Accepted another role closer to home.",
+      },
       isLoading: false,
     });
     mockUseJobOfferSummary.mockReturnValue({ data: null, isLoading: false });
 
     render(<JobOfferPage />);
 
+    expect(screen.getByText("You declined this offer.")).toBeTruthy();
+    expect(screen.getByText("Better opportunity elsewhere")).toBeTruthy();
     expect(
-      screen.getByText(
-        /You have already accepted or rejected the Offer Letter/,
-      ),
+      screen.getByText("Accepted another role closer to home."),
     ).toBeTruthy();
-
-    const dashboardBtn = screen.getByRole("button", {
-      name: /Go to Dashboard/i,
-    });
-    fireEvent.click(dashboardBtn);
-    expect(mockPush).toHaveBeenCalledWith("/dashboard");
   });
 
   it("renders expired state if offer has expired", () => {

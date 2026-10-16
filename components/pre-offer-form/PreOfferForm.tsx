@@ -8,9 +8,17 @@ import { PreOfferStepNav } from "./pre-offer-step-nav";
 import { PreOfferStep } from "./DynamicField";
 import { PreOfferReviewStep } from "./pre-offer-review-step";
 import { Button } from "@/components/ui/button";
+import { SubmittedFormReview } from "@/components/shared/submitted-form-review";
 
 export default function PreOfferForm() {
-  const { tabs, allFields, isLoading, initializeAllStepsFromDraft } = usePreOffer();
+  const {
+    tabs,
+    allFields,
+    isLoading,
+    initializeAllStepsFromDraft,
+    isSubmitted: wasSubmittedEarlier,
+    submittedAt,
+  } = usePreOffer();
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -73,6 +81,20 @@ export default function PreOfferForm() {
           </Button>
         </div>
       </div>
+    );
+  }
+
+  // Opened again from the completed Action Center card: show what was sent,
+  // read-only, rather than a second blank form. A field HR has rejected clears
+  // `wasSubmittedEarlier`, so a correction round still opens for filling.
+  if (wasSubmittedEarlier && tabs.length > 0) {
+    return (
+      <SubmittedFormReview
+        title="Pre-offer Verification"
+        tabs={tabs}
+        submittedAt={submittedAt}
+        headline="You have already submitted your pre-offer details."
+      />
     );
   }
 

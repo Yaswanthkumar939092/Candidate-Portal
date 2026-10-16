@@ -18,6 +18,7 @@ import {
   useJobOfferStatus,
   useRejectionReasons,
 } from "@/lib/hooks/useJobOffer";
+import type { JobOfferStatus, JobOfferSummary } from "@/lib/services/jobOffer";
 import { useExternalConsentHandoff } from "@/lib/hooks/useExternalConsentHandoff";
 import { isExternalConsentMode } from "@/types/consent";
 import { CONSENT_FORM_PATH, buildConsentPath } from "@/lib/utils/dpdp-consent";
@@ -160,12 +161,21 @@ function JobOfferContent() {
   const { handoff: handoffToExternalConsent, failed: consentLinkFailed } =
     useExternalConsentHandoff(applicantEmail, tokenParam);
 
-  // Only fetch summary and PDF if status is awaiting response or just accepted/rejected in this session
-  const isSummaryNeeded =
-    statusNormalized === "awaiting response" ||
-    (statusNormalized === "accepted" && justAccepted) ||
-    (statusNormalized === "rejected" && justRejected);
-  const isPdfNeeded = statusNormalized === "awaiting response";
+  // The offer summary is also what the read-only look back shows, so it is
+  // fetched for a decided offer too — the Action Center keeps the card after the
+  // candidate answers, and "View Details" on it has to show the offer they
+  // accepted or declined, not just that they did. It is a plain field read.
+  const isDecided =
+    statusNormalized === "accepted" || statusNormalized === "rejected";
+  const isSummaryNeeded = statusNormalized === "awaiting response" || isDecided;
+  // The letters are NOT fetched with it. Each one costs a wkhtmltopdf subprocess
+  // (~2s measured) and `download_job_offer_pdf` passes a Job Offer *doc*, so
+  // `_offer_pdf_cache_key` returns None and the render cache never engages — the
+  // cost is paid again on every view. The live offer must pay it (the candidate
+  // cannot accept a letter they have not read), but on the review the letter is
+  // loaded only when asked for, via `showLetters` below.
+  const [showLetters, setShowLetters] = useState(false);
+  const isPdfNeeded = statusNormalized === "awaiting response" || showLetters;
 
   const {
     data: offerData,
@@ -1026,41 +1036,22 @@ function JobOfferContent() {
         </div>
       )}
 
-      {/* STATE: ALREADY PROCESSED */}
+      {/* STATE: ALREADY DECIDED — the read-only look back */}
       {gameState === "processed" && (
-        <div className="max-w-150 mx-auto px-5 py-25 text-center">
-          <div className="w-20 h-20 bg-muted rounded-[20px] flex items-center justify-center mx-auto mb-6">
-            <AlertCircle className="h-9 w-9 text-muted-foreground" />
-          </div>
-          <h2 className="text-[1.5rem] font-semibold text-foreground mb-3">
-            You have already accepted or rejected the Offer Letter.
-          </h2>
-          <p className="text-[0.95rem] text-muted-foreground leading-[1.6] mb-8">
-            If you believe this is an error, please contact our HR department
-            for assistance.
-          </p>
-          <div className="flex flex-col items-center gap-3">
-            <Button
-              onClick={() => router.push("/dashboard")}
-              className="px-6 py-2.5 bg-primary text-primary-foreground font-semibold hover:bg-primary-hover transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 h-11"
-            >
-              Go to Dashboard
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <line x1="5" y1="12" x2="19" y2="12" />
-                <polyline points="12 5 19 12 12 19" />
-              </svg>
-            </Button>
-          </div>
-        </div>
+        <OfferReview
+          decision={statusNormalized === "accepted" ? "accepted" : "rejected"}
+          status={statusData}
+          offer={offerData}
+          letters={lettersData?.letters}
+          pdfUrl={activePdfUrl}
+          isLoading={isOfferFetching}
+          lettersRequested={showLetters}
+          isLettersLoading={isLettersLoading || isLettersFetching}
+          onShowLetters={() => setShowLetters(true)}
+          selectedLetterIndex={selectedLetterIndex}
+          onSelectLetter={setSelectedLetterIndex}
+          onBack={() => router.push("/action-center")}
+        />
       )}
 
       {/* STATE: EXPIRED */}
@@ -1154,4 +1145,235 @@ function JobOfferContent() {
       )}
     </div>
   );
+}
+
+/**
+ * The read-only look back at an offer the candidate has already answered,
+ * reached from their completed Action Center card.
+ *
+ * It shows the decision and the summary they agreed to — the card stays in the
+ * Action Center after the action, so "View Details" has to show the offer rather
+ * than tell them they already responded. Accept / Decline are deliberately
+ * absent: `job_offer_update` refuses a second answer anyway.
+ *
+ * The letter itself is behind a button. Rendering it costs a wkhtmltopdf
+ * subprocess per letter and the backend's render cache does not engage on this
+ * path, so it is not work to do for every candidate who merely wants to check
+ * their joining date.
+ */
+function OfferReview({
+  decision,
+  status,
+  offer,
+  letters,
+  pdfUrl,
+  isLoading,
+  lettersRequested,
+  isLettersLoading,
+  onShowLetters,
+  selectedLetterIndex,
+  onSelectLetter,
+  onBack,
+}: {
+  decision: "accepted" | "rejected";
+  status?: JobOfferStatus;
+  offer?: JobOfferSummary;
+  letters?: { print_format?: string | null; pdf_base64?: string | null }[];
+  pdfUrl: string | null;
+  isLoading: boolean;
+  /** True once the candidate has asked to see the letter. */
+  lettersRequested: boolean;
+  isLettersLoading: boolean;
+  onShowLetters: () => void;
+  selectedLetterIndex: number;
+  onSelectLetter: (index: number) => void;
+  onBack: () => void;
+}) {
+  const accepted = decision === "accepted";
+  const respondedOn = formatReviewDate(status?.responded_on);
+  const rows: { label: string; value: string }[] = [];
+  if (offer?.designation) rows.push({ label: "Role", value: offer.designation });
+  if (offer?.duration_display) rows.push({ label: "Duration", value: offer.duration_display });
+  if (offer?.expected_doj_display)
+    rows.push({ label: "Joining Date", value: offer.expected_doj_display });
+  if (offer?.trainee_doj_display)
+    rows.push({ label: "Trainee DOJ", value: offer.trainee_doj_display });
+  if (offer?.stipend_display) rows.push({ label: "Stipend", value: offer.stipend_display });
+  const total = offer?.total_fixed ?? offer?.total;
+  if (total !== undefined && total !== null)
+    rows.push({ label: "Total Fixed Pay", value: formatIndianAmount(total) });
+
+  return (
+    <div className="max-w-300 mx-auto px-5 py-7.5">
+      <div
+        className={`flex items-start gap-3 rounded-xl border p-4 mb-6 ${
+          accepted
+            ? "border-success/30 bg-success-bg"
+            : "border-border bg-muted"
+        }`}
+      >
+        <AlertCircle
+          className={`mt-0.5 h-5 w-5 shrink-0 ${accepted ? "text-success" : "text-muted-foreground"}`}
+        />
+        <div className="text-sm">
+          <p className="font-semibold text-foreground">
+            {accepted ? "You accepted this offer." : "You declined this offer."}
+          </p>
+          <p className="text-muted-foreground">
+            {respondedOn
+              ? `Answered on ${respondedOn}. This is a copy of what you were sent — it cannot be changed.`
+              : "This is a copy of what you were sent — it cannot be changed."}
+          </p>
+          {!accepted && status?.rejection_reason && (
+            <p className="mt-1.5 text-muted-foreground">
+              Reason: <span className="text-foreground">{status.rejection_reason}</span>
+            </p>
+          )}
+          {!accepted && status?.rejection_message && (
+            <p className="mt-1 whitespace-pre-wrap text-muted-foreground">
+              {status.rejection_message}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="flex flex-col lg:flex-row gap-8 items-stretch lg:items-start w-full">
+        <div className="w-full lg:w-85 shrink-0 flex flex-col gap-6 lg:sticky lg:top-22">
+          <div className="bg-card border border-border/60 rounded-xl overflow-hidden shadow-sm">
+            <div className="text-[1.1rem] font-semibold text-foreground px-5 pt-4 pb-2.5">
+              Offer Summary
+            </div>
+            {rows.length > 0 ? (
+              <div className="bg-muted p-5 border border-border/60 rounded-lg mx-5 mb-4 overflow-hidden">
+                {rows.map((row) => (
+                  <div
+                    key={row.label}
+                    className="flex justify-between items-center py-1.5 gap-4"
+                  >
+                    <span className="text-[0.85rem] text-muted-foreground shrink-0">
+                      {row.label}
+                    </span>
+                    <span className="text-[0.85rem] font-semibold text-foreground text-right truncate">
+                      {row.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="px-5 pb-4 text-[0.85rem] text-muted-foreground">
+                {isLoading ? "Loading offer details..." : "Offer details are no longer available."}
+              </p>
+            )}
+
+            {lettersRequested && letters && letters.length > 1 && (
+              <div className="px-5 pb-5 flex flex-col gap-2">
+                {letters.map((letter, i) => (
+                  <button
+                    key={`${letter.print_format}-${i}`}
+                    onClick={() => onSelectLetter(i)}
+                    className={`text-left text-[0.85rem] rounded-lg border px-3 py-2 transition-colors ${
+                      i === selectedLetterIndex
+                        ? "border-primary bg-primary/10 font-semibold text-foreground"
+                        : "border-border text-muted-foreground hover:bg-accent"
+                    }`}
+                  >
+                    {letter.print_format || `Document ${i + 1}`}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {!lettersRequested ? (
+              <div className="px-5 pb-5">
+                <button
+                  onClick={onShowLetters}
+                  className="flex items-center justify-center gap-2 w-full p-2.5 bg-background text-foreground border border-foreground/40 shadow-xs rounded-lg text-[0.85rem] font-semibold transition-colors duration-200 hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:hover:bg-input/50"
+                >
+                  View Offer Letter
+                </button>
+              </div>
+            ) : (
+              pdfUrl && (
+                <div className="px-5 pb-5">
+                  <button
+                    onClick={() =>
+                      downloadPdf(
+                        pdfUrl,
+                        letters?.[selectedLetterIndex]?.print_format
+                          ? `${letters[selectedLetterIndex].print_format}.pdf`
+                          : "Offer_Letter.pdf",
+                      )
+                    }
+                    className="flex items-center justify-center gap-2 w-full p-2.5 bg-background text-foreground border border-foreground/40 shadow-xs rounded-lg text-[0.85rem] font-semibold transition-colors duration-200 hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:hover:bg-input/50"
+                  >
+                    Download{" "}
+                    {letters?.[selectedLetterIndex]?.print_format || "Offer Letter"}
+                  </button>
+                </div>
+              )
+            )}
+
+            <div className="px-5 pb-5">
+              <Button variant="outline" className="w-full" onClick={onBack}>
+                Back to Action Center
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* The letter pane appears only once asked for: mounting PdfViewer is
+            what triggers the render on the backend. */}
+        {lettersRequested && (
+          <div className="w-full lg:flex-1 lg:min-w-0 overflow-hidden hidden sm:block">
+            <div className="rounded-2xl border border-border bg-card shadow-lg overflow-hidden">
+              <div className="py-3.5 px-6 sm:px-8 flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-xl text-primary shrink-0">
+                  <ClipboardList className="w-5 h-5" />
+                </div>
+                <h1 className="text-lg font-bold text-foreground truncate">
+                  {letters?.[selectedLetterIndex]?.print_format || "Offer of Employment"}
+                </h1>
+              </div>
+              {pdfUrl ? (
+                <div
+                  className="bg-muted overflow-hidden shadow-[inset_0_1px_4px_rgba(0,0,0,0.05)]"
+                  style={{ height: "80vh", minHeight: "600px" }}
+                >
+                  <PdfViewer pdfUrl={pdfUrl} />
+                </div>
+              ) : (
+                <div className="bg-card p-8 flex flex-col items-center justify-center min-h-100">
+                  {isLettersLoading ? (
+                    <>
+                      <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+                      <p className="text-muted-foreground">Loading offer letter...</p>
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="h-10 w-10 text-slate-300 mb-4" />
+                      <p className="text-muted-foreground">
+                        The offer letter is no longer available. Please contact HR.
+                      </p>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** "2026-10-19" / "2026-10-19 11:30:00" -> "19 Oct 2026", or "" when unset. */
+function formatReviewDate(value?: string | null) {
+  if (!value) return "";
+  const parsed = new Date(value.replace(" ", "T"));
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }

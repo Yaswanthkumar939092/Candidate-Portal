@@ -35,6 +35,12 @@ function mapApiStatusToTaskStatus(
       return "approved"
     case "pending":
       return "pending"
+    // The due date passed before the candidate acted; only HR can reopen it
+    // (recruitment.api.direct_applicant_form_expiry). Mapping it to
+    // "action_required" — as the default below used to — offered a "Complete now"
+    // button that could never succeed.
+    case "expired":
+      return "expired"
     default:
       return "action_required"
   }
@@ -240,6 +246,7 @@ function ActionCenterContent() {
   const acceptedTaskCount = tasks.filter(
     (t) => t.status === "approved" || t.status === "completed"
   ).length
+  const expiredTaskCount = tasks.filter((t) => t.status === "expired").length
 
   const pendingRequestCount = requests.filter(
     (r) => r.status === "pending_approval" || r.status === "in_review"
@@ -350,6 +357,22 @@ function ActionCenterContent() {
           >
             Completed ({currentAcceptedCount})
           </button>
+          {/* Only for tasks, and only when some have lapsed: an expired task is
+              neither pending (the candidate cannot act) nor completed (they never
+              did), so without its own pill those cards would be unreachable. */}
+          {activeTab === "tasks" && expiredTaskCount > 0 && (
+            <button
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-sm font-medium transition-all",
+                filter === "expired"
+                  ? "bg-card dark:bg-muted text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+              onClick={() => setFilter("expired")}
+            >
+              Expired ({expiredTaskCount})
+            </button>
+          )}
         </div>
         {activeTab === "requests" && (
           <Button

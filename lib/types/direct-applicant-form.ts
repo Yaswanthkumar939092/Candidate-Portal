@@ -29,6 +29,17 @@ export type DirectApplicantFormStatus =
   | "Resubmission Requested"
   | "Revoked";
 
+/**
+ * Date of Joining must be a working day. `fieldnames` lists the form's Date
+ * fields the rule covers (empty when the form has none) and `non_working_days`
+ * the YYYY-MM-DD dates they must refuse — holidays and weekly offs from the
+ * Holiday List the backend itself validates against.
+ */
+export interface JoiningDayRule {
+  fieldnames: string[];
+  non_working_days: string[];
+}
+
 export interface DirectApplicantFormData {
   applicant_name: string;
   company: string;
@@ -38,6 +49,10 @@ export interface DirectApplicantFormData {
   expires_on: string | null;
   resubmit_note: string;
   fields: DirectApplicantField[];
+  joining_day?: JoiningDayRule;
+  /** True when this is a read-only look back at an already-submitted form. */
+  review?: boolean;
+  submitted_on?: string | null;
 }
 
 export interface LinkOption {
