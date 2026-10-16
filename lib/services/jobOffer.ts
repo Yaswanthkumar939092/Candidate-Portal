@@ -49,6 +49,20 @@ export interface UpdateJobOfferStatusResponse {
   dpdp_consent_session?: string | null;
 }
 
+/**
+ * What the candidate decided, for the read-only look back reached from their
+ * completed Action Center card. `responded_on` and the rejection fields are only
+ * set once they have answered.
+ */
+export interface JobOfferStatus {
+  status: string | null;
+  expired?: boolean;
+  expiry_date?: string | null;
+  responded_on?: string | null;
+  rejection_reason?: string | null;
+  rejection_message?: string | null;
+}
+
 export interface RejectionReason {
   name: string;
   reason: string;
@@ -126,7 +140,7 @@ export const jobOfferService = {
     );
   },
 
-  getJobOfferStatus: async (appl: string, token?: string): Promise<{ status: string }> => {
+  getJobOfferStatus: async (appl: string, token?: string): Promise<JobOfferStatus> => {
     const params: Record<string, string> = { appl };
     if (token) {
       params.token = token;

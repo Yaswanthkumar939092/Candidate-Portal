@@ -41,6 +41,19 @@ export interface PreOfferForm {
   tabs: PreOfferTab[];
 }
 
+/**
+ * Whether the candidate has already submitted their pre-offer form, from
+ * `recruitment.api.channels.pre_offer.get_form_state`.
+ *
+ * `filled` is false while HR has fields back for correction: those are editable
+ * again, so the form opens for filling rather than as a read-only review.
+ */
+export interface PreOfferFormState {
+  filled: boolean;
+  filled_at: string | null;
+  rejected_fields: string[];
+}
+
 export interface FrappePreOfferFieldResponse {
   section?: string;
   reference_name?: string;

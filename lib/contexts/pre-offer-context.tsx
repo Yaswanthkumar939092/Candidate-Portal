@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useMemo, useCallback } from "react";
-import { usePreOfferForm } from "../hooks/usePreOfferForm";
+import { usePreOfferForm, usePreOfferFormState } from "../hooks/usePreOfferForm";
 import { PreOfferTab, PreOfferField } from "../types/pre-offer";
 
 interface PreOfferContextType {
@@ -12,6 +12,14 @@ interface PreOfferContextType {
   allFields: PreOfferField[];
   isLoading: boolean;
   applicantId: string;
+  /**
+   * True when this form has already been submitted and HR has sent nothing back
+   * for correction: the page then shows a read-only copy of what was sent,
+   * because the Action Center card stays after the action is completed.
+   */
+  isSubmitted: boolean;
+  /** When it was submitted, for the review header. */
+  submittedAt: string | null;
 }
 
 const PreOfferContext = createContext<PreOfferContextType | undefined>(undefined);
@@ -26,6 +34,7 @@ export function PreOfferProvider({
   const [stepData, setStepDataState] = useState<Record<string, Record<string, unknown>>>({});
 
   const { data, isLoading } = usePreOfferForm(applicantId);
+  const { data: formState, isLoading: isStateLoading } = usePreOfferFormState(applicantId);
 
   const tabs = useMemo(() => {
     return data?.tabs || [];
@@ -74,8 +83,10 @@ export function PreOfferProvider({
         initializeAllStepsFromDraft,
         tabs,
         allFields,
-        isLoading,
+        isLoading: isLoading || isStateLoading,
         applicantId,
+        isSubmitted: !!formState?.filled,
+        submittedAt: formState?.filled_at ?? null,
       }}
     >
       {children}

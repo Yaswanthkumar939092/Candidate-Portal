@@ -85,6 +85,11 @@ const TableRowField = React.memo(function TableRowField({
           value={rhfField.value}
           onChange={(val) => {
             rhfField.onChange(val);
+            // Changing a family relation can change whether its existing DOB is valid.
+            if (tableFieldname === FAMILY_DETAILS_FIELDNAME && childField.fieldname === RELATION_FIELDNAME) {
+              void trigger?.(tableFieldname);
+              return;
+            }
             if (error) {
               void trigger?.(fieldPath);
             }
@@ -345,8 +350,17 @@ export function DynamicTableField({
                       | undefined;
                     const wasTouched = Boolean(touchedTable?.[index]?.[childField.fieldname]);
                     const addedAtSubmitCount = addedRowSubmitCounts.current[index] ?? -1;
+                    const isAdultFamilyDobError =
+                      isFamilyDetailsTable &&
+                      childField.fieldname === "dob" &&
+                      String(rowDoc?.[RELATION_FIELDNAME] || "").trim().toLowerCase() !== "child" &&
+                      Boolean(childError);
                     const shouldShowChildError =
-                      Boolean(childError) && (wasTouched || (submitCount > 0 && submitCount > addedAtSubmitCount));
+                      Boolean(childError) && (
+                        wasTouched ||
+                        (submitCount > 0 && submitCount > addedAtSubmitCount) ||
+                        isAdultFamilyDobError
+                      );
                     let fieldForRow = childField;
 
                     if (

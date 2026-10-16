@@ -506,7 +506,7 @@ describe("DynamicFieldRenderer", () => {
   describe("Date Field Type", () => {
     it("renders date input field", () => {
       const field: FormField = {
-        fieldname: "dob",
+        fieldname: "custom_date_of_birth",
         label: "Date of Birth",
         fieldtype: "Date",
       }
@@ -528,6 +528,20 @@ describe("DynamicFieldRenderer", () => {
       const eighteenYearsAgo = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate())
       const expectedMax = eighteenYearsAgo.toISOString().split("T")[0]
       expect(input.max).toBe(expectedMax)
+    })
+
+    it("does not restrict a family member DOB to candidates aged 18 or older", () => {
+      const field: FormField = {
+        fieldname: "dob",
+        label: "Date of Birth",
+        fieldtype: "Date",
+      }
+
+      const { container } = render(
+        <DynamicFieldRenderer field={field} value="" onChange={vi.fn()} />
+      )
+
+      expect(container.querySelector("input")?.max).toBe("")
     })
 
     it("handles date changes", async () => {

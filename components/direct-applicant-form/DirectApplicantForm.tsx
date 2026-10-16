@@ -12,12 +12,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useDirectApplicantForm, useSubmitDirectApplicantForm } from "@/lib/hooks/useDirectApplicantForm";
+import { frappeApiBase } from "@/lib/frappe-base";
 import type { FormAccess } from "@/lib/services/direct-applicant-form";
 import type { DirectApplicantField, DirectApplicantFormData, TableRow } from "@/lib/types/direct-applicant-form";
 import { FieldControl } from "./FieldControl";
 import { TableField } from "./TableField";
 
 type Values = Record<string, unknown>;
+
+/** Fieldtypes whose value is a file URL, shown as a link in the review view. */
+const ATTACH_FIELDTYPES: Record<string, true> = { Attach: true, "Attach Image": true };
 
 const isBlank = (value: unknown) =>
   value === null || value === undefined || value === "" || (Array.isArray(value) && value.length === 0);
@@ -87,6 +91,12 @@ export default function DirectApplicantForm({ access }: { access: FormAccess }) 
   if (error || !data) {
     return <Unavailable inPortal={inPortal} message={error instanceof Error ? error.message : "This form is not available."} />;
   }
+  // A submitted form opened from the Action Center shows what was sent, not a
+  // dead end — that is the whole point of "View Details" on a completed task.
+  // The emailed link has no portal session, so it keeps the thank-you page.
+  if (data.review) {
+    return inPortal ? <ReviewBody data={data} /> : <Submitted inPortal={inPortal} />;
+  }
   if (data.status === "Submitted") return <Submitted inPortal={inPortal} />;
   return <FormBody access={access} data={data} />;
 }
@@ -97,6 +107,17 @@ function FormBody({ access, data }: { access: FormAccess; data: DirectApplicantF
   const [errors, setErrors] = React.useState<ReturnType<typeof validate> | null>(null);
   const [done, setDone] = React.useState(false);
   const submit = useSubmitDirectApplicantForm(access);
+
+  // Date of Joining must be a working day. The backend sends which of this
+  // form's fields the rule covers (usually none) and the dates they refuse.
+  const nonWorkingDays = data.joining_day?.non_working_days ?? [];
+  const joiningDayFields = React.useMemo(() => {
+    const covered: Record<string, true> = {};
+    (data.joining_day?.fieldnames ?? []).forEach((fieldname) => {
+      covered[fieldname] = true;
+    });
+    return covered;
+  }, [data.joining_day]);
 
   const sections = React.useMemo(() => {
     const out: { title: string; fields: DirectApplicantField[] }[] = [];
@@ -186,7 +207,14 @@ function FormBody({ access, data }: { access: FormAccess; data: DirectApplicantF
                         value={values[f.fieldname]}
                         onChange={set(f.fieldname)}
                         invalid={invalid}
+                        nonWorkingDays={joiningDayFields[f.fieldname] ? nonWorkingDays : undefined}
+                        onNonWorkingDay={() =>
+                          toast.error(`${f.label} must be a working day — holidays and weekly offs cannot be selected.`)
+                        }
                       />
+                    )}
+                    {joiningDayFields[f.fieldname] && (
+                      <p className="text-xs text-muted-foreground">Must be a working day.</p>
                     )}
                     {f.fieldname === "custom_da_aadhaar_masked" && (
                       <p className="text-xs text-muted-foreground">Only the last 4 digits are stored.</p>
@@ -207,6 +235,144 @@ function FormBody({ access, data }: { access: FormAccess; data: DirectApplicantF
       </form>
     </div>
   );
+}
+
+/**
+ * The read-only look back at a form the candidate has already submitted,
+ * reached from a completed Action Center card. Shows every field the form asked
+ * for with the value on file, grouped exactly as the fill view groups them, so
+ * what they see here matches what they filled in.
+ */
+function ReviewBody({ data }: { data: DirectApplicantFormData }) {
+  const sections = React.useMemo(() => {
+    const out: { title: string; fields: DirectApplicantField[] }[] = [];
+    data.fields.forEach((f) => {
+      let s = out.find((x) => x.title === f.section);
+      if (!s) out.push((s = { title: f.section, fields: [] }));
+      s.fields.push(f);
+    });
+    return out;
+  }, [data.fields]);
+
+  return (
+    <div className="mx-auto w-full max-w-3xl space-y-6 px-4 py-8">
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">{data.form_title}</h1>
+        <p className="text-sm text-muted-foreground">
+          {data.applicant_name}
+          {data.company ? ` · ${data.company}` : ""}
+        </p>
+      </div>
+
+      <div className="flex items-start gap-3 rounded-lg border border-success/30 bg-success-bg p-4">
+        <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-success" />
+        <div className="text-sm">
+          <p className="font-medium text-foreground">You have already submitted this form.</p>
+          <p className="text-muted-foreground">
+            {data.submitted_on
+              ? `Submitted on ${formatSubmittedOn(data.submitted_on)}. This is a copy of what you sent — it cannot be changed.`
+              : "This is a copy of what you sent — it cannot be changed."}
+          </p>
+        </div>
+      </div>
+
+      {sections.map((section) => (
+        <Card key={section.title}>
+          <CardHeader>
+            <CardTitle className="text-base">{section.title}</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            {section.fields.map((f) => (
+              <div
+                key={f.fieldname}
+                className={f.fieldtype === "Table" ? "space-y-1.5 sm:col-span-2" : "space-y-1.5"}
+              >
+                <p className="text-sm font-medium text-muted-foreground">{f.label}</p>
+                {f.fieldtype === "Table" ? (
+                  <ReviewTable field={f} />
+                ) : ATTACH_FIELDTYPES[f.fieldtype] && typeof f.value === "string" && f.value ? (
+                  <a
+                    href={`${frappeApiBase()}${f.value}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="break-all text-sm text-primary underline underline-offset-2"
+                  >
+                    {f.value.split("/").pop() || "View file"}
+                  </a>
+                ) : (
+                  <p className="whitespace-pre-wrap break-words text-sm text-foreground">
+                    {displayValue(f)}
+                  </p>
+                )}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      ))}
+
+      <div className="flex justify-end">
+        <Button asChild variant="outline">
+          <Link href="/action-center">Back to Action Center</Link>
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function ReviewTable({ field }: { field: DirectApplicantField }) {
+  const rows = Array.isArray(field.value) ? (field.value as TableRow[]) : [];
+  const columns = field.child || [];
+  if (!rows.length) {
+    return <p className="text-sm text-muted-foreground">Not provided</p>;
+  }
+  return (
+    <div className="overflow-x-auto rounded-lg border border-border">
+      <table className="w-full text-sm">
+        <thead className="bg-muted">
+          <tr>
+            {columns.map((c) => (
+              <th key={c.fieldname} className="px-3 py-2 text-left font-medium text-muted-foreground">
+                {c.label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, i) => (
+            <tr key={i} className="border-t border-border">
+              {columns.map((c) => (
+                <td key={c.fieldname} className="px-3 py-2 text-foreground">
+                  {formatCell(row[c.fieldname])}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/** A submitted scalar as text. Attachments stay links so the file is reachable. */
+function displayValue(field: DirectApplicantField) {
+  const value = field.value;
+  if (value === null || value === undefined || value === "") {
+    return "Not provided";
+  }
+  if (field.fieldtype === "Check") {
+    return Number(value) ? "Yes" : "No";
+  }
+  return String(value);
+}
+
+function formatCell(value: unknown) {
+  if (value === null || value === undefined || value === "") return "—";
+  return String(value);
+}
+
+function formatSubmittedOn(value: string) {
+  const parsed = new Date(value.replace(" ", "T"));
+  return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleString();
 }
 
 function Submitted({ inPortal }: { inPortal: boolean }) {

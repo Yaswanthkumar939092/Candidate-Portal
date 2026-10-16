@@ -96,6 +96,40 @@ describe("DynamicTableField", () => {
     expect(screen.getAllByTestId("field-year")).toHaveLength(2);
   });
 
+  it("revalidates a family row when its relation changes", () => {
+    const trigger = vi.fn().mockResolvedValue(true);
+    const familyField: OnboardingField = {
+      fieldname: "custom_family_details",
+      label: "Family Details",
+      is_mandatory: 0,
+      read_only: 0,
+      hidden: 0,
+      fieldtype: "Table",
+      child_fields: [
+        { fieldname: "relation", label: "Relation", fieldtype: "Select", read_only: 0, hidden: 0 },
+        { fieldname: "dob", label: "Date of Birth", fieldtype: "Date", read_only: 0, hidden: 0 },
+      ],
+    };
+
+    render(
+      <Wrapper defaultValues={{ custom_family_details: [{ relation: "Child", dob: "2016-01-01" }] }}>
+        {(methods) => (
+          <DynamicTableField
+            field={familyField}
+            control={methods.control}
+            setValue={methods.setValue}
+            trigger={trigger}
+            errors={methods.formState.errors as unknown as FieldErrors<FieldValues>}
+          />
+        )}
+      </Wrapper>
+    );
+
+    fireEvent.change(screen.getByTestId("input-relation"), { target: { value: "Father" } });
+
+    expect(trigger).toHaveBeenCalledWith("custom_family_details");
+  });
+
   it("does not show validation errors immediately for a newly added row", () => {
     const errors = {
       education: [

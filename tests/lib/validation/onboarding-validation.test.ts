@@ -87,6 +87,15 @@ function createFamilyTab(): OnboardingTab {
                 read_only: 0,
                 hidden: 0,
               },
+              {
+                fieldname: "dob",
+                label: "Date of Birth",
+                fieldtype: "Date",
+                is_mandatory: 0,
+                reqd: 0,
+                read_only: 0,
+                hidden: 0,
+              },
             ],
           },
         ],
@@ -178,6 +187,28 @@ describe("validateOnboardingStep", () => {
     );
 
     expect(errors.custom_family_details).toBeUndefined();
+  });
+
+  it("allows an under-18 DOB only when the family relation is Child", () => {
+    const today = new Date();
+    const under18Dob = new Date(today.getFullYear() - 10, today.getMonth(), today.getDate())
+      .toISOString()
+      .split("T")[0];
+
+    const fatherErrors = validateOnboardingStep(
+      createFamilyTab(),
+      { custom_family_details: [{ relation: "Father", member_name: "Ramesh", dob: under18Dob }] },
+      {},
+    );
+    const childErrors = validateOnboardingStep(
+      createFamilyTab(),
+      { custom_family_details: [{ relation: "Child", member_name: "Aarav", dob: under18Dob }] },
+      {},
+    );
+
+    expect((fatherErrors.custom_family_details as Array<Record<string, { message?: string }>>)[0].dob.message)
+      .toBe("Family members other than children must be at least 18 years old");
+    expect(childErrors.custom_family_details).toBeUndefined();
   });
 
   it("still flags an incomplete Spouse row when marital status is Married", () => {
@@ -522,6 +553,48 @@ describe("validateOnboardingStep", () => {
       );
       expect(errors.dob).toBeDefined();
       expect((errors.dob as any).message).toContain("at least 18 years old");
+    });
+
+    it("does not apply the age rule to a DOB in Family Details", () => {
+      const today = new Date();
+      const childDob = new Date(today.getFullYear() - 10, today.getMonth(), today.getDate())
+        .toISOString()
+        .split("T")[0];
+      const errors = validateOnboardingStep(
+        {
+          tab: "Family Details",
+          sections: [{
+            section: "Family Details",
+            fields: [{
+              fieldname: "custom_family_details",
+              label: "Family Details",
+              fieldtype: "Table",
+              is_mandatory: 0,
+              read_only: 0,
+              hidden: 0,
+              child_fields: [{
+                fieldname: "relation",
+                label: "Relation",
+                fieldtype: "Select",
+                is_mandatory: 0,
+                read_only: 0,
+                hidden: 0,
+              }, {
+                fieldname: "dob",
+                label: "Date of Birth",
+                fieldtype: "Date",
+                is_mandatory: 0,
+                read_only: 0,
+                hidden: 0,
+              }],
+            }],
+          }],
+        },
+        { custom_family_details: [{ relation: "Child", dob: childDob }] },
+        {},
+      );
+
+      expect(errors.custom_family_details).toBeUndefined();
     });
   });
 

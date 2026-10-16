@@ -36,7 +36,7 @@ export interface Task {
   id: string
   title: string
   category: string
-  status: "action_required" | "completed" | "approved" | "pending"
+  status: "action_required" | "completed" | "approved" | "pending" | "expired"
   dueDate?: string
   completedDate?: string
   icon?: string
@@ -69,6 +69,12 @@ const STATUS_STYLES: Record<string, { label: string; badgeClass: string; iconBgC
     badgeClass: "bg-[#FFFAEB] text-[#B54708] hover:bg-[#FFFAEB] dark:bg-amber-950/40 dark:text-amber-300 dark:hover:bg-amber-950/40 border border-[#FEDF89] dark:border-amber-900 font-medium text-[12px] px-2.5 py-0.5 rounded-full shadow-none",
     iconBgColor: "bg-[#F79009]",
     icon: Hourglass,
+  },
+  expired: {
+    label: "Expired",
+    badgeClass: "bg-muted text-muted-foreground hover:bg-muted border border-border font-medium text-[12px] px-2.5 py-0.5 rounded-full shadow-none",
+    iconBgColor: "bg-[#667085]",
+    icon: Clock,
   },
 }
 
@@ -111,6 +117,7 @@ export function AssignedTasksList({
       ? tasks.filter((task) => {
         if (filter === "pending") return task.status === "action_required" || task.status === "pending"
         if (filter === "accepted") return task.status === "approved" || task.status === "completed"
+        if (filter === "expired") return task.status === "expired"
         return true
       })
       : tasks
@@ -197,7 +204,15 @@ export function AssignedTasksList({
                               </span>)}
                               <div className="mt-3.5 flex items-center gap-1.5 text-xs font-medium text-[#475467] whitespace-nowrap dark:text-gray-400 overflow-hidden text-ellipsis">
                                 <Clock className="h-3.5 w-3.5 shrink-0" />
-                                <span className="">{task.dueDate ? `Due by ${task.dueDate}` : task.completedDate ? `Completed on ${task.completedDate}` : "No due date"}</span>
+                                <span className="">
+                                  {task.status === "expired" && task.dueDate
+                                    ? `Expired on ${task.dueDate}`
+                                    : task.dueDate
+                                      ? `Due by ${task.dueDate}`
+                                      : task.completedDate
+                                        ? `Completed on ${task.completedDate}`
+                                        : "No due date"}
+                                </span>
                               </div>
                             </div>
                           </div>
@@ -210,18 +225,28 @@ export function AssignedTasksList({
                       <div className="mx-5 my-4.5 h-[1px] bg-border" />
 
                       <CardFooter className="px-5 pb-5 pt-0 justify-end">
-                        <Button
-                          onClick={() => {
-                            if (task.redirectUrl) {
-                              router.push(`${task.redirectUrl}`)
-                            }
-                          }}
-                        >
-                          {task.status === "action_required" || task.status === "pending"
-                            ? "Complete now"
-                            : "View Details"}
-                          <ArrowRight className="h-3.5 w-3.5" />
-                        </Button>
+                        {task.status === "expired" ? (
+                          // Nothing for the candidate to open: the due date passed
+                          // and only HR can reopen the task, so an enabled button
+                          // would lead to a refused link.
+                          <p className="text-xs text-muted-foreground">
+                            This task expired. Please contact HR to have it reopened.
+                          </p>
+                        ) : (
+                          <Button
+                            onClick={() => {
+                              if (task.redirectUrl) {
+                                router.push(`${task.redirectUrl}`)
+                              }
+                            }}
+                            disabled={!task.redirectUrl}
+                          >
+                            {task.status === "action_required" || task.status === "pending"
+                              ? "Complete now"
+                              : "View Details"}
+                            <ArrowRight className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
                       </CardFooter>
                     </Card>
                   )

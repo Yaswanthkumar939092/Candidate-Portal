@@ -14,6 +14,7 @@ import { OnboardingStepNav } from "@/components/onboarding/onboarding-step-nav";
 import { ReviewStep } from "@/components/onboarding/steps/review-step";
 import { OnboardingFormStep } from "@/components/onboarding/onboarding-form-step";
 import { OnboardingRightRail } from "@/components/onboarding/onboarding-right-rail";
+import { SubmittedFormReview } from "@/components/shared/submitted-form-review";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import type { OnboardingTab } from "@/lib/types/onboarding";
@@ -214,6 +215,22 @@ function OnboardingContent() {
           </p>
         </div>
       </div>
+    );
+  }
+
+  // Already submitted and reached again from the completed Action Center card:
+  // show a read-only copy of what was sent instead of the wizard's "already
+  // submitted" dead end — reviewing their own answers is the point of the card.
+  if (status === "submitted" && tabs.length > 0) {
+    return (
+      <SubmittedFormReview
+        title="Onboarding Details"
+        subtitle={formConfig?.branding?.company_name || undefined}
+        tabs={tabs}
+        headline="You have already submitted your onboarding details."
+        backHref="/dashboard"
+        backLabel="Back to Dashboard"
+      />
     );
   }
 

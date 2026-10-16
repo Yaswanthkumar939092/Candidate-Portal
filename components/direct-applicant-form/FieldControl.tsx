@@ -37,6 +37,15 @@ export interface FieldControlProps {
   id?: string;
   /** Accessible name when there is no visible <label> (table cells). */
   ariaLabel?: string;
+  /**
+   * Date fields only: YYYY-MM-DD dates this field must refuse (holidays and
+   * weekly offs, for a Date of Joining). A native date input cannot grey out
+   * individual days, so a picked one is rejected and cleared on change — the
+   * same rule the backend enforces on submit.
+   */
+  nonWorkingDays?: string[];
+  /** Called when a non-working day is rejected, so the form can explain why. */
+  onNonWorkingDay?: (date: string) => void;
 }
 
 const NUMERIC = new Set(["Int", "Float", "Currency", "Percent"]);
@@ -46,7 +55,7 @@ const ACCEPT = ".pdf,.png,.jpg,.jpeg,.doc,.docx";
 const AADHAAR_FIELD = "custom_da_aadhaar_masked";
 
 export function FieldControl(props: FieldControlProps) {
-  const { field, value, onChange, disabled, invalid, id, ariaLabel } = props;
+  const { field, value, onChange, disabled, invalid, id, ariaLabel, nonWorkingDays, onNonWorkingDay } = props;
   const text = value === null || value === undefined ? "" : String(value);
   const invalidClass = invalid ? "border-destructive focus-visible:ring-destructive/30" : "";
 
@@ -96,7 +105,17 @@ export function FieldControl(props: FieldControlProps) {
       inputMode={field.fieldname === AADHAAR_FIELD ? "numeric" : undefined}
       placeholder={field.fieldname === AADHAAR_FIELD ? "12-digit Aadhaar number" : undefined}
       value={text}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={(e) => {
+        const next = e.target.value;
+        // A native date input offers no way to grey out individual days, so a
+        // non-working one is refused here instead of being carried to a submit
+        // the backend would reject.
+        if (next && nonWorkingDays?.includes(next)) {
+          onNonWorkingDay?.(next);
+          return;
+        }
+        onChange(next);
+      }}
       disabled={disabled}
       className={invalidClass}
     />

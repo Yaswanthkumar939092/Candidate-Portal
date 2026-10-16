@@ -173,6 +173,52 @@ describe("JobOfferPage", () => {
     expect(screen.queryByText("Stipend")).toBeNull();
   });
 
+  it("renders apprentice role and details properly when employment_type is Apprentice", () => {
+    mockUseJobOfferSummary.mockReturnValue({
+      data: {
+        applicant_name: "Rahul Verma",
+        designation: "",
+        employment_type: "Apprentice",
+        duration_display: "1 Year",
+        expected_doj_display: "01-11-2026",
+        stipend: 15000,
+        expiry_display: null,
+      },
+      isLoading: false,
+    });
+
+    render(<JobOfferPage />);
+
+    expect(screen.getByText("Apprentice")).toBeTruthy();
+    expect(screen.getByText("Duration")).toBeTruthy();
+    expect(screen.getByText("1 Year")).toBeTruthy();
+    expect(screen.getByText("Joining Date")).toBeTruthy();
+    expect(screen.getByText("01-11-2026")).toBeTruthy();
+    expect(screen.getByText("Stipend")).toBeTruthy();
+    expect(screen.getByText("15,000")).toBeTruthy();
+    expect(screen.queryByText("Variable Pay")).toBeNull();
+    expect(screen.queryByText("Total Fixed Pay")).toBeNull();
+  });
+
+  it("renders specific designation for Apprentice when designation is provided", () => {
+    mockUseJobOfferSummary.mockReturnValue({
+      data: {
+        applicant_name: "Rahul Verma",
+        designation: "Graduate Apprentice",
+        employment_type: "Apprentice",
+        duration_display: "1 Year",
+        expected_doj_display: "01-11-2026",
+        stipend: 15000,
+        expiry_display: null,
+      },
+      isLoading: false,
+    });
+
+    render(<JobOfferPage />);
+
+    expect(screen.getByText("Graduate Apprentice")).toBeTruthy();
+  });
+
   it("renders trainee_doj_display if available", () => {
     mockUseJobOfferSummary.mockReturnValue({
       data: {
@@ -403,26 +449,59 @@ describe("JobOfferPage", () => {
     });
   });
 
-  it("renders processed state if offer was already accepted", () => {
+  it("shows the offer back read-only once the candidate has accepted it", () => {
     mockUseJobOfferStatus.mockReturnValue({
-      data: { status: "Accepted" },
+      data: {
+        status: "Accepted",
+        responded_on: "2026-10-05",
+      },
+      isLoading: false,
+    });
+    mockUseJobOfferSummary.mockReturnValue({
+      data: {
+        applicant_name: "Pushpa",
+        designation: "Professor",
+        expected_doj_display: "30-10-2026",
+        total_fixed: 2000000,
+      },
+      isLoading: false,
+    });
+
+    render(<JobOfferPage />);
+
+    // The decision and the offer it was made against, not a dead end.
+    expect(screen.getByText("You accepted this offer.")).toBeTruthy();
+    expect(screen.getByText("Professor")).toBeTruthy();
+    expect(screen.getByText("30-10-2026")).toBeTruthy();
+    // Accept / Decline are gone: the backend refuses a second answer anyway.
+    expect(screen.queryByRole("button", { name: /Accept Offer/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Reject Offer/i })).toBeNull();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Back to Action Center/i }),
+    );
+    expect(mockPush).toHaveBeenCalledWith("/action-center");
+  });
+
+  it("shows the reason back when the candidate declined the offer", () => {
+    mockUseJobOfferStatus.mockReturnValue({
+      data: {
+        status: "Rejected",
+        responded_on: "2026-10-03",
+        rejection_reason: "Better opportunity elsewhere",
+        rejection_message: "Accepted another role closer to home.",
+      },
       isLoading: false,
     });
     mockUseJobOfferSummary.mockReturnValue({ data: null, isLoading: false });
 
     render(<JobOfferPage />);
 
+    expect(screen.getByText("You declined this offer.")).toBeTruthy();
+    expect(screen.getByText("Better opportunity elsewhere")).toBeTruthy();
     expect(
-      screen.getByText(
-        /You have already accepted or rejected the Offer Letter/,
-      ),
+      screen.getByText("Accepted another role closer to home."),
     ).toBeTruthy();
-
-    const dashboardBtn = screen.getByRole("button", {
-      name: /Go to Dashboard/i,
-    });
-    fireEvent.click(dashboardBtn);
-    expect(mockPush).toHaveBeenCalledWith("/dashboard");
   });
 
   it("renders expired state if offer has expired", () => {

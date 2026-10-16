@@ -97,15 +97,24 @@ describe("OnboardingPage", () => {
     expect(screen.getByText("Review Step Mock")).toBeTruthy();
   });
 
-  it("hides header, mobile progress bar and step nav when status is submitted", () => {
+  it("shows a read-only copy of the submitted details instead of the wizard", () => {
     mockUseOnboarding.mockReturnValue({
       isLoading: false,
       currentStep: 2,
       completedSteps: new Set([0, 1, 2]),
       formConfig: {
         tabs: [
-          { tab: "Personal Info", sections: [] },
-          { tab: "Education", sections: [] },
+          {
+            tab: "Personal Info",
+            sections: [
+              {
+                section: "Basics",
+                fields: [
+                  { fieldname: "first_name", label: "First Name", fieldtype: "Data", value: "Asha" },
+                ],
+              },
+            ],
+          },
         ],
       },
       stepData: {},
@@ -113,11 +122,15 @@ describe("OnboardingPage", () => {
     });
 
     render(<OnboardingPage />);
-    
+
+    // The wizard chrome is gone: there is nothing left to fill in.
     expect(screen.queryByText(/Please fill in the details below accurately/)).toBeNull();
     expect(screen.queryByTestId("progress-bar")).toBeNull();
     expect(screen.queryByTestId("onboarding-step-nav")).toBeNull();
-    expect(screen.getByTestId("review-step")).toBeTruthy();
+    // What they sent is shown back, rather than a "you already submitted" dead end.
+    expect(screen.getByText("You have already submitted your onboarding details.")).toBeTruthy();
+    expect(screen.getByText("First Name")).toBeTruthy();
+    expect(screen.getByText("Asha")).toBeTruthy();
   });
 
   it("renders error state when isError is true", () => {

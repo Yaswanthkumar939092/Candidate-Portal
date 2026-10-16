@@ -96,18 +96,6 @@ function validateFieldPattern(
     };
   }
 
-  if ((fieldname === "custom_date_of_birth" || fieldname === "dob") && normalizedValue !== "") {
-    const birthDate = new Date(normalizedValue);
-    const today = new Date();
-    const ageLimitDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
-    if (birthDate > ageLimitDate) {
-      return {
-        type: "validate",
-        message: "You must be at least 18 years old",
-      };
-    }
-  }
-
   const isNumberField =
     fieldtype === "Int" ||
     fieldtype === "Float" ||
@@ -321,6 +309,22 @@ export function validateOnboardingStep(
               );
               if (patternError) {
                 setNestedTableError(errorList, effectiveField.fieldname, originalIndex, childField.fieldname, patternError);
+              }
+
+              const isNonChildFamilyDob =
+                effectiveField.fieldname === FAMILY_DETAILS_FIELDNAME &&
+                childField.fieldname === "dob" &&
+                String(row[RELATION_FIELDNAME] || "").trim().toLowerCase() !== "child";
+              if (isNonChildFamilyDob && typeof val === "string") {
+                const birthDate = new Date(val);
+                const today = new Date();
+                const ageLimitDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+                if (birthDate > ageLimitDate) {
+                  setNestedTableError(errorList, effectiveField.fieldname, originalIndex, childField.fieldname, {
+                    type: "validate",
+                    message: "Family members other than children must be at least 18 years old",
+                  });
+                }
               }
             }
           });

@@ -1,5 +1,11 @@
 import { FrappeAPI } from "../frappe-api";
-import { PreOfferForm, PreOfferTab, PreOfferField, FrappePreOfferFieldResponse } from "../types/pre-offer";
+import {
+  PreOfferForm,
+  PreOfferFormState,
+  PreOfferTab,
+  PreOfferField,
+  FrappePreOfferFieldResponse,
+} from "../types/pre-offer";
 
 export const preOfferService = {
   getPreOfferForm: async (userEmail?: string): Promise<PreOfferForm> => {
@@ -18,6 +24,19 @@ export const preOfferService = {
     }
 
     return transformPreOfferForm(message, userEmail || "");
+  },
+
+  /**
+   * Whether this form has already been submitted — what decides between the fill
+   * view and the read-only look back reached from a completed Action Center card.
+   */
+  getPreOfferFormState: async (jobApplicant: string): Promise<PreOfferFormState> => {
+    if (!jobApplicant) return { filled: false, filled_at: null, rejected_fields: [] };
+    const message = (await FrappeAPI.get(
+      "recruitment.api.channels.pre_offer.get_form_state",
+      { job_applicant: jobApplicant }
+    )) as PreOfferFormState;
+    return message || { filled: false, filled_at: null, rejected_fields: [] };
   },
 
   submitPreOffer: async (jobApplicant: string, data: Record<string, unknown>): Promise<any> => {
