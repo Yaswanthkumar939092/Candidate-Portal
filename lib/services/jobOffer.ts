@@ -23,6 +23,18 @@ export interface JobOfferSummary {
   total_fixed?: number | null;
   total?: number | null;
   count?: number;
+  /** Recruitment Settings: whether accepting needs a signature, and how. */
+  signature?: SignatureSettings;
+  /** The data URL the candidate signed with; set once the offer is accepted. */
+  candidate_signature?: string | null;
+  signed_on_display?: string | null;
+}
+
+export interface SignatureSettings {
+  required: boolean;
+  mode: "Draw or Upload" | "Draw Only" | "Upload Only" | string;
+  allow_draw: boolean;
+  allow_upload: boolean;
 }
 
 export interface UpdateJobOfferStatusParams {
@@ -31,6 +43,9 @@ export interface UpdateJobOfferStatusParams {
   reason?: string;
   message?: string;
   token?: string;
+  /** `data:image/...` URL; required on accept when the setting is on. */
+  signature?: string;
+  signature_method?: "Drawn" | "Uploaded";
 }
 
 export interface UpdateJobOfferStatusResponse {

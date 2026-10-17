@@ -114,14 +114,14 @@ function mapApiItemsToTasks(items: any[]): Task[] {
       ? item.reference_doctype.replace(/_/g, " ")
       : "General"
 
-    // Format modified date for display
-    const formattedDate = item.modified
-      ? new Date(item.modified).toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      })
-      : undefined
+    const formatDate = (value?: string) =>
+      value
+        ? new Date(value.replace(" ", "T")).toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        })
+        : undefined
 
     return {
       id: item.name ?? `task-${index}`,
@@ -130,9 +130,12 @@ function mapApiItemsToTasks(items: any[]): Task[] {
       status,
       description: item.description || "",
       attachment: item.attachment || "",
+      // Completed: when it was done (last change). Otherwise the task's real
+      // due date — only set on cards that have one (the application form);
+      // none is shown rather than a made-up one.
       ...(isCompleted
-        ? { completedDate: formattedDate }
-        : { dueDate: formattedDate }),
+        ? { completedDate: formatDate(item.modified) }
+        : { dueDate: formatDate(item.due_date) }),
       jobChips: mapJobToChips(item.job),
       // Optionally carry through redirect for click handling
       redirectUrl: item.redirect_url,
