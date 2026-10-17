@@ -74,7 +74,8 @@ vi.mock("@/lib/hooks/useAcationCenter", () => ({
           title: "PF Form",
           status: "Action Required",
           reference_doctype: "Onboarding",
-          modified: "2025-05-15",
+          modified: "2025-05-10",
+          due_date: "2025-05-15 18:30:00",
           description: "Please fill the PF form",
         },
         {
@@ -361,6 +362,11 @@ describe("ActionCenterPage – Assigned Tasks Content", () => {
   it("shows due date for tasks with dueDate", () => {
     renderWithProviders(<ActionCenterPage />);
     expect(screen.getByText(/Due by 15 May 2025/)).toBeTruthy();
+  });
+
+  it("never shows the last-modified date as a due date", () => {
+    renderWithProviders(<ActionCenterPage />);
+    expect(screen.queryByText(/Due by 10 May 2025/)).toBeNull();
   });
 
   it("shows completed date for Completed tasks", async () => {

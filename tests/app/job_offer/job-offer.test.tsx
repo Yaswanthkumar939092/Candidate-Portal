@@ -327,6 +327,72 @@ describe("JobOfferPage", () => {
     expect(mockPush).toHaveBeenCalledWith("/dashboard");
   });
 
+  describe("candidate signature", () => {
+    const withSignature = (mode: string, allow_draw: boolean, allow_upload: boolean) =>
+      mockUseJobOfferSummary.mockReturnValue({
+        data: {
+          applicant_name: "Test User",
+          designation: "Software Engineer",
+          signature: { required: true, mode, allow_draw, allow_upload },
+        },
+        isLoading: false,
+      });
+
+    it("asks for no signature when the setting is off", () => {
+      render(<JobOfferPage />);
+      expect(screen.queryByText("Your signature")).toBeNull();
+    });
+
+    it("keeps Accept disabled until signed, then sends the signature", async () => {
+      withSignature("Upload Only", false, true);
+      const mutateAsync = vi.fn().mockResolvedValue({});
+      mockUseUpdateJobOfferStatus.mockReturnValue({ mutateAsync });
+
+      render(<JobOfferPage />);
+      fireEvent.click(screen.getByRole("checkbox"));
+      const acceptBtn = screen.getByRole("button", { name: /Accept Offer/i });
+      expect(acceptBtn).toBeDisabled();
+
+      const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+      fireEvent.change(input, {
+        target: { files: [new File([new Uint8Array([1, 2, 3])], "sig.png", { type: "image/png" })] },
+      });
+      await waitFor(() => expect(acceptBtn).not.toBeDisabled());
+
+      fireEvent.click(acceptBtn);
+      await waitFor(() =>
+        expect(mutateAsync).toHaveBeenCalledWith({
+          status: "Accepted",
+          appl: DEFAULT_EMAIL,
+          signature: expect.stringMatching(/^data:image\/png;base64,/),
+          signature_method: "Uploaded",
+        }),
+      );
+    });
+
+    it("shows the signature back on an accepted offer", () => {
+      mockUseJobOfferStatus.mockReturnValue({
+        data: { status: "Accepted" },
+        isLoading: false,
+      });
+      mockUseJobOfferSummary.mockReturnValue({
+        data: {
+          designation: "Professor",
+          candidate_signature: "data:image/png;base64,AAAA",
+          signed_on_display: "16-10-2026 11:00:00",
+        },
+        isLoading: false,
+      });
+
+      render(<JobOfferPage />);
+      expect(screen.getByAltText("Your signature")).toHaveAttribute(
+        "src",
+        "data:image/png;base64,AAAA",
+      );
+      expect(screen.getByText(/16-10-2026 11:00:00/)).toBeTruthy();
+    });
+  });
+
   it("handles rejection flow correctly and displays the Offer Declined page", async () => {
     // Status refetches to "Rejected" after the mutation (mirrors the real backend),
     // so the page settles on the declined screen instead of reverting to "main".

@@ -28,6 +28,10 @@ import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
 import { PortalStepperSidebar } from "@/components/portal/portal-stepper-sidebar";
 import { formatIndianAmount } from "@/lib/utils";
+import {
+  SignatureCapture,
+  type SignatureValue,
+} from "@/components/job-offer/signature-capture";
 
 async function downloadPdf(url: string, filename: string = "Offer_Letter.pdf") {
   try {
@@ -302,6 +306,12 @@ function JobOfferContent() {
   }, [gameState, consentRequiredAfterAccept, startConsentJourney]);
 
   const [isTermsChecked, setIsTermsChecked] = useState(false);
+  // Recruitment Settings can require a signature to accept; it is then sent
+  // with the acceptance and printed on the letter.
+  const [signature, setSignature] = useState<SignatureValue | null>(null);
+  const signatureSettings = offerData?.signature;
+  const isSignatureRequired = signatureSettings?.required === true;
+  const isSignatureMissing = isSignatureRequired && !signature;
   const [isAccepting, setIsAccepting] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
@@ -310,7 +320,7 @@ function JobOfferContent() {
   const [showDeclinedPopup, setShowDeclinedPopup] = useState(false);
 
   const handleAccept = async () => {
-    if (!isTermsChecked || isAccepting) return;
+    if (!isTermsChecked || isAccepting || isSignatureMissing) return;
     setIsAccepting(true);
 
     try {
@@ -318,6 +328,9 @@ function JobOfferContent() {
         status: "Accepted",
         appl: applicantEmail,
         ...(tokenParam ? { token: tokenParam } : {}),
+        ...(isSignatureRequired && signature
+          ? { signature: signature.dataUrl, signature_method: signature.method }
+          : {}),
       });
 
       // Acceptance now carries the consent hand-over, so the happy path needs
@@ -622,6 +635,16 @@ function JobOfferContent() {
                         </div>
                       )}
 
+                      {isSignatureRequired && (
+                        <SignatureCapture
+                          allowDraw={signatureSettings?.allow_draw !== false}
+                          allowUpload={signatureSettings?.allow_upload === true}
+                          value={signature}
+                          onChange={setSignature}
+                          disabled={!hasViewedAllLetters || isAccepting}
+                        />
+                      )}
+
                       <label className="flex items-start gap-2.5 text-[0.82rem] text-foreground cursor-pointer leading-[1.45] mb-4 bg-warning-bg border border-warning/30 rounded-lg p-3">
                         <input
                           type="checkbox"
@@ -674,7 +697,10 @@ function JobOfferContent() {
                       <button
                         className="flex items-center justify-center gap-2 w-full py-2.5 bg-success hover:bg-success/90 text-success-foreground rounded-lg text-[0.95rem] font-semibold transition-colors duration-200 mb-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
                         disabled={
-                          !isTermsChecked || isAccepting || !hasViewedAllLetters
+                          !isTermsChecked ||
+                          isAccepting ||
+                          !hasViewedAllLetters ||
+                          isSignatureMissing
                         }
                         onClick={handleAccept}
                       >
@@ -1263,6 +1289,23 @@ function OfferReview({
               <p className="px-5 pb-4 text-[0.85rem] text-muted-foreground">
                 {isLoading ? "Loading offer details..." : "Offer details are no longer available."}
               </p>
+            )}
+
+            {accepted && offer?.candidate_signature && (
+              <div className="mx-5 mb-4">
+                <div className="text-[0.85rem] text-muted-foreground mb-1.5">
+                  Your signature
+                  {offer.signed_on_display ? ` · ${offer.signed_on_display}` : ""}
+                </div>
+                <div className="flex h-20 items-center justify-center rounded-lg border border-border/60 bg-white p-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={offer.candidate_signature}
+                    alt="Your signature"
+                    className="max-h-full max-w-full object-contain"
+                  />
+                </div>
+              </div>
             )}
 
             {lettersRequested && letters && letters.length > 1 && (

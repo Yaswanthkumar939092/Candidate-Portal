@@ -22,6 +22,14 @@ type Values = Record<string, unknown>;
 
 /** Fieldtypes whose value is a file URL, shown as a link in the review view. */
 const ATTACH_FIELDTYPES: Record<string, true> = { Attach: true, "Attach Image": true };
+const WIDE_FIELDTYPES: Record<string, true> = { "Small Text": true, Text: true, "Long Text": true };
+
+/** Spans both grid columns: HR's Width on the form, else tables and long text. */
+export function isFullWidth(field: DirectApplicantField) {
+  if (field.fieldtype === "Table") return true;
+  if (field.width === "Full" || field.width === "Half") return field.width === "Full";
+  return !!WIDE_FIELDTYPES[field.fieldtype];
+}
 
 const isBlank = (value: unknown) =>
   value === null || value === undefined || value === "" || (Array.isArray(value) && value.length === 0);
@@ -184,9 +192,8 @@ function FormBody({ access, data }: { access: FormAccess; data: DirectApplicantF
               {section.fields.map((f) => {
                 const id = `daf-${f.fieldname}`;
                 const invalid = errors?.fieldErrors.has(f.fieldname);
-                const wide = f.fieldtype === "Table" || ["Small Text", "Text", "Long Text"].includes(f.fieldtype);
                 return (
-                  <div key={f.fieldname} className={wide ? "space-y-1.5 sm:col-span-2" : "space-y-1.5"}>
+                  <div key={f.fieldname} className={isFullWidth(f) ? "space-y-1.5 sm:col-span-2" : "space-y-1.5"}>
                     <Label htmlFor={id} className="text-sm font-medium text-foreground">
                       {f.label}
                       {!!f.reqd && <span className="text-destructive"> *</span>}
@@ -285,7 +292,7 @@ function ReviewBody({ data }: { data: DirectApplicantFormData }) {
             {section.fields.map((f) => (
               <div
                 key={f.fieldname}
-                className={f.fieldtype === "Table" ? "space-y-1.5 sm:col-span-2" : "space-y-1.5"}
+                className={isFullWidth(f) ? "space-y-1.5 sm:col-span-2" : "space-y-1.5"}
               >
                 <p className="text-sm font-medium text-muted-foreground">{f.label}</p>
                 {f.fieldtype === "Table" ? (
