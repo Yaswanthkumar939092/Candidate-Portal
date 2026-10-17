@@ -16,6 +16,8 @@ export interface DirectApplicantField {
   options?: string;
   reqd: number;
   section: string;
+  /** "Half" | "Full"; blank (or missing on older links) = tables and long text full, the rest half. */
+  width?: string;
   value: unknown;
   /** False for fields HR did not reopen on a resubmission. */
   editable: boolean;
