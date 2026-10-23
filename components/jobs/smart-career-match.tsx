@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useRef } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import { Upload, Rocket } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { CircularProgress } from "@/components/shared/circular-progress"
@@ -28,6 +28,8 @@ export interface MatchedJob {
 
 interface Props {
   onAnalysisComplete?: (results: MatchedJob[]) => void
+  /** Resume carried over from the public careers page; analysed as soon as the component mounts. */
+  initialFile?: File | null
   className?: string
 }
 
@@ -40,7 +42,7 @@ const SKILLS = [
 ]
 
 // ---------------- COMPONENT ----------------
-export function SmartCareerMatch({ onAnalysisComplete, className }: Props) {
+export function SmartCareerMatch({ onAnalysisComplete, initialFile, className }: Props) {
   const [state, setState] = useState<"upload" | "analyzing">("upload")
   const [progress, setProgress] = useState(0)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -79,13 +81,11 @@ export function SmartCareerMatch({ onAnalysisComplete, className }: Props) {
   }
 
   // ---------------- MAIN ----------------
-  const runAnalysis = useCallback(async () => {
-    if (!selectedFile) return
-
+  const analyze = useCallback(async (file: File) => {
     setState("analyzing")
     setProgress(20)
 
-    const rawText = await extractTextFromAPI(selectedFile)
+    const rawText = await extractTextFromAPI(file)
     const text = cleanText(rawText)
 
     setProgress(50)
@@ -99,7 +99,19 @@ export function SmartCareerMatch({ onAnalysisComplete, className }: Props) {
     setProgress(100)
 
     onAnalysisComplete?.([])
-  }, [selectedFile, onAnalysisComplete])
+  }, [onAnalysisComplete])
+
+  const runAnalysis = useCallback(() => {
+    if (selectedFile) void analyze(selectedFile)
+  }, [selectedFile, analyze])
+
+  const startedInitial = useRef(false)
+  useEffect(() => {
+    if (!initialFile || startedInitial.current) return
+    startedInitial.current = true
+    setSelectedFile(initialFile)
+    void analyze(initialFile)
+  }, [initialFile, analyze])
 
   // ---------------- FILE ----------------
   const handleFileUpload = (file: File) => {
