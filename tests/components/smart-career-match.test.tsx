@@ -130,6 +130,15 @@ describe("SmartCareerMatch", () => {
     expect(results.length).toBe(0)
   })
 
+  it("analyses a resume carried over from the public careers page without a click", async () => {
+    const carried = new File(["react"], "carried.pdf", { type: "application/pdf" })
+    render(<SmartCareerMatch onAnalysisComplete={mockOnAnalysisComplete} initialFile={carried} />)
+
+    await waitFor(() => expect(mockOnAnalysisComplete).toHaveBeenCalledTimes(1))
+    expect(global.fetch).toHaveBeenCalledWith("/api/parse-resume", expect.objectContaining({ method: "POST" }))
+    expect(screen.queryByText("Analyze Resume")).toBeNull()
+  })
+
   it("handles supported file types (PDF, DOC, TXT)", async () => {
     const { rerender } = render(<SmartCareerMatch />)
 
