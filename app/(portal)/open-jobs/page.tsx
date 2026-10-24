@@ -17,6 +17,7 @@ import { useJobOpening } from "@/lib/hooks/useJobOpening";
 import { useToggleSavedJob } from "@/lib/hooks/useSavedJobs";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { CustomJobOpening } from "@/types/job";
+import { takePendingResume } from "@/lib/careers/pending-resume";
 import { toast } from "sonner";
 
 
@@ -131,6 +132,15 @@ export default function OpenJobsPage() {
   const jobColumns = useMemo(() => jobOpeningsResponse?.columns || [], [jobOpeningsResponse]);
 
   const [matchResults, setMatchResults] = useState<MatchedJob[]>([]);
+  const [carriedResume, setCarriedResume] = useState<File | null>(null);
+
+  // Arriving from the public careers page after login: open AI Resume / Job Match
+  // and analyse the resume the visitor dropped before logging in.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("tab") !== "smart-match") return;
+    setActiveTab("smart-match");
+    void takePendingResume().then(setCarriedResume);
+  }, []);
   const toggleSavedJobMutation = useToggleSavedJob();
   const [pendingBookmarkId, setPendingBookmarkId] = useState<string | null>(null);
 
@@ -306,7 +316,7 @@ export default function OpenJobsPage() {
       {activeTab === "smart-match" && (
         <Card>
           <CardContent>
-            <SmartCareerMatch onAnalysisComplete={handleAnalysisComplete} />
+            <SmartCareerMatch onAnalysisComplete={handleAnalysisComplete} initialFile={carriedResume} />
           </CardContent>
         </Card>
       )}

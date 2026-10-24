@@ -301,6 +301,12 @@
   }
 }
 
+/* Public careers pages: always reserve the page scrollbar so switching between a
+   short and a long tab (e.g. Normal vs Evergreen jobs) never shifts the layout. */
+html:has([data-careers-shell]) {
+  overflow-y: scroll;
+}
+
 /* Custom Ultra-Thin Scrollbars — derived from the active palette, so they
    follow whichever brand theme (and runtime primary override) is in effect. */
 .scrollbar-thin {

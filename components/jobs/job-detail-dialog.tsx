@@ -42,6 +42,8 @@ interface JobDetailDialogProps {
   onOpenChange: (open: boolean) => void;
   onApply?: (open: boolean) => void;
   openApplyForm?: boolean;
+  /** Where Apply leads. Defaults to the portal application page; public pages point it at login. */
+  applyHref?: string;
 }
 
 /**
@@ -54,6 +56,7 @@ export function JobDetailDialog({
   job,
   open,
   onOpenChange,
+  applyHref,
 }: JobDetailDialogProps) {
   if (!job) return null;
 
@@ -75,10 +78,12 @@ export function JobDetailDialog({
               <Clock className="h-3 w-3" />
               {job.type}
             </span>
-            <span className="inline-flex items-center gap-1">
-              <IndianRupee className="h-3 w-3" />
-              {job.lower_range || 0} - {job.upper_range} LPA
-            </span>
+            {job.upper_range ? (
+              <span className="inline-flex items-center gap-1">
+                <IndianRupee className="h-3 w-3" />
+                {job.lower_range || 0} - {job.upper_range} LPA
+              </span>
+            ) : null}
           </DialogDescription>
         </DialogHeader>
 
@@ -142,7 +147,7 @@ export function JobDetailDialog({
             </Button>
           ) : (
             <Button size="sm" asChild className="hover:cursor-pointer gap-1 ">
-              <Link href={`/open-jobs/${job.id}/apply-job`}>
+              <Link href={applyHref ?? `/open-jobs/${job.id}/apply-job`}>
                 Apply
                 <ChevronRight className="h-4 w-4" />
               </Link>
