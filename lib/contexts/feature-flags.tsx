@@ -29,6 +29,7 @@ export const DEFAULT_FEATURE_FLAGS = {
   open_jobs: false,
   action_center: false,
   my_jobs: false,
+  careers_public_enabled: false,
 } as const
 
 export type FeatureFlagKey = keyof typeof DEFAULT_FEATURE_FLAGS
