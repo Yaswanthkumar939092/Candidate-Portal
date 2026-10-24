@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/contexts/auth-context";
-import { useCandidateBranding } from "@/lib/hooks/useCandidateBranding";
+import { usePublicBranding } from "@/lib/hooks/usePublicBranding";
 import { loginHref, PORTAL_EQUIVALENT } from "@/lib/careers/login-redirect";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -25,7 +25,7 @@ export function CareersShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useAuth();
-  const { data: branding } = useCandidateBranding();
+  const { data: branding } = usePublicBranding();
 
   useEffect(() => {
     if (user) router.replace(PORTAL_EQUIVALENT[pathname] ?? "/dashboard");
