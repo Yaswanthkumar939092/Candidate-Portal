@@ -92,11 +92,11 @@ export const jobApplicationService = {
       return response as SubmitApplicationResponse;
     }
 
-    const response = await FrappeAPI.post(
-      "recruitment.api.channels.careers.submit_application",
-      payload as unknown as Record<string, unknown>,
-    );
-    return response as SubmitApplicationResponse;
+    const response = (await FrappeAPI.post("recruitment.api.v1.candidate.submit_application", {
+      job_opening: payload.job_opening,
+      form_data: payload.form_data,
+    })) as { receipt: string; status: string };
+    return { status: response.status, name: response.receipt, source: "careers" };
   },
 
   getJobApplicationForm: async (
@@ -113,7 +113,7 @@ export const jobApplicationService = {
 
       const endpoint = isCampus
         ? "recruitment.api.channels.campus.get_application_fields"
-        : "recruitment.api.channels.careers.get_application_fields";
+        : "recruitment.api.v1.candidate.get_application_fields";
 
       const res = await FrappeAPI.get(endpoint, params);
 

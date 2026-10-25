@@ -64,25 +64,27 @@ describe("JobOpening Services", () => {
 
   describe("jobApplicationService", () => {
     // Spec: CAND-07-A9.3D (docs/spec/clauses/07-services-and-hooks.md#cand-07-a9-3d)
-    it("submitApplication calls FrappeAPI.post with submit_application", async () => {
-      const mockRes = {
-        status: "ok",
-        name: "HR-APP-2026-00123",
-        source: "Careers Page"
-      };
-      (FrappeAPI.post as any).mockResolvedValue(mockRes);
-
+    it("submitApplication sends only job_opening and form_data to the v1 method and adapts the receipt", async () => {
+      (FrappeAPI.post as any).mockResolvedValue({ receipt: "APP-ABC123", status: "received" });
       const payload = {
-        opening: "HR-OPN-2026-0006",
-        data: {
-          applicant_name: "Aarav Sharma",
-          email_id: "aarav@example.com",
-          phone_number: "+91-9000000000",
-        }
+        job_applicant_email: "aarav@example.com",
+        job_opening: "HR-OPN-2026-0006",
+        status: "Open",
+        form_data: { applicant_name: "Aarav Sharma", phone_number: "+91-9000000000" },
       };
       const result = await jobApplicationService.submitApplication(payload as any);
-      expect(result).toEqual(mockRes);
-      expect(FrappeAPI.post).toHaveBeenCalledWith("recruitment.api.channels.careers.submit_application", payload);
+      expect(FrappeAPI.post).toHaveBeenCalledWith("recruitment.api.v1.candidate.submit_application", {
+        job_opening: "HR-OPN-2026-0006",
+        form_data: { applicant_name: "Aarav Sharma", phone_number: "+91-9000000000" },
+      });
+      expect(result).toEqual({ status: "received", name: "APP-ABC123", source: "careers" });
+    });
+
+    it("submitApplication never sends an email or status to v1 (identity comes from the session)", async () => {
+      (FrappeAPI.post as any).mockResolvedValue({ receipt: "APP-1", status: "received" });
+      await jobApplicationService.submitApplication({ job_applicant_email: "x@y.z", job_opening: "J", form_data: {}, status: "Draft" } as any);
+      const body = (FrappeAPI.post as any).mock.calls[0][1];
+      expect(Object.keys(body).sort()).toEqual(["form_data", "job_opening"]);
     });
 
     // Spec: CAND-07-A9.3E (docs/spec/clauses/07-services-and-hooks.md#cand-07-a9-3e)
@@ -158,7 +160,7 @@ describe("JobOpening Services", () => {
           section_label: "Details"
         }
       ]);
-      expect(FrappeAPI.get).toHaveBeenCalledWith("recruitment.api.channels.careers.get_application_fields", {
+      expect(FrappeAPI.get).toHaveBeenCalledWith("recruitment.api.v1.candidate.get_application_fields", {
         opening: "job1"
       });
 
