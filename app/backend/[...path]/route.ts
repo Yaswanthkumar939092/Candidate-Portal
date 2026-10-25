@@ -84,9 +84,8 @@ const DROP_FROM_UPSTREAM = new Set([
 // methods) answers 404 here, whatever cookie the caller sends.
 const ALLOWED_METHODS = new Set([
   ...["list_openings", "get_opening", "get_application_fields", "submit_application", "my_applications", "get_application"].map(name => `recruitment.api.v1.candidate.${name}`),
-  ...["get_auth_settings", "login", "signup", "request_email_signup_otp", "request_otp", "verify_otp", "logout", "me"].map(name => `recruitment.api.candidate_auth.${name}`),
+  ...["get_auth_settings", "get_auth_page_content", "login", "signup", "request_email_signup_otp", "request_otp", "verify_otp", "logout", "me"].map(name => `recruitment.api.candidate_auth.${name}`),
   "recruitment.api.candidate_portal.get_website_branding",
-  "recruitment.api.candidate_portal.get_candidate_feature_flags",
 ]);
 
 // Decode the raw path (repeatedly, so double-encoding cannot smuggle a denied

@@ -31,7 +31,6 @@ import {
 } from "@/components/ui/sheet";
 
 import {
-  Home,
   Briefcase,
   ClipboardList,
   ChevronDown,
@@ -62,7 +61,6 @@ interface PortalNavigationProps {
 }
 
 const navItems: NavItem[] = [
-  { label: "Home", href: "/dashboard", icon: Home },
   {
     label: "Open Jobs",
     href: "/open-jobs",
@@ -74,12 +72,6 @@ const navItems: NavItem[] = [
     href: "/my-jobs",
     icon: ClipboardList,
     flagKey: "my_jobs",
-  },
-  {
-    label: "Action Center",
-    href: "/action-center",
-    icon: ClipboardList,
-    flagKey: "action_center",
   },
 ];
 

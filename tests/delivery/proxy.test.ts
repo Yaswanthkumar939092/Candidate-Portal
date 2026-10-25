@@ -124,3 +124,22 @@ it.each(["recruitment.api.channels.careers.submit_application", "recruitment.api
   vi.stubEnv("FRAPPE_BASE_URL", "http://frappe:8000");
   await expectDenied(`http://portal/backend/api/method/${method}`);
 });
+it.each([
+  "/backend/api/method/recruitment.api.candidate_auth.get_auth_page_content",
+  "/backend/api/method/recruitment.api.candidate_portal.get_website_branding",
+])("proxies the Guest read-only page content route %s", async (path) => {
+  vi.stubEnv("FRAPPE_BASE_URL", "http://frappe:8000");
+  const res = await callProxy(`http://portal${path}`);
+  expect(res.status).toBe(200);
+  expect(lastCall?.url).toBe(`http://frappe:8000${path.slice("/backend".length)}`);
+});
+it.each([
+  "/backend/api/method/recruitment.api.candidate_portal.get_candidate_feature_flags",
+  "/backend/api/method/recruitment.api.v1.candidate.get_public_flags",
+  "/backend/api/method/recruitment.api.candidate_portal_survey.get_post_login_route",
+  "/backend/api/method/recruitment.api.onboarding_dashboard.get_dashboard",
+  "/backend/api/method/recruitment.api.channels.careers.list_openings",
+])("keeps %s denied at the browser proxy", async (path) => {
+  vi.stubEnv("FRAPPE_BASE_URL", "http://frappe:8000");
+  await expectDenied(`http://portal${path}`);
+});

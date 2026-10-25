@@ -7,7 +7,6 @@ import { auth } from "@/lib/auth";
 import { useAuthSettings } from "@/lib/hooks/useAuthSettings";
 import { MailCheck, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { surveyService } from "@/lib/services/survey";
 import { useAuth } from "@/lib/contexts/auth-context";
 
 export default function LoginPage() {
@@ -52,24 +51,13 @@ function LoginFormContent() {
   const handlePostLoginRouting = async () => {
     try {
       await refreshProfile();
-      const response = await surveyService.getPostLoginRoute();
-      if (typeof window !== "undefined" && window.sessionStorage) {
-        sessionStorage.setItem("showLoginToast", "true");
-      }
-      if (response.survey_required) {
-        router.push("/survey");
-      } else if (redirectParam) {
-        router.push(redirectParam);
-      } else {
-        router.push(response.redirect_url || "/dashboard");
-      }
     } catch (error) {
-      console.error("Post-login routing error:", error);
-      if (typeof window !== "undefined" && window.sessionStorage) {
-        sessionStorage.setItem("showLoginToast", "true");
-      }
-      router.push(redirectParam || "/dashboard");
+      console.error("Post-login profile refresh error:", error);
     }
+    if (typeof window !== "undefined" && window.sessionStorage) {
+      sessionStorage.setItem("showLoginToast", "true");
+    }
+    router.push(redirectParam || "/open-jobs");
   };
 
   useEffect(() => {
