@@ -4,7 +4,6 @@ import Link from "next/link";
 import { ArrowRight, BriefcaseBusiness, Sparkles } from "lucide-react";
 import { HomePromo } from "@/components/home/home-promo";
 import { Card, CardContent } from "@/components/ui/card";
-import { ResumeMatchSteps } from "@/components/careers/resume-match-steps";
 import { usePublicOpenings } from "@/lib/hooks/usePublicOpenings";
 
 const WHY_FALLBACK = [
@@ -75,8 +74,6 @@ export default function CareersHomePage() {
           </Card>
         </Link>
       </section>
-
-      <ResumeMatchSteps />
     </div>
   );
 }
