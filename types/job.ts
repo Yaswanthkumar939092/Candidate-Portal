@@ -61,6 +61,7 @@ export interface ApplicationField {
   editability: string;
   value?: string;
   table_fields?: any[];
+  columns?: any[];
   stage_requirement?: {
     fieldname: string;
     doctype: string;

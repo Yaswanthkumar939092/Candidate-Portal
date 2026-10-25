@@ -252,7 +252,7 @@ export function PortalNavigation({
               </div>
             ) : (
               <Link
-                href="/dashboard"
+                href="/open-jobs"
                 className="flex min-w-0 items-center gap-2"
                 onClick={() => {
                   queryClient.invalidateQueries({
@@ -367,14 +367,6 @@ export function PortalNavigation({
 
               {!disableUserDropdown && (
                 <>
-                  {/* Profile link */}
-                  <DropdownMenuItem asChild>
-                    <Link href="/profile" className="flex items-center">
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
-                    </Link>
-                  </DropdownMenuItem>
-
                   {/* Settings link */}
                   {/* <DropdownMenuItem asChild>
                     <Link href="/settings" className="flex items-center">

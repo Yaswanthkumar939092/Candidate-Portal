@@ -246,7 +246,6 @@ describe("PortalNavigation", () => {
     expect(trigger).toBeTruthy()
     if (trigger) {
       await user.click(trigger)
-      expect(screen.getByText("Profile")).toBeTruthy()
       // expect(screen.getByText("Settings")).toBeTruthy()
       expect(screen.getByText("Sign Out")).toBeTruthy()
     }
@@ -297,7 +296,13 @@ describe("PortalNavigation", () => {
     }
   })
 
-  it("renders profile link in dropdown", async () => {
+  it("brand logo links to /open-jobs, not the dashboard", () => {
+    render(<PortalNavigation />)
+    const link = screen.getAllByRole("link").find((a) => a.querySelector("img"))
+    expect(link?.getAttribute("href")).toBe("/open-jobs")
+  })
+
+  it("has no Profile menu item, because the profile page calls methods the proxy denies", async () => {
     render(<PortalNavigation />)
     const trigger = screen.getAllByRole("button").find(
       (btn) => btn.textContent?.includes("John Doe")
@@ -305,7 +310,8 @@ describe("PortalNavigation", () => {
     expect(trigger).toBeTruthy()
     if (trigger) {
       await user.click(trigger)
-      expect(screen.getByText("Profile")).toBeTruthy()
+      expect(screen.getByText("Sign Out")).toBeTruthy()
+      expect(screen.queryByText("Profile")).toBeNull()
     }
   })
 

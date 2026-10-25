@@ -56,7 +56,7 @@ function RegisterContent() {
     if (redirectParam) {
       router.push(redirectParam);
     } else {
-      router.push("/dashboard");
+      router.push("/open-jobs");
     }
   };
 
