@@ -79,15 +79,50 @@ const DROP_FROM_UPSTREAM = new Set([
   "content-length",
 ]);
 
-async function proxy(req: NextRequest, ctx: RouteContext) {
+// The browser may reach only these reviewed candidate API methods. Everything
+// else on Frappe (desk, /api/resource, private files, other whitelisted
+// methods) answers 404 here, whatever cookie the caller sends.
+const ALLOWED_METHODS = new Set([
+  ...["list_openings", "get_opening", "get_application_fields", "submit_application", "my_applications", "get_application"].map(name => `recruitment.api.v1.candidate.${name}`),
+  ...["get_auth_settings", "login", "signup", "request_email_signup_otp", "request_otp", "verify_otp", "logout", "me"].map(name => `recruitment.api.candidate_auth.${name}`),
+  "recruitment.api.candidate_portal.get_website_branding",
+  "recruitment.api.candidate_portal.get_candidate_feature_flags",
+]);
+
+// Decode the raw path (repeatedly, so double-encoding cannot smuggle a denied
+// route past the check) and return it only if it names an allowed method.
+function allowedPath(pathname: string): string | null {
+  let path = pathname.slice("/backend".length) || "/";
+  try {
+    for (let i = 0; i < 3; i++) {
+      const decoded = decodeURIComponent(path);
+      if (decoded === path) break;
+      path = decoded;
+    }
+  } catch {
+    return null;
+  }
+  if (path.includes("%")) return null;
+  const prefix = "/api/method/";
+  if (!path.startsWith(prefix) || !ALLOWED_METHODS.has(path.slice(prefix.length))) return null;
+  return path;
+}
+
+async function proxy(req: NextRequest, _ctx: RouteContext) {
+  const path = allowedPath(req.nextUrl.pathname);
+  if (!path) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   const target = targetBase();
   if (!target) {
     return NextResponse.json({ error: "Backend unavailable" }, { status: 503 });
   }
 
-  const { path } = await ctx.params;
+  // Assign the checked pathname rather than resolve user input as a URL, so
+  // the request always stays on the configured upstream.
   const upstreamUrl = new URL(target.toString());
-  upstreamUrl.pathname = "/" + (path?.join("/") ?? "");
+  upstreamUrl.pathname = path;
   upstreamUrl.search = req.nextUrl.search;
 
   const upstreamHeaders = new Headers();
