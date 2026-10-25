@@ -7,6 +7,14 @@ import { useAuth, type AuthContextType } from "@/lib/contexts/auth-context"
 import { useDashboard } from "@/lib/hooks/useDashboard"
 import type { DashboardData } from "@/types/dashboard"
 
+vi.mock("@/lib/careers/milestone", () => ({
+  ONBOARDING_DASHBOARD_ENABLED: true,
+}))
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ replace: vi.fn() }),
+}))
+
 vi.mock("@/lib/contexts/auth-context", () => ({
   useAuth: vi.fn(),
 }))
