@@ -688,7 +688,7 @@ function CampusApplyWizardInner({
 
       {/* Form Details Card */}
       <main className="flex-1 w-full lg:max-w-7xl overflow-y-auto">
-        <div className="mx-auto w-full px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full px-4 pt-8 sm:px-6 lg:px-8">
           {/* Step header */}
           <div className="mb-6">
             <div className="md:hidden flex items-center justify-between mb-1">

@@ -5,7 +5,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useWatch } from "react-hook-form";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { FileUploadField } from "@/components/onboarding/file-upload-field";
 import { SectionCard } from "@/components/onboarding/section-card";
 import { DynamicFieldRenderer } from "@/components/ui/field-renderer";
@@ -485,8 +484,7 @@ export function JobApplicationStep({
         </React.Fragment>
       ))}
 
-      <Separator />
-      <div className="flex items-center justify-between pt-2">
+      <div className="sticky bottom-0 z-10 flex items-center justify-between border-t bg-background/95 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <Button
           type="button"
           variant="outline"

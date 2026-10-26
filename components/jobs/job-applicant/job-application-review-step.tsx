@@ -422,8 +422,7 @@ export function JobApplicationReviewStep({
             </div>
           )}
 
-          <Separator />
-          <div className="flex items-center justify-between pt-2">
+          <div className="sticky bottom-0 z-10 flex items-center justify-between border-t bg-background/95 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
             <Button
               type="button"
               variant="ghost"
