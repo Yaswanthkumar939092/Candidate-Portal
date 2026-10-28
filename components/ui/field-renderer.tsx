@@ -1011,30 +1011,6 @@ export interface DynamicFieldRendererProps<T extends FormField> {
   document?: Record<string, unknown>;
 }
 
-export function formatIndianFormat(value: unknown): string {
-  if (value === null || value === undefined || value === "") return "";
-  const str = String(value);
-  // Clean all characters except digits and decimal point
-  const clean = str.replace(/[^0-9.]/g, "");
-  if (!clean) return "";
-
-  const parts = clean.split(".");
-  const integerPart = parts[0];
-  const decimalPart = parts.length > 1 ? parts.slice(1).join("") : "";
-
-  let lastThree = integerPart.substring(integerPart.length - 3);
-  const otherNumbers = integerPart.substring(0, integerPart.length - 3);
-  if (otherNumbers !== "") {
-    lastThree = "," + lastThree;
-  }
-  const formattedInteger =
-    otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + lastThree;
-
-  return clean.includes(".")
-    ? `${formattedInteger}.${decimalPart}`
-    : formattedInteger;
-}
-
 export function DynamicFieldRenderer<T extends FormField>({
   field,
   value,

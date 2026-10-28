@@ -11,7 +11,7 @@ A comprehensive web application for candidates to discover, apply for, and track
 - **Application Tracking**: Monitor application status through the complete hiring pipeline
 - **Social Sharing**: Share job opportunities via social media and direct links
 
-- **Indian Amount Formatting**: Monetary fields and displays use Indian digit grouping; hovering or focusing an amount reveals its value in words.
+- **Indian Amount Formatting**: Monetary inputs include a rupee prefix and Indian digit grouping; hovering or focusing an amount reveals its value in words.
 
 
 ### Administration

@@ -45,23 +45,28 @@ interface AmountInputProps extends Omit<React.ComponentProps<typeof Input>, "typ
 }
 
 /** Controlled numeric text input that shows Indian grouping without leaking separators to form state. */
-export function AmountInput({ value, onValueChange, words, ...props }: AmountInputProps) {
+export function AmountInput({ value, onValueChange, words, className, ...props }: AmountInputProps) {
   const rawValue = value === null || value === undefined ? "" : normalizeAmountInput(String(value));
   const formatted = formatIndianAmount(rawValue);
   const amountInWords = words ?? formatIndianAmountInWords(rawValue);
-  const input = (
-    <Input
-      {...props}
-      type="text"
-      inputMode="decimal"
-      value={formatted}
-      onChange={(event) => onValueChange(normalizeAmountInput(event.target.value))}
-    />
-  );
 
   return (
     <Tooltip>
-      <TooltipTrigger asChild>{input}</TooltipTrigger>
+      <TooltipTrigger asChild>
+        <div className="relative">
+          <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-sm font-semibold text-muted-foreground">
+            ₹
+          </span>
+          <Input
+            {...props}
+            type="text"
+            inputMode="decimal"
+            value={formatted}
+            onChange={(event) => onValueChange(normalizeAmountInput(event.target.value))}
+            className={cn("pl-8", className)}
+          />
+        </div>
+      </TooltipTrigger>
       {amountInWords && <TooltipContent side="top">{amountInWords}</TooltipContent>}
     </Tooltip>
   );
