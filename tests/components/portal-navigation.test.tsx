@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { render, screen } from "@testing-library/react"
+import { render as rtlRender, screen } from "@testing-library/react"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import type { ReactElement } from "react"
 import userEvent from "@testing-library/user-event"
 
 const mockSignOut = vi.fn()
@@ -52,6 +54,13 @@ import * as featureFlagsContext from "@/lib/contexts/feature-flags"
 import * as themeContext from "@/lib/contexts/theme-context"
 import * as candidateBrandingHook from "@/lib/hooks/useCandidateBranding"
 import * as applicantStatusHook from "@/lib/hooks/useApplicantStatus"
+
+function render(ui: ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  })
+  return rtlRender(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>)
+}
 
 const mockUser = {
   id: "user-123",
@@ -130,7 +139,16 @@ describe("PortalNavigation", () => {
   })
 
   it("displays branding logo and title", () => {
+    const { unmount } = render(<PortalNavigation />)
+    expect(screen.getByAltText("Physics Wallah")).toBeTruthy()
+    expect(screen.queryByText("Physics Wallah")).toBeNull()
+    unmount()
+
+    vi.mocked(candidateBrandingHook.useCandidateBranding).mockReturnValue({
+      data: { ...mockBranding, logo_includes_company_name: true },
+    } as ReturnType<typeof candidateBrandingHook.useCandidateBranding>)
     render(<PortalNavigation />)
+    expect(screen.getByAltText("Physics Wallah")).toBeTruthy()
     expect(screen.getByText("Physics Wallah")).toBeTruthy()
   })
 

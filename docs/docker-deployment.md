@@ -158,3 +158,38 @@ A failed run's partial artifacts are diagnostic evidence, not a release.
 Base image tags and existing action major tags remain updateable; the lockfile
 locks application resolution, while the published digest identifies the exact
 image bytes. Existing GHCR release automation is separate from this UAT path.
+
+### Refreshing the distroless runtime base pin
+
+The runtime stage is pinned by digest
+(`gcr.io/distroless/nodejs22-debian13:nonroot@sha256:...`), so it never picks
+up upstream Debian/Node patches on its own. Refresh it at least monthly, and
+whenever the strict Trivy gate reports a fixed HIGH/CRITICAL finding in the
+base layer:
+
+1. Check whether the pin is stale (reads the registry only; exit code `10`
+   means a newer `nonroot` digest exists):
+
+   ```bash
+   scripts/refresh-distroless-pin.sh
+   ```
+
+2. Update the pin in `Dockerfile` to the current `nonroot` digest:
+
+   ```bash
+   scripts/refresh-distroless-pin.sh --write
+   ```
+
+3. Build locally and run the same strict gate CI uses (HIGH/CRITICAL, unfixed
+   included, vuln + secret scanners). Requires Docker and Trivy:
+
+   ```bash
+   scripts/refresh-distroless-pin.sh --write --scan
+   ```
+
+4. Open a PR with the `Dockerfile` change. The PR image build and the
+   `candidate-portal-uat` CodeBuild run must pass the unchanged strict gate on
+   the PR commit before merge. Do not relax the gate to land a refresh; if the
+   new base still has unfixed findings, record them on the tracking issue.
+
+Rollback is reverting the PR, which restores the previous digest.

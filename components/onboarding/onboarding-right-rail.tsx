@@ -190,6 +190,7 @@ export function OnboardingRightRail({
              rows = [{}]; // Force at least one row to evaluate required child fields
           }
           
+          const listLengthBeforeRows = list.length;
           rows.forEach((row: any, rowIndex: number) => {
             field.child_fields?.forEach((childField) => {
               const childVisible = !childField.hidden && (!childField.depends_on || evaluateDependsOn(childField.depends_on, row));
@@ -207,6 +208,14 @@ export function OnboardingRightRail({
               }
             });
           });
+          if (isMandatory && list.length === listLengthBeforeRows) {
+            list.push({
+              fieldname: field.fieldname,
+              label: field.label,
+              field,
+              parentDoc: doc
+            });
+          }
         } else {
           if (isMandatory) {
             list.push({
