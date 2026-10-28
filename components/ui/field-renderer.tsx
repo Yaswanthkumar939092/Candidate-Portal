@@ -2,6 +2,7 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
+import { AmountInput } from "@/components/ui/amount";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -11,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FrappeAPI } from "@/lib/frappe-api";
-import { cn } from "@/lib/utils";
+import { cn, isMonetaryField } from "@/lib/utils";
 import { AlertCircle, Check, Loader2 } from "lucide-react";
 import {
   Tooltip,
@@ -1065,9 +1066,11 @@ export function DynamicFieldRenderer<T extends FormField>({
 
   let element: React.ReactNode;
 
-  const isCtcField = field.fieldname === "custom_current_ctc" || field.fieldname === "custom_expected_ctc";
+  const isMonetary =
+    ["Currency", "Int", "Float", "Data"].includes(fieldForRender.fieldtype) &&
+    isMonetaryField(fieldForRender);
 
-  if (isCtcField) {
+  if (isMonetary) {
     const baseClass = getFieldClass(fieldForRender, value, error, disabled);
     element = (
       <div className="space-y-1.5">
@@ -1078,15 +1081,9 @@ export function DynamicFieldRenderer<T extends FormField>({
           )}
         </Label>
         <div className="relative">
-          <Input
-            type="text"
-            value={formatIndianFormat(value)}
-            onChange={(e) => {
-              const clean = e.target.value.replace(/[^0-9.]/g, "");
-              const parts = clean.split(".");
-              const cleaned = parts.length > 1 ? `${parts[0]}.${parts.slice(1).join("")}` : clean;
-              onChange(cleaned);
-            }}
+          <AmountInput
+            value={value as string | number | null | undefined}
+            onValueChange={onChange}
             onBlur={onBlur}
             placeholder={fieldForRender.label}
             disabled={disabled || isReadOnly}

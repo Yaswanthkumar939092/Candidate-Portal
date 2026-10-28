@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
 import { PortalStepperSidebar } from "@/components/portal/portal-stepper-sidebar";
 import { formatIndianAmount } from "@/lib/utils";
+import { AmountDisplay } from "@/components/ui/amount";
 import {
   SignatureCapture,
   type SignatureValue,
@@ -249,7 +250,7 @@ function JobOfferContent() {
         }
       } else if (statusNormalized === "expired") {
         setGameState("expired");
-      } else if (statusNormalized === "awaiting response") {
+      } else if (statusNormalized === "awaiting response" && !justAccepted && !justRejected) {
         setGameState("main");
       }
     }
@@ -550,9 +551,7 @@ function JobOfferContent() {
                             Stipend
                           </span>
                           <span className="text-[0.85rem] font-semibold text-foreground text-right">
-                            {formatIndianAmount(
-                              offerData.stipend ?? offerData.stipend_display,
-                            )}
+                            <AmountDisplay value={offerData.stipend ?? offerData.stipend_display} />
                           </span>
                         </div>
                       ) : null}
@@ -564,7 +563,7 @@ function JobOfferContent() {
                               Variable Pay
                             </span>
                             <span className="text-[0.85rem] font-semibold text-foreground text-right">
-                              {formatIndianAmount(offerData.variable)}
+                              <AmountDisplay value={offerData.variable} />
                             </span>
                           </div>
                         )}
@@ -576,9 +575,7 @@ function JobOfferContent() {
                               Total Fixed Pay
                             </span>
                             <span className="text-[0.85rem] font-semibold text-foreground text-right">
-                              {formatIndianAmount(
-                                offerData.total_fixed ?? offerData.total,
-                              )}
+                              <AmountDisplay value={offerData.total_fixed ?? offerData.total} />
                             </span>
                           </div>
                         )}
@@ -1217,17 +1214,20 @@ function OfferReview({
 }) {
   const accepted = decision === "accepted";
   const respondedOn = formatReviewDate(status?.responded_on);
-  const rows: { label: string; value: string }[] = [];
+  const rows: { label: string; value: string; amount?: string | number | null }[] = [];
   if (offer?.designation) rows.push({ label: "Role", value: offer.designation });
   if (offer?.duration_display) rows.push({ label: "Duration", value: offer.duration_display });
   if (offer?.expected_doj_display)
     rows.push({ label: "Joining Date", value: offer.expected_doj_display });
   if (offer?.trainee_doj_display)
     rows.push({ label: "Trainee DOJ", value: offer.trainee_doj_display });
-  if (offer?.stipend_display) rows.push({ label: "Stipend", value: offer.stipend_display });
+  if (offer?.stipend !== undefined && offer?.stipend !== null)
+    rows.push({ label: "Stipend", value: formatIndianAmount(offer.stipend), amount: offer.stipend });
+  else if (offer?.stipend_display)
+    rows.push({ label: "Stipend", value: formatIndianAmount(offer.stipend_display), amount: offer.stipend_display });
   const total = offer?.total_fixed ?? offer?.total;
   if (total !== undefined && total !== null)
-    rows.push({ label: "Total Fixed Pay", value: formatIndianAmount(total) });
+    rows.push({ label: "Total Fixed Pay", value: formatIndianAmount(total), amount: total });
 
   return (
     <div className="max-w-300 mx-auto px-5 py-7.5">
@@ -1280,7 +1280,7 @@ function OfferReview({
                       {row.label}
                     </span>
                     <span className="text-[0.85rem] font-semibold text-foreground text-right truncate">
-                      {row.value}
+                      {row.amount !== undefined ? <AmountDisplay value={row.amount} /> : row.value}
                     </span>
                   </div>
                 ))}

@@ -66,7 +66,7 @@ describe("JobMatchCard", () => {
     expect(screen.getByText("Tech Corp")).toBeTruthy()
     expect(screen.getByText("New York, NY")).toBeTruthy()
     expect(screen.getByText("3-5 years")).toBeTruthy()
-    expect(screen.getByText("120,000 - 150,000")).toBeTruthy()
+    expect(screen.getByText("1,20,000 - 1,50,000")).toBeTruthy()
   })
 
   it("renders all skill badges", () => {

@@ -15,6 +15,8 @@ import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { frappeApiBase } from "@/lib/frappe-base";
+import { AmountDisplay } from "@/components/ui/amount";
+import { isMonetaryField } from "@/lib/utils";
 
 /** Fieldtypes whose value is a file URL, shown as a link rather than as text. */
 const ATTACH_FIELDTYPES: Record<string, true> = { Attach: true, "Attach Image": true };
@@ -159,7 +161,7 @@ function FieldValue({ field }: { field: ReviewField }) {
   }
   return (
     <p className="whitespace-pre-wrap break-words text-sm text-foreground">
-      {scalarText(field)}
+      {isMonetaryField(field) && value ? <AmountDisplay value={value as string | number} /> : scalarText(field)}
     </p>
   );
 }
@@ -192,7 +194,7 @@ function TableValue({ field }: { field: ReviewField }) {
             <tr key={i} className="border-t border-border">
               {columns.map((c) => (
                 <td key={c.fieldname} className="px-3 py-2 text-foreground">
-                  {cellText(row[c.fieldname])}
+                  {isMonetaryField(c) && row[c.fieldname] ? <AmountDisplay value={row[c.fieldname] as string | number} /> : cellText(row[c.fieldname])}
                 </td>
               ))}
             </tr>

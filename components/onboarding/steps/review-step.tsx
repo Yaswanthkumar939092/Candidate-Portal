@@ -21,7 +21,8 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
-import { cn } from '@/lib/utils'
+import { cn, isMonetaryField } from '@/lib/utils'
+import { AmountDisplay } from '@/components/ui/amount'
 import { evaluateDependsOn } from '@/lib/onboarding-utils'
 import { toast } from 'sonner'
 
@@ -280,7 +281,7 @@ export function ReviewStep() {
                                             if (!cVal || !isChildVisible) return null
                                             return (
                                               <p key={cf.fieldname} className="text-xs">
-                                                <span className="font-medium text-foreground">{cf.label}:</span> {String(cVal)}
+                                                <span className="font-medium text-foreground">{cf.label}:</span> {isMonetaryField(cf) ? <AmountDisplay value={cVal as string | number} /> : String(cVal)}
                                               </p>
                                             )
                                           })}
@@ -293,7 +294,7 @@ export function ReviewStep() {
                                 if (!val) return null
                                 return (
                                   <p key={f.fieldname} className="text-xs">
-                                    <span className="font-medium text-foreground">{f.label}:</span> {String(val)}
+                                    <span className="font-medium text-foreground">{f.label}:</span> {isMonetaryField(f) ? <AmountDisplay value={val as string | number} /> : String(val)}
                                   </p>
                                 )
                               })}
