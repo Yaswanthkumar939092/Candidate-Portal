@@ -17,7 +17,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useCtcProposal, useRespondToCtcProposal } from "@/lib/hooks/useCtcProposal";
 import type { ProposalAccess } from "@/lib/services/ctc-proposal";
 import type { CtcProposalData, CtcProposalLine, CtcResponse } from "@/lib/types/ctc-proposal";
-import { cn } from "@/lib/utils";
+import { cn, formatIndianAmountInWords } from "@/lib/utils";
+import { AmountDisplay, AmountInput } from "@/components/ui/amount";
 
 export function formatMoney(value: number | null | undefined, currency?: string | null) {
   const amount = Number(value || 0);
@@ -30,6 +31,10 @@ export function formatMoney(value: number | null | undefined, currency?: string 
   } catch {
     return amount.toLocaleString("en-IN");
   }
+}
+
+function Money({ value, currency }: { value: number; currency?: string | null }) {
+  return <AmountDisplay value={formatMoney(value, currency)} words={formatIndianAmountInWords(value)} />;
 }
 
 /** "2026-10-19" -> "19 Oct 2026", read as a calendar date (no timezone shift). */
@@ -77,7 +82,7 @@ export default function CtcProposalView({ access }: { access: ProposalAccess }) 
 }
 
 function ProposalBody({ access, data }: { access: ProposalAccess; data: CtcProposalData }) {
-  const money = (v: number) => formatMoney(v, data.currency);
+  const currency = data.currency;
   const outcome = data.can_respond
     ? null
     : data.expired && data.status === "Sent"
@@ -118,10 +123,10 @@ function ProposalBody({ access, data }: { access: ProposalAccess; data: CtcPropo
         <CardContent className="space-y-4 pt-6">
           <div>
             <p className="text-sm text-muted-foreground">Annual CTC</p>
-            <p className="text-3xl font-bold text-foreground">{money(data.ctc)}</p>
+            <p className="text-3xl font-bold text-foreground"><Money value={data.ctc} currency={data.currency} /></p>
             {showTotal && (
               <p className="text-sm text-muted-foreground">
-                Total cost to company incl. employer contributions: {money(data.annual_ctc)}
+                Total cost to company incl. employer contributions: <Money value={data.annual_ctc} currency={data.currency} />
               </p>
             )}
           </div>
@@ -143,10 +148,10 @@ function ProposalBody({ access, data }: { access: ProposalAccess; data: CtcPropo
         <CardContent className="overflow-x-auto">
           <table className="w-full text-sm">
             <tbody>
-              <Lines title="Earnings" lines={data.earnings} money={money} />
-              <TotalRow label="Gross" monthly={data.monthly_gross} annual={grossAnnual} money={money} />
-              <Lines title="Deductions" lines={data.deductions} money={money} />
-              <TotalRow label="Take-home before income tax" monthly={data.monthly_net} annual={grossAnnual - deductionsAnnual} money={money} />
+              <Lines title="Earnings" lines={data.earnings} currency={currency} />
+              <TotalRow label="Gross" monthly={data.monthly_gross} annual={grossAnnual} currency={currency} />
+              <Lines title="Deductions" lines={data.deductions} currency={currency} />
+              <TotalRow label="Take-home before income tax" monthly={data.monthly_net} annual={grossAnnual - deductionsAnnual} currency={currency} />
             </tbody>
           </table>
         </CardContent>
@@ -181,7 +186,7 @@ function Detail({ label, value }: { label: string; value: string }) {
   );
 }
 
-function Lines({ title, lines, money }: { title: string; lines: CtcProposalLine[]; money: (v: number) => string }) {
+function Lines({ title, lines, currency }: { title: string; lines: CtcProposalLine[]; currency?: string | null }) {
   if (!lines.length) return null;
   return (
     <>
@@ -193,20 +198,20 @@ function Lines({ title, lines, money }: { title: string; lines: CtcProposalLine[
       {lines.map((l) => (
         <tr key={`${title}-${l.component}`} className="border-b border-dashed">
           <td className="py-2 pr-4 text-foreground">{l.component}</td>
-          <td className="whitespace-nowrap py-2 text-right">{money(l.monthly)}</td>
-          <td className="whitespace-nowrap py-2 text-right">{money(l.annual)}</td>
+          <td className="whitespace-nowrap py-2 text-right"><Money value={l.monthly} currency={currency} /></td>
+          <td className="whitespace-nowrap py-2 text-right"><Money value={l.annual} currency={currency} /></td>
         </tr>
       ))}
     </>
   );
 }
 
-function TotalRow({ label, monthly, annual, money }: { label: string; monthly: number; annual: number; money: (v: number) => string }) {
+function TotalRow({ label, monthly, annual, currency }: { label: string; monthly: number; annual: number; currency?: string | null }) {
   return (
     <tr className="border-b font-semibold">
       <td className="py-2 pr-4 text-foreground">{label}</td>
-      <td className="whitespace-nowrap py-2 text-right">{money(monthly)}</td>
-      <td className="whitespace-nowrap py-2 text-right">{money(annual)}</td>
+      <td className="whitespace-nowrap py-2 text-right"><Money value={monthly} currency={currency} /></td>
+      <td className="whitespace-nowrap py-2 text-right"><Money value={annual} currency={currency} /></td>
     </tr>
   );
 }
@@ -269,17 +274,17 @@ function Respond({ access, data }: { access: ProposalAccess; data: CtcProposalDa
 
         {mode === "Accept" && (
           <p className="text-sm text-muted-foreground">
-            By accepting, you agree to an annual CTC of {formatMoney(data.ctc, data.currency)}. Your offer letter will follow.
+            By accepting, you agree to an annual CTC of <Money value={data.ctc} currency={data.currency} />. Your offer letter will follow.
           </p>
         )}
         {mode === "Negotiate" && (
           <div className="space-y-3">
             <div className="space-y-1.5">
               <Label htmlFor="ctc-expected">Your expected Annual CTC *</Label>
-              <Input id="ctc-expected" inputMode="numeric" value={expected} placeholder="e.g. 2000000"
-                onChange={(e) => setExpected(e.target.value.replace(/[^0-9.]/g, ""))} />
+              <AmountInput id="ctc-expected" value={expected} placeholder="e.g. 2000000"
+                onValueChange={setExpected} />
               {Number(expected) > 0 && (
-                <p className="text-xs text-muted-foreground">{formatMoney(Number(expected), data.currency)} per year</p>
+                <p className="text-xs text-muted-foreground"><Money value={Number(expected)} currency={data.currency} /> per year</p>
               )}
             </div>
             <div className="space-y-1.5">

@@ -12,6 +12,7 @@ import {
   Loader2,
   CheckCircle2,
 } from "lucide-react";
+import { SalaryDisplay } from "@/components/ui/amount";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -96,7 +97,7 @@ export function JobMatchCard({
                     className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground"
                   >
                     <IconComp className="h-3 w-3" />
-                    {field.value}
+                    {field.label.toLowerCase().includes("salary") ? <SalaryDisplay value={field.value} /> : field.value}
                   </span>
                 );
               })
@@ -123,7 +124,7 @@ export function JobMatchCard({
                 {job.salary && (
                   <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
                     <IndianRupee className="h-3 w-3" />
-                    {job.salary}
+                    <SalaryDisplay value={job.salary} />
                   </span>
                 )}
               </>

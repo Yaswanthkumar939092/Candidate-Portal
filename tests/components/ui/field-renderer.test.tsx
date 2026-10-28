@@ -465,7 +465,7 @@ describe("DynamicFieldRenderer", () => {
         <DynamicFieldRenderer field={field} value="" onChange={onChange} />
       )
 
-      await user.type(screen.getByRole("spinbutton"), "9")
+      await user.type(screen.getByRole("textbox"), "9")
       expect(onChange).toHaveBeenLastCalledWith("9")
     })
 
@@ -476,7 +476,7 @@ describe("DynamicFieldRenderer", () => {
         fieldtype: "Float",
       }
       render(<DynamicFieldRenderer field={field} value="1.2.3" onChange={vi.fn()} />)
-      const input = screen.getByRole("spinbutton") as HTMLInputElement
+      const input = screen.getByRole("textbox") as HTMLInputElement
       expect(input.value).toBe("1.23")
     })
 
@@ -1575,6 +1575,19 @@ describe("DynamicFieldRenderer", () => {
 
       fireEvent.change(input, { target: { value: "15,00,000" } });
       expect(onChange).toHaveBeenCalledWith("1500000");
+    });
+
+    it("shows the amount in words when hovering a monetary input", async () => {
+      const field: FormField = {
+        fieldname: "custom_expected_ctc",
+        label: "Expected CTC",
+        fieldtype: "Currency",
+      };
+
+      render(<DynamicFieldRenderer field={field} value="1250000" onChange={vi.fn()} />);
+
+      await user.hover(screen.getByPlaceholderText("Expected CTC"));
+      expect((await screen.findAllByText("Twelve Lakh Fifty Thousand Rupees")).length).toBeGreaterThan(0);
     });
   });
 });

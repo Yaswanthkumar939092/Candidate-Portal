@@ -202,7 +202,7 @@ function OnboardingContent() {
                 router.push("/dashboard");
               }}
               size="lg"
-              className="h-12 px-8 flex items-center gap-2"
+              className="inline-flex h-12 items-center gap-2 px-8"
             >
               <ArrowLeft className="h-4 w-4" />
               Back to Dashboard
