@@ -16,9 +16,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useCtcProposal, useRespondToCtcProposal } from "@/lib/hooks/useCtcProposal";
 import type { ProposalAccess } from "@/lib/services/ctc-proposal";
-import type { CtcProposalData, CtcProposalLine, CtcResponse } from "@/lib/types/ctc-proposal";
-import { cn, formatIndianAmountInWords } from "@/lib/utils";
-import { AmountDisplay, AmountInput } from "@/components/ui/amount";
+import type { CtcAnnexureRow, CtcProposalData, CtcResponse } from "@/lib/types/ctc-proposal";
+import { cn } from "@/lib/utils";
 
 export function formatMoney(value: number | null | undefined, currency?: string | null) {
   const amount = Number(value || 0);
@@ -31,10 +30,6 @@ export function formatMoney(value: number | null | undefined, currency?: string 
   } catch {
     return amount.toLocaleString("en-IN");
   }
-}
-
-function Money({ value, currency }: { value: number; currency?: string | null }) {
-  return <AmountDisplay value={formatMoney(value, currency)} words={formatIndianAmountInWords(value)} />;
 }
 
 /** "2026-10-19" -> "19 Oct 2026", read as a calendar date (no timezone shift). */
@@ -82,18 +77,12 @@ export default function CtcProposalView({ access }: { access: ProposalAccess }) 
 }
 
 function ProposalBody({ access, data }: { access: ProposalAccess; data: CtcProposalData }) {
-  const currency = data.currency;
+  const money = (v: number) => formatMoney(v, data.currency);
   const outcome = data.can_respond
     ? null
     : data.expired && data.status === "Sent"
       ? { text: "This proposal has expired. Please contact HR.", tone: "muted" as const }
       : OUTCOME[data.status] || { text: data.status, tone: "muted" as const };
-  // Annual totals add up the lines' own annual amounts, so yearly-only
-  // components (e.g. a bonus) are counted as they appear in the rows above.
-  const sumAnnual = (lines: CtcProposalLine[]) => lines.reduce((t, l) => t + Number(l.annual || 0), 0);
-  const grossAnnual = sumAnnual(data.earnings);
-  const deductionsAnnual = sumAnnual(data.deductions);
-  const showTotal = Number(data.annual_ctc) > 0 && Math.round(data.annual_ctc) !== Math.round(data.ctc);
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6 px-4 py-8">
@@ -121,14 +110,19 @@ function ProposalBody({ access, data }: { access: ProposalAccess; data: CtcPropo
 
       <Card>
         <CardContent className="space-y-4 pt-6">
-          <div>
-            <p className="text-sm text-muted-foreground">Annual CTC</p>
-            <p className="text-3xl font-bold text-foreground"><Money value={data.ctc} currency={data.currency} /></p>
-            {showTotal && (
-              <p className="text-sm text-muted-foreground">
-                Total cost to company incl. employer contributions: <Money value={data.annual_ctc} currency={data.currency} />
-              </p>
-            )}
+          <div className="flex flex-wrap gap-x-12 gap-y-4">
+            <div>
+              <p className="text-sm text-muted-foreground">CTC (Monthly)</p>
+              <p className="text-3xl font-bold text-foreground">{money(data.ctc_monthly ?? data.ctc / 12)}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Annual CTC</p>
+              <p className="text-3xl font-bold text-foreground">{money(data.ctc)}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Take-home (Monthly)</p>
+              <p className="text-3xl font-bold text-foreground">{money(data.take_home_monthly)}</p>
+            </div>
           </div>
           <dl className="grid grid-cols-1 gap-x-6 gap-y-2 border-t pt-4 text-sm sm:grid-cols-2">
             <Detail label="Designation" value={data.designation} />
@@ -141,21 +135,7 @@ function ProposalBody({ access, data }: { access: ProposalAccess; data: CtcPropo
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Salary Breakup</CardTitle>
-        </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <tbody>
-              <Lines title="Earnings" lines={data.earnings} currency={currency} />
-              <TotalRow label="Gross" monthly={data.monthly_gross} annual={grossAnnual} currency={currency} />
-              <Lines title="Deductions" lines={data.deductions} currency={currency} />
-              <TotalRow label="Take-home before income tax" monthly={data.monthly_net} annual={grossAnnual - deductionsAnnual} currency={currency} />
-            </tbody>
-          </table>
-        </CardContent>
-      </Card>
+      <Annexure data={data} />
 
       {data.hr_note && (
         <div className="whitespace-pre-wrap rounded-lg bg-muted p-4 text-sm">
@@ -186,33 +166,63 @@ function Detail({ label, value }: { label: string; value: string }) {
   );
 }
 
-function Lines({ title, lines, currency }: { title: string; lines: CtcProposalLine[]; currency?: string | null }) {
-  if (!lines.length) return null;
-  return (
-    <>
-      <tr className="border-b">
-        <th className="py-2 text-left font-medium text-muted-foreground">{title}</th>
-        <th className="py-2 text-right font-medium text-muted-foreground">Monthly</th>
-        <th className="py-2 text-right font-medium text-muted-foreground">Annual</th>
-      </tr>
-      {lines.map((l) => (
-        <tr key={`${title}-${l.component}`} className="border-b border-dashed">
-          <td className="py-2 pr-4 text-foreground">{l.component}</td>
-          <td className="whitespace-nowrap py-2 text-right"><Money value={l.monthly} currency={currency} /></td>
-          <td className="whitespace-nowrap py-2 text-right"><Money value={l.annual} currency={currency} /></td>
-        </tr>
-      ))}
-    </>
-  );
-}
+const amount = (v?: number) =>
+  Number(v || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-function TotalRow({ label, monthly, annual, currency }: { label: string; monthly: number; annual: number; currency?: string | null }) {
+/**
+ * The CTC annexure as PAPL's annexure sheet lays it out, cell for cell as HR's
+ * preview on the CTC Proposal draws it: a white sheet in either theme.
+ */
+function Annexure({ data }: { data: CtcProposalData }) {
+  const cell = "border border-black px-2 py-1";
+  const name = data.annexure_name || data.applicant_name;
+  const sign = "min-w-[200px] flex-1 border-t border-black pt-1 text-xs font-bold";
   return (
-    <tr className="border-b font-semibold">
-      <td className="py-2 pr-4 text-foreground">{label}</td>
-      <td className="whitespace-nowrap py-2 text-right"><Money value={monthly} currency={currency} /></td>
-      <td className="whitespace-nowrap py-2 text-right"><Money value={annual} currency={currency} /></td>
-    </tr>
+    <div className="overflow-x-auto rounded-lg border bg-white p-4 font-serif text-black">
+      <table className="w-full border-collapse text-sm text-black">
+        <colgroup>
+          <col className="w-[46%]" />
+          <col className="w-[27%]" />
+          <col className="w-[27%]" />
+        </colgroup>
+        <thead>
+          <tr>
+            <th colSpan={3} className={cn(cell, "text-center font-bold")}>ANNEXURE</th>
+          </tr>
+          <tr>
+            <th colSpan={3} className={cn(cell, "text-left font-bold")}>{name}</th>
+          </tr>
+          <tr>
+            <th className={cn(cell, "text-left font-bold")}>Particular</th>
+            <th className={cn(cell, "whitespace-nowrap text-center font-bold")}>Monthly C.T.C INR.</th>
+            <th className={cn(cell, "whitespace-nowrap text-center font-bold")}>Annual C.T.C. INR.</th>
+          </tr>
+        </thead>
+        <tbody>
+          {(data.annexure || []).map((r: CtcAnnexureRow, i) =>
+            r.kind === "heading" ? (
+              <tr key={i}>
+                <td className={cn(cell, "underline")}>{r.label}</td>
+                <td className={cell} />
+                <td className={cell} />
+              </tr>
+            ) : (
+              <tr key={i} className={cn(r.kind === "total" && "font-bold")}>
+                <td className={cell}>{r.label}</td>
+                <td className={cn(cell, "whitespace-nowrap text-right")}>{amount(r.monthly)}</td>
+                <td className={cn(cell, "whitespace-nowrap text-right")}>{amount(r.annual)}</td>
+              </tr>
+            )
+          )}
+        </tbody>
+      </table>
+      {data.annexure_note && <p className="mt-3 whitespace-pre-wrap text-justify text-sm">{data.annexure_note}</p>}
+      <p className="mb-12 mt-3 text-sm font-bold">M/S. {data.company_name || data.company}</p>
+      <div className="flex flex-wrap gap-12">
+        <div className={sign}>Admin / Accounts &amp; Finance</div>
+        <div className={cn(sign, "text-center")}>Accepted ({name})</div>
+      </div>
+    </div>
   );
 }
 
@@ -274,17 +284,17 @@ function Respond({ access, data }: { access: ProposalAccess; data: CtcProposalDa
 
         {mode === "Accept" && (
           <p className="text-sm text-muted-foreground">
-            By accepting, you agree to an annual CTC of <Money value={data.ctc} currency={data.currency} />. Your offer letter will follow.
+            By accepting, you agree to an annual CTC of {formatMoney(data.ctc, data.currency)}. Your offer letter will follow.
           </p>
         )}
         {mode === "Negotiate" && (
           <div className="space-y-3">
             <div className="space-y-1.5">
               <Label htmlFor="ctc-expected">Your expected Annual CTC *</Label>
-              <AmountInput id="ctc-expected" value={expected} placeholder="e.g. 2000000"
-                onValueChange={setExpected} />
+              <Input id="ctc-expected" inputMode="numeric" value={expected} placeholder="e.g. 2000000"
+                onChange={(e) => setExpected(e.target.value.replace(/[^0-9.]/g, ""))} />
               {Number(expected) > 0 && (
-                <p className="text-xs text-muted-foreground"><Money value={Number(expected)} currency={data.currency} /> per year</p>
+                <p className="text-xs text-muted-foreground">{formatMoney(Number(expected), data.currency)} per year</p>
               )}
             </div>
             <div className="space-y-1.5">
