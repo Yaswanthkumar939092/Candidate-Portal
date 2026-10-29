@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, waitFor, fireEvent } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { useForm, FormProvider } from "react-hook-form"
-import { DynamicFieldRenderer, FormField, formatIndianFormat } from "@/components/ui/field-renderer"
+import { DynamicFieldRenderer, FormField } from "@/components/ui/field-renderer"
 
 vi.mock("@/lib/frappe-api", () => ({
   FrappeAPI: {
@@ -465,7 +465,7 @@ describe("DynamicFieldRenderer", () => {
         <DynamicFieldRenderer field={field} value="" onChange={onChange} />
       )
 
-      await user.type(screen.getByRole("spinbutton"), "9")
+      await user.type(screen.getByRole("textbox"), "9")
       expect(onChange).toHaveBeenLastCalledWith("9")
     })
 
@@ -476,7 +476,7 @@ describe("DynamicFieldRenderer", () => {
         fieldtype: "Float",
       }
       render(<DynamicFieldRenderer field={field} value="1.2.3" onChange={vi.fn()} />)
-      const input = screen.getByRole("spinbutton") as HTMLInputElement
+      const input = screen.getByRole("textbox") as HTMLInputElement
       expect(input.value).toBe("1.23")
     })
 
@@ -1541,18 +1541,8 @@ describe("DynamicFieldRenderer", () => {
     });
   });
 
-  describe("CTC Formatting and Indian format comma separation", () => {
-    it("formats numbers to Indian format correctly", () => {
-      expect(formatIndianFormat(1000)).toBe("1,000");
-      expect(formatIndianFormat("10000")).toBe("10,000");
-      expect(formatIndianFormat(100000)).toBe("1,00,000");
-      expect(formatIndianFormat("1000000")).toBe("10,00,000");
-      expect(formatIndianFormat("12345678")).toBe("1,23,45,678");
-      expect(formatIndianFormat("12345678.90")).toBe("1,23,45,678.90");
-      expect(formatIndianFormat("")).toBe("");
-      expect(formatIndianFormat(null)).toBe("");
-    });
 
+  describe("CTC formatting and rupee input prefix", () => {
     it("renders CTC fields using formatted value and onChange cleans formatting", async () => {
       const field: FormField = {
         fieldname: "custom_current_ctc",
@@ -1572,9 +1562,23 @@ describe("DynamicFieldRenderer", () => {
       const input = screen.getByPlaceholderText("Current CTC") as HTMLInputElement;
       expect(input).toBeTruthy();
       expect(input.value).toBe("12,00,000");
+      expect(screen.getByText("₹")).toBeTruthy();
 
       fireEvent.change(input, { target: { value: "15,00,000" } });
       expect(onChange).toHaveBeenCalledWith("1500000");
+    });
+
+    it("shows the amount in words when hovering a monetary input", async () => {
+      const field: FormField = {
+        fieldname: "custom_expected_ctc",
+        label: "Expected CTC",
+        fieldtype: "Currency",
+      };
+
+      render(<DynamicFieldRenderer field={field} value="1250000" onChange={vi.fn()} />);
+
+      await user.hover(screen.getByPlaceholderText("Expected CTC"));
+      expect((await screen.findAllByText("Twelve Lakh Fifty Thousand Rupees")).length).toBeGreaterThan(0);
     });
   });
 });

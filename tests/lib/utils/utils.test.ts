@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { formatDateDDMMYYYY, formatIndianAmount } from "@/lib/utils";
+import { formatDateDDMMYYYY, formatIndianAmount, formatIndianAmountInWords, isMonetaryField } from "@/lib/utils";
 
 describe("formatIndianAmount", () => {
   it("formats numbers using Indian digit grouping", () => {
@@ -19,6 +19,27 @@ describe("formatIndianAmount", () => {
     expect(formatIndianAmount(undefined)).toBe("");
     expect(formatIndianAmount("")).toBe("");
     expect(formatIndianAmount("Not disclosed")).toBe("Not disclosed");
+  });
+});
+
+describe("formatIndianAmountInWords", () => {
+  it("spells rupees and paise with Indian denominations", () => {
+    expect(formatIndianAmountInWords("1234567.89")).toBe(
+      "Twelve Lakh Thirty Four Thousand Five Hundred Sixty Seven Rupees and Eighty Nine Paise",
+    );
+    expect(formatIndianAmountInWords(-10000000)).toBe("Minus One Crore Rupees");
+  });
+
+  it("does not fabricate words for non-monetary text", () => {
+    expect(formatIndianAmountInWords("Not disclosed")).toBe("");
+  });
+});
+
+describe("isMonetaryField", () => {
+  it("recognizes currency and monetary labels without matching percentages", () => {
+    expect(isMonetaryField({ fieldtype: "Currency" })).toBe(true);
+    expect(isMonetaryField({ fieldname: "custom_expected_ctc", fieldtype: "Float" })).toBe(true);
+    expect(isMonetaryField({ label: "Salary percentage", fieldtype: "Float" })).toBe(false);
   });
 });
 

@@ -22,7 +22,20 @@ const base: CtcProposalData = {
   employment_type: "Full-time", expected_doj: "2026-10-19", currency: "INR", ctc: 1800000, annual_ctc: 1800000,
   earnings: [{ component: "Basic", monthly: 60000, annual: 720000 }],
   deductions: [{ component: "Professional Tax", monthly: 200, annual: 2400 }],
-  monthly_gross: 150000, monthly_deductions: 200, monthly_net: 149800, hr_note: "Welcome!", version: 1,
+  monthly_gross: 150000, monthly_deductions: 200, monthly_net: 149800,
+  annexure: [
+    { label: "Basic", kind: "row", monthly: 60000, annual: 720000 },
+    { label: "Gross Salary", kind: "total", key: "gross", monthly: 60000, annual: 720000 },
+    { label: "EMPLOYEE'S DEDUCTIONS", kind: "heading" },
+    { label: "Professional Tax", kind: "row", monthly: 0, annual: 0 },
+    { label: "Net Salary (In Hand)", kind: "total", key: "net", monthly: 60000, annual: 720000 },
+    { label: "EMPLOYER'S DEDUCTIONS", kind: "heading" },
+    { label: "Gratuity", kind: "row", monthly: 2886, annual: 34632 },
+    { label: "Total CTC – Per Month", kind: "total", key: "ctc", monthly: 62886, annual: 754632 },
+  ],
+  take_home_monthly: 60000, annexure_note: "Subject to TDS.",
+  annexure_name: "Ms. Asha", company_name: "PhysicsWallah Limited",
+  hr_note: "Welcome!", version: 1,
   status: "Sent", expired: false, expires_on: null, can_respond: true, can_negotiate: true, negotiations_left: 3, response: "",
 };
 
@@ -47,6 +60,29 @@ describe("CtcProposalView", () => {
     expect((await screen.findAllByText(formatMoney(1800000, "INR"))).length).toBeGreaterThan(0);
     expect(screen.getByText("Basic")).toBeInTheDocument();
     expect(screen.getByText("Welcome!")).toBeInTheDocument();
+  });
+
+  it("shows the annexure with every row, a 0 included, and the take-home", async () => {
+    getProposal.mockResolvedValue(base);
+    renderView();
+    expect(await screen.findByText("ANNEXURE")).toBeInTheDocument();
+    expect(screen.getByText("EMPLOYEE'S DEDUCTIONS")).toBeInTheDocument();
+    expect(screen.getByText("Professional Tax")).toBeInTheDocument();
+    expect(screen.getAllByText("0.00")).toHaveLength(2);
+    expect(screen.getByText("Net Salary (In Hand)")).toBeInTheDocument();
+    expect(screen.getByText("62,886.00")).toBeInTheDocument();
+    expect(screen.getByText(formatMoney(60000, "INR"))).toBeInTheDocument();
+    expect(screen.getByText("Subject to TDS.")).toBeInTheDocument();
+  });
+
+  it("names the candidate and signs off as the annexure sheet does", async () => {
+    getProposal.mockResolvedValue(base);
+    renderView();
+    expect(await screen.findByText("Ms. Asha")).toBeInTheDocument();
+    expect(screen.getByText("Total CTC – Per Month")).toBeInTheDocument();
+    expect(screen.getByText("M/S. PhysicsWallah Limited")).toBeInTheDocument();
+    expect(screen.getByText("Admin / Accounts & Finance")).toBeInTheDocument();
+    expect(screen.getByText("Accepted (Ms. Asha)")).toBeInTheDocument();
   });
 
   it("accepts after confirmation", async () => {

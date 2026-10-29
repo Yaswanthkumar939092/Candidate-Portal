@@ -798,9 +798,11 @@ describe("OnboardingFormStep", () => {
         vi.mocked(useOnboarding).mockReturnValue(defaultContext);
         const { container } = render(<OnboardingFormStep tab={unifiedTab} stepKey="match_test" />);
         
-        // The SectionCard receives undefined title which prevents header container from rendering
-        // Our earlier SectionCard tests indicated header presence implies .pt-2.px-6 selectors
-        expect(container.querySelector(".pt-2.px-6")).toBeNull();
+        // The SectionCard receives undefined title, so no section title is rendered;
+        // the header only carries the filled/total counts badge.
+        expect(container.querySelector('[data-slot="card-title"]')).toBeNull();
+        expect(screen.queryByText("Identity Match")).toBeNull();
+        expect(screen.getByText("0/1")).toBeTruthy();
      });
 
       it("bypasses validation for hidden fields or fields whose depends_on evaluates to false", async () => {

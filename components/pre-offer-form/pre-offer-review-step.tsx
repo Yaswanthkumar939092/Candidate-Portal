@@ -17,7 +17,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
+import { cn, isMonetaryField } from "@/lib/utils";
+import { AmountDisplay } from "@/components/ui/amount";
 import {
   reviewDeclarationSchema,
   type ReviewDeclarationData,
@@ -225,7 +226,7 @@ export function PreOfferReviewStep({
                                               <span className="font-semibold text-foreground mr-1">
                                                 {cf.label}:
                                               </span>
-                                              {String(cVal)}
+                                              {isMonetaryField(cf) ? <AmountDisplay value={cVal} /> : String(cVal)}
                                             </p>
                                           );
                                         })}
@@ -241,7 +242,7 @@ export function PreOfferReviewStep({
                                   <span className="font-semibold text-foreground mr-1">
                                     {f.label}:
                                   </span>
-                                  {String(val)}
+                                  {isMonetaryField(f) ? <AmountDisplay value={val} /> : String(val)}
                                 </p>
                               );
                             })}

@@ -17,6 +17,8 @@ import type { FormAccess } from "@/lib/services/direct-applicant-form";
 import type { DirectApplicantField, DirectApplicantFormData, TableRow } from "@/lib/types/direct-applicant-form";
 import { FieldControl } from "./FieldControl";
 import { TableField } from "./TableField";
+import { AmountDisplay } from "@/components/ui/amount";
+import { isMonetaryField } from "@/lib/utils";
 
 type Values = Record<string, unknown>;
 
@@ -308,7 +310,7 @@ function ReviewBody({ data }: { data: DirectApplicantFormData }) {
                   </a>
                 ) : (
                   <p className="whitespace-pre-wrap break-words text-sm text-foreground">
-                    {displayValue(f)}
+                    {isMonetaryField(f) && f.value ? <AmountDisplay value={f.value as string | number} /> : displayValue(f)}
                   </p>
                 )}
               </div>
@@ -349,7 +351,7 @@ function ReviewTable({ field }: { field: DirectApplicantField }) {
             <tr key={i} className="border-t border-border">
               {columns.map((c) => (
                 <td key={c.fieldname} className="px-3 py-2 text-foreground">
-                  {formatCell(row[c.fieldname])}
+                  {isMonetaryField(c) && row[c.fieldname] ? <AmountDisplay value={row[c.fieldname] as string | number} /> : formatCell(row[c.fieldname])}
                 </td>
               ))}
             </tr>

@@ -16,7 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { directApplicantFormService, type FormAccess } from "@/lib/services/direct-applicant-form";
 import type { LinkOption } from "@/lib/types/direct-applicant-form";
-import { cn } from "@/lib/utils";
+import { cn, isMonetaryField } from "@/lib/utils";
+import { AmountInput } from "@/components/ui/amount";
 
 export interface ControlField {
   fieldname: string;
@@ -94,6 +95,18 @@ export function FieldControl(props: FieldControlProps) {
     return (
       <Textarea id={id} aria-label={ariaLabel} rows={3} value={text} onChange={(e) => onChange(e.target.value)}
         disabled={disabled} className={invalidClass} />
+    );
+  }
+  if (isMonetaryField(field) && field.fieldtype !== "Date") {
+    return (
+      <AmountInput
+        id={id}
+        aria-label={ariaLabel}
+        value={text}
+        onValueChange={onChange}
+        disabled={disabled}
+        className={invalidClass}
+      />
     );
   }
   return (

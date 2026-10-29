@@ -8,6 +8,7 @@ import {
   ChevronRight,
   CheckCircle2,
 } from "lucide-react";
+import { SalaryDisplay } from "@/components/ui/amount";
 import {
   Dialog,
   DialogContent,
@@ -81,7 +82,7 @@ export function JobDetailDialog({
             {job.upper_range ? (
               <span className="inline-flex items-center gap-1">
                 <IndianRupee className="h-3 w-3" />
-                {job.lower_range || 0} - {job.upper_range} LPA
+                <SalaryDisplay value={`${job.lower_range || 0} - ${job.upper_range} LPA`} />
               </span>
             ) : null}
           </DialogDescription>

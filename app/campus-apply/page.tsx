@@ -21,6 +21,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SalaryDisplay } from "@/components/ui/amount";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useJobOpening } from "@/lib/hooks/useJobOpening";
@@ -241,7 +242,7 @@ function CampusApplyContent() {
                                   Compensation Package
                                 </span>
                                 <p className="font-bold text-sm text-primary">
-                                  {selectedJob.custom_salary || "Competitive LPA"}
+                                  <SalaryDisplay value={selectedJob.custom_salary || "Competitive LPA"} />
                                 </p>
                               </div>
                               <div className="p-4 bg-card border border-border/60 rounded-xl space-y-1 sm:col-span-2 md:col-span-1">
@@ -688,7 +689,7 @@ function CampusApplyWizardInner({
 
       {/* Form Details Card */}
       <main className="flex-1 w-full lg:max-w-7xl overflow-y-auto">
-        <div className="mx-auto w-full px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full px-4 pt-8 sm:px-6 lg:px-8">
           {/* Step header */}
           <div className="mb-6">
             <div className="md:hidden flex items-center justify-between mb-1">
