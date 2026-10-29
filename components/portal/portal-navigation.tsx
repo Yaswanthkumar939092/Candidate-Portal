@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -180,7 +179,7 @@ export function PortalNavigation({
     >
       <div className="container mx-auto flex h-full items-center justify-between px-4">
         {/* Left side: Mobile Menu + brand lockup */}
-        <div className="flex items-center gap-2 md:gap-4">
+        <div className="flex min-w-0 items-center gap-2 md:gap-4">
           {/* Mobile Hamburger Menu */}
           {!hideNavLinks && (
             <div className="md:hidden">
@@ -256,13 +255,13 @@ export function PortalNavigation({
             const content = <BrandLockup branding={branding} />;
 
             return disableBrandRedirect ? (
-              <div className="flex shrink-0 items-center gap-2 cursor-default select-none">
+              <div className="flex min-w-0 items-center gap-2 cursor-default select-none">
                 {content}
               </div>
             ) : (
               <Link
                 href="/dashboard"
-                className="flex shrink-0 items-center gap-2"
+                className="flex min-w-0 items-center gap-2"
                 onClick={() => {
                   queryClient.invalidateQueries({
                     queryKey: ["dashboard", { email: userEmail }],

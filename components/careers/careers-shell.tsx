@@ -37,7 +37,7 @@ export function CareersShell({ children }: { children: React.ReactNode }) {
     <div data-careers-shell className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 border-b bg-card shadow-sm">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <Link href="/" className="flex shrink-0 items-center gap-2" aria-label="Careers home">
+          <Link href="/" className="flex min-w-0 items-center gap-2" aria-label="Careers home">
             <BrandLockup branding={branding} />
           </Link>
 

@@ -27,6 +27,8 @@ interface BrandLockupProps {
   /** `light` for dark backgrounds (auth left pane). */
   tone?: "default" | "light";
   size?: "md" | "lg";
+  /** Skip next/image optimisation (logo host may be outside `images.remotePatterns`). */
+  unoptimized?: boolean;
   className?: string;
 }
 
@@ -36,6 +38,7 @@ export function BrandLockup({
   logoSrc,
   tone = "default",
   size = "md",
+  unoptimized,
   className,
 }: BrandLockupProps) {
   const showName = shouldShowBrandName(branding);
@@ -54,11 +57,14 @@ export function BrandLockup({
         width={px}
         height={px}
         priority
+        unoptimized={unoptimized}
         className={cn(
           "shrink-0 object-contain",
-          size === "lg" ? "size-12" : "size-8",
-          // Logos that carry their own wordmark are wide, not square.
-          !showName && "w-auto max-w-[160px]",
+          // Name beside the logo: square mark. Wordmark logo alone: height-bound, width follows
+          // the artwork (h-* + w-auto, never size-*, so a wide logo is not squeezed).
+          showName
+            ? size === "lg" ? "size-12" : "size-8"
+            : size === "lg" ? "h-12 w-auto max-w-[220px]" : "h-8 w-auto max-w-[160px]",
         )}
       />
       {showName && (
