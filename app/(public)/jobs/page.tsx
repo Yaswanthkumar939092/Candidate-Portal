@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import { JobDetailDialog } from "@/components/jobs/job-detail-dialog";
@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResumeDropzone } from "@/components/careers/resume-dropzone";
 import { toCardJob, toColumnFields } from "@/components/careers/job-mapping";
-import { loginHref } from "@/lib/careers/login-redirect";
+import { loginHref, SHARED_JOB_PARAM } from "@/lib/careers/login-redirect";
 import { matchesQuery } from "@/lib/careers/openings";
 import { usePublicOpenings } from "@/lib/hooks/usePublicOpenings";
 import type { PublicOpening } from "@/types/public-job";
@@ -27,6 +27,21 @@ export default function PublicJobsPage() {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<PublicOpening | null>(null);
   const [tab, setTab] = useState<string | null>(null);
+  // `/jobs?job=<id>` is a shared link: open that job's details instead of the list.
+  const [sharedJobId, setSharedJobId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSharedJobId(new URLSearchParams(window.location.search).get(SHARED_JOB_PARAM));
+  }, []);
+
+  useEffect(() => {
+    const shared = sharedJobId ? openings?.find((o) => o.id === sharedJobId) : undefined;
+    if (!shared) return;
+    setTab(shared.evergreen ? "evergreen" : "normal");
+    setSelected(shared);
+  }, [sharedJobId, openings]);
+
+  const sharedJobClosed = !!sharedJobId && !!openings && !openings.some((o) => o.id === sharedJobId);
 
   const results = useMemo(() => (openings ?? []).filter((o) => matchesQuery(o, query)), [openings, query]);
   const searching = query.trim().length > 0;
@@ -54,6 +69,12 @@ export default function PublicJobsPage() {
           onChange={(e) => setQuery(e.target.value)}
         />
       </div>
+
+      {sharedJobClosed && (
+        <div role="status" className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">
+          The job you were sent is no longer open. Here are the roles open right now.
+        </div>
+      )}
 
       {isLoading && (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -142,7 +163,11 @@ export default function PublicJobsPage() {
 
       <JobDetailDialog
         open={selected !== null}
-        onOpenChange={(open) => !open && setSelected(null)}
+        onOpenChange={(open) => {
+          if (open) return;
+          setSelected(null);
+          setSharedJobId(null);
+        }}
         job={selected ? toCardJob(selected) : null}
         applyHref={selected ? loginHref(`/open-jobs/${selected.id}/apply-job`) : undefined}
       />

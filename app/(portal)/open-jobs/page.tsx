@@ -18,6 +18,7 @@ import { useToggleSavedJob } from "@/lib/hooks/useSavedJobs";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { CustomJobOpening } from "@/types/job";
 import { takePendingResume } from "@/lib/careers/pending-resume";
+import { SHARED_JOB_PARAM } from "@/lib/careers/login-redirect";
 import { toast } from "sonner";
 
 
@@ -111,6 +112,8 @@ function Pagination({
 // ---------------------------------------------------------------------------
 export default function OpenJobsPage() {
   const [currentPage, setCurrentPage] = useState(1);
+  // `/open-jobs?job=<id>` is a shared job link: search for that job and open its details.
+  const [sharedJobId, setSharedJobId] = useState<string | null>(null);
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -147,6 +150,14 @@ export default function OpenJobsPage() {
 
   // filters state
   const [searchText, setSearchText] = useState("");
+
+  useEffect(() => {
+    const shared = new URLSearchParams(window.location.search).get(SHARED_JOB_PARAM);
+    if (!shared) return;
+    setSharedJobId(shared);
+    setSearchText(shared);
+    setDebouncedSearch(shared);
+  }, []);
 
   // Detail dialog
   const [selectedJob, setSelectedJob] = useState<MatchedJob | null>(null);
@@ -232,6 +243,17 @@ export default function OpenJobsPage() {
       saved: job.saved,
     }));
   }, [jobOpenings]);
+
+  // Open the shared job as soon as the search brings it back (once).
+  const sharedJobOpened = useRef(false);
+  useEffect(() => {
+    if (!sharedJobId || sharedJobOpened.current) return;
+    const shared = mappedJobs.find((j) => j.id === sharedJobId);
+    if (!shared) return;
+    sharedJobOpened.current = true;
+    setSelectedJob(shared);
+    setDialogOpen(true);
+  }, [sharedJobId, mappedJobs]);
 
   // Build column metadata for each opening, extracting values via value_key.
   // Exclude 'name' (used as ID) and 'job_title' (already shown as card title).
