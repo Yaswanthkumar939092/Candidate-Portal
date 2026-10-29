@@ -1,12 +1,12 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { usePublicBranding } from "@/lib/hooks/usePublicBranding";
 import { loginHref, PORTAL_EQUIVALENT } from "@/lib/careers/login-redirect";
+import { BrandLockup } from "@/components/brand-lockup";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -33,34 +33,12 @@ export function CareersShell({ children }: { children: React.ReactNode }) {
 
   if (user) return null;
 
-  const showCompanyName = Boolean(branding?.logo_includes_company_name);
-  const logo = branding?.app_logo
-    ? branding.app_logo.startsWith("http")
-      ? branding.app_logo
-      : `${(process.env.NEXT_PUBLIC_FRAPPE_URL || "").replace(/\/$/, "")}${branding.app_logo.startsWith("/") ? branding.app_logo : `/${branding.app_logo}`}`
-    : "/fallback.png";
-
   return (
     <div data-careers-shell className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 border-b bg-card shadow-sm">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <Link href="/" className="flex shrink-0 items-center gap-2" aria-label="Careers home">
-            <Image
-              src={logo}
-              alt={branding?.title_prefix || "Logo"}
-              width={showCompanyName ? 32 : 120}
-              height={32}
-              priority
-              className={cn(
-                "shrink-0",
-                showCompanyName ? "size-8 rounded-full object-cover" : "h-8 w-auto max-w-[140px] object-contain",
-              )}
-            />
-            {showCompanyName && (
-              <span className="hidden text-[14px] font-extrabold uppercase text-black sm:block sm:text-base">
-                {branding?.title_prefix || ""}
-              </span>
-            )}
+            <BrandLockup branding={branding} />
           </Link>
 
           <nav className="hidden items-center gap-1 md:flex" aria-label="Careers">

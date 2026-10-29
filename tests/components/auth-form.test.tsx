@@ -174,7 +174,9 @@ describe("AuthForm – Login UI", () => {
 
   it("renders the brand logo on login", () => {
     render(<AuthForm {...defaultLoginProps} />);
-    expect(screen.getByAltText("Logo")).toBeTruthy();
+    const lockup = screen.getByTestId("brand-lockup");
+    expect(lockup.querySelector("img")).toBeTruthy();
+    expect(lockup.textContent).toBe("Physics Wallah");
   });
 
   it("renders left-pane heading for login", () => {
@@ -671,7 +673,7 @@ describe("AuthForm – Dynamic left pane content", () => {
     expect(screen.queryByTestId("auth-pane-glow")).toBeNull();
     expect(screen.queryByText("Track your onboarding journey")).toBeNull();
     expect(screen.getByText("© 2026 Acme. All rights reserved.")).toBeTruthy();
-    expect(screen.getByAltText("Logo").getAttribute("src")).toBe(
+    expect(screen.getByTestId("brand-lockup").querySelector("img")!.getAttribute("src")).toBe(
       "https://cdn.example.com/logo.png",
     );
     expect(
@@ -698,7 +700,7 @@ describe("AuthForm – Dynamic left pane content", () => {
       screen.getByText(/Access your personalized dashboard/),
     ).toBeTruthy();
     expect(screen.getByText("Track your onboarding journey")).toBeTruthy();
-    expect(screen.getByAltText("Logo").getAttribute("src")).toContain(
+    expect(screen.getByTestId("brand-lockup").querySelector("img")!.getAttribute("src")).toContain(
       "/brand.png",
     );
     expect(screen.queryByTestId("auth-pane-background")).toBeNull();

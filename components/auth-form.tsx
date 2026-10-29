@@ -19,6 +19,7 @@ import { useCandidateBranding } from "@/lib/hooks/useCandidateBranding";
 import { useAuthPageContent } from "@/lib/hooks/useAuthPageContent";
 import type { AuthPagePoint } from "@/lib/services/auth-page-content";
 import { cn } from "@/lib/utils";
+import { BrandLockup } from "@/components/brand-lockup";
 
 // Generic left-pane content used when the backend doesn't provide it.
 // Keep these company-agnostic — no hard-coded brand names.
@@ -115,7 +116,6 @@ export function AuthForm({
   defaultEmail,
 }: AuthFormProps) {
   const { data: branding } = useCandidateBranding();
-  const showCompanyName = Boolean(branding?.logo_includes_company_name);
   const { data: pageContent } = useAuthPageContent();
   const sectionKey = type === "login" ? "login" : "signup";
   const section = pageContent?.[sectionKey];
@@ -200,31 +200,7 @@ export function AuthForm({
           />
         )}
         <div className="z-10 flex items-center gap-2 text-white absolute md:top-6 md:left-6 lg:top-10 lg:left-10 top-12 left-12">
-          <div
-            className={cn(
-              "bg-none flex items-center justify-center overflow-hidden",
-              showCompanyName
-                ? "md:w-12 md:h-12 lg:w-16 lg:h-16 w-16 h-16 rounded-full"
-                : "md:h-12 lg:h-16 h-16 w-auto",
-            )}
-          >
-            <Image
-              src={logoSrc}
-              alt="Logo"
-              width={showCompanyName ? 100 : 320}
-              height={100}
-              className={cn(
-                showCompanyName
-                  ? "object-cover"
-                  : "h-full w-auto max-w-[220px] object-contain",
-              )}
-            />
-          </div>
-          {showCompanyName && (
-            <span className="md:text-[18px] lg:text-[22px] text-[22px] font-[800] tracking-tight">
-              {branding?.title_prefix || ""}
-            </span>
-          )}
+          <BrandLockup branding={branding} logoSrc={logoSrc} tone="light" size="lg" />
         </div>
 
         <div className="relative z-10 flex-1 flex flex-col justify-center md:px-6 lg:px-10 md:mt-4 md:mb-4 mt-12 mb-12">

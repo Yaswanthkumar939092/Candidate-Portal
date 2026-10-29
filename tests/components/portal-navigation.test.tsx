@@ -138,18 +138,24 @@ describe("PortalNavigation", () => {
     expect(screen.getByRole("banner")).toBeTruthy()
   })
 
-  it("displays branding logo and title", () => {
-    const { unmount } = render(<PortalNavigation />)
-    expect(screen.getByAltText("Physics Wallah")).toBeTruthy()
-    expect(screen.queryByText("Physics Wallah")).toBeNull()
-    unmount()
+  it("shows the logo first, then the company name", () => {
+    render(<PortalNavigation />)
+    const lockup = screen.getByTestId("brand-lockup")
+    const name = screen.getByText("Physics Wallah")
+    const logo = lockup.querySelector("img")!
+    expect(logo).toBeTruthy()
+    expect(
+      logo.compareDocumentPosition(name) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+  })
 
+  it("drops the text when the logo already spells out the company name", () => {
     vi.mocked(candidateBrandingHook.useCandidateBranding).mockReturnValue({
       data: { ...mockBranding, logo_includes_company_name: true },
     } as ReturnType<typeof candidateBrandingHook.useCandidateBranding>)
     render(<PortalNavigation />)
     expect(screen.getByAltText("Physics Wallah")).toBeTruthy()
-    expect(screen.getByText("Physics Wallah")).toBeTruthy()
+    expect(screen.queryByText("Physics Wallah")).toBeNull()
   })
 
   it("renders navigation items on desktop", () => {
@@ -428,8 +434,7 @@ describe("PortalNavigation", () => {
   it("disables brand logo redirect on /campus-apply", () => {
     mockPathname = "/campus-apply"
     render(<PortalNavigation />)
-    const logoImg = screen.getByAltText("Physics Wallah")
-    const link = logoImg.closest("a")
+    const link = screen.getByText("Physics Wallah").closest("a")
     expect(link).toBeNull()
   })
 })
