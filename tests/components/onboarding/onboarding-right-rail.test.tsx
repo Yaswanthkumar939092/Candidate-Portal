@@ -321,6 +321,31 @@ describe("OnboardingRightRail", () => {
     windowMock.mockRestore();
   });
 
+  it("shows only the Onboarding Buddy under the buddy heading, not teammates or the manager", () => {
+    vi.mocked(useOnboarding).mockReturnValue({
+      formConfig: {
+        key_contacts: [
+          { name: "Shruchi Jha", role: "Onboarding Buddy", designation: "Assistant HR", email: "shruchi@test.com" },
+          { name: "Gopal Kumar", role: "Teammate", designation: "Legal", email: "gopal@test.com" },
+          { name: "Rahul Agrawal", role: "Manager", designation: "Head", email: "rahul@test.com" },
+        ],
+        tabs: [],
+      },
+      currentStep: 0,
+      stepData: {},
+      triggerSubmit: vi.fn(),
+      isSaving: false,
+    } as any);
+
+    render(<OnboardingRightRail focusedFieldname={null} />);
+
+    expect(screen.getByText("Shruchi Jha")).toBeTruthy();
+    expect(screen.getByText(/Onboarding Buddy$/i)).toBeTruthy();
+    expect(screen.queryByText(/Onboarding Buddies/i)).toBeNull();
+    expect(screen.queryByText("Gopal Kumar")).toBeNull();
+    expect(screen.queryByText("Rahul Agrawal")).toBeNull();
+  });
+
   it("handles bottom action triggers (Save & Continue, Save as Draft & Exit) on form steps", async () => {
     const mockTriggerSubmit = vi.fn().mockResolvedValue(true);
     vi.mocked(useOnboarding).mockReturnValue({

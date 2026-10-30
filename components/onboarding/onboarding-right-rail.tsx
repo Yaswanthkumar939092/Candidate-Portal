@@ -112,12 +112,17 @@ export function OnboardingRightRail({
 
   const buddies = useMemo(() => {
     if (formConfig?.key_contacts && formConfig.key_contacts.length > 0) {
-      return formConfig.key_contacts.map((c) => ({
-        name: c.name || "",
-        designation: c.designation || "",
-        email: c.email || "",
-        phone: c.phone || c.mobile_no || "",
-      }));
+      // key_contacts also carries Teammates and the Manager; only the Onboarding
+      // Buddy belongs under this heading. A contact with no role (older payloads)
+      // is kept so those still render.
+      return formConfig.key_contacts
+        .filter((c) => !c.role || c.role === "Onboarding Buddy")
+        .map((c) => ({
+          name: c.name || "",
+          designation: c.designation || "",
+          email: c.email || "",
+          phone: c.phone || c.mobile_no || "",
+        }));
     }
     return [];
   }, [formConfig?.key_contacts]);
