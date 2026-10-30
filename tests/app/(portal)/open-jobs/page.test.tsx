@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import OpenJobsPage from "@/app/(portal)/open-jobs/page";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { useJobOpening } from "@/lib/hooks/useJobOpening";
@@ -111,5 +111,40 @@ describe("OpenJobsPage - Saved Jobs", () => {
       { email: "candidate@test.com", jobId: "HR-OPN-1" },
       expect.any(Object)
     );
+  });
+});
+
+describe("OpenJobsPage - shared job link", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(useAuth).mockReturnValue({ user: { email: "candidate@test.com" } } as any);
+    vi.mocked(useToggleSavedJob).mockReturnValue({ mutate: vi.fn() } as any);
+    vi.mocked(useJobOpening).mockReturnValue({
+      data: {
+        columns: [],
+        openings: [
+          { name: "HR-OPN-7", job_title: "Shared Role", company: "Test Corp", location: "Pune", description: "<p>JD</p>", status: "Open" },
+        ],
+      },
+    } as any);
+  });
+
+  afterEach(() => window.history.pushState({}, "", "/"));
+
+  it("searches for the shared job and opens its details", async () => {
+    window.history.pushState({}, "", "/open-jobs?job=HR-OPN-7");
+    render(<OpenJobsPage />);
+
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText("Shared Role")).toBeInTheDocument();
+    expect(vi.mocked(useJobOpening)).toHaveBeenCalledWith(expect.objectContaining({ searchTerm: "HR-OPN-7" }));
+  });
+
+  it("opens no dialog and runs no search without ?job=", () => {
+    window.history.pushState({}, "", "/open-jobs");
+    render(<OpenJobsPage />);
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(vi.mocked(useJobOpening)).not.toHaveBeenCalledWith(expect.objectContaining({ searchTerm: "HR-OPN-7" }));
   });
 });

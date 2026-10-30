@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -12,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { useCandidateBranding } from "@/lib/hooks/useCandidateBranding";
 import { useApplicantStatus } from "@/lib/hooks/useApplicantStatus";
 
+import { BrandLockup } from "@/components/brand-lockup";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -178,8 +178,8 @@ export function PortalNavigation({
       )}
     >
       <div className="container mx-auto flex h-full items-center justify-between px-4">
-        {/* Left side: Mobile Menu + PW Logo */}
-        <div className="flex items-center gap-2 md:gap-4">
+        {/* Left side: Mobile Menu + brand lockup */}
+        <div className="flex min-w-0 items-center gap-2 md:gap-4">
           {/* Mobile Hamburger Menu */}
           {!hideNavLinks && (
             <div className="md:hidden">
@@ -245,53 +245,23 @@ export function PortalNavigation({
             </div>
           )}
 
-          {/* Desktop/Mobile PW Logo */}
+          {/* Desktop/Mobile brand lockup (logo, then company name) */}
           {(() => {
             const disableBrandRedirect =
               pathname === "/survey" ||
               pathname.startsWith("/job_offer") ||
               pathname === "/campus-apply" ||
               pathname.startsWith("/campus-apply/");
-            const showCompanyName = Boolean(
-              branding?.logo_includes_company_name,
-            );
-            const content = (
-              <>
-                <Image
-                  src={
-                    branding?.app_logo
-                      ? branding.app_logo.startsWith("http")
-                        ? branding.app_logo
-                        : `${(process.env.NEXT_PUBLIC_FRAPPE_URL || "").replace(/\/$/, "")}${branding.app_logo.startsWith("/") ? branding.app_logo : `/${branding.app_logo}`}`
-                      : "/fallback.png"
-                  }
-                  alt={branding?.title_prefix || "Logo"}
-                  width={showCompanyName ? 32 : 120}
-                  height={32}
-                  priority
-                  className={cn(
-                    "shrink-0",
-                    showCompanyName
-                      ? "size-8 rounded-full object-cover"
-                      : "h-8 w-auto max-w-[140px] object-contain",
-                  )}
-                />
-                {showCompanyName && (
-                  <span className="text-[14px] sm:text-base font-extrabold text-black uppercase hidden sm:block">
-                    {branding?.title_prefix || ""}
-                  </span>
-                )}
-              </>
-            );
+            const content = <BrandLockup branding={branding} />;
 
             return disableBrandRedirect ? (
-              <div className="flex shrink-0 items-center gap-2 cursor-default select-none">
+              <div className="flex min-w-0 items-center gap-2 cursor-default select-none">
                 {content}
               </div>
             ) : (
               <Link
                 href="/dashboard"
-                className="flex shrink-0 items-center gap-2"
+                className="flex min-w-0 items-center gap-2"
                 onClick={() => {
                   queryClient.invalidateQueries({
                     queryKey: ["dashboard", { email: userEmail }],

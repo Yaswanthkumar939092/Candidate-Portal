@@ -15,7 +15,13 @@ export function middleware(request: NextRequest) {
     // must remain a path on the configured upstream.
     target.pathname = request.nextUrl.pathname.slice("/backend".length) || "/";
     target.search = request.nextUrl.search;
-    return NextResponse.rewrite(target);
+
+    // Frappe resolves the site from the Host header; without these it sees
+    // the frontend's hostname and replies "<host> does not exist" (404).
+    const headers = new Headers(request.headers);
+    headers.set("host", target.host);
+    headers.set("x-frappe-site-name", target.hostname);
+    return NextResponse.rewrite(target, { request: { headers } });
   } catch {
     return NextResponse.json({ error: "Backend unavailable" }, { status: 503 });
   }

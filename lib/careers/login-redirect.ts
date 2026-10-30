@@ -12,3 +12,17 @@ export const PORTAL_EQUIVALENT: Record<string, string> = {
   "/ai-match": RESUME_CONTINUE_PATH,
   "/jobs": "/open-jobs",
 };
+
+/** Query parameter of a shared job link (`/jobs?job=<Job Opening id>`). */
+export const SHARED_JOB_PARAM = "job";
+
+/**
+ * Where a logged-in visitor on public careers page `pathname` is sent. A shared job
+ * link (`/jobs?job=HR-OPN-1`) keeps its job, so the portal opens that job's details
+ * instead of the general list.
+ */
+export function portalEquivalent(pathname: string, search: string): string {
+  const target = PORTAL_EQUIVALENT[pathname] ?? "/dashboard";
+  const job = pathname === "/jobs" ? new URLSearchParams(search).get(SHARED_JOB_PARAM) : null;
+  return job ? `${target}?${SHARED_JOB_PARAM}=${encodeURIComponent(job)}` : target;
+}
