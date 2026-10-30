@@ -82,6 +82,8 @@ export interface OnboardingJourney {
 
 export interface OnboardingKeyContact {
   name?: string;
+  /** "Onboarding Buddy" | "Teammate" | "Manager" — set by the backend key-contacts payload. */
+  role?: string;
   designation?: string;
   email?: string;
   mobile_no?: string;
