@@ -68,6 +68,7 @@ describe("login page after a successful password sign-in", () => {
     h.redirectParam.value = "/ignored-too"
     await signInWith(base)
     await waitFor(() => expect(h.push).toHaveBeenCalledWith("/survey"))
+    expect(h.push).toHaveBeenCalledTimes(1)
     expect(h.refreshProfile).toHaveBeenCalledTimes(1)
     expect(window.sessionStorage.getItem("showLoginToast")).toBe("true")
   })

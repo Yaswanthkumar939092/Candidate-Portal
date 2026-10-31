@@ -12,7 +12,7 @@
 
 This clause describes how a candidate signs up, signs in, verifies a one-time code, sets or resets a password and signs out, as the front end does it: the sign-in client `lib/auth.ts`, the auth-settings hook, and the three pages `/login`, `/register` and `/verify-email`. Issue: PWHR-1364 (parent PWHR-1362).
 
-The client talks to one backend module, `recruitment.api.candidate_auth` (`lib/auth.ts:4`), through its own request function `frappeMethod` (`lib/auth.ts:115-140`). Which login steps are offered is read from the backend method `get_auth_settings` (`lib/auth.ts:277-279`, `lib/hooks/useAuthSettings.ts:4-9`). The session itself is a cookie that the backend sets and the browser returns; the client keeps no token (`lib/auth.ts:125-130`).
+The client talks to one backend module, `recruitment.api.candidate_auth` (`lib/auth.ts:4`), through its own request function `frappeMethod` (`lib/auth.ts:115-140`). Which login steps are offered is read from the backend method `get_auth_settings` (`lib/auth.ts:277-279`, `lib/hooks/useAuthSettings.ts:4-9`). Every call is sent with `credentials: "include"` and the client keeps no token of its own (`lib/auth.ts:125-130`). `[INFERENCE]`: that the session is a cookie the backend sets and the browser returns is read from that `credentials` option and from the absence of any token store in the client; no response header was observed (G12).
 
 Page flows, as coded:
 
@@ -82,7 +82,7 @@ Backend behaviour behind these methods (password rules, OTP expiry, attempt limi
 
 ### A6: Verify-email page
 
-- A6.1: The page shows "Access unavailable" unless `enable_email_signup` is exactly 1 (`app/(auth)/verify-email/page.tsx:155,172-177`). [CAND-03-A6.1A]
+- A6.1: While the settings query reports `isLoading` the page shows a spinner with the text "Loading settings..."; once it has loaded, the page shows "Access unavailable" unless the settings exist and `enable_email_signup` is exactly 1 (`app/(auth)/verify-email/page.tsx:148-152,155,172-177`). [CAND-03-A6.1A]
 - A6.2: With `purpose=Password Reset` in the query it calls `resetPassword`; otherwise `requestEmailSignupOtp` with mode `verify_email`; the e-mail field starts from the `email` query value (`app/(auth)/verify-email/page.tsx:30-32,49-61,170`). [CAND-03-A6.2A] [CAND-03-A6.2B]
 - A6.3: `verifyOtp` is called with the returned `otp_log` and the returned `purpose`, else `Password Reset` or `Signup`; on success the set-password step shows (`app/(auth)/verify-email/page.tsx:81-95`). [CAND-03-A6.2A] [CAND-03-A6.2B]
 - A6.4: Setting the password calls `setPassword`, then `signOut`, shows "Password resetted successfully please login!" and pushes `/login`, with `?redirect=<encoded>` when a redirect exists (`app/(auth)/verify-email/page.tsx:105-124`). [CAND-03-A6.2A]
@@ -90,7 +90,7 @@ Backend behaviour behind these methods (password rules, OTP expiry, attempt limi
 ## 4. Data and permissions
 
 - The client sends the e-mail, password, one-time code and the code log id to the backend and receives a mapped user; no password or code is stored by the client (`lib/auth.ts:202-243`).
-- The user object fields the client reads are `name`, `email`, `first_name`, `last_name`, `full_name`, `user_image`, `mobile_no`, `last_login_at`, `password_setup_required` and `roles` (type only) (`lib/auth.ts:58-79`). The client does not read `roles`; the stage and role are constants (A2.5).
+- The user object fields the client reads are `name`, `email`, `first_name`, `last_name`, `full_name`, `user_image`, `avatar_url`, `mobile_no` and `last_login_at` (`lib/auth.ts:155-171,174-199`). `roles`, `password_setup_required`, `enabled`, `status` and `user_type` are declared on the `FrappeAuthUser` interface and have no reader in `app/`, `lib/` or `components/` (`lib/auth.ts:58-79`); the stage and role are constants (A2.5).
 - Who may sign in, password strength, code expiry and attempt limits are enforced by the backend and are not in this repo.
 - `sessionStorage.showLoginToast` is the only value the pages write to storage (`app/(auth)/login/page.tsx:57,69,248`).
 - Statutory source: not applicable. (Data-protection consent for candidates is handled in the offer flow, not here.)
@@ -119,7 +119,7 @@ None. The pages run effects only: toast on settings error (`app/(auth)/login/pag
 - Security: a malformed percent escape in a campus `redirect` throws during render on login and register (`app/(auth)/login/page.tsx:46`, `app/(auth)/register/page.tsx:45`). Issue: PWHR-1520.
 - Security: password and code are sent in a JSON POST body, not in the URL (`lib/auth.ts:128-129`).
 - Security: the OTP log id is kept in component state and sent back with the code (`app/(auth)/login/page.tsx:39,147`).
-- Security: password and code inputs live in component state; none is written to storage (`app/(auth)/register/page.tsx:36-40`).
+- Security: password and code inputs live in component state; none is written to storage (`components/auth-form.tsx:151-158`, `app/(auth)/register/page.tsx:39`). The register page itself holds only the code (`otp`) and the pending e-mail (`app/(auth)/register/page.tsx:38-39`).
 - Security: because `signIn` returns no session unless the status is exactly `success`, but the login page does not read that session, the page's own decision to continue rests on `signIn` not throwing (`lib/auth.ts:218-219`, `app/(auth)/login/page.tsx:100-120`).
 - Security: Google and LinkedIn client IDs are passed to the image build with no reader in source (SPEC-CAND-02 section 6); OAuth is hard-disabled in code (`lib/auth.ts:281-292`).
 - Performance: each page waits for `get_auth_settings` before it renders a form; the result is cached for one hour (`lib/hooks/useAuthSettings.ts:8`).
@@ -138,19 +138,21 @@ None. The pages run effects only: toast on settings error (`app/(auth)/login/pag
 - G9: The text test for "Please verify your email OTP before signing in." depends on a backend string (`app/(auth)/login/page.tsx:124`); a changed backend message would stop the redirect to `/verify-email`. Not filed: backend contract.
 - G10: Branch drift: `deploy/hybrowbase-candidate-20261025` changes login and register (header). Issue: PWHR-1518.
 - G11: Every case stubs `fetch`, the router, `auth` or the services; none talks to a real Frappe site. Hosted CI is UNVERIFIED.
+- G12: `[INFERENCE]` in section 1: the cookie session is read from `credentials: "include"` (`lib/auth.ts:127`) and from the client holding no token; the `Set-Cookie` header itself was not read, and the backend is out of scope. Not filed: backend contract.
 - Statutory source: not applicable.
 
 ## 10. Uncovered behaviour
 
 - A4.8, the passwordless branch of login: its only test is skipped. Not filed: no test written in this pass.
 - A4.4 and the `survey_required` branch with a redirect value: A4.3 cases cover them; the toast-flag write on the success path is asserted only for `true`. Not filed.
-- A4.2, the OTP verify step on the login page after the code is typed: existing tests in `tests/app/(auth)/login/page.test.tsx` (about 30 tests, not mapped) assert it; they are not linked to a case in this pass. Not filed: no defect.
+- A4.2, the OTP verify step on the login page after the code is typed: existing tests in `tests/app/(auth)/login/page.test.tsx` (27 `it(` calls, none mapped) assert it; they are not linked to a case in this pass. Not filed: no defect.
 - A5.5 and A5.2 error alerts: existing register tests assert them; not mapped except A5.2 and A5.3. Not filed.
 - A6.4 in the password-reset path with a redirect value: the mapped signup test covers `/login`; the reset path is covered by an unmapped existing test. Not filed.
+- A6.1, the `isSettingsLoading` spinner branch of the verify-email page (`app/(auth)/verify-email/page.tsx:148-152`): every case stubs the settings hook with `isLoading: false`, so the spinner is never rendered in a case. Not filed: the login page's own loading notice is covered by CAND-03-A4.3A.
 - A1.2, an `exc` field in an OK reply: covered by CAND-03-A1.1B; a reply with both `message` and `exc` is not tried. Not filed.
 - `components/auth-form.tsx` (777 lines): `tests/components/auth-form.test.tsx` exists and is not mapped. Not filed: out of scope; PWHR-1366 or the review issue PWHR-1368 can map it.
 - `components/oauth-buttons.tsx`: `tests/components/oauth-buttons.test.tsx` exists; the buttons are unreachable while OAuth is off. Not filed.
-- The 28 login tests and 24 register tests that exist but are not mapped were not read line by line. Not filed: PWHR-1368 can sample them.
+- The login and register tests that exist but are not mapped were not read line by line. Counted by script over the working tree (equal to `Described at`): `tests/app/(auth)/login/page.test.tsx` has 27 `it(` calls, of which 26 run and 1 sits inside the file's single `describe.skip` block (`:482-555`), which is not coverage (conventions section 8.2); `tests/app/(auth)/register/page.test.tsx` has 26 `it(` calls, all running, with no `skip`, `only` or `todo`. Not filed: PWHR-1368 can sample them.
 
 ## 11. Acceptance cases
 
@@ -408,10 +410,10 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 - Precondition: Settings turn e-mail OTP off; `getPostLoginRoute` says a survey is required; a `redirect` value exists.
 - Action: Type the credentials and submit.
-- Expected result: `refreshProfile` ran once, the toast flag is `true` and the page pushed `/survey` only `app/(auth)/login/page.tsx:52-60`
+- Expected result: `refreshProfile` ran once, the toast flag is `true` and the page pushed `/survey` once and nothing else, ahead of both the `redirect` value and the server's `redirect_url` `app/(auth)/login/page.tsx:52-60`
 - Test: characterization: `tests/spec/cand-03-auth-pages.test.tsx::refreshes the profile, asks the server for the post-login route and goes to /survey when a survey is required`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
-- Known gaps: `fetch`, the router, the auth module or the settings hook are mocked; no real HTTP or Frappe backend. The survey service and router are mocked.
+- Known gaps: `fetch`, the router, the auth module or the settings hook are mocked; no real HTTP or Frappe backend. The survey service and router are mocked; the `/survey` page itself is not rendered.
 - Evidence: UNVERIFIED
 
 <a id="cand-03-a4-1b"></a>
@@ -575,7 +577,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 - Expected result: Access unavailable shows both times `app/(auth)/verify-email/page.tsx:155,172-177`
 - Test: characterization: `tests/spec/cand-03-verify-email.test.tsx::shows an Access unavailable notice unless enable_email_signup is exactly 1`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
-- Known gaps: `fetch`, the router, the auth module or the settings hook are mocked; no real HTTP or Frappe backend.
+- Known gaps: `fetch`, the router, the auth module or the settings hook are mocked; no real HTTP or Frappe backend. The settings hook is stubbed with `isLoading: false`, so the earlier `isSettingsLoading` branch that shows the "Loading settings..." spinner instead of either page body (`app/(auth)/verify-email/page.tsx:148-152`) is not asserted by any case (section 10).
 - Evidence: UNVERIFIED
 
 <a id="cand-03-a6-2a"></a>

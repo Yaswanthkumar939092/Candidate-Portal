@@ -14,7 +14,7 @@ This clause describes the React components that draw the onboarding wizard: the 
 
 The components are driven entirely by one object, the onboarding form configuration held in the onboarding context: a list of tabs, each with sections, each with fields that carry a `fieldtype`, `depends_on`, `mandatory_depends_on`, `approval_status`, `hr_comment` and child fields (`components/onboarding/onboarding-form-step.tsx:655-800`, `components/onboarding/onboarding-step-nav.tsx:31,45-124`). None of them fetches anything itself; every read and write goes through the context hook `useOnboarding` and, for uploads, through `useFileUpload` (`components/onboarding/onboarding-form-step.tsx:143-157`, `components/onboarding/file-upload-field.tsx:65`). The context, the validation rules, the hooks and the page that mounts them are SPEC-CAND-05.
 
-Two more components are in scope because the portal pages render them: the three-step portal sidebar used by the survey and offer pages (`components/portal/portal-stepper-sidebar.tsx:30-37`) and the shared SVG progress ring (`components/shared/circular-progress.tsx:23-28`). `components/onboarding-wizard.tsx` is a 21-line placeholder with no caller in `app/`, `lib/` or `components/` (A10.2).
+Two more components are in scope because the portal pages render them: the three-step portal sidebar used by the survey and offer pages (`components/portal/portal-stepper-sidebar.tsx:31-38`) and the shared SVG progress ring (`components/shared/circular-progress.tsx:23-28`). `components/onboarding-wizard.tsx` is a 21-line placeholder with no caller in `app/`, `lib/` or `components/` (A10.2).
 
 ## 2. Boundaries
 
@@ -74,7 +74,7 @@ Two more components are in scope because the portal pages render them: the three
 - A4.5: A mandatory table contributes one checklist entry per mandatory child field of each row, with the row number in the label when there is more than one row; when it is mandatory and no child field is mandatory, the table itself is one entry (`components/onboarding/onboarding-right-rail.tsx:182-225`). [CAND-06-A4.2C]
 - A4.6: Save & Continue is rendered only outside the review step, is disabled while any required field is missing or while saving, and reads `Fill N more to continue` in that state; it calls the context handler with `save_continue` (`components/onboarding/onboarding-right-rail.tsx:663-697`). [CAND-06-A4.2B] [CAND-06-A4.4A] [CAND-06-A4.4C]
 - A4.7: Save as Draft & Exit calls the context handler with `save_draft` on a form step; on the review step it awaits `submitAll("save")` and then navigates the window to `/dashboard` (`components/onboarding/onboarding-right-rail.tsx:700-713`). [CAND-06-A4.4A] [CAND-06-A4.4B]
-- A4.8: A tip card appears only for a focused field name that is one of the 15 keys of the built-in `FIELD_TIPS` table; the texts are fixed in the component (`components/onboarding/onboarding-right-rail.tsx:28-86,280-283,459-471`). [CAND-06-A4.3A]
+- A4.8: A tip card appears only for a focused field name that is one of the 14 keys of the built-in `FIELD_TIPS` table; the texts are fixed in the component (`components/onboarding/onboarding-right-rail.tsx:28-86,280-283,459-471`). [CAND-06-A4.3A]
 - A4.9: Only a contact with no `role`, or the role `Onboarding Buddy`, is listed under the buddy heading; the heading is plural above one buddy and the empty state reads `No onboarding buddy assigned yet.` (`components/onboarding/onboarding-right-rail.tsx:113-129,595,652-656`). [CAND-06-A4.5A] [CAND-06-A4.5B]
 - A4.10: The initials are the first letters of the first two words, else the first two characters of the single word, else `OB` for an empty name (`components/onboarding/onboarding-right-rail.tsx:88-95`). [CAND-06-A4.5C]
 - A4.11: The journey card shows the configured title and subtitle, else `After you're onboarded` and a sentence built from the company name, and cycles five icons over the steps (`components/onboarding/onboarding-right-rail.tsx:528-585`). [CAND-06-A4.6A]
@@ -120,12 +120,12 @@ Two more components are in scope because the portal pages render them: the three
 
 ### A9: Portal stepper sidebar
 
-- A9.1: With survey steps present, each step's icon is chosen from the key (`offer`, `onboarding`, else the clipboard), it is ongoing when it is the page's own step, when its status is `ongoing` or when its key is the survey's `current_step`, completed when its status is `completed` and not ongoing, and pending otherwise (`components/portal/portal-stepper-sidebar.tsx:38-80`). [CAND-06-A9.1A] [CAND-06-A9.1B]
-- A9.2: Without survey steps a fixed three-step list is used, whose statuses follow the page the sidebar is on (`components/portal/portal-stepper-sidebar.tsx:81-107`). [CAND-06-A9.3A] [CAND-06-A9.3B]
-- A9.3: A step with a `redirect_url` is a link only while `isViewOnly` is false; the prop defaults to true, so the sidebar is inert unless the caller says otherwise (`components/portal/portal-stepper-sidebar.tsx:33,189-203`). [CAND-06-A9.1A]
-- A9.4: When the caller passes expanded items, they are listed under the page's own step, the step header becomes a toggle for them, and selecting one reports its index (`components/portal/portal-stepper-sidebar.tsx:134-136,170-177,186-192,206-230`). [CAND-06-A9.2A] [CAND-06-A9.2B]
-- A9.5: The bottom card names the survey's `next_step` label, falling back to the raw key when nothing matches and to a fixed word per page without survey data (`components/portal/portal-stepper-sidebar.tsx:110-122,243-252`). [CAND-06-A9.1C] [CAND-06-A9.3A] [CAND-06-A9.3B]
-- A9.6: The caller's extra classes are added to the outer container (`components/portal/portal-stepper-sidebar.tsx:124-130`). [CAND-06-A9.3C]
+- A9.1: With survey steps present, each step's icon is chosen from the key (`offer`, `onboarding`, else the clipboard), it is ongoing when it is the page's own step, when its status is `ongoing` or when its key is the survey's `current_step`, completed when its status is `completed` and not ongoing, and pending otherwise (`components/portal/portal-stepper-sidebar.tsx:46-85`). [CAND-06-A9.1A] [CAND-06-A9.1B]
+- A9.2: Without survey steps a fixed three-step list is used, whose statuses follow the page the sidebar is on (`components/portal/portal-stepper-sidebar.tsx:86-113`). [CAND-06-A9.3A] [CAND-06-A9.3B]
+- A9.3: A step with a `redirect_url` is a link only while `isViewOnly` is false; the prop defaults to true, so the sidebar is inert unless the caller says otherwise (`components/portal/portal-stepper-sidebar.tsx:34,212-223`). [CAND-06-A9.1A]
+- A9.4: When the caller passes expanded items, they are listed under the page's own step, the step header becomes a toggle for them, and selecting one reports its index (`components/portal/portal-stepper-sidebar.tsx:143-148,183-189,205-211,225-248`). [CAND-06-A9.2A] [CAND-06-A9.2B]
+- A9.5: The bottom card names the survey's `next_step` label, falling back to the raw key when nothing matches and to a fixed word per page without survey data (`components/portal/portal-stepper-sidebar.tsx:115-127,261-269`). [CAND-06-A9.1C] [CAND-06-A9.3A] [CAND-06-A9.3B]
+- A9.6: The caller's extra classes are added to the outer container (`components/portal/portal-stepper-sidebar.tsx:131-134`). [CAND-06-A9.3C]
 
 ### A10: Onboarding wizard placeholder
 
@@ -155,7 +155,7 @@ Two more components are in scope because the portal pages render them: the three
 ## 6. Configuration
 
 - No environment variable is read in these files. `FileUploadField` reads the backend base through `frappeApiBase()`, which is built from `NEXT_PUBLIC_FRAPPE_URL` and `FRAPPE_BASE_URL` in the browser-proxy form described in SPEC-CAND-02 (`components/onboarding/file-upload-field.tsx:9,76`).
-- The constants that steer behaviour are written in the components: the 5 MB upload limit and the accept list (`components/onboarding/file-upload-field.tsx:49-50,96`), the 150 ms auto-save delay (`components/onboarding/onboarding-form-step.tsx:464`), the 300 ms delay before focusing a jumped-to field and the 900 ms highlight (`components/onboarding/onboarding-right-rail.tsx:260-275`), the 50 ms animation delay of the ring (`components/shared/circular-progress.tsx:43`), the four education levels (`components/onboarding/dynamic-table-field.tsx:17`), the three field names with fixed rules (`components/onboarding/onboarding-form-step.tsx:33-35`), and the 15 tip texts (`components/onboarding/onboarding-right-rail.tsx:28-86`).
+- The constants that steer behaviour are written in the components: the 5 MB upload limit and the accept list (`components/onboarding/file-upload-field.tsx:49-50,96`), the 150 ms auto-save delay (`components/onboarding/onboarding-form-step.tsx:464`), the 300 ms delay before focusing a jumped-to field and the 900 ms highlight (`components/onboarding/onboarding-right-rail.tsx:260-275`), the 50 ms animation delay of the ring (`components/shared/circular-progress.tsx:43`), the four education levels (`components/onboarding/dynamic-table-field.tsx:17`), the three field names with fixed rules (`components/onboarding/onboarding-form-step.tsx:33-35`), and the 14 tip texts (`components/onboarding/onboarding-right-rail.tsx:28-86`).
 - Everything else comes from the backend's form configuration object at run time (section 1).
 
 ## 7. Scheduled jobs, hooks and patches
@@ -187,9 +187,10 @@ None. These are client components; they run React effects only. The effects are:
 - G5: `OnboardingFormStep` and `ReviewStep` each hold their own copy of the rejected-field comparison, and `OnboardingStepNav`, `OnboardingRightRail` and `OnboardingFormStep` each hold their own copy of the per-field count rules, which already differ: the step nav keeps approved fields in a separate tally and the form step folds them into `filled` (`components/onboarding/onboarding-form-step.tsx:484-500,692-710`, `components/onboarding/steps/review-step.tsx:73-86`, `components/onboarding/onboarding-step-nav.tsx:45-124`). Not filed: duplication, no behaviour difference proved by a case.
 - G6: The right rail's countdown shows `0` and `Start date passed` for a date string that cannot be parsed, which is the same output as a date in the past (section 5) (`components/onboarding/onboarding-right-rail.tsx:164-173`). Not filed: the existing test pins it.
 - G7: Branch drift: on `deploy/hybrowbase-candidate-20261025` the right rail lists every key contact as a buddy and leaves out the mandatory-table fallback entry, and the review step prints monetary values with `String(...)` (header). The cases of A4.9 and A8.6 describe `develop` only. Issue: PWHR-1567.
-- G8: Six test titles are used twice in `tests/components/onboarding/file-upload-field.test.tsx` because a `describe` block is nested inside a block of the same name with the same six tests, so the file runs 24 `it(` calls of which 12 are a verbatim copy of the other 12 (`tests/components/onboarding/file-upload-field.test.tsx:192-333`). A duplicate title cannot be named by a case selector. Issue: PWHR-1568.
+- G8: Six test titles are used twice in `tests/components/onboarding/file-upload-field.test.tsx` because a `describe` block is nested inside a block of the same name and repeats its six tests verbatim, so the file runs 24 `it(` calls of which 12 carry one of the six duplicated titles: the six at `tests/components/onboarding/file-upload-field.test.tsx:193-260` and their copies at `:262-331`, inside the outer block `:192-332`. A duplicate title cannot be named by a case selector. Issue: PWHR-1568.
 - G9: Every case in this clause mocks the onboarding context, the survey hook, the upload hook, the field renderer or the router; none exercises a real backend. Hosted CI is UNVERIFIED.
 - G10: `tests/components/onboarding/onboarding-right-rail.test.tsx:120-124` builds its joining date with `toISOString`, which is UTC, while the countdown in `components/onboarding/onboarding-right-rail.tsx:164-173` subtracts two local midnights. On a machine whose local date has already rolled past the UTC date the two disagree by one day and the test fails; it was observed failing under `Asia/Calcutta` and passing under `TZ=UTC` on 2026-10-31, at the Described-at commit and before this change touched that file. Should the component read the joining date as a local date or as UTC? Issue: PWHR-1569.
+- G10.1: Two further tests in the same file fail west of UTC, for a second, separate reason. `formatDisplayDate` calls `new Date(d)` on a bare `YYYY-MM-DD` string, which JavaScript parses as UTC midnight, and then renders it with `toLocaleDateString("en-IN", ...)`, which uses the machine's local zone (`components/onboarding/onboarding-right-rail.tsx:145-157`); in a zone behind UTC that prints the previous day, so the Date of Joining and Trainee DOJ lines of the ID card show the day before the date the backend sent (`components/onboarding/onboarding-right-rail.tsx:336-355`). Run on 2026-11-01 with Node v24.22.2 at this branch: `TZ=America/Los_Angeles npx vitest run tests/components/onboarding/onboarding-right-rail.test.tsx` gives 3 failed, 9 passed - `renders company name and joining details when provided in formConfig` (asserts `30 Jun 2026`, the card shows `29 Jun 2026`), `renders Trainee DOJ when trainee_doj is provided in joining info` (asserts `15 Jul 2026`, the card shows `14 Jul 2026`), and the countdown test of G10, which reproduces under Los Angeles as well as under Kolkata. `TZ=Asia/Kolkata` gives 1 failed, 11 passed (the countdown test only); `TZ=UTC` gives 12 passed. One Los Angeles run over 34 files, a superset of the 32 files this clause and SPEC-CAND-05 map, gave 3 failed, 330 passed, 1 skipped: those three and no other timezone-dependent failure. Is the joining date meant to be read as a local date or as a UTC instant? Issue: PWHR-1569 carries the countdown and these two lines together.
 - Statutory source: not applicable (section 4).
 
 ## 10. Uncovered behaviour
@@ -607,7 +608,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 - Precondition: A tab with one mandatory `Attach Image` field.
 - Action: Trigger the mock upload, then submit the form.
-- Expected result: `submitAll` is called with `save`, the step key and values holding the returned URL for that field `components/onboarding/onboarding-form-step.tsx:559-564`
+- Expected result: `submitAll` is called with `save`, the step key and values holding the returned URL for that field `components/onboarding/onboarding-form-step.tsx:504,559-564`
 - Test: mapped: `tests/components/onboarding/onboarding-form-step.test.tsx::handles file upload and attach change for Attach Image field type`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
 - Known gaps: the backend, `fetch`, the router and the onboarding context hooks are mocked or absent; no real HTTP or Frappe backend. The real upload hook is not exercised; a removal, which writes an empty string, is not tried.
@@ -618,7 +619,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 - Precondition: A tab with one table whose child field is an attachment.
 - Action: Trigger the mocked table's attach callback, then submit.
-- Expected result: `submitAll` is called with values holding the URL under the child field name `components/onboarding/onboarding-form-step.tsx:559-564`
+- Expected result: `submitAll` is called with values holding the URL under the child field name `components/onboarding/onboarding-form-step.tsx:504,559-564`
 - Test: mapped: `tests/components/onboarding/onboarding-form-step.test.tsx::handles file upload callback via handleFileUpload on table field`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
 - Known gaps: the backend, `fetch`, the router and the onboarding context hooks are mocked or absent; no real HTTP or Frappe backend. The mocked table calls the callback with a bare field name, so the real row-indexed path is not exercised.
@@ -640,7 +641,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 - Precondition: The context reports a save in progress.
 - Action: Render the step.
-- Expected result: Previous is disabled and the submit button reads `Saving...` and is disabled `components/onboarding/onboarding-form-step.tsx:805-815`
+- Expected result: Previous is disabled and the submit button reads `Saving...` and is disabled `components/onboarding/onboarding-form-step.tsx:807-817`
 - Test: mapped: `tests/components/onboarding/onboarding-form-step.test.tsx::disables buttons when isSaving is true`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
 - Known gaps: the backend, `fetch`, the router and the onboarding context hooks are mocked or absent; no real HTTP or Frappe backend. That the whole container is `hidden` and `aria-hidden` is not asserted (section 10).
@@ -718,7 +719,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 - Precondition: The default context with two tabs.
 - Action: Render the navigation.
-- Expected result: The words `Onboarding` and `Complete your profile to get started.` are on screen `components/onboarding/onboarding-step-nav.tsx:171-181`
+- Expected result: The words `Onboarding` and `Complete your profile to get started.` are on screen `components/onboarding/onboarding-step-nav.tsx:178-183`
 - Test: mapped: `tests/components/onboarding/onboarding-step-nav.test.tsx::renders onboarding header and progress bar`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
 - Known gaps: the backend, `fetch`, the router and the onboarding context hooks are mocked or absent; no real HTTP or Frappe backend. Despite its name it does not assert anything about the bar.
@@ -919,7 +920,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 - Expected result: The company name, the words Role, Department and Date of Joining, the role, the department and the date formatted as day, short month and year are on screen `components/onboarding/onboarding-right-rail.tsx:301,312-345`
 - Test: mapped: `tests/components/onboarding/onboarding-right-rail.test.tsx::renders company name and joining details when provided in formConfig`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
-- Known gaps: the backend, `fetch`, the router and the onboarding context hooks are mocked or absent; no real HTTP or Frappe backend. The date format depends on the `en-IN` locale data of the running Node build.
+- Known gaps: the backend, `fetch`, the router and the onboarding context hooks are mocked or absent; no real HTTP or Frappe backend. The date format depends on the `en-IN` locale data of the running Node build, and the day itself depends on the machine's timezone: the fixture `2026-06-30` is parsed as UTC midnight and printed in the local zone, so this test asserts `30 Jun 2026` and fails with `29 Jun 2026` under `TZ=America/Los_Angeles` (observed 2026-11-01, Node v24.22.2), while passing under `TZ=UTC` and `TZ=Asia/Kolkata` (G10.1, PWHR-1569).
 - Evidence: UNVERIFIED
 
 <a id="cand-06-a4-1c"></a>
@@ -941,7 +942,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 - Expected result: The words Trainee DOJ and the formatted date are on screen `components/onboarding/onboarding-right-rail.tsx:346-354`
 - Test: mapped: `tests/components/onboarding/onboarding-right-rail.test.tsx::renders Trainee DOJ when trainee_doj is provided in joining info`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
-- Known gaps: the backend, `fetch`, the router and the onboarding context hooks are mocked or absent; no real HTTP or Frappe backend. That the Date of Joining line is absent is not asserted.
+- Known gaps: the backend, `fetch`, the router and the onboarding context hooks are mocked or absent; no real HTTP or Frappe backend. That the Date of Joining line is absent is not asserted. The printed day depends on the machine's timezone for the same reason as CAND-06-A4.1B: the fixture `2026-07-15` is parsed as UTC midnight, so this test asserts `15 Jul 2026` and fails with `14 Jul 2026` under `TZ=America/Los_Angeles` (observed 2026-11-01, Node v24.22.2), while passing under `TZ=UTC` and `TZ=Asia/Kolkata` (G10.1, PWHR-1569).
 - Evidence: UNVERIFIED
 
 <a id="cand-06-a4-1e"></a>
@@ -952,7 +953,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 - Expected result: The card shows 15, then 5, then the words `Start date passed`, then a dash `components/onboarding/onboarding-right-rail.tsx:160-173,362-390`
 - Test: mapped: `tests/components/onboarding/onboarding-right-rail.test.tsx::calculates days to joining from days_to_joining field or custom date, including invalid date fallback`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
-- Known gaps: the backend, `fetch`, the router and the onboarding context hooks are mocked or absent; no real HTTP or Frappe backend. The unparsable case produces the same words as a date in the past, so the two are not told apart (G6); the zero-day welcome wording is not tried. This test builds its target date with `toISOString`, which is UTC, while the component subtracts local midnights, so it fails whenever the machine's local date is already ahead of the UTC date (G10, PWHR-1569).
+- Known gaps: the backend, `fetch`, the router and the onboarding context hooks are mocked or absent; no real HTTP or Frappe backend. The unparsable case produces the same words as a date in the past, so the two are not told apart (G6); the zero-day welcome wording is not tried. The five-day step is timezone-dependent and fails on both sides of UTC: the test builds its target with `toISOString`, which is UTC, while the component takes local midnight as today and re-parses the string as UTC midnight. East of UTC the local date is already a day ahead of the UTC string, west of UTC the parsed target falls back a day; either way the count is 4 and the assertion of `5` fails. Observed on 2026-11-01 with Node v24.22.2: failing under `TZ=Asia/Kolkata` and `TZ=America/Los_Angeles`, passing under `TZ=UTC` and `TZ=Europe/Berlin` (G10, G10.1, PWHR-1569).
 - Evidence: UNVERIFIED
 
 <a id="cand-06-a4-2a"></a>
@@ -996,7 +997,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 - Expected result: The known name shows its fixed tip title; the unknown name shows no tip `components/onboarding/onboarding-right-rail.tsx:280-283,459-471`
 - Test: characterization: `tests/spec/cand-06-step-nav-and-rail.test.tsx::shows the built-in tip text for a focused field name that has one and nothing for one that does not`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
-- Known gaps: the backend, `fetch`, the router and the onboarding context hooks are mocked or absent; no real HTTP or Frappe backend. One of the 15 keys is driven; the other 14 texts are unpinned.
+- Known gaps: the backend, `fetch`, the router and the onboarding context hooks are mocked or absent; no real HTTP or Frappe backend. One of the 14 keys is driven; the other 13 texts are unpinned.
 - Evidence: UNVERIFIED
 
 <a id="cand-06-a4-4a"></a>
@@ -1196,7 +1197,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 - Precondition: The field holds a synthetic absolute URL; `window.open` is replaced.
 - Action: Click the stored file row.
-- Expected result: `window.open` is called with that URL unchanged `components/onboarding/file-upload-field.tsx:74-77`
+- Expected result: `window.open` is called with that URL unchanged `components/onboarding/file-upload-field.tsx:74-77,87`
 - Test: characterization: `tests/spec/cand-06-file-upload.test.tsx::keeps an absolute stored URL as it is instead of prefixing it`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
 - Known gaps: the upload hook is mocked, so no request leaves the test; the backend is stubbed. Pins that no same-origin check is made; see G4 and PWHR-1566.
@@ -1538,7 +1539,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 - Expected result: The SVG holds exactly two circle elements `components/shared/circular-progress.tsx:56-76`
 - Test: mapped: `tests/components/shared/circular-progress.test.tsx::renders two circle elements (track + progress arc)`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
-- Known gaps: no backend, router or context is involved; the component is rendered alone in jsdom. The dash offset that encodes the progress is not asserted.
+- Known gaps: no module is mocked in this case and none is needed: no backend, router or context is involved and the component is rendered alone in jsdom, so the G9 mock gap does not apply to it. The dash offset that encodes the progress is not asserted.
 - Evidence: UNVERIFIED
 
 <a id="cand-06-a7-1b"></a>
@@ -1549,7 +1550,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 - Expected result: The label reads 75 per cent at once, although the arc still stands at zero `components/shared/circular-progress.tsx:29,39-45,79`
 - Test: mapped: `tests/components/shared/circular-progress.test.tsx::displays percentage text immediately`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
-- Known gaps: no backend, router or context is involved; the component is rendered alone in jsdom. The arc's value after the 50 ms timer is not asserted.
+- Known gaps: no module is mocked in this case and none is needed: no backend, router or context is involved and the component is rendered alone in jsdom, so the G9 mock gap does not apply to it. The arc's value after the 50 ms timer is not asserted.
 - Evidence: UNVERIFIED
 
 <a id="cand-06-a7-1c"></a>
@@ -1560,7 +1561,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 - Expected result: The label reads 100 per cent `components/shared/circular-progress.tsx:32,79`
 - Test: mapped: `tests/components/shared/circular-progress.test.tsx::clamps values above 100 to 100`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
-- Known gaps: no backend, router or context is involved; the component is rendered alone in jsdom. The lower clamp is covered by an unmapped sibling test (section 10).
+- Known gaps: no module is mocked in this case and none is needed: no backend, router or context is involved and the component is rendered alone in jsdom, so the G9 mock gap does not apply to it. The lower clamp is covered by an unmapped sibling test (section 10).
 - Evidence: UNVERIFIED
 
 <a id="cand-06-a7-1d"></a>
@@ -1571,7 +1572,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 - Expected result: The SVG's width and height attributes are both 200 `components/shared/circular-progress.tsx:50-51`
 - Test: mapped: `tests/components/shared/circular-progress.test.tsx::accepts custom size and sets SVG dimensions`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
-- Known gaps: no backend, router or context is involved; the component is rendered alone in jsdom. The radius and circumference derived from the stroke width are not asserted.
+- Known gaps: no module is mocked in this case and none is needed: no backend, router or context is involved and the component is rendered alone in jsdom, so the G9 mock gap does not apply to it. The radius and circumference derived from the stroke width are not asserted.
 - Evidence: UNVERIFIED
 
 <a id="cand-06-a8"></a>
@@ -1679,7 +1680,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 - Precondition: One tab with no table whose saved data holds two strings and a number.
 - Action: Render the step.
-- Expected result: The accordion line reads the two strings joined by a space, without the number `components/onboarding/steps/review-step.tsx:170-171`
+- Expected result: The accordion line reads the two strings joined by a space, without the number `components/onboarding/steps/review-step.tsx:172-174`
 - Test: characterization: `tests/spec/cand-06-review-step.test.tsx::summarises a tab without a table as the first two string values only, dropping the numeric one`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
 - Known gaps: the onboarding context, the router and the toast library are mocked; the backend is stubbed. A tab with more than two strings, where only the first two are taken, is not tried.
@@ -1803,7 +1804,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 - Precondition: The survey hook returns four steps with mixed statuses and redirect URLs, a current step and a next step; the sidebar is on the offer page and not view-only.
 - Action: Render it.
-- Expected result: The labels are shown; the current step reads ONGOING, the completed one COMPLETED and at least two read PENDING; a step with a redirect URL is an anchor with that href while one without is not an anchor; the next-step label appears twice `components/portal/portal-stepper-sidebar.tsx:38-107,189-203,243-252`
+- Expected result: The labels are shown; the current step reads ONGOING, the completed one COMPLETED and at least two read PENDING; a step with a redirect URL is an anchor with that href while one without is not an anchor; the next-step label appears twice `components/portal/portal-stepper-sidebar.tsx:46-85,116-119,212-223,261-269`
 - Test: mapped: `tests/components/portal/portal-stepper-sidebar.test.tsx::renders dynamic steps with mapped icons, statuses, links, and next step label`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
 - Known gaps: the survey hook and `next/link` are mocked; the backend is stubbed and no router is used. Which icon each key picks is not asserted; the view-only default, which drops every link, is not tried.
@@ -1814,7 +1815,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 - Precondition: One survey step whose status is pending but whose key equals the survey's current step; the sidebar is on another page.
 - Action: Render it.
-- Expected result: The step reads ONGOING and, having no redirect URL, is not an anchor `components/portal/portal-stepper-sidebar.tsx:63-80,196-203`
+- Expected result: The step reads ONGOING and, having no redirect URL, is not an anchor `components/portal/portal-stepper-sidebar.tsx:64-85,219-223`
 - Test: mapped: `tests/components/portal/portal-stepper-sidebar.test.tsx::marks a step ongoing when its key equals current_step even if status is not ongoing`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
 - Known gaps: the survey hook and `next/link` are mocked; the backend is stubbed and no router is used. The third ongoing trigger, a status of `ongoing`, is covered by CAND-06-A9.1A.
@@ -1825,7 +1826,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 - Precondition: The survey's next step names a key that no step carries.
 - Action: Render the sidebar.
-- Expected result: That raw string is shown in the bottom card `components/portal/portal-stepper-sidebar.tsx:110-116`
+- Expected result: That raw string is shown in the bottom card `components/portal/portal-stepper-sidebar.tsx:116-119`
 - Test: mapped: `tests/components/portal/portal-stepper-sidebar.test.tsx::falls back to next_step key when it does not match any step`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
 - Known gaps: the survey hook and `next/link` are mocked; the backend is stubbed and no router is used. A null next step with survey data present, which falls through to the per-page word, is not tried.
@@ -1836,7 +1837,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 - Precondition: The sidebar is on the offer page with two expanded items and the first one active.
 - Action: Click the second item.
-- Expected result: The callback is called with 1 `components/portal/portal-stepper-sidebar.tsx:206-230`
+- Expected result: The callback is called with 1 `components/portal/portal-stepper-sidebar.tsx:230-244`
 - Test: characterization: `tests/spec/cand-06-table-and-sidebar.test.tsx::lists the expanded items under the current step and reports the clicked index`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
 - Known gaps: the survey hook and `next/link` are mocked; the backend is stubbed and no router is used. The active item's highlight classes are not asserted.
@@ -1847,7 +1848,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 - Precondition: The sidebar is on the offer page with one expanded item.
 - Action: Click the step header twice.
-- Expected result: The item is shown at first, gone after the first click and back after the second `components/portal/portal-stepper-sidebar.tsx:134-136,186-192,206-230`
+- Expected result: The item is shown at first, gone after the first click and back after the second `components/portal/portal-stepper-sidebar.tsx:148,205-211,225-245`
 - Test: characterization: `tests/spec/cand-06-table-and-sidebar.test.tsx::collapses and re-expands the item list when the step header is clicked`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
 - Known gaps: the survey hook and `next/link` are mocked; the backend is stubbed and no router is used. The chevron that changes with the state is not asserted.
@@ -1858,7 +1859,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 - Precondition: The survey hook returns no data; the sidebar is on the survey page.
 - Action: Render it.
-- Expected result: The survey and onboarding labels are shown, one step reads ONGOING and the offer label appears both as a step and in the bottom card `components/portal/portal-stepper-sidebar.tsx:81-107,117-122`
+- Expected result: The survey and onboarding labels are shown, one step reads ONGOING and the offer label appears both as a step and in the bottom card `components/portal/portal-stepper-sidebar.tsx:88-112,121-126`
 - Test: mapped: `tests/components/portal/portal-stepper-sidebar.test.tsx::renders the three static steps and next-step text for the survey page`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
 - Known gaps: the survey hook and `next/link` are mocked; the backend is stubbed and no router is used. The COMPLETED and PENDING pills of the fixed list are not asserted.
@@ -1869,7 +1870,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 - Precondition: No survey data; the sidebar is rendered for the offer page and then the onboarding page.
 - Action: Render and re-render.
-- Expected result: The offer page shows the onboarding label twice and the onboarding page shows `Portal Completion` `components/portal/portal-stepper-sidebar.tsx:117-122`
+- Expected result: The offer page shows the onboarding label twice and the onboarding page shows `Portal Completion` `components/portal/portal-stepper-sidebar.tsx:121-126`
 - Test: mapped: `tests/components/portal/portal-stepper-sidebar.test.tsx::computes next-step text for the offer and onboarding pages`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
 - Known gaps: the survey hook and `next/link` are mocked; the backend is stubbed and no router is used. The statuses of the fixed steps on those pages are not asserted.
@@ -1880,7 +1881,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 - Precondition: No survey data and an extra class name.
 - Action: Render the sidebar.
-- Expected result: An element inside the output carries that class `components/portal/portal-stepper-sidebar.tsx:124-130`
+- Expected result: An element inside the output carries that class `components/portal/portal-stepper-sidebar.tsx:131-134`
 - Test: mapped: `tests/components/portal/portal-stepper-sidebar.test.tsx::applies a custom className`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
 - Known gaps: the survey hook and `next/link` are mocked; the backend is stubbed and no router is used. That it is the outer container, and that the built-in classes survive, are not asserted.
@@ -1902,7 +1903,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 - Expected result: The text `Onboarding Wizard Placeholder` is on screen `components/onboarding-wizard.tsx:16-19`
 - Test: mapped: `tests/components/onboarding-wizard.test.tsx::renders placeholder text`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
-- Known gaps: no backend, router or context is involved; the component is rendered alone in jsdom. That the user and profile are never read is not asserted. The file has no importer in the app (G3, PWHR-1565).
+- Known gaps: no module is mocked in this case apart from the callback stub the test passes in as a prop; no backend, router or context is involved and the component is rendered alone in jsdom, so the G9 mock gap does not apply to it. That the user and profile are never read is not asserted. The file has no importer in the app (G3, PWHR-1565).
 - Evidence: UNVERIFIED
 
 <a id="cand-06-a10-1b"></a>
@@ -1913,5 +1914,5 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 - Expected result: The callback is called exactly once `components/onboarding-wizard.tsx:18`
 - Test: mapped: `tests/components/onboarding-wizard.test.tsx::calls onComplete when button is clicked`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
-- Known gaps: no backend, router or context is involved; the component is rendered alone in jsdom. The callback receives no argument and that is not asserted. The file has no importer in the app (G3, PWHR-1565).
+- Known gaps: no module is mocked in this case apart from the callback stub the test passes in as a prop; no backend, router or context is involved and the component is rendered alone in jsdom, so the G9 mock gap does not apply to it. The callback receives no argument and that is not asserted. The file has no importer in the app (G3, PWHR-1565).
 - Evidence: UNVERIFIED

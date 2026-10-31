@@ -30,11 +30,11 @@ describe("jobOfferService", () => {
     const mockData = { applicant_name: "John" };
     (FrappeAPI.get as any).mockResolvedValue(mockData);
 
-    const result = await jobOfferService.getJobOfferSummary("test@test.com", "db388c916142068b098ff0463eaae20d190c0cce");
+    const result = await jobOfferService.getJobOfferSummary("test@test.com", "tok-test-0000");
     expect(result).toEqual(mockData);
     expect(FrappeAPI.get).toHaveBeenCalledWith(expect.stringContaining("get_job_offer_summary"), {
       appl: "test@test.com",
-      token: "db388c916142068b098ff0463eaae20d190c0cce",
+      token: "tok-test-0000",
     });
   });
 
@@ -57,10 +57,10 @@ describe("jobOfferService", () => {
 
   // Spec: CAND-07-A1.3A (docs/spec/clauses/07-services-and-hooks.md#cand-07-a1-3a)
   it("getJobOfferPdfUrl returns the correct API URL with token if provided", () => {
-    const url = jobOfferService.getJobOfferPdfUrl("test@test.com", "db388c916142068b098ff0463eaae20d190c0cce");
+    const url = jobOfferService.getJobOfferPdfUrl("test@test.com", "tok-test-0000");
     expect(url).toContain("download_job_offer_pdf");
     expect(url).toContain("appl=test%40test.com");
-    expect(url).toContain("token=db388c916142068b098ff0463eaae20d190c0cce");
+    expect(url).toContain("token=tok-test-0000");
   });
 
   it("updateJobOfferStatus calls FrappeAPI.post", async () => {
@@ -100,11 +100,11 @@ describe("jobOfferService", () => {
     const mockRes = { status: "Offered" };
     (FrappeAPI.get as any).mockResolvedValue(mockRes);
 
-    const result = await jobOfferService.getJobOfferStatus("test@test.com", "db388c916142068b098ff0463eaae20d190c0cce");
+    const result = await jobOfferService.getJobOfferStatus("test@test.com", "tok-test-0000");
     expect(result).toEqual(mockRes);
     expect(FrappeAPI.get).toHaveBeenCalledWith(expect.stringContaining("get_job_offer_status"), {
       appl: "test@test.com",
-      token: "db388c916142068b098ff0463eaae20d190c0cce",
+      token: "tok-test-0000",
     });
   });
 
@@ -148,7 +148,7 @@ describe("jobOfferService", () => {
 
   // Spec: CAND-07-A1.2D (docs/spec/clauses/07-services-and-hooks.md#cand-07-a1-2d)
   it("startConsentSession posts to the external consent endpoint", async () => {
-    const mockRes = { already_consented: false, session_id: "s1", consent_url: "https://l.hffc.in/x" };
+    const mockRes = { already_consented: false, session_id: "s1", consent_url: "https://consent.example.invalid/x" };
     (FrappeAPI.post as any).mockResolvedValue(mockRes);
 
     const result = await jobOfferService.startConsentSession("test@test.com", "my-token");

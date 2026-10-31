@@ -185,7 +185,7 @@ None. No scheduler, no server hooks, no patches. The container health check is t
 - G10: `/api/candidate-feature-flags` and `/api/public/*` answer any caller from one shared key. Whether the key is read-only and field-limited is a backend fact not read here. Not filed: backend permission, outside this repo.
 - G11: `tests/components/ui/field-renderer.test.tsx` has one failing test (the `custom_account_number` case: expected `123456`, received `12AB3456`). A full `npx vitest run` at the head that adds this spec gave 161 files, 1 failed, 1992 passed, 3 skipped (1996 tests). It is outside the scope of this clause. Issue: PWHR-1517.
 - G12: Branch drift (see the header). Issue: PWHR-1518.
-- G13: `lib/services/action-center.ts:14` passes the doctype as `Candidate%20Raise%20Request` and `:28` as `Candidate Raise Request`; both reach the same resource. Not filed: no observed effect.
+- G13: `lib/services/action-center.ts:14` passes the doctype as `Candidate%20Raise%20Request` and `:28` as `Candidate Raise Request`; both reach the same resource. The string is interpolated into the URL and handed to `fetch` (`lib/frappe-api.ts:158,183`), and the URL parser percent-encodes the space itself: `node -e 'console.log(new URL("http://h/api/resource/Candidate Raise Request").pathname)'` printed `/api/resource/Candidate%20Raise%20Request`, the same pathname as the pre-encoded spelling. The pre-encoding at `:14` is therefore redundant, not divergent. Not a defect: the two spellings produce one request. PWHR-1554 was filed on the premise that only one spelling survives; that premise does not hold and the issue needs re-triage.
 - G14: Every case stubs `fetch`, the router, the services or the API-key routes; none talks to a real Frappe site. Hosted CI is UNVERIFIED.
 - Statutory source: not applicable.
 
@@ -220,7 +220,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 | [CAND-02-A1.3C](02-api-client-and-backend-contract.md#cand-02-a1-3c) | Resource listing parameters and the unwrapped return value. | [`getresourceDocumentData serialises fields and filters as JSON and does not unwrap the response`](../../../tests/spec/cand-02-frappe-client.test.ts) |
 | [CAND-02-A1.3D](02-api-client-and-backend-contract.md#cand-02-a1-3d) | Multipart upload fields and blob return. | [`uploadFile posts multipart form data with file, doctype and docname and returns message, and getBlob returns the response blob`](../../../tests/spec/cand-02-frappe-client.test.ts) |
 | [CAND-02-A1.4A](02-api-client-and-backend-contract.md#cand-02-a1-4a) | The service's docName ends up in the doctype field. | [`fileUploadService passes its docName in the doctype form field and sends no docname field, because it calls uploadFile(file, '', docName, doctype)`](../../../tests/spec/cand-02-more.test.ts) |
-| [CAND-02-A1.4B](02-api-client-and-backend-contract.md#cand-02-a1-4b) | The service passes (file, empty string, docName, doctype) and rethrows errors. | [`uploadFile calls FrappeAPI.uploadFile correctly`](../../../tests/lib/services/uploadProofFile.test.ts) |
+| [CAND-02-A1.4B](02-api-client-and-backend-contract.md#cand-02-a1-4b) | The service passes (file, empty string, docName, doctype) and returns the reply. | [`uploadFile calls FrappeAPI.uploadFile correctly`](../../../tests/lib/services/uploadProofFile.test.ts) |
 
 <a id="cand-02-a1-1a"></a>
 #### CAND-02-A1.1A: Server base URL
@@ -314,11 +314,11 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 #### CAND-02-A1.4B: fileUploadService delegates to FrappeAPI
 
 - Precondition: `FrappeAPI.uploadFile` is mocked.
-- Action: Call the service with a file, a doctype and a name; then with a rejecting mock.
-- Expected result: `FrappeAPI.uploadFile` is called with the file, an empty string, the name and the doctype in that order; a rejection is rethrown after being logged `lib/services/uploadProofFile.ts:9-16`
+- Action: Call the service with a file, a doctype and a name.
+- Expected result: `FrappeAPI.uploadFile` is called with the file, an empty string, the name and the doctype in that order, and the service returns the reply unchanged `lib/services/uploadProofFile.ts:9-12`
 - Test: mapped: `tests/lib/services/uploadProofFile.test.ts::uploadFile calls FrappeAPI.uploadFile correctly`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
-- Known gaps: Services and routes are tested with `fetch`, the router or the services mocked; no real HTTP or Frappe backend. The test asserts the call as it is, which is the wrong order (PWHR-1513). Mapped test: only the `Spec:` comment was added.
+- Known gaps: Services and routes are tested with `fetch`, the router or the services mocked; no real HTTP or Frappe backend. The test asserts the call as it is, which is the wrong order (PWHR-1513). The rethrow-after-logging path (`lib/services/uploadProofFile.ts:13-16`) is not driven by this test; the sibling test `handles upload errors` in the same file drives it and is mapped to CAND-05-A9.2A. Mapped test: only the `Spec:` comment was added.
 - Evidence: UNVERIFIED
 
 <a id="cand-02-a2"></a>
@@ -328,7 +328,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 |---|---|---|
 | [CAND-02-A2.1A](02-api-client-and-backend-contract.md#cand-02-a2-1a) | Conversion of flag values, the request header and the empty fallbacks. | [`calls the flag method with the API key header, coerces values to booleans and returns {} on any failure`](../../../tests/spec/cand-02-routes.test.ts) |
 | [CAND-02-A2.1B](02-api-client-and-backend-contract.md#cand-02-a2-1b) | A server flag is enabled only when exactly true. | [`treats a flag as enabled only when it is exactly true after coercion`](../../../tests/spec/cand-02-routes.test.ts) |
-| [CAND-02-A2.2A](02-api-client-and-backend-contract.md#cand-02-a2-2a) | The flags route answers 500 without credentials and the flags otherwise. | [`returns 500 when the URL or either API credential is missing, else {flags}`](../../../tests/spec/cand-02-routes.test.ts) |
+| [CAND-02-A2.2A](02-api-client-and-backend-contract.md#cand-02-a2-2a) | The flags route answers 500 when the credentials are blank and the flags when they are set. | [`returns 500 when the URL or either API credential is missing, else {flags}`](../../../tests/spec/cand-02-routes.test.ts) |
 | [CAND-02-A2.3A](02-api-client-and-backend-contract.md#cand-02-a2-3a) | Branding route payload, cache header and empty fallbacks. | [`returns the branding with a 300 s edge cache, and an empty object without credentials or on upstream failure`](../../../tests/spec/cand-02-routes.test.ts) |
 | [CAND-02-A2.4A](02-api-client-and-backend-contract.md#cand-02-a2-4a) | Openings route requests, normalised output and cache header. | [`reads Job Opening and Employment Type with the API key, filters Open, and returns normalised openings with a 60 s edge cache`](../../../tests/spec/cand-02-routes.test.ts) |
 | [CAND-02-A2.4B](02-api-client-and-backend-contract.md#cand-02-a2-4b) | Openings route status codes for missing credentials, upstream failure and a failed type lookup. | [`answers 500 without credentials and 502 when the openings read fails or throws, but tolerates a failed type lookup`](../../../tests/spec/cand-02-routes.test.ts) |
@@ -360,12 +360,12 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 <a id="cand-02-a2-2a"></a>
 #### CAND-02-A2.2A: Flags route credentials guard
 
-- Precondition: The environment is cleared, then set.
+- Precondition: Both URL variables and both API credentials are blanked together, then all four are set.
 - Action: Call `GET` of the route twice.
-- Expected result: The first answer is 500 with the fixed error text; the second is 200 with `{ flags: { open_jobs: true } }` `app/api/candidate-feature-flags/route.ts:10-18`
+- Expected result: With all four blank the answer is 500 with the fixed error text; with all four set it is 200 with `{ flags: { open_jobs: true } }` `app/api/candidate-feature-flags/route.ts:10-18`
 - Test: characterization: `tests/spec/cand-02-routes.test.ts::returns 500 when the URL or either API credential is missing, else {flags}`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
-- Known gaps: Services and routes are tested with `fetch`, the router or the services mocked; no real HTTP or Frappe backend. No session is sent in either call, which is the behaviour (A2.3).
+- Known gaps: Services and routes are tested with `fetch`, the router or the services mocked; no real HTTP or Frappe backend. No session is sent in either call, which is the behaviour (A2.3). The guard is an `or` over the URL, the key and the secret (`app/api/candidate-feature-flags/route.ts:10`), but the test blanks all four variables in one step, so no single missing credential is exercised on its own; the test title says "either API credential" and the assertions do not separate them.
 - Evidence: UNVERIFIED
 
 <a id="cand-02-a2-3a"></a>
@@ -534,7 +534,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 | [CAND-02-A4.1B](02-api-client-and-backend-contract.md#cand-02-a4-1b) | Health does not depend on the backend. | [`health is independent of backend availability`](../../../tests/delivery/proxy.test.ts) |
 | [CAND-02-A4.2A](02-api-client-and-backend-contract.md#cand-02-a4-2a) | A failed flag request throws with the status text. | [`throws an Error carrying the status text when /api/candidate-feature-flags answers not ok`](../../../tests/spec/cand-02-more.test.ts) |
 | [CAND-02-A4.2B](02-api-client-and-backend-contract.md#cand-02-a4-2b) | The flag client returns the flags from the portal route. | [`getFeatureFlags calls the server-side proxy route`](../../../tests/lib/services/feature-flags.test.ts) |
-| [CAND-02-A4.3A](02-api-client-and-backend-contract.md#cand-02-a4-3a) | Layering of defaults, initial flags and remote flags. | [`layers built-in defaults, then initialFlags, then remote flags, and turns a remote flag on only for 1 or true`](../../../tests/spec/cand-02-flag-context.test.tsx) |
+| [CAND-02-A4.3A](02-api-client-and-backend-contract.md#cand-02-a4-3a) | Layering of defaults, initial flags and remote flags, with initialFlags set against its defaults so the middle layer is pinned. | [`layers built-in defaults, then initialFlags, then remote flags, and turns a remote flag on only for 1 or true`](../../../tests/spec/cand-02-flag-context.test.tsx) |
 | [CAND-02-A4.3B](02-api-client-and-backend-contract.md#cand-02-a4-3b) | isEnabled is false for unknown flags and getFlag uses its default only when the flag is missing. | [`isEnabled is false for a flag that is missing or not a boolean, and getFlag returns the caller's default only when the flag is missing`](../../../tests/spec/cand-02-flag-context.test.tsx) |
 
 <a id="cand-02-a4-1a"></a>
@@ -584,12 +584,12 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 <a id="cand-02-a4-3a"></a>
 #### CAND-02-A4.3A: Flag precedence
 
-- Precondition: `useCandidateFeatureFlags` is mocked with mixed remote values; `initialFlags` is set for two flags.
+- Precondition: `useCandidateFeatureFlags` is mocked with mixed remote values; `initialFlags` sets `social_job_sharing` and `action_center` to `true`, the opposite of their built-in defaults, and `my_jobs` to `false`.
 - Action: Render the provider and read `flags`.
-- Expected result: Remote `1` and `true` become true, remote `0` false, remote `"1"` and `"true"` false; remote values win over `initialFlags`, which win over the defaults; `careers_public_enabled` stays false `lib/contexts/feature-flags.tsx:17-33,49-57`
+- Expected result: Remote `1` and `true` become true, remote `0` false, remote `"1"` and `"true"` false; `social_job_sharing`, which `initialFlags` turns on and no remote key names, stays true, so `initialFlags` beats the defaults; `action_center`, which `initialFlags` also turns on, is false because the remote `"true"` overrides it, so remote beats `initialFlags`; `careers_public_enabled` stays at its default false `lib/contexts/feature-flags.tsx:17-33,49-57`
 - Test: characterization: `tests/spec/cand-02-flag-context.test.tsx::layers built-in defaults, then initialFlags, then remote flags, and turns a remote flag on only for 1 or true`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
-- Known gaps: Services and routes are tested with `fetch`, the router or the services mocked; no real HTTP or Frappe backend. The default values of the other flags are not each asserted.
+- Known gaps: Services and routes are tested with `fetch`, the router or the services mocked; no real HTTP or Frappe backend. The default values of the other flags are not each asserted. Both layered keys are checked through one render; no test re-renders with a changed `initialFlags` object to drive the `useMemo` dependency.
 - Evidence: UNVERIFIED
 
 <a id="cand-02-a4-3b"></a>

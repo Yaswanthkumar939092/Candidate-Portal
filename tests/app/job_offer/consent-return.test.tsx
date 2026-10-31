@@ -169,7 +169,7 @@ describe("DpdpConsentReturnPage", () => {
     );
     mockStartConsentSession.mockResolvedValue({
       already_consented: false,
-      consent_url: "https://l.hffc.in/HFFCIN/fresh",
+      consent_url: "https://consent.example.invalid/c/fresh",
     });
 
     render(<DpdpConsentReturnPage />);
@@ -178,7 +178,7 @@ describe("DpdpConsentReturnPage", () => {
     fireEvent.click(screen.getByRole("button", { name: /Start consent again/i }));
 
     await waitFor(() => {
-      expect(assign).toHaveBeenCalledWith("https://l.hffc.in/HFFCIN/fresh");
+      expect(assign).toHaveBeenCalledWith("https://consent.example.invalid/c/fresh");
     });
   });
 
