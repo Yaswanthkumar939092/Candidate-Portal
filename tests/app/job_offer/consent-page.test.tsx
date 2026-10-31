@@ -212,7 +212,7 @@ describe("DpdpConsentPage", () => {
     const externalPayload = {
       enabled: true,
       consent_mode: "External Portal",
-      consent_url: "https://l.hffc.in/HFFCIN/gqsPk",
+      consent_url: "https://consent.example.invalid/c/gqsPk",
       already_consented: false,
     };
 
@@ -246,7 +246,7 @@ describe("DpdpConsentPage", () => {
       render(<DpdpConsentPage />);
 
       await waitFor(() => {
-        expect(assign).toHaveBeenCalledWith("https://l.hffc.in/HFFCIN/gqsPk");
+        expect(assign).toHaveBeenCalledWith("https://consent.example.invalid/c/gqsPk");
       });
       expect(screen.getByText(/Taking you to the consent portal/i)).toBeInTheDocument();
       // The in-app declaration must not render in external mode.
@@ -260,7 +260,7 @@ describe("DpdpConsentPage", () => {
       });
       mockStartConsentSession.mockResolvedValue({
         already_consented: false,
-        consent_url: "https://l.hffc.in/HFFCIN/reissued",
+        consent_url: "https://consent.example.invalid/c/reissued",
         reused: true,
       });
 
@@ -273,7 +273,7 @@ describe("DpdpConsentPage", () => {
         });
       });
       await waitFor(() => {
-        expect(assign).toHaveBeenCalledWith("https://l.hffc.in/HFFCIN/reissued");
+        expect(assign).toHaveBeenCalledWith("https://consent.example.invalid/c/reissued");
       });
     });
 
@@ -292,12 +292,12 @@ describe("DpdpConsentPage", () => {
 
       mockStartConsentSession.mockResolvedValue({
         already_consented: false,
-        consent_url: "https://l.hffc.in/HFFCIN/retry-worked",
+        consent_url: "https://consent.example.invalid/c/retry-worked",
       });
       fireEvent.click(screen.getByRole("button", { name: /Try again/i }));
 
       await waitFor(() => {
-        expect(assign).toHaveBeenCalledWith("https://l.hffc.in/HFFCIN/retry-worked");
+        expect(assign).toHaveBeenCalledWith("https://consent.example.invalid/c/retry-worked");
       });
     });
 

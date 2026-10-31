@@ -4,7 +4,7 @@
 
 - Stable ID: `SPEC-CAND-01`
 - Described at: repo `hybrowlabs/Candidate-Portal`, branch `develop`, commit `97dbcd5d3ce79fbc49dc0ba254c7a52375fbd8e5` (committer date `2026-10-30 22:32:12 +0530`)
-- Also read at: branch `deploy/hybrowbase-candidate-20261025`, commit `786b53e406869986d5d5d0c81b7ae6b1605f8315`; differs: 24 of the files cited in this spec set differ there (list in section 9 G1) (`app/backend/[...path]/route.ts` is deleted and `middleware.ts` added; `components/careers/careers-shell.tsx`, `lib/careers/login-redirect.ts`, `app/(auth)/login/page.tsx`, `app/(auth)/register/page.tsx`, `app/campus-apply/page.tsx` and `lib/contexts/feature-flags.tsx` are modified); no `pw-uat` branch exists in this repo (`git ls-remote --heads origin pw-uat` printed nothing on 2026-10-31); only `develop` is described and no other branch was read
+- Also read at: branch `deploy/hybrowbase-candidate-20261025`, commit `786b53e406869986d5d5d0c81b7ae6b1605f8315`; differs: 26 of the source and configuration files cited by clauses 01 to 03 differ there (full list and counting method in section 9 G1; across all seven clauses the same method gives 33) (`app/backend/[...path]/route.ts` is deleted and `middleware.ts` added; `components/careers/careers-shell.tsx`, `lib/careers/login-redirect.ts`, `app/(auth)/login/page.tsx`, `app/(auth)/register/page.tsx`, `app/campus-apply/page.tsx` and `lib/contexts/feature-flags.tsx` are modified); no `pw-uat` branch exists in this repo (`git ls-remote --heads origin pw-uat` printed nothing on 2026-10-31); only `develop` is described and no other branch was read
 - Author: Frontend Developer (Yashwanth). Reviewer: Code Reviewer (Yashwanth), to be recorded in the PR.
 - Status: DRAFT
 
@@ -67,7 +67,7 @@ The pages of the onboarding, dashboard, jobs, offer and survey flows are specced
 - A1.4: The `(public)` layout asks the server for the flag `careers_public_enabled`; when it is not true it calls `redirect("/login")`, otherwise it renders `CareersShell` around the page (`app/(public)/layout.tsx:8-12`). [CAND-01-A1.2A]
 - A1.5: `CareersShell` renders nothing for a signed-in user and, from an effect, replaces the URL with the portal page that matches the careers page (`/` → `/dashboard`, `/ai-match` → `/open-jobs?tab=smart-match`, `/jobs` → `/open-jobs`, anything else → `/dashboard`) (`components/careers/careers-shell.tsx:30-34`, `lib/careers/login-redirect.ts:10-14,25`). [CAND-01-A1.3A]
 - A1.6: For a guest, `CareersShell` renders a header with three tabs (Home, AI Resume / Job Match, All Open Jobs) twice (desktop and mobile navigation), marks the tab for the current path with `aria-current="page"`, and shows a Login link to `/login?redirect=%2Fdashboard` (`components/careers/careers-shell.tsx:13-17,44-63,67-83`). [CAND-01-A1.3B]
-- A1.7: `CareersShell` does not read the loading flag of auth; a guest sees the header while the session check is still running (`components/careers/careers-shell.tsx:27`). [CAND-01-A1.3B]
+- A1.7: `CareersShell` does not read the loading flag of auth; a guest sees the header while the session check is still running (`components/careers/careers-shell.tsx:27`). No case covers this (section 10).
 - A1.8: `/campus-apply` pushes a signed-out visitor to `/login?redirect=<encoded /campus-apply plus its whole query string>` once loading is done, shows "Verifying authorization status..." while loading, and renders nothing when there is no user (`app/campus-apply/page.tsx:42-48,81-96`). [CAND-01-A1.4A] [CAND-01-A1.4B]
 
 ### A2: Session state
@@ -146,7 +146,7 @@ None. This is a browser and Node front end with no scheduler, no server hooks an
 
 ## 9. Known gaps / open questions
 
-- G1: Branch drift. There is no `pw-uat` branch. `deploy/hybrowbase-candidate-20261025` (`786b53e406869986d5d5d0c81b7ae6b1605f8315`) differs in 24 files that this spec set cites (count by script: names in `docs/spec/clauses/` intersected with `git diff --name-only` between the two commits). The changes were read for the following; the other pages and components in that count (`app/(portal)/dashboard`, `job_offer`, `my-jobs`, `onboarding`, `open-jobs`, `app/(public)/jobs`, `components/auth-form.tsx`, `brand-lockup.tsx`, `portal-navigation.tsx`, `lib/services/applicantStatusService.ts`, `jobOpeningService.ts`, `lib/careers/openings.ts`) were not read for what changed: `app/backend/[...path]/route.ts` (deleted there), `middleware.ts` (added), `components/careers/careers-shell.tsx`, `lib/careers/login-redirect.ts` (the `portalEquivalent` function and `SHARED_JOB_PARAM` are removed and `/` maps to `/open-jobs`), `app/(auth)/login/page.tsx` (the post-login route call is removed), `app/(auth)/register/page.tsx`, `app/campus-apply/page.tsx`, `lib/server/feature-flags.ts`, `app/api/candidate-feature-flags/route.ts`, `app/api/public/branding/route.ts`, `app/api/public/openings/route.ts`, `app/api/parse-resume/route.ts`, `lib/contexts/feature-flags.tsx` and `next.config.ts`. These rules were not re-read there. Issue: PWHR-1518.
+- G1: Branch drift. There is no `pw-uat` branch. `deploy/hybrowbase-candidate-20261025` (`786b53e406869986d5d5d0c81b7ae6b1605f8315`) differs in 26 of the source and configuration files that clauses 01 to 03 cite. Counting method, reproducible at `Described at`: take every backtick-quoted path in `docs/spec/clauses/01-*.md`, `02-*.md` and `03-*.md` that is a tracked file at either commit, intersect that set with `git diff --name-only 97dbcd5d3ce79fbc49dc0ba254c7a52375fbd8e5 786b53e406869986d5d5d0c81b7ae6b1605f8315`, then drop the files under `tests/` (8 there) and the two dependency and runner files `package.json` and `vitest.config.ts`; what remains is the 26 below. The same method over all seven clause files gives 33. The changes were read for these 14: `app/backend/[...path]/route.ts` (deleted there), `middleware.ts` (added), `components/careers/careers-shell.tsx`, `lib/careers/login-redirect.ts` (the `portalEquivalent` function and `SHARED_JOB_PARAM` are removed and `/` maps to `/open-jobs`), `app/(auth)/login/page.tsx` (the post-login route call is removed), `app/(auth)/register/page.tsx`, `app/campus-apply/page.tsx`, `lib/server/feature-flags.ts`, `app/api/candidate-feature-flags/route.ts`, `app/api/public/branding/route.ts`, `app/api/public/openings/route.ts`, `app/api/parse-resume/route.ts`, `lib/contexts/feature-flags.tsx` and `next.config.ts`. The other 12 in the count were not read for what changed: `app/(portal)/dashboard/page.tsx`, `app/(portal)/job_offer/page.tsx`, `app/(portal)/my-jobs/page.tsx`, `app/(portal)/onboarding/page.tsx`, `app/(portal)/open-jobs/page.tsx`, `app/(public)/jobs/page.tsx`, `components/auth-form.tsx`, `components/brand-lockup.tsx`, `components/portal/portal-navigation.tsx`, `lib/services/applicantStatusService.ts`, `lib/services/jobOpeningService.ts` and `lib/careers/openings.ts`. No rule in this clause was re-read there. Issue: PWHR-1518.
 - G2: `isOnboardingComplete` is always false from this provider because the profile is built with the stage `candidate` (`lib/contexts/auth-context.tsx:90-92`, `lib/auth.ts:191`). No code reads it outside the provider (`git grep isOnboardingComplete` at `Described at` finds only the provider). Not filed: no consumer.
 - G3: `lib/contexts/auth-context.tsx:14` imports `getProfile`, which `lib/auth.ts` does not export (TS2305). Issue: PWHR-1514.
 - G4: `useCurrentUser` falls back to a personal address (`lib/hooks/useUser.ts:12-16`). Issue: PWHR-1512.
@@ -189,10 +189,10 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 - Precondition: `useAuth` is mocked three times: loading, done with no user, done with user `CAND-TEST-0001@example.invalid`; navigation components are stubbed.
 - Action: Render the `(portal)` layout with a child paragraph in each state.
-- Expected result: Loading shows the text Loading... and no child and no push; no user renders an empty container and calls `router.push('/login')` once; a user renders the child inside the flag provider and the portal navigation with no push `app/(portal)/layout.tsx:31-67`
+- Expected result: Loading shows the text Loading... and no child and no push; no user renders an empty container and calls `router.push('/login')`; a user renders the child inside the flag provider and the portal navigation with no push `app/(portal)/layout.tsx:31-67`
 - Test: characterization: `tests/spec/cand-01-layouts.test.tsx::shows a spinner while loading, nothing and a push to /login without a user, and the page with a user`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
-- Known gaps: Services and hooks are mocked with `vi.mock`; no real HTTP, Frappe backend or browser. The assertions do not check the real flag request, the spinner styling, or that the push carries no `redirect` value beyond the exact string `/login`.
+- Known gaps: Services and hooks are mocked with `vi.mock`; no real HTTP, Frappe backend or browser. The assertions do not check the real flag request, the spinner styling, or that the push carries no `redirect` value beyond the exact string `/login`. The no-user step waits for the push with `waitFor` and asserts no call count, so a repeated push would not fail it.
 - Evidence: UNVERIFIED
 
 <a id="cand-01-a1-1b"></a>
@@ -334,12 +334,12 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 <a id="cand-01-a2-3b"></a>
 #### CAND-01-A2.3B: useCurrentUser returns the user's e-mail
 
-- Precondition: `auth.getCurrentUser` resolves `{ email: 'ava@example.invalid' }`.
+- Precondition: `auth.getCurrentUser` resolves `{ email: 'ava@example.com' }` — the synthetic address the existing test uses; `example.com` is a reserved documentation domain (RFC 2606), so it names no real mailbox, but it is not the `.invalid` form `conventions.md` section 8.3 asks for.
 - Action: Render the hook; wait for loading to end.
 - Expected result: Loading starts true with no e-mail, then the e-mail is returned and the lookup ran once `lib/hooks/useUser.ts:8-22`
 - Test: mapped: `tests/lib/hooks/useUser.test.tsx::returns the logged-in user's email`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
-- Known gaps: Services and hooks are mocked with `vi.mock`; no real HTTP, Frappe backend or browser. `auth` is mocked. Mapped test: only the `Spec:` comment was added.
+- Known gaps: Services and hooks are mocked with `vi.mock`; no real HTTP, Frappe backend or browser. `auth` is mocked. The fixture address uses `example.com` rather than `example.invalid`; changing it is a test-data change for the maker, not this spec pass. Mapped test: only the `Spec:` comment was added.
 - Evidence: UNVERIFIED
 
 <a id="cand-01-a2-3c"></a>
@@ -369,7 +369,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 - Precondition: `auth.getSession` resolves a user; `profileFromFrappeUser` is mocked to return stage `onboarded`.
 - Action: Render the probe.
-- Expected result: The mock is called with the session user, the stage shown is `onboarded` and `isOnboardingComplete` is true `lib/contexts/auth-context.tsx:53-58,90-92`
+- Expected result: The mock is called with the session user, the stage shown is `onboarded` and `isOnboardingComplete` is true `lib/contexts/auth-context.tsx:64-88,90-92`
 - Test: mapped: `tests/lib/contexts/auth-context.test.tsx::hydrates profile state directly from the Frappe session user`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
 - Known gaps: Services and hooks are mocked with `vi.mock`; no real HTTP, Frappe backend or browser. The real `profileFromFrappeUser` always returns `candidate`, so this state is unreachable in the app (G2). Mapped test: only the `Spec:` comment was added.

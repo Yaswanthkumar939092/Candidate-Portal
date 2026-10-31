@@ -61,12 +61,12 @@ The order of the page's region choice, as coded:
 - A3.3: It shows a "Profile Active" badge only when the auth context has a profile, a fixed subtitle, and a wave emoji labelled "wave" (`components/dashboard/welcome-header.tsx:45,52-69,56-58`). [CAND-04-A3.3A] [CAND-04-A3.3B] [CAND-04-A3.3C] [CAND-04-A3.3D] Issue: PWHR-1543.
 - A3.4: `JourneyCountdown` shows "In N Day(s)" with N the number of calendar days from today to the joining date in local time, never below 0, "Day" only for 1, and nothing for an empty date; an unparseable date shows "In NaN Days" (`components/dashboard/journey-countdown.tsx:16-27,36-59`). [CAND-04-A3.4A] [CAND-04-A3.4B] [CAND-04-A3.4C] [CAND-04-A3.4D] [CAND-04-A3.4E] [CAND-04-A3.4F] Issue: PWHR-1542.
 - A3.5: `InfoCard` always shows the icon, label and value; it shows the subtitle and the tag only when they are truthy; the tag style is chosen by `tagVariant` (default "default") (`components/dashboard/info-card.tsx:27-71`). [CAND-04-A3.5A] [CAND-04-A3.5B] [CAND-04-A3.5C] [CAND-04-A3.5D]
-- A3.6: `KeyContacts` renders nothing for an empty list; otherwise a heading "Your Key Contacts" and one row per contact with initials (first letter of the first and last word, "U" without a name), the name or "Unknown Contact", the role or "Role not assigned", an Email link `mailto:<email>` and a Call link `tel:<phone>` when those fields are set, built without encoding (`components/dashboard/key-contacts.tsx:22-28,38-109`). [CAND-04-A3.6A] [CAND-04-A3.6B] [CAND-04-A3.6C] [CAND-04-A3.6D] [CAND-04-A3.6E] [CAND-04-A3.6F]
+- A3.6: `KeyContacts` renders nothing for an empty list; otherwise a heading "Your Key Contacts" and one row per contact with initials (the first letter of the first and the last word in capitals, one letter only for a one-word name, "U" for a missing or blank name), the name or "Unknown Contact", the role or "Role not assigned", an Email link `mailto:<email>` and a Call link `tel:<phone>` when those fields are set, built without encoding (`components/dashboard/key-contacts.tsx:22-28,38-109`). [CAND-04-A3.6A] [CAND-04-A3.6B] [CAND-04-A3.6C] [CAND-04-A3.6D] [CAND-04-A3.6E] [CAND-04-A3.6F]
 
 ### A4: Onboarding snapshot
 
 - A4.1: The ring percentage is `form_completion.percentage` rounded when present (including 0), else `completedSteps / totalSteps` rounded, else 0 when `totalSteps` is 0 (`components/dashboard/onboarding-snapshot.tsx:126-131`). [CAND-04-A4.1A] [CAND-04-A4.1B] [CAND-04-A4.1C]
-- A4.2: The snapshot counts as complete when `onboarding_stage`, lower-cased, is "onboarding complete", "complete" or "completed", or `onboarding_status` is true, or the percentage is 100 or more (`components/dashboard/onboarding-snapshot.tsx:133-138`). A complete snapshot shows a "Ready" label and a check badge (`components/dashboard/onboarding-snapshot.tsx:341-352`). [CAND-04-A4.2B] [CAND-04-A4.2D]
+- A4.2: The snapshot counts as complete when `onboarding_stage`, lower-cased, is "onboarding complete", "complete" or "completed", or `onboarding_status` is true, or the percentage is 100 or more (`components/dashboard/onboarding-snapshot.tsx:133-138`). A complete snapshot shows a "Ready" label (`components/dashboard/onboarding-snapshot.tsx:341-345`) and a check badge (`components/dashboard/onboarding-snapshot.tsx:348-352`); the cases assert the label only (section 10). [CAND-04-A4.2B] [CAND-04-A4.2D]
 - A4.3: The badge text is `onboarding_stage` when present, else "ONBOARDING COMPLETE" or "ONBOARDING IN PROGRESS" (`components/dashboard/onboarding-snapshot.tsx:183-184`). [CAND-04-A4.2A] [CAND-04-A4.2C]
 - A4.4: When complete and a joining date exists (the payload's, else the prop) the heading is "You are ready to join us on <Month> <day><suffix>!" with the suffixes st, nd, rd for 1, 2, 3, 21, 22, 23 and 31 (st for 1, 21, 31), and th otherwise; else the heading is "<completedSteps> of <totalSteps> steps completed" (`components/dashboard/onboarding-snapshot.tsx:68-81,140,189-191`). [CAND-04-A4.3A] Issue: PWHR-1542.
 - A4.5: The snapshot reads the user's e-mail from `useCurrentUser`, not from the page, and calls the job-offer hooks with it: the summary, the letters (always enabled) and the PDF URL (enabled only when the candidate has no separate letters) (`components/dashboard/onboarding-snapshot.tsx:101-116`). [CAND-04-A4.4A]
@@ -110,13 +110,13 @@ The order of the page's region choice, as coded:
 - A8.3: Home is active only on exactly `/dashboard`; other items are active by path prefix (`components/portal/portal-navigation.tsx:152-157`).
 - A8.4: The brand block is not a link on `/survey`, any `/job_offer` path and `/campus-apply` paths (`components/portal/portal-navigation.tsx:249-260`). [CAND-04-A8.3A]
 - A8.5: The display name is `profile.full_name`, else the user metadata name, else the text before the "@", else "User"; initials are the first letters of the first two words (`components/portal/portal-navigation.tsx:90-97,139-145`). [CAND-04-A8.4A] [CAND-04-A8.4B]
-- A8.6: The user menu has Profile, a theme toggle and Sign Out (the last two follow `disableUserDropdown`); Sign Out calls `auth.signOut` then assigns `/login` (`components/portal/portal-navigation.tsx:164-171,331-419`). [CAND-04-A8.4C] [CAND-04-A8.4D] [CAND-04-A8.4E]
+- A8.6: The user menu always shows the signed-in name, e-mail and lifecycle badge and a Sign Out item (`components/portal/portal-navigation.tsx:352-372,411-417`); the Profile link and the theme toggle are inside the `!disableUserDropdown` branch and are left out when that prop is true (`components/portal/portal-navigation.tsx:376-408`). Sign Out calls `auth.signOut` then assigns `/login` (`components/portal/portal-navigation.tsx:164-171`). [CAND-04-A8.4C] [CAND-04-A8.4D] [CAND-04-A8.4E]
 - A8.7: `SurveyOfferNavigation` is `PortalNavigation` with `hideNavLinks` true (`components/portal/survey-offer-navigation.tsx:5-7`). [CAND-04-A8.5A]
 
 
 ## 4. Data and permissions
 
-- The payload `DashboardData` has `name`, `date_of_joining`, `designation`, `department`, `work_location`, `work_location_details` (location code, address parts, a map link and office contact fields), `key_contacts` (name, employee, role, e-mail, phone number, index, employee name) and optional `onboarding_stage`, `form_completion` (total, filled, percentage), `onboarding_status`, `dpdp_consent_required`, `dpdp_consent_submitted`, `dpdp_consent_url` and `dpdp_consent_mode` (`types/dashboard.ts:3-57`). The page reads every one except the office contact fields, the location code, the index and the employee id.
+- The payload `DashboardData` has `name`, `date_of_joining`, `designation`, `department`, `work_location`, `work_location_details` (location code, address parts, a map link and office contact fields), `key_contacts` (name, employee, role, e-mail, phone number, index, employee name) and optional `onboarding_stage`, `form_completion` (total, filled, percentage), `onboarding_status`, `dpdp_consent_required`, `dpdp_consent_submitted`, `dpdp_consent_url` and `dpdp_consent_mode` (`types/dashboard.ts:3-57`). The page itself reads `name`, `date_of_joining`, `designation`, `department`, `work_location`, `key_contacts`, `onboarding_status` and the four `dpdp_` fields, and passes the whole payload on to the snapshot (`app/(portal)/dashboard/page.tsx:168-182,189-223,230`); the snapshot reads `onboarding_stage`, `onboarding_status`, `date_of_joining` and, of `form_completion`, only `percentage` (`components/dashboard/onboarding-snapshot.tsx:123-140`), so `total_fields` and `filled_fields` have no reader. Of `work_location_details` only five fields are read: `custom_address`, `custom_office_city`, `custom_state` and `custom_country` for the address line, and `custom_google_map_link` for the map link (`app/(portal)/dashboard/page.tsx:39-51,202-204`); the other eleven (`name`, `branch`, `custom_location_code`, `custom_location_area`, `custom_office_area`, `custom_city`, `custom_pin_code`, `custom_office_email`, `custom_mobile_no`, `custom_telephone_no`, `custom_location_url`) have no reader in `app/`, `lib/` or `components/` (`types/dashboard.ts:3-20`). Of each `key_contacts` row the page maps `employee_name`, `name`, `role`, `email` and `phone_number`; `employee` and `idx` are unread (`app/(portal)/dashboard/page.tsx:53-61`).
 - The request carries the e-mail as the `email` query parameter; the page takes it from the auth context, so a candidate asks for their own e-mail. Whether the backend checks that the session's user owns that e-mail is a backend fact not read here (`lib/services/dashboard.ts:15-18`). `[INFERENCE]`: the page does not enforce it.
 - The consent flags decide whether the dashboard body is hidden behind the consent card; the front end only reads them (`app/(portal)/dashboard/page.tsx:168-174`).
 - The snapshot's offer data comes from the job-offer hooks with the e-mail from `useCurrentUser` (`components/dashboard/onboarding-snapshot.tsx:9,101-119`). That hook falls back to a fixed address when there is no session (`lib/hooks/useUser.ts:13,16`); the address is a personal-looking value in source and is not repeated here. Issue: PWHR-1512.
@@ -162,7 +162,7 @@ None. The page runs no timers except the countdown's one-shot effect (`component
 - G1: Branch drift. There is no `pw-uat` branch. On `deploy/hybrowbase-candidate-20261025` the dashboard page is switched off by a build constant and redirects to `/open-jobs`, the promo query is disabled, the applied-jobs service calls a different method, and the top bar differs (header). Only `develop` is described. Issue: PWHR-1518.
 - G2: The offer-letter preview writes backend data into HTML in a new window (A4.9). Issue: PWHR-1540.
 - G3: A protocol-relative consent URL is treated as an in-app path (A5.2). Issue: PWHR-1541.
-- G4: Date-only joining dates are read as UTC midnight and shown in local time; four existing tests fail under `TZ=America/Los_Angeles` (A2.6, A3.4, A4.4); the countdown shows "In NaN Days" for an unparseable date. Issue: PWHR-1542.
+- G4: Date-only joining dates are read as UTC midnight and shown in local time; the countdown shows "In NaN Days" for an unparseable date. Observed by running the clause-04 mapped and characterization test files (21 files, 149 tests) at the working tree: `TZ=UTC` and `TZ=Asia/Kolkata` are green (148 passed, 1 skipped), `TZ=America/Los_Angeles` fails four of them, and only those four: `tests/components/dashboard/journey-countdown.test.tsx::renders correctly for a future date` (CAND-04-A3.4A) and `::renders '1 Day' for tomorrow` (CAND-04-A3.4B), `tests/components/dashboard/onboarding-snapshot.test.tsx::renders correctly with completed status` (CAND-04-A4.2D) and `tests/app/(portal)/dashboard/page.test.tsx::renders dashboard data from useDashboard` (CAND-04-A2.1A). The rules behind them are A2.6, A3.4 and A4.4; each of the four cases repeats the gap in its Known gaps. Issue: PWHR-1542.
 - G5: "Steps completed" is 8 of 8 whenever a joining date exists, while the ring uses the form completion (A2.1); the header subtitle always says "You are all set for your first day." (A3.3). Issue: PWHR-1543.
 - G6: `useCurrentUser` falls back to a hard-coded e-mail, and the snapshot uses it (section 4). Issue: PWHR-1512.
 - G7: Clicking Try again in the missing-e-mail state calls `refetch` on a disabled query, which runs the query function with an undefined e-mail and ends in the error "Email is required" (A6.2). Not filed: the error is shown only inside the already-shown error card state; no defect asserted.
@@ -184,6 +184,7 @@ Rules and files with no case. Each row has its reason. Counts come from a script
 - A7.4 `PromoHero` fields other than eyebrow, heading, body and stats, and `A7.7` `PromoArtwork` (image load failure, preset keys): no test renders them with an image. Not filed: decorative.
 - A8.3 active-link rule (`/dashboard` exact, others by prefix): no test sets a path and reads the active class. Not filed.
 - A8.4 brand block disabled on `/survey` and `/job_offer*`: only `/campus-apply` is tested (CAND-04-A8.3A). Not filed.
+- A4.2 check badge: the badge element at `components/dashboard/onboarding-snapshot.tsx:348-352` carries no text and no accessible name, so no case asserts it; the cases read the "Ready" label, which is governed by the same `isComplete` flag. Not filed: the flag is covered by CAND-04-A4.2B and CAND-04-A4.2D.
 - A8.6 `disableUserDropdown`: not tested. Not filed.
 - The mobile menu copy of the Home link: see G10.
 - `tests/components/dashboard/welcome-header.test.tsx`: 3 of 13 tests are not mapped because a mapped test covers the same behaviour more tightly: `shows first name in greeting`, `shows time-of-day greeting when no custom greeting` (covered by CAND-04-A3.2E) and `accepts className prop`. Not filed.
@@ -240,10 +241,10 @@ Every case is `Evidence: UNVERIFIED`. Cases of kind `mapped` use a test that exi
 
 - Precondition: The user has no e-mail; the query is not loading and has no data.
 - Action: Render the page and click Try again.
-- Expected result: The text We couldn't identify your account email for  dashboard yet. (two spaces) shows and `refetch` is called once `app/(portal)/dashboard/page.tsx:154-158`
+- Expected result: The missing-e-mail text We couldn't identify your account email for  dashboard yet. shows and `refetch` is called once `app/(portal)/dashboard/page.tsx:154-158`
 - Test: mapped: `tests/app/(portal)/dashboard/page.test.tsx::renders the missing-email error state and allows retry`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
-- Known gaps: The auth context, `useDashboard` and the child components are mocked; no real HTTP or Frappe backend. The retry calls the mocked `refetch`; what a real refetch does with no e-mail is CAND-04-A6.2E.
+- Known gaps: The auth context, `useDashboard` and the child components are mocked; no real HTTP or Frappe backend. The retry calls the mocked `refetch`; what a real refetch does with no e-mail is CAND-04-A6.2E. The two spaces of the source string (`app/(portal)/dashboard/page.tsx:156`) are not pinned: the test matches `/for\s+dashboard/` (`tests/app/(portal)/dashboard/page.test.tsx:319`), which also passes with one space, so a whitespace change there would not be caught.
 - Evidence: UNVERIFIED
 
 <a id="cand-04-a1-3a"></a>
@@ -356,7 +357,7 @@ Every case is `Evidence: UNVERIFIED`. Cases of kind `mapped` use a test that exi
 - Expected result: The header shows Welcome back and the profile name, the snapshot gets 8 of 8 steps, the three cards show the formatted joining date, the location with its address and the role with its department, and the contact line carries the contact's name, role, e-mail and phone `app/(portal)/dashboard/page.tsx:177-223`
 - Test: mapped: `tests/app/(portal)/dashboard/page.test.tsx::renders dashboard data from useDashboard`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
-- Known gaps: The auth context, `useDashboard` and the child components are mocked; no real HTTP or Frappe backend. The cards and contacts are stubs that print props. The joining-date assertion (Mon, 8 Sep 2025) depends on the machine time zone and fails under `TZ=America/Los_Angeles` (observed on `develop`). Issue: PWHR-1542. The 8 of 8 comes from a fixed rule (section 9). Issue: PWHR-1543.
+- Known gaps: The auth context, `useDashboard` and the child components are mocked; no real HTTP or Frappe backend. The cards and contacts are stubs that print props. The joining-date assertion (Mon, 8 Sep 2025) depends on the machine time zone: run at the working tree, this test passes under `TZ=UTC` and `TZ=Asia/Kolkata` and fails under `TZ=America/Los_Angeles` (observed on `develop`). Issue: PWHR-1542. The 8 of 8 comes from a fixed rule (section 9). Issue: PWHR-1543.
 - Evidence: UNVERIFIED
 
 <a id="cand-04-a2-2a"></a>
@@ -622,7 +623,7 @@ Every case is `Evidence: UNVERIFIED`. Cases of kind `mapped` use a test that exi
 - Expected result: The text In 3 Days shows `components/dashboard/journey-countdown.tsx:36-59`
 - Test: mapped: `tests/components/dashboard/journey-countdown.test.tsx::renders correctly for a future date`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
-- Known gaps: The auth context is mocked where the component reads it; no real HTTP or Frappe backend. The date-only string is parsed as UTC midnight and read in local time; this test fails under `TZ=America/Los_Angeles` (observed). Issue: PWHR-1542.
+- Known gaps: The auth context is mocked where the component reads it; no real HTTP or Frappe backend. The date-only string is parsed as UTC midnight and read in local time: run at the working tree, this test passes under `TZ=UTC` and `TZ=Asia/Kolkata` and fails under `TZ=America/Los_Angeles` (observed). Issue: PWHR-1542.
 - Evidence: UNVERIFIED
 
 <a id="cand-04-a3-4b"></a>
@@ -633,7 +634,7 @@ Every case is `Evidence: UNVERIFIED`. Cases of kind `mapped` use a test that exi
 - Expected result: The text In 1 Day shows (singular) `components/dashboard/journey-countdown.tsx:56`
 - Test: mapped: `tests/components/dashboard/journey-countdown.test.tsx::renders '1 Day' for tomorrow`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
-- Known gaps: The auth context is mocked where the component reads it; no real HTTP or Frappe backend. Same time-zone gap as CAND-04-A3.4A. Issue: PWHR-1542.
+- Known gaps: The auth context is mocked where the component reads it; no real HTTP or Frappe backend. Same time-zone gap as CAND-04-A3.4A: green under `TZ=UTC` and `TZ=Asia/Kolkata`, failing under `TZ=America/Los_Angeles` (observed). Issue: PWHR-1542.
 - Evidence: UNVERIFIED
 
 <a id="cand-04-a3-4c"></a>
@@ -773,7 +774,7 @@ Every case is `Evidence: UNVERIFIED`. Cases of kind `mapped` use a test that exi
 
 - Precondition: A contact with an empty name and an avatar URL; a contact with a single-word name and empty role.
 - Action: Render the list.
-- Expected result: The initials U and P, the text Unknown Contact, Role not assigned twice, and the link names Email Contact and Call Contact show `components/dashboard/key-contacts.tsx:22-28,63-68,82,98`
+- Expected result: The initials U (missing name) and P (the single word Prince, one letter only), the text Unknown Contact, Role not assigned twice, and the link names Email Contact and Call Contact show `components/dashboard/key-contacts.tsx:22-28,63-68,82,98`
 - Test: mapped: `tests/components/dashboard/key-contacts.test.tsx::renders fallbacks for missing name, role, and calculates initials for single word names`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
 - Known gaps: The auth context is mocked where the component reads it; no real HTTP or Frappe backend. The avatar image is not asserted (the Radix avatar needs an image load event).
@@ -784,7 +785,7 @@ Every case is `Evidence: UNVERIFIED`. Cases of kind `mapped` use a test that exi
 
 - Precondition: A name with extra spaces and three words; a one-letter name; an e-mail with a plus sign and a phone number with spaces.
 - Action: Render the list.
-- Expected result: The initials are the first and last word's first letters in capitals (AL, X); the hrefs are mailto: and tel: followed by the raw values `components/dashboard/key-contacts.tsx:22-28,81,97`
+- Expected result: For a multi-word name the initials are the first and last word's first letters in capitals (AL); for a one-word name only that word's first letter (X); the hrefs are mailto: and tel: followed by the raw values `components/dashboard/key-contacts.tsx:22-28,81,97`
 - Test: characterization: `tests/spec/cand-04-dashboard-components.test.tsx::builds initials from the first and last word of the name and puts the e-mail and phone into unencoded mailto and tel links`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
 - Known gaps: The auth context is mocked where the component reads it; no real HTTP or Frappe backend. The raw values are not encoded; whether that matters is not asserted.
@@ -867,7 +868,7 @@ Every case is `Evidence: UNVERIFIED`. Cases of kind `mapped` use a test that exi
 - Expected result: The Ready label shows for the first five and not for the last two `components/dashboard/onboarding-snapshot.tsx:133-138,341-345`
 - Test: characterization: `tests/spec/cand-04-dashboard-snapshot.test.tsx::marks completion from the stage text in any case, from onboarding_status true, or from a percentage of 100 or more`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
-- Known gaps: The auth context, the user hook and the job-offer hooks are mocked; `fetch` and `window.open` are stubbed where a test clicks; no real HTTP or Frappe backend.
+- Known gaps: The auth context, the user hook and the job-offer hooks are mocked; `fetch` and `window.open` are stubbed where a test clicks; no real HTTP or Frappe backend. Only the "Ready" label is read; the check badge that the same `isComplete` flag renders (`components/dashboard/onboarding-snapshot.tsx:348-352`) has no text or accessible name and is asserted nowhere (section 10).
 - Evidence: UNVERIFIED
 
 <a id="cand-04-a4-2c"></a>
@@ -889,7 +890,7 @@ Every case is `Evidence: UNVERIFIED`. Cases of kind `mapped` use a test that exi
 - Expected result: The badge, the heading You are ready to join us on September 8th! and the Ready label show `components/dashboard/onboarding-snapshot.tsx:133-138,189-190,341-345`
 - Test: mapped: `tests/components/dashboard/onboarding-snapshot.test.tsx::renders correctly with completed status`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
-- Known gaps: The auth context, the user hook and the job-offer hooks are mocked; `fetch` and `window.open` are stubbed where a test clicks; no real HTTP or Frappe backend. The date has a Z suffix and the test fails under `TZ=America/Los_Angeles` (observed). Issue: PWHR-1542.
+- Known gaps: The auth context, the user hook and the job-offer hooks are mocked; `fetch` and `window.open` are stubbed where a test clicks; no real HTTP or Frappe backend. The date has a Z suffix, so the heading day moves with the machine time zone: run at the working tree, this test passes under `TZ=UTC` and `TZ=Asia/Kolkata` and fails under `TZ=America/Los_Angeles` (observed). Issue: PWHR-1542. The check badge is not asserted here either (section 10).
 - Evidence: UNVERIFIED
 
 <a id="cand-04-a4-3a"></a>
@@ -1686,10 +1687,10 @@ Every case is `Evidence: UNVERIFIED`. Cases of kind `mapped` use a test that exi
 
 - Precondition: The applicant status holds two applications.
 - Action: Render the navigation.
-- Expected result: The count 2 shows `components/portal/portal-navigation.tsx:128-130,304-315`
+- Expected result: At least one element with the text 2 shows `components/portal/portal-navigation.tsx:128-130,304-315`
 - Test: mapped: `tests/components/portal-navigation.test.tsx::displays live badge count for My Jobs`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
-- Known gaps: The auth, flag, theme and branding hooks are mocked; no real HTTP or Frappe backend.
+- Known gaps: The auth, flag, theme and branding hooks are mocked; no real HTTP or Frappe backend. The assertion is `getAllByText("2").length > 0` (`tests/components/portal-navigation.test.tsx:318-319`): it does not say the badge belongs to the My Jobs item, nor how many copies render (the desktop and the mobile menu each render one), so another element printing a 2 would satisfy it.
 - Evidence: UNVERIFIED
 
 <a id="cand-04-a8-2b"></a>
@@ -1741,10 +1742,10 @@ Every case is `Evidence: UNVERIFIED`. Cases of kind `mapped` use a test that exi
 
 - Precondition: A signed-in user.
 - Action: Click the user button.
-- Expected result: Profile and Sign Out show `components/portal/portal-navigation.tsx:331-419`
+- Expected result: Profile and Sign Out show `components/portal/portal-navigation.tsx:379-384,411-417`
 - Test: mapped: `tests/components/portal-navigation.test.tsx::opens user dropdown menu when clicked`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
-- Known gaps: The auth, flag, theme and branding hooks are mocked; no real HTTP or Frappe backend.
+- Known gaps: The auth, flag, theme and branding hooks are mocked; no real HTTP or Frappe backend. The default `disableUserDropdown` (false) is used, so the case does not separate the always-rendered Sign Out item (`components/portal/portal-navigation.tsx:411-417`) from Profile and the theme toggle, which the `!disableUserDropdown` branch holds (`components/portal/portal-navigation.tsx:376-408`); the `true` value is untested (section 10).
 - Evidence: UNVERIFIED
 
 <a id="cand-04-a8-4d"></a>

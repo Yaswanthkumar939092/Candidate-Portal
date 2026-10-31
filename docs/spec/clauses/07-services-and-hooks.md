@@ -18,14 +18,14 @@ The live modules fall into three shapes:
 2. **Direct-`fetch` services.** `ctc-proposal` and `direct-applicant-form` build their own request against `frappeApiBase()`, read `message` out of the body and raise `frappeErrorMessage` text on a non-OK reply (`lib/services/ctc-proposal.ts:11-26`, `lib/services/direct-applicant-form.ts:13-31`). `jobOffer.isCultureBookAvailable` and `useNonWorkingDays` also call `fetch` directly (`lib/services/jobOffer.ts:128-147`, `lib/hooks/useNonWorkingDays.ts:28-47`).
 3. **Hooks.** Each hook wraps one service call in `useQuery` or `useMutation`, fixing the query key, the `enabled` gate, the stale time and which caches a mutation invalidates (`lib/hooks/useJobOffer.ts:5-12`, `lib/hooks/useCtcProposal.ts:7-27`).
 
-Six modules are legacy: they are built into the image but no live file imports them (section 9, G1; SPEC-CAND-02 G5, PWHR-1515). They are `lib/services/email.ts`, `sso.ts`, `sync.ts`, `frappe-env.ts`, `employee-detection.ts` and `onboarding.ts`. They talk to Supabase and to a server-side Frappe client that the portal does not otherwise use. Their tests still run; this clause maps a representative test per module and lists the rest (section 10).
+Six modules are legacy: they are built into the image but no live file imports them (section 9, G1; SPEC-CAND-02 G5, PWHR-1515). They are `lib/services/email.ts`, `sso.ts`, `sync.ts`, `frappe-env.ts`, `employee-detection.ts` and `onboarding.ts`. Five of them talk to Supabase, to a server-side Frappe client that the portal does not otherwise use, or to both (`lib/services/sso.ts:95-100`, `lib/services/sync.ts:1,3`, `lib/services/frappe-env.ts:261-265`, `lib/services/employee-detection.ts:22-27`, `lib/services/onboarding.ts:15-19`); `email.ts` reaches neither — it builds a `nodemailer` transport from the `SMTP_*` variables (`lib/services/email.ts:1,88-103`). Their tests still run; this clause maps a representative test per module and lists the rest (section 10).
 
 What the backend does with any of these calls — who may read a proposal, how a job offer is approved, what a survey is for — is in the `recruitment` app and is not described here.
 
 ## 2. Boundaries
 
 - In: `lib/services/{jobOffer,jobOpeningService,action-center,savedJobsService,pre-offer,profileService,ctc-proposal,direct-applicant-form,home,survey,email,sso,sync,frappe-env,employee-detection,onboarding}.ts` and `lib/hooks/{useJobOffer,useJobOpening,useSavedJobs,useAcationCenter,usePreOfferForm,useCtcProposal,useDirectApplicantForm,useUpdateProfile,useChangePassword,useHomeContent,useSurvey,useDebounce,useNonWorkingDays,useExternalConsentHandoff,usePublicBranding,usePublicOpenings}.ts`.
-- Out: `lib/frappe-api.ts`, `lib/frappe-base.ts`, `lib/frappe-error.ts`, `lib/services/{feature-flags,candidate-branding,auth-page-content,uploadProofFile}.ts` and `lib/hooks/useCandidateFeatureFlags.ts` are SPEC-CAND-02. `lib/auth.ts` and `lib/hooks/useAuthSettings.ts` are SPEC-CAND-03. `lib/hooks/useDashboard.ts`, `lib/services/dashboard.ts`, `lib/hooks/useApplicantStatus.ts`, `lib/services/applicantStatusService.ts` and `lib/utils/dpdp-consent.ts` are SPEC-CAND-04. `lib/services/candidate-onboarding.ts`, `link-field.ts` and the onboarding hooks are SPEC-CAND-05. Every page and component that calls these hooks is out: this clause stops at the hook's return value.
+- Out: `lib/frappe-api.ts`, `lib/frappe-base.ts`, `lib/frappe-error.ts`, `lib/services/{feature-flags,candidate-branding,auth-page-content,uploadProofFile}.ts` and `lib/hooks/useCandidateFeatureFlags.ts` are SPEC-CAND-02. `lib/hooks/useCandidateBranding.ts` and `lib/hooks/useAuthPageContent.ts` wrap the two services SPEC-CAND-02 A5.1 and A5.2 describe, so they are out here; what SPEC-CAND-02 does not state is their query keys, stale times and `retry` setting (section 10). `lib/auth.ts` and `lib/hooks/useAuthSettings.ts` are SPEC-CAND-03. `lib/hooks/useDashboard.ts`, `lib/services/dashboard.ts`, `lib/hooks/useApplicantStatus.ts`, `lib/services/applicantStatusService.ts` and `lib/utils/dpdp-consent.ts` are SPEC-CAND-04. `lib/services/candidate-onboarding.ts`, `link-field.ts` and the onboarding hooks are SPEC-CAND-05. Every page and component that calls these hooks is out: this clause stops at the hook's return value.
 - Neighbouring clauses: SPEC-CAND-02 for how `FrappeAPI` builds a request and turns a failure into an `Error`; SPEC-CAND-04 for `lib/utils/dpdp-consent.ts`, whose helpers `useExternalConsentHandoff` calls.
 - Extension points: a new backend call is a new method on an existing service object plus a hook that names a new query key.
 
@@ -34,7 +34,7 @@ What the backend does with any of these calls — who may read a proposal, how a
 ### A1: Job offer service
 
 - A1.1: `getJobOfferSummary`, `getJobOfferStatus` and `getRejectionReasons` are `FrappeAPI.get` calls to `recruitment.job_offer_utils.get_job_offer_summary`, `.get_job_offer_status` and `.get_rejection_reasons`; the first two send `{ appl }` and add `token` only when one is passed, the third sends no parameters at all (`lib/services/jobOffer.ts:87-97`). [CAND-07-A1.1A] [CAND-07-A1.1B] [CAND-07-A1.1C]
-- A1.2: `updateJobOfferStatus` posts the whole parameter object to `recruitment.job_offer_utils.job_offer_update`; `getConsentForm` gets `recruitment.recruitment.doctype.dpdp_act_settings.dpdp_act_settings.get_consent_form` with `appl` and `token`; `submitConsent` posts the payload to `recruitment.dpdp_consent.submit_dpdp_consent`; `startConsentSession` posts `{ appl }` plus `token` when present to `recruitment.dpdp_external_consent.start_consent_session`; `getConsentSessionStatus` gets `recruitment.dpdp_external_consent.get_consent_session_status` the same way (`lib/services/jobOffer.ts:149-215`). [CAND-07-A1.2A] [CAND-07-A1.2B] [CAND-07-A1.2C] [CAND-07-A1.2D] [CAND-07-A1.2E] [CAND-07-A1.2F]
+- A1.2: `updateJobOfferStatus` posts the whole parameter object to `recruitment.job_offer_utils.job_offer_update`; `getConsentForm` gets `recruitment.recruitment.doctype.dpdp_act_settings.dpdp_act_settings.get_consent_form` with `appl` and `token`; `submitConsent` posts the payload to `recruitment.dpdp_consent.submit_dpdp_consent`; `startConsentSession` posts `{ appl }` plus `token` when present to `recruitment.dpdp_external_consent.start_consent_session`; `getConsentSessionStatus` gets `recruitment.dpdp_external_consent.get_consent_session_status` the same way (`lib/services/jobOffer.ts:149-222`). [CAND-07-A1.2A] [CAND-07-A1.2B] [CAND-07-A1.2C] [CAND-07-A1.2D] [CAND-07-A1.2E] [CAND-07-A1.2F]
 - A1.3: `getJobOfferPdfUrl` and `getCultureBookPdfUrl` return a URL string and make no request: `<frappeApiBase()>/api/method/recruitment.job_offer_utils.download_job_offer_pdf` and `.preview_culture_book`, with `appl` and an optional `token` encoded by `URLSearchParams` (`lib/services/jobOffer.ts:99-117`). [CAND-07-A1.3A] [CAND-07-A1.3B] [CAND-07-A1.3C]
 - A1.4: `isCultureBookAvailable` returns false for an empty `appl` without a request; otherwise it `fetch`es the preview URL with credentials, returns false and cancels the body when the reply is not OK, returns true and cancels the body when the content type does not contain `application/json`, and otherwise reads the JSON and returns false only when `message.available` is exactly `false`; any thrown error gives false (`lib/services/jobOffer.ts:128-147`). [CAND-07-A1.4A] [CAND-07-A1.4B] [CAND-07-A1.4C] [CAND-07-A1.4D]
 - A1.5: `getJobOfferLetters` gets `recruitment.job_offer_utils.download_job_offer_pdf` with `{ appl, separate: "1" }` plus the optional token — the same method as the PDF URL, asked for as JSON (`lib/services/jobOffer.ts:224-230`). [CAND-07-A1.5A]
@@ -43,7 +43,7 @@ What the backend does with any of these calls — who may read a proposal, how a
 ### A2: Job offer hooks
 
 - A2.1: `useJobOfferSummary`, `useCultureBookAvailability` and `useJobOfferLetters` key on `["<name>", appl, token]`, run only when `appl` is non-empty and the `enabled` argument is true, and keep an answer fresh for five minutes (`lib/hooks/useJobOffer.ts:5-12,34-50`). [CAND-07-A2.1A] [CAND-07-A2.1C]
-- A2.2: `useJobOfferPdf` and `useCultureBookPdf` issue no query at all: they return `{ pdfUrl, isLoading: false, error: null }`, where `pdfUrl` is the service's URL when `appl` is non-empty and `enabled` is true, and otherwise the falsy left-hand value of the conditional — `null` for a disabled hook and `""` for an empty `appl` (`lib/hooks/useJobOffer.ts:19-27`). [CAND-07-A2.1B] [CAND-07-A2.3C]
+- A2.2: `useJobOfferPdf` and `useCultureBookPdf` issue no query at all: they return `{ pdfUrl, isLoading: false, error: null }`, where `pdfUrl` is the service's URL when `appl` is non-empty and `enabled` is true, and `null` otherwise — the else branch of the conditional, which an empty `appl` and a disabled hook both reach (`lib/hooks/useJobOffer.ts:19-27`). [CAND-07-A2.1B] [CAND-07-A2.3C]
 - A2.3: `useJobOfferStatus` keys on `["jobOfferStatus", appl, token]` with a one-minute stale time and no `enabled` argument; `useRejectionReasons` keys on `["rejectionReasons"]` with a one-hour stale time and no gate; `useConsentForm` keys on `["consentForm", appl, token]`, needs both, and is fresh for ten minutes (`lib/hooks/useJobOffer.ts:68-91`). [CAND-07-A2.3A] [CAND-07-A2.3B] [CAND-07-A2.3D] [CAND-07-A2.3E]
 - A2.4: `useUpdateJobOfferStatus` writes `{ status }` straight into the cache at `["jobOfferStatus", appl, token]` and then invalidates `["dashboard"]`; `useSubmitConsent` has no `onSuccess` and invalidates nothing (`lib/hooks/useJobOffer.ts:52-66,94-98`). [CAND-07-A2.4A] [CAND-07-A2.4B]
 - A2.5: `useStartConsentSession` sets `retry: false`, so a failed `start_consent_session` is attempted exactly once (`lib/hooks/useJobOffer.ts:110-116`). [CAND-07-A2.2A]
@@ -74,7 +74,7 @@ What the backend does with any of these calls — who may read a proposal, how a
 - A5.2: `getPreOfferFormState` returns `{ filled: false, filled_at: null, rejected_fields: [] }` without a request when no applicant is named, and falls back to the same object when the backend answers nothing (`lib/services/pre-offer.ts:34-39`). [CAND-07-A5.1A]
 - A5.3: `submitPreOffer` throws `Job applicant is required` without a request when the applicant is empty, and otherwise posts `{ job_applicant, data: JSON.stringify(data) }` to `recruitment.api.channels.pre_offer.submit_application` (`lib/services/pre-offer.ts:42-47`). [CAND-07-A5.1B] [CAND-07-A5.3D]
 - A5.4: `transformPreOfferField` takes the field name from `reference_name`, else `fieldname`, else `""`; the label from `display_name`, else `label`, else the field name; the child rows from `child_fields`, else `table_fields`; and derives `read_only` from `editability !== "Editable"` and `hidden` from `visibility === "Hidden"` only when the explicit numeric flags are absent (`lib/services/pre-offer.ts:51-72`). [CAND-07-A5.1C] [CAND-07-A5.3C]
-- A5.5: `transformPreOfferForm` reads the form status from a field named `pre_offer_form_status` or `status` (its `value`, else its `default`, else `Sent`), leaves that field out of the rendered fields, and groups every other field into one tab per `section`, defaulting to `Basic Details`, each with a single section called `Details`… no: `section` named after the tab (`lib/services/pre-offer.ts:74-115`). [CAND-07-A5.1D]
+- A5.5: `transformPreOfferForm` reads the form status from the first field whose `reference_name` is `pre_offer_form_status` or `status` (its `value`, else its `default`, else `Sent`), leaves that field out of the rendered fields, and groups every other field into one tab per `section`, defaulting to `Basic Details`; each tab holds a single section whose name repeats the tab name (`lib/services/pre-offer.ts:76-119`). [CAND-07-A5.1D]
 - A5.6: `usePreOfferForm` keys on `["pre-offer-form", { userEmail }]` — an object, not a string — with a one-minute stale time and no `enabled` gate, so it runs with an empty e-mail too; `usePreOfferFormState` keys on `["pre-offer-form-state", jobApplicant]` and waits for an applicant (`lib/hooks/usePreOfferForm.ts:5-23`). [CAND-07-A5.2A]
 - A5.7: `useSubmitPreOffer` invalidates both of those keys, rebuilding the object key from the submitted applicant (`lib/hooks/usePreOfferForm.ts:29-36`). [CAND-07-A5.2B]
 
@@ -102,11 +102,11 @@ What the backend does with any of these calls — who may read a proposal, how a
 ### A9: Job opening, saved job and action centre services
 
 - A9.1: `JobOpeningService.getJobOpening` gets `recruitment.api.channels.careers.list_openings` with `page` and `limit` as strings, adding `search_term` and `email` only when they are truthy; `getCampusInviteOpenings` gets `recruitment.api.channels.campus.get_invite_openings` with `campus_invite` and an optional `email` (`lib/services/jobOpeningService.ts:10-45`). [CAND-07-A9.1D] [CAND-07-A9.3A] [CAND-07-A9.3B] [CAND-07-A9.3C]
-- A9.2: `jobApplicationService.submitApplication` posts to `recruitment.api.channels.campus.submit_invite_application` with four renamed fields only when the payload has both `isCampus` and `campus_invite`; otherwise it posts the whole payload to `recruitment.api.channels.careers.submit_application` (`lib/services/jobOpeningService.ts:73-97`). [CAND-07-A9.1C] [CAND-07-A9.3D] [CAND-07-A9.3E]
-- A9.3: `getJobApplicationForm` picks the campus or careers `get_application_fields` method from `isCampus`, sends `opening` when a job is named and `email`/`campus_invite` only in the campus case, and renames every returned field into the form shape; any error is logged as `API ERROR:` and answered with `{ fields: [] }` (`lib/services/jobOpeningService.ts:99-138`). [CAND-07-A9.1A] [CAND-07-A9.1B] [CAND-07-A9.3G]
-- A9.4: `draftJobApplicantService.getAllDrafts` gets `recruitment.api.channels.careers.get_draft` with `job_applicant_email`; `deleteDraftJobApplicant` posts `job_applicant_email` and `job_opening` to `.delete_draft` (`lib/services/jobOpeningService.ts:47-72`). [CAND-07-A9.3F]
+- A9.2: `jobApplicationService.submitApplication` posts to `recruitment.api.channels.campus.submit_invite_application` with four renamed fields only when the payload has both `isCampus` and `campus_invite`; otherwise it posts the whole payload to `recruitment.api.channels.careers.submit_application` (`lib/services/jobOpeningService.ts:79-100`). [CAND-07-A9.1C] [CAND-07-A9.3D] [CAND-07-A9.3E]
+- A9.3: `getJobApplicationForm` picks the campus or careers `get_application_fields` method from `isCampus`, sends `opening` when a job is named and `email`/`campus_invite` only in the campus case, and remaps every returned field into the form shape; any error is logged as `API ERROR:` and answered with `{ fields: [] }` (`lib/services/jobOpeningService.ts:102-139`). [CAND-07-A9.1A] [CAND-07-A9.1B] [CAND-07-A9.3G]
+- A9.4: `draftJobApplicantService.getAllDrafts` gets `recruitment.api.channels.careers.get_draft` with `job_applicant_email`; `deleteDraftJobApplicant` posts `job_applicant_email` and `job_opening` to `.delete_draft` (`lib/services/jobOpeningService.ts:50-75`). [CAND-07-A9.3F]
 - A9.5: `ActionCenterDataService.getActionCenterData` gets `recruitment.api.action_center.get_action_center_items` with `candidate_email` (`lib/services/action-center.ts:4-9`). [CAND-07-A9.4A]
-- A9.6: `ActionCenterMyRequestService` reads the Candidate Raise Request resource with the doctype spelled `Candidate%20Raise%20Request` — already percent-encoded before `FrappeAPI` builds the URL — asking for all fields filtered on `candidate_email`, and returns only the reply's `data` field; `CandidateRaiseRequestService` posts a new request with the unencoded doctype and also returns `data` (`lib/services/action-center.ts:12-34`). [CAND-07-A9.2A] [CAND-07-A9.4B]
+- A9.6: `ActionCenterMyRequestService` reads the Candidate Raise Request resource with the doctype spelled `Candidate%20Raise%20Request` — already percent-encoded before `FrappeAPI` builds the URL — asking for all fields filtered on `candidate_email`, and returns only the reply's `data` field; `CandidateRaiseRequestService` posts a new request with the unencoded spelling `Candidate Raise Request` and also returns `data` (`lib/services/action-center.ts:12-34`). Both strings are interpolated into the URL and handed to `fetch`, which percent-encodes the space itself, so the two spellings produce the same request path (`lib/frappe-api.ts:158,183`). [CAND-07-A9.2A] [CAND-07-A9.4B]
 - A9.7: `SavedJobsService.getSavedJobs` gets `recruitment.api.channels.careers.get_saved_job_openings` with `candidate_email`; `toggleSavedJob` posts `candidate_email` and `job_opening` to `.toggle_saved_job_opening` (`lib/services/savedJobsService.ts:3-23`). [CAND-07-A9.5A] [CAND-07-A9.5B]
 
 ### A10: Job opening, saved job and action centre hooks
@@ -122,21 +122,21 @@ What the backend does with any of these calls — who may read a proposal, how a
 These modules have no importer in `app/`, `lib/` or `components/` outside the legacy set itself (G1). They are described, not live.
 
 - A11.1: `FrappeClient.request` builds `<frappe_url without a trailing slash><endpoint>` with the `params` appended, sends an `Authorization: token <key>:<secret>` header when both API credentials are set, else a bearer of a session id, else logs in with username and password first; a 401 or 403 becomes `FrappeAuthError`, any other non-OK status becomes `FrappeApiError` carrying the status and the body text, and every call aborts after `timeout` milliseconds (default 30000) (`lib/services/frappe-env.ts:30-117`). [CAND-07-A11.1A] [CAND-07-A11.1B]
-- A11.2: `FrappeEnvironmentManager.getActiveConfig` reads the active row of the Supabase table `frappe_environments`, caches it for five minutes and falls back to `FRAPPE_BASE_URL` and the four `FRAPPE_*` credential variables, throwing when no URL is configured (`lib/services/frappe-env.ts:249-300`). [CAND-07-A11.1C]
+- A11.2: `FrappeEnvironmentManager.getActiveConfig` reads the active row of the Supabase table `frappe_environments`, caches it for five minutes and falls back to `FRAPPE_BASE_URL` and the four `FRAPPE_*` credential variables, throwing when no URL is configured (`lib/services/frappe-env.ts:249,254-301`). [CAND-07-A11.1C]
 - A11.3: `FrappeSyncService.syncAll` runs the job, application and company syncs one after another and adds their counts into one summary (`lib/services/sync.ts:546-574`). [CAND-07-A11.2A]
 - A11.4: `FrappeSSOProvider.generateAuthUrl` builds a `frappe.integrations.oauth2.authorize` URL with the client id, redirect URI, `response_type=code`, the scope `openid email profile` and the caller's state (`lib/services/sso.ts:31-40`). [CAND-07-A11.3A]
-- A11.5: `EmailService.sendBulkEmails` sends each message in turn, counts sent and failed, logs and counts a thrown message as failed, and waits `delayMs` between messages when that is above zero (`lib/services/email.ts:215-257`). [CAND-07-A11.4A]
-- A11.6: `InternalEmployeeDetector.detectInternal` tries the Supabase `company_domains` table first and falls back to a Frappe Employee lookup, which is skipped silently when Frappe is unreachable (`lib/services/employee-detection.ts:18-59`). [CAND-07-A11.5A]
-- A11.7: `OnboardingService.submitForReview` throws `No onboarding data found` with no record, and `Missing required steps: <names>` listing every one of the seven required steps that holds no data (`lib/services/onboarding.ts:47-67`). [CAND-07-A11.6A]
+- A11.5: `EmailService.sendBulkEmails` sends each message in turn and counts it as sent or failed from the boolean the per-template send returned, waiting `delayMs` between messages when that is above zero; a message that throws out of the send is logged and counted as failed by the loop's own `catch` (`lib/services/email.ts:215-257`). `sendEmail` swallows a rejected transport and returns false itself, so a refused send reaches the `success === false` branch rather than that `catch` (`lib/services/email.ts:141-148,239-243`). [CAND-07-A11.4A]
+- A11.6: `InternalEmployeeDetector.detectInternal` tries the Supabase `company_domains` table first and falls back to a Frappe Employee lookup, which is skipped silently when Frappe is unreachable (`lib/services/employee-detection.ts:18-34,39-48,54-59`). [CAND-07-A11.5A]
+- A11.7: `OnboardingService.submitForReview` throws `No onboarding data found` with no record, and `Missing required steps: <names>` listing every one of the seven required steps that holds no data (`lib/services/onboarding.ts:49-69`). [CAND-07-A11.6A]
 
 ## 4. Data and permissions
 
-- These services send the candidate's e-mail or application id, the record name or link token, form answers, uploaded files, a password change and survey answers; they receive the backend's own objects and pass them to the caller unchanged (`lib/services/jobOffer.ts:87-92`, `lib/services/direct-applicant-form.ts:49-79`, `lib/services/profileService.ts:31-42`).
+- These services send the candidate's e-mail or application id, the record name or link token, form answers, uploaded files, a password change and survey answers; they receive the backend's own objects and pass them to the caller unchanged (`lib/services/jobOffer.ts:87-92`, `lib/services/direct-applicant-form.ts:49-79`, `lib/services/profileService.ts:32-42`).
 - Every live call is identified either by the session cookie (`credentials: "include"`) or by a link token in a query parameter (`lib/services/ctc-proposal.ts:13-17`, `lib/services/direct-applicant-form.ts:16-20`). Who may read a proposal, a form or an offer is decided by the backend and is not in this repo.
 - The link token travels in the URL query for every token-mode call, including the PDF and culture-book URLs that end up in an `<img>`/`<iframe>` source (`lib/services/jobOffer.ts:99-116`, `lib/services/direct-applicant-form.ts:43`). See section 8.
 - `profileService.changePassword` sends the current and new password in a POST body, never in the URL (`lib/services/profileService.ts:33-37`).
 - No module in this clause writes to `localStorage`, `sessionStorage` or a cookie; the only client-side state is the React Query cache and the module-level promise in `useNonWorkingDays` (`lib/hooks/useNonWorkingDays.ts:26`).
-- The legacy modules read and write Supabase tables `frappe_environments`, `sso_providers`, `company_domains`, `profiles`, `onboarding_data`, `jobs`, `applications` and `companies`, and read `FRAPPE_API_KEY`, `FRAPPE_API_SECRET`, `FRAPPE_USERNAME`, `FRAPPE_PASSWORD` and the `SMTP_*` variables (`lib/services/frappe-env.ts:259-301`, `lib/services/sso.ts:92-114`, `lib/services/employee-detection.ts:22-27`, `lib/services/onboarding.ts:14-21`, `lib/services/email.ts:87-99`). Those variables are inventoried in SPEC-CAND-02 section 6.
+- The legacy modules read and write Supabase tables `frappe_environments`, `sso_providers`, `company_domains`, `profiles`, `onboarding_data`, `jobs`, `applications` and `companies`, and read `FRAPPE_API_KEY`, `FRAPPE_API_SECRET`, `FRAPPE_USERNAME`, `FRAPPE_PASSWORD` and the `SMTP_*` variables (`lib/services/frappe-env.ts:261-265,292-295`, `lib/services/sso.ts:95-100`, `lib/services/employee-detection.ts:22-27`, `lib/services/onboarding.ts:15-19`, `lib/services/email.ts:89-95`). `company_domains` is read at `lib/services/employee-detection.ts:23` and `profiles` is written at `lib/services/employee-detection.ts:67`. Those variables are inventoried in SPEC-CAND-02 section 6.
 - Statutory source: not applicable. The DPDP consent text, its wording and the consent record itself come from the backend; this clause only moves a URL and a session id (`lib/services/jobOffer.ts:166-215`). The data-protection rule behind that flow is described where the consent decision lives, SPEC-CAND-04.
 
 ## 5. Errors and edge behaviour
@@ -145,9 +145,9 @@ These modules have no importer in `app/`, `lib/` or `components/` outside the le
 - The two direct-`fetch` services turn a non-OK reply into `new Error(frappeErrorMessage(body, "Something went wrong. Please try again."))`; a body that is not JSON leaves `body` as `{}`, so such a failure carries only the fallback text (`lib/services/ctc-proposal.ts:18-24`, `lib/services/direct-applicant-form.ts:21-29`).
 - `isCultureBookAvailable` and `useNonWorkingDays` swallow every failure and answer `false` / `[]`; the candidate sees a missing feature rather than an error (`lib/services/jobOffer.ts:144-146`, `lib/hooks/useNonWorkingDays.ts:44`).
 - `useExternalConsentHandoff` swallows a thrown session call and reports `failed` instead, so the caller can offer a retry (`lib/hooks/useExternalConsentHandoff.ts:55-60`).
-- `useCreateJobApplicant`, `useDeleteDraftJobApplicant` and `useCandidateRaiseRequest` handle a failure only by writing to the console; nothing reaches the user from the hook (`lib/hooks/useJobOpening.ts:59,76`, `lib/hooks/useAcationCenter.ts:33-35`).
+- `useCreateJobApplicant`, `useDeleteDraftJobApplicant` and `useCandidateRaiseRequest` handle a failure only by writing to the console; nothing reaches the user from the hook (`lib/hooks/useJobOpening.ts:60,77`, `lib/hooks/useAcationCenter.ts:33-35`).
 - `useCtcProposal`, `useDirectApplicantForm`, `useGetAllDrafts`, `useGetSavedJobs` and `useHomeContent` set `retry: false`, so one failure is final until something invalidates the key (`lib/hooks/useCtcProposal.ts:12`, `lib/hooks/useDirectApplicantForm.ts:11`, `lib/hooks/useJobOpening.ts:69`, `lib/hooks/useSavedJobs.ts:9`, `lib/hooks/useHomeContent.ts:9`).
-- `useJobOfferPdf("")` returns `pdfUrl: ""`, not `null`, because the conditional yields the empty `appl` itself; the documented guard is only exact for a non-empty string (`lib/hooks/useJobOffer.ts:20`). Section 9, G4.
+- `useJobOfferPdf("")` and `useCultureBookPdf("")` return `pdfUrl: null`: the empty string is falsy, so `appl && enabled` short-circuits to a falsy left-hand value and the conditional takes its else branch (`lib/hooks/useJobOffer.ts:20,25`). The guard the hook's own comment promises therefore holds; section 9, G2.
 - `usePreOfferForm` has no `enabled` gate, so it asks for the form with an empty e-mail and relies on the backend to answer (`lib/hooks/usePreOfferForm.ts:5-11`).
 - `useJobApplicationForm` likewise has no gate and runs with `job_opening` undefined (`lib/hooks/useJobOpening.ts:81-89`).
 - `getPreOfferForm` is the only service here that validates the reply's shape before using it (`lib/services/pre-offer.ts:23-25`).
@@ -157,12 +157,12 @@ These modules have no importer in `app/`, `lib/` or `components/` outside the le
 - `NEXT_PUBLIC_FRAPPE_URL` and `FRAPPE_BASE_URL` decide the base URL of every direct `fetch` through `frappeApiBase()` (SPEC-CAND-02); the `FrappeAPI` services inherit the same base (`lib/services/ctc-proposal.ts:13`, `lib/services/jobOffer.ts:107`).
 - `CONSENT_STATUS_POLL_MS` is the only tunable constant in this clause: 3000 ms, exported and read by the return page (`lib/hooks/useJobOffer.ts:101,146`).
 - Stale times are constants in the hook files: five minutes for the offer summary, availability and letters, one minute for the offer status and the pre-offer form, ten minutes for the consent form, the post-login route and public branding, one hour for the rejection reasons and the home content, five minutes for public openings, and zero for the consent status (`lib/hooks/useJobOffer.ts:10,39,48,73,81,90,144`, `lib/hooks/usePreOfferForm.ts:9`, `lib/hooks/useSurvey.ts:9`, `lib/hooks/useHomeContent.ts:8`, `lib/hooks/usePublicBranding.ts:20`, `lib/hooks/usePublicOpenings.ts:16`).
-- The legacy modules read `FRAPPE_BASE_URL`, `FRAPPE_API_KEY`, `FRAPPE_API_SECRET`, `FRAPPE_USERNAME`, `FRAPPE_PASSWORD`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `FROM_EMAIL` and `FROM_NAME`, with defaults for the mail host, port and sender (`lib/services/frappe-env.ts:286-299`, `lib/services/email.ts:87-99`). The same list is in SPEC-CAND-02 section 6.
+- The legacy modules read `FRAPPE_BASE_URL`, `FRAPPE_API_KEY`, `FRAPPE_API_SECRET`, `FRAPPE_USERNAME`, `FRAPPE_PASSWORD`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `FROM_EMAIL` and `FROM_NAME`, with defaults for the mail host, port and sender (`lib/services/frappe-env.ts:285-295`, `lib/services/email.ts:89-99`). The same list is in SPEC-CAND-02 section 6.
 - No feature flag gates any module in this clause at `Described at`; on the deployment branch `useHomeContent` gains `enabled: HOME_PROMO_ENABLED` (header).
 
 ## 7. Scheduled jobs, hooks and patches
 
-No cron, queue or server-side schedule exists in this repo. Two timed behaviours run in the browser:
+No module in this clause is run by a scheduler, and no cron or queue worker ships with this repo. Two periodic behaviours exist outside it: the container health check, which the image runs every 30 seconds (`Dockerfile:55`, `scripts/container-health.mjs:2-9`) and which SPEC-CAND-02 section 7 describes, and the legacy in-memory rate-limit store, whose constructor sets a five-minute `setInterval` cleanup (`lib/middleware/rate-limit.ts:35-40`); that module has no importer either (SPEC-CAND-02 G5, PWHR-1515) and no clause states its interval. Two timed behaviours run in the browser:
 
 - `useConsentSessionStatus` polls every 3000 ms until `consent_given` turns true (`lib/hooks/useJobOffer.ts:145-147`).
 - `useDebounce` holds a `setTimeout` per value change and clears it on the next change or on unmount (`lib/hooks/useDebounce.ts:6-14`).
@@ -175,7 +175,7 @@ No cron, queue or server-side schedule exists in this repo. Two timed behaviours
 - Security: `useExternalConsentHandoff` sends the candidate to a backend-supplied URL; `isSafeExternalConsentUrl` accepts any absolute `http:` or `https:` URL, so the backend chooses the destination host without an allowlist in this repo (`lib/hooks/useExternalConsentHandoff.ts:35,54`, `lib/utils/dpdp-consent.ts:48-56`). The validation itself is SPEC-CAND-04.
 - Security: no module here writes to `localStorage`, `sessionStorage` or a cookie (`lib/hooks/useJobOffer.ts:5-149`).
 - Security: `jobApplicationService.getJobApplicationForm` logs the whole error object to the console, which in a browser puts the backend's message into the devtools log (`lib/services/jobOpeningService.ts:135`).
-- Security: `ActionCenterMyRequestService` passes a pre-encoded doctype into `FrappeAPI.getresourceDocumentData`, which builds the URL by interpolation; an un-encoded value would be interpolated as given (`lib/services/action-center.ts:14`, `lib/frappe-api.ts:158`).
+- Security: `ActionCenterMyRequestService` passes a pre-encoded doctype into `FrappeAPI.getresourceDocumentData`, which builds the URL by interpolation and hands it to `fetch`; a value holding a `?` or `#` would not survive that interpolation, and the sibling create path interpolates the unencoded spelling (`lib/services/action-center.ts:14,28`, `lib/frappe-api.ts:158,183`).
 - Security: file uploads here go through `directApplicantFormService.uploadFile`, which sends the `File` as-is with no type or size check in the client; what is accepted is decided by `recruitment.api.direct_applicant_portal.upload_my_file` (`lib/services/direct-applicant-form.ts:64-71`).
 - Security (legacy): `FrappeClient` puts the API key and secret in an `Authorization` header and, without them, posts the username and password to `/api/method/login` and keeps the returned `sid` in memory (`lib/services/frappe-env.ts:40-45,55-76`).
 - Performance: `useConsentSessionStatus` issues one request every three seconds for as long as the return page is open and consent has not landed; it does stop in a background tab (`lib/hooks/useJobOffer.ts:145-147`).
@@ -187,15 +187,15 @@ No cron, queue or server-side schedule exists in this repo. Two timed behaviours
 
 ## 9. Known gaps / open questions
 
-- G1: The six legacy modules have no importer outside the legacy set. A script that read every `from "…"`, `import("…")` and `require("…")` specifier in 234 files under `app/`, `lib/`, `components/`, `types/`, `middleware.ts` and `next.config.mjs` at `Described at` found zero importers of `lib/services/email.ts`, `lib/services/sso.ts`, `lib/services/sync.ts`, `lib/services/employee-detection.ts` and `lib/services/onboarding.ts`, and three importers of `lib/services/frappe-env.ts` — `lib/services/employee-detection.ts:2`, `lib/services/onboarding.ts:2` and `lib/services/sync.ts:3`, all legacy themselves. Issue: PWHR-1515 (SPEC-CAND-02 G5).
-- G2: `useJobOfferPdf("")` and `useCultureBookPdf("")` return `pdfUrl: ""` rather than `null`, because the guard is `appl && enabled ? … : null` and an empty string short-circuits to itself (`lib/hooks/useJobOffer.ts:20,25`). A caller that checks `pdfUrl !== null` would treat the empty string as a URL. Issue: PWHR-1553.
-- G3: `ActionCenterMyRequestService` names the doctype `Candidate%20Raise%20Request` while `CandidateRaiseRequestService` names the same doctype `Candidate Raise Request`; `FrappeAPI.getresourceDocumentData` interpolates the value into the URL without encoding it, so only the first spelling survives in a GET URL and the two paths disagree (`lib/services/action-center.ts:14,28`, `lib/frappe-api.ts:158`). Issue: PWHR-1554.
-- G4: `useJobOpening`'s campus branch builds `pagination.limit` as `openings.length || 10`, so the page size reported to the UI is the row count rather than the requested limit, and 10 when the invite lists nothing (`lib/hooks/useJobOpening.ts:40`). Issue: PWHR-1555.
+- G1: The six legacy modules have no importer outside the legacy set. A script that read every `from "…"`, `import("…")` and `require("…")` specifier in the 234 `.ts`, `.tsx`, `.js`, `.jsx` and `.mjs` files under `app/`, `lib/`, `components/` and `types/` at `Described at` found zero importers of `lib/services/email.ts`, `lib/services/sso.ts`, `lib/services/sync.ts`, `lib/services/employee-detection.ts` and `lib/services/onboarding.ts`, and three importers of `lib/services/frappe-env.ts` — `lib/services/employee-detection.ts:2`, `lib/services/onboarding.ts:2` and `lib/services/sync.ts:3`, all legacy themselves. The repo has no `middleware.ts`, and the root config `next.config.ts` was outside the scanned set. Issue: PWHR-1515 (SPEC-CAND-02 G5).
+- G2: Not a defect; premise withdrawn. An earlier draft of this clause read `appl && enabled ? … : null` as yielding the empty string for `useJobOfferPdf("")` and `useCultureBookPdf("")`. It does not: `""` is falsy, the conditional takes its else branch and both hooks return `pdfUrl: null` (`lib/hooks/useJobOffer.ts:20,25`). The guard a caller needs — `pdfUrl !== null` — is therefore exact, and the behaviour is benign. PWHR-1553 was filed on the withdrawn reading and needs re-triage; no code change is asked for here.
+- G3: Not a defect; premise withdrawn. `ActionCenterMyRequestService` names the doctype `Candidate%20Raise%20Request` while `CandidateRaiseRequestService` names the same doctype `Candidate Raise Request` (`lib/services/action-center.ts:14,28`). An earlier draft read `FrappeAPI.getresourceDocumentData` as sending only the first spelling, because it interpolates the value into the URL without encoding it (`lib/frappe-api.ts:158`). The interpolated string is then handed to `fetch`, which percent-encodes the space itself, so both spellings reach the server with the same `%20` path (`lib/frappe-api.ts:183`). Observed by running: `node -e` constructing a `URL` from an `/api/resource/` path with the unencoded spelling, on this checkout at `Described at`, printed a pathname ending `Candidate%20Raise%20Request`, identical to the pre-encoded spelling. The pre-encoding is redundant, not divergent. PWHR-1554 was filed on the withdrawn reading and needs re-triage.
+- G4: `useJobOpening`'s campus branch builds `pagination.limit` as `openings.length || 10`, so the page size reported to the UI is the row count rather than the requested limit, and 10 when the invite lists nothing (`lib/hooks/useJobOpening.ts:41`). Issue: PWHR-1555.
 - G5: `useJobApplicationForm` takes a `form_name` argument that is only ever placed in the query key; nothing reads it, and no caller passes a meaningful value (`lib/hooks/useJobOpening.ts:81-83`). Not filed: dead parameter.
 - G6: `usePreOfferForm` keys on an object (`{ userEmail }`) rather than a string, so the key only matches another object with the same shape; `useSubmitPreOffer` rebuilds that object to invalidate it (`lib/hooks/usePreOfferForm.ts:7,31`). It works, but a caller that invalidates `["pre-offer-form", email]` would miss. Not filed: no defect asserted.
-- G7: `useCultureBookPdf` has no caller in `app/` or `components/` at `Described at`; a grep for `useCultureBookPdf` over the tree found it only in its own module and the hook's export list. Not filed: dead export.
+- G7: `useCultureBookPdf` has one caller at `Described at`: the dashboard's onboarding snapshot imports it and calls it with the candidate's e-mail (`components/dashboard/onboarding-snapshot.tsx:10,118`). That is the culture-book entry point SPEC-CAND-04 describes in its A4.5 area and its section 8. The hook always yields a truthy URL for a non-empty application, so the component pairs it with `useCultureBookAvailability` to decide whether to show the entry point at all (`lib/hooks/useJobOffer.ts:34-41`). Not filed: no defect asserted.
 - G8: `jobOfferService.getJobOfferLetters` and `getJobOfferPdfUrl` call the same backend method, one as JSON and one as a document URL; whether the backend distinguishes them only by the `separate` parameter is a backend fact not read (`lib/services/jobOffer.ts:107,224-230`). Not filed: backend question.
-- G9: The hook file is named `useAcationCenter.ts` — a misspelling of "action" — while every export inside spells it correctly (`lib/hooks/useAcationCenter.ts:1`). Not filed: naming only.
+- G9: The hook file is named `useAcationCenter.ts` — a misspelling of "action" — while every export inside spells it correctly (`lib/hooks/useAcationCenter.ts:6,16,25`). Not filed: naming only.
 - G10: Branch drift: on `deploy/hybrowbase-candidate-20261025` the careers list, submit and field endpoints move to `recruitment.api.v1.candidate.*` with different parameter names and a client-built pagination, and `useHomeContent` is gated by a milestone flag (header). The existing tests in `tests/lib/services/jobOpeningService.test.ts` assert the `develop` endpoints, so they describe only `develop`. Issue: PWHR-1556.
 - G11: Every case here stubs `fetch`, `FrappeAPI`, the router or the service module; none talks to a real Frappe site or a real Supabase project. Hosted CI is UNVERIFIED.
 - Statutory source: not applicable.
@@ -213,14 +213,15 @@ Counts were taken with `grep -c -E '^\s*(it|test)\('` over each file at `Describ
 - A4.1 to A4.8 for `ctc-proposal`: no test file exists for `lib/services/ctc-proposal.ts` or `lib/hooks/useCtcProposal.ts` at `Described at`; `tests/components/ctc-proposal/CtcProposalView.test.tsx` mocks the service. The cases here are all characterization. Not filed: covered by the new cases.
 - A5.5, the `default` fallback of the pre-offer status field and a form with no status field at all: CAND-07-A5.1D pins the `value` path only. Not filed: no test written.
 - A8.1, `useDebounce` with a changing `delay`: the case changes the value only. Not filed: no test written.
-- A8.3, a non-OK reply or a rejected fetch in `useNonWorkingDays`: the module-level promise cache makes a second outcome unreachable inside one test file, so CAND-07-A8.2B pins the success path and the disabled path only. Not filed: module-level state.
+- A8.3, a non-OK reply or a rejected fetch in `useNonWorkingDays`: the module-level promise cache keeps the first outcome for the rest of the module's life, so reaching a second outcome needs the module registry reset (`vi.resetModules()` and a fresh dynamic import) rather than another render. CAND-07-A8.2B pins the success path and the disabled path only and does not reset the registry. Not filed: no test written.
 - `tests/lib/services/frappe-env.test.ts` (27 tests): 3 are mapped (A11.1, A11.2). The remaining 24 cover `FrappeClient.ping`, `getJobOpenings`, `createJobApplicant`, `createUser`, `createEmployee`, `checkEmployeeExists`, query and body building, the trailing-slash rule, the two error classes, and the manager's `switchEnvironment`, `testConnection`, `listEnvironments` and `seedLocalEnv`. Not mapped: legacy module, see G1.
 - `tests/lib/services/sync.test.ts` (6 tests): 1 is mapped. The other 5 cover `syncJobs`, `syncApplications`, `syncCompanies` and both `testConnection` paths. Not mapped: legacy module, see G1.
 - `tests/lib/services/sso.test.ts` (5 tests): 1 is mapped. The other 4 cover `handleCallback`, `getProvider`, `createOrLinkUser` and `validateEmailDomain`. Not mapped: legacy module, see G1.
 - `tests/lib/services/email.test.ts` (9 tests): 1 is mapped. The other 8 cover `sendEmail`, `verifyConnection`, the four template senders and the bulk success path. Not mapped: legacy module, see G1.
 - `tests/lib/services/employee-detection.test.ts` (9 tests): 1 is mapped. The other 8 cover `detectByDomain`, `detectByFrappe` and the remaining `detectInternal` branches. Not mapped: legacy module, see G1.
 - `tests/lib/services/onboarding.test.ts` (11 tests): 1 is mapped. The other 10 cover `getOnboardingData`, `saveStep`, `approveOnboarding`, `rejectOnboarding`, `createFrappeEmployee` and the rest of `submitForReview`. Not mapped: legacy module, see G1.
-- No test in this clause's scope is `it.skip`, `describe.skip`, `it.todo` or `it.each`: a grep for `(it|test)\.(skip|todo|only|each)` and `describe\.skip` over the 17 test files named above found none.
+- `lib/hooks/useCandidateBranding.ts` and `lib/hooks/useAuthPageContent.ts`: no clause in this set states their query keys (`["candidate-branding"]`, `["auth-page-content"]`), their one-hour stale times or the `retry: false` on the auth-content hook (`lib/hooks/useCandidateBranding.ts:5-9`, `lib/hooks/useAuthPageContent.ts:5-10`). SPEC-CAND-02 A5.1 and A5.2 describe only the two services underneath them, so the hooks themselves are out of this clause (section 2) and unspecified. Their existing tests (`tests/lib/hooks/useCandidateBranding.test.tsx`, `tests/lib/hooks/useAuthPageContent.test.tsx`) are mapped by no case. Not filed: the owning clause is SPEC-CAND-02 and PWHR-1368 can map them there.
+- No test in this clause's scope is `it.skip`, `describe.skip`, `it.todo` or `it.each`: a grep for `(it|test)\.(skip|todo|only|each)` and `describe\.skip` over the 24 test files this clause cites — the 18 existing files named above and in section 11, plus the six `tests/spec/cand-07-*.test.ts(x)` files added here — found none.
 
 ## 11. Acceptance cases
 
@@ -472,10 +473,10 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 - Precondition: The service module is mocked; a fresh QueryClient is used per test.
 - Action: Render `useJobOfferSummary` with an application and a token, then with an empty application, then with `enabled` false.
-- Expected result: The cached key is `["jobOfferSummary", appl, token]`, the first render fetched once, and both other renders stay in fetch status `idle` with no further service call `lib/hooks/useJobOffer.ts:5-12`
+- Expected result: The first entry of the query cache is keyed `["jobOfferSummary", appl, token]`, the first render fetched once, and both other renders stay in fetch status `idle` with no further service call `lib/hooks/useJobOffer.ts:5-12`
 - Test: characterization: `tests/spec/cand-07-job-offer-hooks.test.tsx::keys the summary on application and token and makes no request for an empty application or a disabled hook`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
-- Known gaps: `fetch`, `FrappeAPI`, the router or the service module is mocked; no real HTTP, Frappe or Supabase backend. It does not assert what the hook returns while the query is idle.
+- Known gaps: `fetch`, `FrappeAPI`, the router or the service module is mocked; no real HTTP, Frappe or Supabase backend. It does not assert what the hook returns while the query is idle. The key is read as `findAll()[0]`, so the assertion depends on that entry being the only one the cache holds at that point rather than on a lookup by key.
 - Evidence: UNVERIFIED
 
 <a id="cand-07-a2-1b"></a>
@@ -483,10 +484,10 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 - Precondition: `getCultureBookPdfUrl` is mocked to return a fixed string.
 - Action: Render `useCultureBookPdf` enabled, then disabled, then with an empty application.
-- Expected result: The first returns `{ pdfUrl, isLoading: false, error: null }` built from the service call; the second returns a null URL; the third returns a falsy URL and makes no service call `lib/hooks/useJobOffer.ts:24-27`
+- Expected result: The first returns `{ pdfUrl, isLoading: false, error: null }` built from the service call; the second and the third both return `pdfUrl: null`, and the third makes no service call `lib/hooks/useJobOffer.ts:24-27`
 - Test: characterization: `tests/spec/cand-07-job-offer-hooks.test.tsx::returns a culture book URL without any request and null once the application is empty or the hook is off`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
-- Known gaps: `fetch`, `FrappeAPI`, the router or the service module is mocked; no real HTTP, Frappe or Supabase backend. The empty-application case is asserted as falsy through `toBeNull` on the value the hook returned; see section 9, G2 for the `useJobOfferPdf` twin, which returns the empty string.
+- Known gaps: `fetch`, `FrappeAPI`, the router or the service module is mocked; no real HTTP, Frappe or Supabase backend. It pins `useCultureBookPdf` only; the `useJobOfferPdf` twin has the same two-line body and its disabled case is CAND-07-A2.3C, but no case renders that twin with an empty application. See section 9, G2.
 - Evidence: UNVERIFIED
 
 <a id="cand-07-a2-1c"></a>
@@ -527,10 +528,10 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 - Precondition: `invalidateQueries` is spied on; the service answers first without and then with consent.
 - Action: Render the hook twice, once per answer.
-- Expected result: No invalidation follows the pending answer; the consented answer invalidates `["dashboard"]` `lib/hooks/useJobOffer.ts:134-140`
+- Expected result: After the pending answer the client's `invalidateQueries` has not been called at all; the consented answer calls it with `{ queryKey: ["dashboard"] }` `lib/hooks/useJobOffer.ts:134-140`
 - Test: characterization: `tests/spec/cand-07-job-offer-hooks.test.tsx::drops the dashboard cache as soon as the status says consent was given, and leaves it alone otherwise`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
-- Known gaps: `fetch`, `FrappeAPI`, the router or the service module is mocked; no real HTTP, Frappe or Supabase backend. It does not assert that the dashboard query actually refetched.
+- Known gaps: `fetch`, `FrappeAPI`, the router or the service module is mocked; no real HTTP, Frappe or Supabase backend. It does not assert that the dashboard query actually refetched. The pending half is asserted as "no invalidation of any key", not just of `["dashboard"]`, so an unrelated invalidation on the same client would fail it; the two halves use different applications so each gets its own cache entry.
 - Evidence: UNVERIFIED
 
 <a id="cand-07-a2-3a"></a>
@@ -799,7 +800,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 - Precondition: `fetch` answers 403 with a `_server_messages` payload.
 - Action: Call `getForm` with a request name.
-- Expected result: The promise rejects with the server's own sentence, not with a status text `lib/services/direct-applicant-form.ts:26-29`
+- Expected result: The promise rejects with the server's own sentence, not with a status text `lib/services/direct-applicant-form.ts:27-29`
 - Test: mapped: `tests/lib/services/direct-applicant-form.test.ts::throws the server's own message`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
 - Known gaps: `fetch`, `FrappeAPI`, the router or the service module is mocked; no real HTTP, Frappe or Supabase backend. The fallback path for an unreadable body is covered by CAND-07-A4.1C on the sibling service. Mapped test: only the `Spec:` comment was added.
@@ -892,7 +893,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 - Precondition: `FrappeAPI.get` answers a status field, a sectioned field and a field with no section.
 - Action: Call `getPreOfferForm` with an applicant.
-- Expected result: The form status is the status field's value; the tabs are the named section and `Basic Details`, each holding only its own field, and the status field appears in neither `lib/services/pre-offer.ts:74-115`
+- Expected result: The form status is the status field's value; the tabs are the named section and `Basic Details`, each holding only its own field, and the status field appears in neither `lib/services/pre-offer.ts:76-119`
 - Test: characterization: `tests/spec/cand-07-forms-services.test.ts::takes the form status from a status field, keeps it out of the rendered fields and groups the rest by section`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
 - Known gaps: `fetch`, `FrappeAPI`, the router or the service module is mocked; no real HTTP, Frappe or Supabase backend. The `default` fallback and a form with no status field are not tried (section 10).
@@ -925,7 +926,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 - Precondition: `FrappeAPI.get` is mocked to resolve one sectioned field.
 - Action: Call `getPreOfferForm` with an e-mail.
-- Expected result: The call names `recruitment.api.channels.pre_offer.get_application_fields` with `{ job_applicant }`; the result carries that e-mail as `applicantId`, one tab named after the section and the field under its `reference_name` `lib/services/pre-offer.ts:11-27,74-115`
+- Expected result: The call names `recruitment.api.channels.pre_offer.get_application_fields` with `{ job_applicant }`; the result carries that e-mail as `applicantId`, one tab named after the section and the field under its `reference_name` `lib/services/pre-offer.ts:11-27,76-119`
 - Test: mapped: `tests/lib/services/pre-offer.test.ts::calls FrappeAPI.get with correct arguments and transforms data`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
 - Known gaps: `fetch`, `FrappeAPI`, the router or the service module is mocked; no real HTTP, Frappe or Supabase backend. The form status defaults to `Sent` and is not asserted. Mapped test: only the `Spec:` comment was added.
@@ -1142,7 +1143,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 | [CAND-07-A9.3D](07-services-and-hooks.md#cand-07-a9-3d) | A non-campus payload is posted whole to submit_application. | [`submitApplication calls FrappeAPI.post with submit_application`](../../../tests/lib/services/jobOpeningService.test.ts) |
 | [CAND-07-A9.3E](07-services-and-hooks.md#cand-07-a9-3e) | A campus payload is posted to submit_invite_application with renamed fields. | [`submitApplication calls submit_invite_application when isCampus is true`](../../../tests/lib/services/jobOpeningService.test.ts) |
 | [CAND-07-A9.3F](07-services-and-hooks.md#cand-07-a9-3f) | delete_draft is posted with the applicant e-mail and the job opening. | [`deleteDraftJobApplicant calls FrappeAPI.post`](../../../tests/lib/services/jobOpeningService.test.ts) |
-| [CAND-07-A9.3G](07-services-and-hooks.md#cand-07-a9-3g) | Backend fields are renamed into the form shape and a null reply yields an empty list. | [`getJobApplicationForm returns data or fallback`](../../../tests/lib/services/jobOpeningService.test.ts) |
+| [CAND-07-A9.3G](07-services-and-hooks.md#cand-07-a9-3g) | Backend fields are remapped into the form shape, with `reqd` kept under both names, and a null reply yields an empty list. | [`getJobApplicationForm returns data or fallback`](../../../tests/lib/services/jobOpeningService.test.ts) |
 | [CAND-07-A9.4A](07-services-and-hooks.md#cand-07-a9-4a) | get_action_center_items is called with candidate_email. | [`getActionCenterData calls FrappeAPI.get with correct arguments`](../../../tests/lib/services/action-center.test.ts) |
 | [CAND-07-A9.4B](07-services-and-hooks.md#cand-07-a9-4b) | A new request posts to the unencoded doctype and returns only data. | [`createCandidateRaiseRequest calls FrappeAPI.getresourceDocumentData correctly`](../../../tests/lib/services/action-center.test.ts) |
 | [CAND-07-A9.5A](07-services-and-hooks.md#cand-07-a9-5a) | get_saved_job_openings is called with candidate_email. | [`getSavedJobs calls FrappeAPI.get`](../../../tests/lib/services/savedJobsService.test.ts) |
@@ -1175,7 +1176,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 - Precondition: `FrappeAPI.post` is mocked to resolve.
 - Action: Call `submitApplication` with the campus flag and an invite, then with the flag but no invite.
-- Expected result: The first posts to `recruitment.api.channels.campus.submit_invite_application` with the four renamed fields; the second posts the whole payload — campus flag included — to `recruitment.api.channels.careers.submit_application` `lib/services/jobOpeningService.ts:76-97`
+- Expected result: The first posts to `recruitment.api.channels.campus.submit_invite_application` with the four renamed fields; the second posts the whole payload — campus flag included — to `recruitment.api.channels.careers.submit_application` `lib/services/jobOpeningService.ts:79-99`
 - Test: characterization: `tests/spec/cand-07-job-opening.test.tsx::uses the campus submit endpoint only when the payload carries both the campus flag and the invite`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
 - Known gaps: `fetch`, `FrappeAPI`, the router or the service module is mocked; no real HTTP, Frappe or Supabase backend. On the deployment branch the careers submission has a different body and return shape (header).
@@ -1200,7 +1201,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 - Expected result: The returned value is the reply's `data` array; the call named `Candidate%20Raise%20Request` with the method, page, limit, all fields and the `candidate_email` filter `lib/services/action-center.ts:12-24`
 - Test: characterization: `tests/spec/cand-07-job-opening.test.tsx::asks the Candidate Raise Request resource with a percent-encoded doctype and returns only the data field`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
-- Known gaps: `fetch`, `FrappeAPI`, the router or the service module is mocked; no real HTTP, Frappe or Supabase backend. The sibling create path spells the same doctype unencoded; see section 9, G3.
+- Known gaps: `fetch`, `FrappeAPI`, the router or the service module is mocked; no real HTTP, Frappe or Supabase backend. `FrappeAPI` is mocked, so nothing here pins the URL that would reach the server: the sibling create path spells the same doctype unencoded and both spellings produce the same request path (section 9, G3).
 - Evidence: UNVERIFIED
 
 <a id="cand-07-a9-3a"></a>
@@ -1230,7 +1231,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 - Precondition: `FrappeAPI.get` is mocked to resolve an invite object.
 - Action: Call `getCampusInviteOpenings` with an invite and an e-mail.
-- Expected result: The call names `recruitment.api.channels.campus.get_invite_openings` with `{ campus_invite, email }` and the reply is returned `lib/services/jobOpeningService.ts:32-45`
+- Expected result: The call names `recruitment.api.channels.campus.get_invite_openings` with `{ campus_invite, email }` and the reply is returned `lib/services/jobOpeningService.ts:33-46`
 - Test: mapped: `tests/lib/services/jobOpeningService.test.ts::getCampusInviteOpenings calls FrappeAPI.get with campus_invite`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
 - Known gaps: `fetch`, `FrappeAPI`, the router or the service module is mocked; no real HTTP, Frappe or Supabase backend. A call without an e-mail is not tried. Mapped test: only the `Spec:` comment was added.
@@ -1263,7 +1264,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 - Precondition: `FrappeAPI.post` is mocked to resolve.
 - Action: Call `deleteDraftJobApplicant` with an e-mail and a job id.
-- Expected result: The post names a method containing `delete_draft` with `{ job_applicant_email, job_opening }` `lib/services/jobOpeningService.ts:60-72`
+- Expected result: The post names a method containing `delete_draft` with `{ job_applicant_email, job_opening }` `lib/services/jobOpeningService.ts:63-74`
 - Test: mapped: `tests/lib/services/jobOpeningService.test.ts::deleteDraftJobApplicant calls FrappeAPI.post`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
 - Known gaps: `fetch`, `FrappeAPI`, the router or the service module is mocked; no real HTTP, Frappe or Supabase backend. The sibling `getAllDrafts` is exercised only through its hook. Mapped test: only the `Spec:` comment was added.
@@ -1274,7 +1275,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 - Precondition: `FrappeAPI.get` is mocked to resolve one raw field, then a campus call, then null.
 - Action: Call `getJobApplicationForm` three times.
-- Expected result: The first result renames `reference_name`, `display_name`, `reqd` and `section` into `fieldname`, `label`, `is_mandatory` and `tab_label` with the constant `section_label` of `Details`; the campus call switches the endpoint; the null reply yields `{ fields: [] }` `lib/services/jobOpeningService.ts:116-131`
+- Expected result: The first result renames `reference_name` to `fieldname`, `display_name` to `label` and `section` to `tab_label`, copies `reqd` into both `reqd` and `is_mandatory`, sets the constant `section_label` of `Details`, and carries no `ctq`, `visibility` or `editability` key; the campus call switches the endpoint; the null reply yields `{ fields: [] }` `lib/services/jobOpeningService.ts:114-137`
 - Test: mapped: `tests/lib/services/jobOpeningService.test.ts::getJobApplicationForm returns data or fallback`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
 - Known gaps: `fetch`, `FrappeAPI`, the router or the service module is mocked; no real HTTP, Frappe or Supabase backend. The error path is CAND-07-A9.1A. Mapped test: only the `Spec:` comment was added.
@@ -1299,7 +1300,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 - Expected result: The call names `Candidate Raise Request` with `{ method: "POST", data }` and only the reply's `data` is returned `lib/services/action-center.ts:26-34`
 - Test: mapped: `tests/lib/services/action-center.test.ts::createCandidateRaiseRequest calls FrappeAPI.getresourceDocumentData correctly`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
-- Known gaps: `fetch`, `FrappeAPI`, the router or the service module is mocked; no real HTTP, Frappe or Supabase backend. The doctype spelling differs from the listing path; see section 9, G3. Mapped test: only the `Spec:` comment was added.
+- Known gaps: `fetch`, `FrappeAPI`, the router or the service module is mocked; no real HTTP, Frappe or Supabase backend. The doctype spelling differs from the listing path but produces the same request path; see section 9, G3. Mapped test: only the `Spec:` comment was added.
 - Evidence: UNVERIFIED
 
 <a id="cand-07-a9-5a"></a>
@@ -1445,7 +1446,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 - Precondition: `console.error` is spied on; the service is mocked to reject.
 - Action: Run the mutation and wait for the error state.
-- Expected result: The mutation ends in error and `console.error` was called `lib/hooks/useJobOpening.ts:59`
+- Expected result: The mutation ends in error and `console.error` was called `lib/hooks/useJobOpening.ts:60`
 - Test: mapped: `tests/lib/hooks/useJobOpening.test.tsx::useCreateJobApplicant onError is called on failure`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
 - Known gaps: `fetch`, `FrappeAPI`, the router or the service module is mocked; no real HTTP, Frappe or Supabase backend. It does not assert the log text, nor that no cache was touched. Mapped test: only the `Spec:` comment was added.
@@ -1472,7 +1473,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 | [CAND-07-A11.1C](07-services-and-hooks.md#cand-07-a11-1c) | A second read inside the cache window makes no further database call. | [`caches config for 5 minutes (no second DB call)`](../../../tests/lib/services/frappe-env.test.ts) |
 | [CAND-07-A11.2A](07-services-and-hooks.md#cand-07-a11-2a) | syncAll returns the three results and a summary of their counts. | [`syncAll runs all syncs and returns summary`](../../../tests/lib/services/sync.test.ts) |
 | [CAND-07-A11.3A](07-services-and-hooks.md#cand-07-a11-3a) | The URL carries the client id, the encoded redirect URI and the caller's state. | [`generateAuthUrl returns correct URL`](../../../tests/lib/services/sso.test.ts) |
-| [CAND-07-A11.4A](07-services-and-hooks.md#cand-07-a11-4a) | A thrown send is counted as failed and the next message is still attempted. | [`sendBulkEmails handles failures`](../../../tests/lib/services/email.test.ts) |
+| [CAND-07-A11.4A](07-services-and-hooks.md#cand-07-a11-4a) | A send that returns false is counted as failed and the next message is still attempted. | [`sendBulkEmails handles failures`](../../../tests/lib/services/email.test.ts) |
 | [CAND-07-A11.5A](07-services-and-hooks.md#cand-07-a11-5a) | An unrecognised domain makes the detector ask the Frappe Employee lookup. | [`falls back to Frappe when domain is not recognized`](../../../tests/lib/services/employee-detection.test.ts) |
 | [CAND-07-A11.6A](07-services-and-hooks.md#cand-07-a11-6a) | The error message lists exactly which required steps hold no data. | [`error message includes specific missing step names`](../../../tests/lib/services/onboarding.test.ts) |
 
@@ -1492,7 +1493,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 - Precondition: `fetch` answers a 401.
 - Action: Call `request`.
-- Expected result: The promise rejects with a `FrappeAuthError` `lib/services/frappe-env.ts:96-98`
+- Expected result: The promise rejects with a `FrappeAuthError` `lib/services/frappe-env.ts:100-102`
 - Test: mapped: `tests/lib/services/frappe-env.test.ts::throws FrappeAuthError on 401`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
 - Known gaps: `fetch`, `FrappeAPI`, the router or the service module is mocked; no real HTTP, Frappe or Supabase backend. Legacy module (section 9, G1). The 403 twin and the `FrappeApiError` branch are unmapped (section 10). Mapped test: only the `Spec:` comment was added.
@@ -1503,7 +1504,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 - Precondition: The Supabase client is mocked to return one active environment row.
 - Action: Call `getActiveConfig` twice in a row.
-- Expected result: Both return the same configuration and the Supabase table was queried exactly once `lib/services/frappe-env.ts:249-277`
+- Expected result: Both return the same configuration and the Supabase table was queried exactly once `lib/services/frappe-env.ts:254-282`
 - Test: mapped: `tests/lib/services/frappe-env.test.ts::caches config for 5 minutes (no second DB call)`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
 - Known gaps: `fetch`, `FrappeAPI`, the router or the service module is mocked; no real HTTP, Frappe or Supabase backend. Legacy module (section 9, G1). It does not advance time past the five-minute window. Mapped test: only the `Spec:` comment was added.
@@ -1532,14 +1533,14 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 - Evidence: UNVERIFIED
 
 <a id="cand-07-a11-4a"></a>
-#### CAND-07-A11.4A: Bulk mail counts a failure instead of stopping
+#### CAND-07-A11.4A: Bulk mail counts a refused send as failed and keeps going
 
-- Precondition: The mail transport is mocked to reject once and then resolve; `console.error` is spied on.
-- Action: Call `sendBulkEmails` with two messages and no delay.
-- Expected result: The result is one sent and one failed; the loop did not stop at the rejection `lib/services/email.ts:215-257`
+- Precondition: The mail transport is mocked to reject the first `sendMail`; `console.error` is spied on.
+- Action: Call `sendBulkEmails` with a `job_alert` message and a `newsletter` message, and a delay of zero.
+- Expected result: The result is one sent and one failed. The rejection never leaves `sendEmail`, which catches it and returns false (`lib/services/email.ts:141-148`), so the loop takes its `success === false` branch rather than its own `catch`; it then goes on to the `newsletter` message, which is counted as sent without any transport call `lib/services/email.ts:225-243`
 - Test: mapped: `tests/lib/services/email.test.ts::sendBulkEmails handles failures`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
-- Known gaps: `fetch`, `FrappeAPI`, the router or the service module is mocked; no real HTTP, Frappe or Supabase backend. Legacy module (section 9, G1). The delay branch is not exercised because the delay is zero. Mapped test: only the `Spec:` comment was added.
+- Known gaps: `fetch`, `FrappeAPI`, the router or the service module is mocked; no real HTTP, Frappe or Supabase backend. Legacy module (section 9, G1). The delay branch is not exercised because the delay is zero, and the loop's own `catch` — which needs a send that throws rather than one that returns false — is reached by no test (section 10). The `newsletter` branch it counts as sent sends nothing at all (`lib/services/email.ts:233-236`). Mapped test: only the `Spec:` comment was added.
 - Evidence: UNVERIFIED
 
 <a id="cand-07-a11-5a"></a>

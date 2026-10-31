@@ -31,11 +31,23 @@ describe("FeatureFlagProvider precedence", () => {
   // Spec: CAND-02-A4.3A (docs/spec/clauses/02-api-client-and-backend-contract.md#cand-02-a4-3a)
   // Characterization: pins current behaviour, not endorsed.
   it("layers built-in defaults, then initialFlags, then remote flags, and turns a remote flag on only for 1 or true", () => {
-    const flags = renderWith({ documents: 1, home: 0, open_jobs: true, my_jobs: "1", action_center: "true", extra_flag: 1 }, { documents: false, my_jobs: false })
+    // The two initialFlags values below are the opposite of their built-in default, so the
+    // middle layer is pinned: social_job_sharing has no remote key and must survive,
+    // action_center has one and must be overridden by it.
+    expect(DEFAULT_FEATURE_FLAGS.social_job_sharing).toBe(false)
+    expect(DEFAULT_FEATURE_FLAGS.action_center).toBe(false)
+    expect(DEFAULT_FEATURE_FLAGS.home).toBe(true)
+    const flags = renderWith(
+      { documents: 1, home: 0, open_jobs: true, my_jobs: "1", action_center: "true", extra_flag: 1 },
+      { social_job_sharing: true, action_center: true, my_jobs: false },
+    )
     expect(flags.documents).toBe(true)
     expect(flags.home).toBe(false)
     expect(flags.open_jobs).toBe(true)
     expect(flags.my_jobs).toBe(false)
+    // initialFlags beats the default when no remote key exists
+    expect(flags.social_job_sharing).toBe(true)
+    // a remote key beats initialFlags, and "true" is not 1 or true, so it lands false
     expect(flags.action_center).toBe(false)
     expect(flags.extra_flag).toBe(true)
     expect(flags.careers_public_enabled).toBe(DEFAULT_FEATURE_FLAGS.careers_public_enabled)

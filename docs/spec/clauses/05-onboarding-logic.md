@@ -4,7 +4,7 @@
 
 - Stable ID: `SPEC-CAND-05`
 - Described at: repo `hybrowlabs/Candidate-Portal`, branch `develop`, commit `0d7fd6f6002cd2dff3c6b6716195cf051f5fad1c` (committer date `2026-10-31 17:27:47 +0000`)
-- Also read at: branch `deploy/hybrowbase-candidate-20261025`, commit `786b53e406869986d5d5d0c81b7ae6b1605f8315`; differs: `app/(portal)/onboarding/page.tsx:205` writes the Back-to-Dashboard button's class list as `h-12 px-8 flex items-center gap-2` instead of `inline-flex h-12 items-center gap-2 px-8` (same classes, different order, no behaviour cited here changes), and `lib/types/onboarding.ts` has no `role` field on `OnboardingKeyContact` (the two lines `lib/types/onboarding.ts:80-81` are absent there); `lib/contexts/onboarding-context.tsx`, `lib/onboarding-utils.ts`, `lib/validation/onboarding-validation.ts`, `lib/validation/onboarding-schemas.ts`, `lib/services/candidate-onboarding.ts`, `lib/services/link-field.ts`, `lib/services/uploadProofFile.ts` and the four hooks are identical there; no `pw-uat` branch exists in this repo (`git ls-remote --heads origin pw-uat` printed nothing on 2026-10-31); only `develop` is described
+- Also read at: branch `deploy/hybrowbase-candidate-20261025`, commit `786b53e406869986d5d5d0c81b7ae6b1605f8315`; differs: `app/(portal)/onboarding/page.tsx:205` writes the Back-to-Dashboard button's class list as `h-12 px-8 flex items-center gap-2` instead of `inline-flex h-12 items-center gap-2 px-8` (same classes, different order, no behaviour cited here changes), and `lib/types/onboarding.ts` has no `role` field on `OnboardingKeyContact` (the comment and the field at `lib/types/onboarding.ts:85-86` are absent there); `lib/contexts/onboarding-context.tsx`, `lib/onboarding-utils.ts`, `lib/validation/onboarding-validation.ts`, `lib/validation/onboarding-schemas.ts`, `lib/services/candidate-onboarding.ts`, `lib/services/link-field.ts`, `lib/services/uploadProofFile.ts` and the four hooks are identical there; no `pw-uat` branch exists in this repo (`git ls-remote --heads origin pw-uat` printed nothing on 2026-10-31); only `develop` is described
 - Author: Frontend Developer (Yashwanth). Reviewer: Code Reviewer (Yashwanth), to be recorded in the PR.
 - Status: DRAFT
 
@@ -218,7 +218,7 @@ None. There is no scheduler, no cron and no server-side hook in this clause. The
 - A7.11 for the right rail: the mapped and characterization page cases assert the sidebar and the mobile bars are absent when submitted; the rail is asserted absent only in CAND-05-A7.1E. Not filed.
 - A6.14 for the Aadhaar, PAN, IFSC, postal-code and account-holder rules inside a table row: `validateFieldPattern` applies them there (`lib/validation/onboarding-validation.ts:301-312`), and only the phone and e-mail cases are tested (CAND-05-A6.6A, CAND-05-A6.6B). Not filed: same behaviour class.
 - A6.1's third shape (a plain row map rather than an array) is produced only through `setNestedTableError` on an index of an array, so no case produces it alone. Not filed.
-- The five tests in `tests/app/(portal)/onboarding/onboarding.test.tsx` are not mapped: `tools/check_spec_ts_links.mjs:174` accepts only a selector matching `^(src|tests?)/[A-Za-z0-9_./-]+\.test\.tsx?$`, and the route-group parentheses in that path are not in the character class, so the checker reports `test-field` for any case naming it. Their behaviour is characterized instead in `tests/spec/cand-05-onboarding-page.test.tsx` (CAND-05-A7.1A to CAND-05-A7.3B). The checker limitation is reported to the lead.
+- The five tests in `tests/app/(portal)/onboarding/onboarding.test.tsx` are not mapped. The path itself is accepted: the selector check at `tools/check_spec_ts_links.mjs:175` matches `^(src|tests?)/[A-Za-z0-9_./()-]+\.test\.tsx?$`, whose character class holds the route-group parentheses, and SPEC-CAND-04 maps eleven cases to `tests/app/(portal)/dashboard/page.test.tsx` through it. The reason is that each behaviour those five assert is already pinned by a characterization case in `tests/spec/cand-05-onboarding-page.test.tsx`: the loading screen and the error screen by CAND-05-A7.1D, the not-started button by CAND-05-A7.1B, the form step and its step key by CAND-05-A7.2B, the review step by CAND-05-A7.1C and the read-only copy of a submitted form by CAND-05-A7.1E. A second link would need a second case ID, and this pass opens none. Not filed: no behaviour is uncovered.
 - `tests/lib/services/uploadProofFile.test.ts::uploadFile calls FrappeAPI.uploadFile correctly` is already mapped by SPEC-CAND-02 A1.4B and is not mapped again here; only its sibling error test is mapped (CAND-05-A9.2A). Not filed: no duplicate mapping.
 
 ## 11. Acceptance cases
@@ -1391,7 +1391,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 - Precondition: The context is on step 0 of a form whose first section is `section-basic_details`.
 - Action: Render the page.
-- Expected result: The bar names `Basic Details` and says `All changes saved` `app/(portal)/onboarding/page.tsx:22-35,274-276`
+- Expected result: The bar names `Basic Details` and says `All changes saved` `app/(portal)/onboarding/page.tsx:22-35,55,274-276`
 - Test: characterization: `tests/spec/cand-05-onboarding-page.test.tsx::names the first section of the current tab in the autosave bar, with the section- prefix and underscores removed`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
 - Known gaps: The onboarding context, the query client and the router are mocked, and the wizard components are replaced by stubs; no real HTTP or Frappe backend. The scroll spy does not run in jsdom (section 10).
@@ -1442,7 +1442,7 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 - Precondition: `FrappeAPI.get` is mocked to answer a successful form with every optional field set.
 - Action: Call `getOnboardingForm` with a synthetic e-mail.
-- Expected result: The call names `recruitment.api.candidate_portal.get_candidate_portal_form` with `job_applicant_id`, and the result holds exactly the nine transformed keys `lib/services/candidate-onboarding.ts:15-23,49-63`
+- Expected result: The call names `recruitment.api.candidate_portal.get_candidate_portal_form` with `job_applicant_id`, and the result holds exactly the nine transformed keys `lib/services/candidate-onboarding.ts:5-6,15-23,49-63`
 - Test: characterization: `tests/spec/cand-05-services.test.ts::sends the signed-in e-mail as job_applicant_id to the candidate-portal form method and renames the backend fields`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
 - Known gaps: `FrappeAPI` is mocked, so the backend is stubbed; no real HTTP or Frappe backend. It does not check what the Frappe client does with the parameters.

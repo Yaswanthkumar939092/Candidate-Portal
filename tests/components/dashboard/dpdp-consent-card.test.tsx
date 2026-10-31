@@ -31,24 +31,24 @@ describe("DpdpConsentCard", () => {
     render(
       <DpdpConsentCard
         consentMode="External Portal"
-        consentUrl="https://l.hffc.in/HFFCIN/gqsPk"
+        consentUrl="https://consent.example.invalid/c/gqsPk"
         appl="test@example.com"
       />,
     );
 
     const link = screen.getByRole("link", { name: /Continue to Consent Portal/i });
-    expect(link).toHaveAttribute("href", "https://l.hffc.in/HFFCIN/gqsPk");
+    expect(link).toHaveAttribute("href", "https://consent.example.invalid/c/gqsPk");
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
   });
 
   // Spec: CAND-04-A5.1D (docs/spec/clauses/04-dashboard.md#cand-04-a5-1d)
   it("keeps following an absolute URL even when the backend reports no mode", () => {
     // Pre-existing behaviour: an absolute consent URL has always left the site.
-    render(<DpdpConsentCard consentUrl="https://l.hffc.in/HFFCIN/legacy" />);
+    render(<DpdpConsentCard consentUrl="https://consent.example.invalid/c/legacy" />);
 
     expect(screen.getByRole("link", { name: /Go to Consent Form/i })).toHaveAttribute(
       "href",
-      "https://l.hffc.in/HFFCIN/legacy",
+      "https://consent.example.invalid/c/legacy",
     );
   });
 

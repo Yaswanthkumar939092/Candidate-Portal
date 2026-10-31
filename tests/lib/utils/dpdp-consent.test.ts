@@ -38,7 +38,7 @@ describe("buildConsentPath", () => {
 describe("isSafeExternalConsentUrl", () => {
   // Spec: CAND-04-A5.3E (docs/spec/clauses/04-dashboard.md#cand-04-a5-3e)
   it("accepts absolute http(s) links", () => {
-    expect(isSafeExternalConsentUrl("https://l.hffc.in/HFFCIN/gqsPk")).toBe(true);
+    expect(isSafeExternalConsentUrl("https://consent.example.invalid/c/gqsPk")).toBe(true);
     expect(isSafeExternalConsentUrl("http://uat.example.com/consent")).toBe(true);
   });
 
