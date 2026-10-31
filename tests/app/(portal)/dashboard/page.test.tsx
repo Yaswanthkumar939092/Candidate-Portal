@@ -135,6 +135,7 @@ describe("DashboardPage", () => {
     vi.clearAllMocks()
   })
 
+  // Spec: CAND-04-A1.1A (docs/spec/clauses/04-dashboard.md#cand-04-a1-1a)
   it("renders skeleton loading state initially", () => {
     vi.mocked(useAuth).mockReturnValue({ user: { id: "123", email: "test@example.com" }, profile: null } as unknown as ReturnType<typeof useAuth>)
     mockUseDashboardState({ isLoading: true })
@@ -145,6 +146,7 @@ describe("DashboardPage", () => {
     expect(container.querySelectorAll('[data-slot="skeleton"]').length).toBeGreaterThan(0)
   })
 
+  // Spec: CAND-04-A2.1A (docs/spec/clauses/04-dashboard.md#cand-04-a2-1a)
   it("renders dashboard data from useDashboard", async () => {
     vi.mocked(useAuth).mockReturnValue({
       user: { id: "user-123", email: "test@example.com" },
@@ -170,6 +172,7 @@ describe("DashboardPage", () => {
     expect(cards[2]).toHaveTextContent("Engineering")
   })
 
+  // Spec: CAND-04-A2.2A (docs/spec/clauses/04-dashboard.md#cand-04-a2-2a)
   it("renders the view on map link when custom_google_map_link is present", async () => {
     vi.mocked(useAuth).mockReturnValue({
       user: { id: "user-123", email: "test@example.com" },
@@ -191,6 +194,7 @@ describe("DashboardPage", () => {
     expect(mapLink).toHaveAttribute("href", "https://maps.google.com/?q=noida-office")
   })
 
+  // Spec: CAND-04-A2.2B (docs/spec/clauses/04-dashboard.md#cand-04-a2-2b)
   it("falls back to derived address, backend name, and default role labels when fields are missing", async () => {
     vi.mocked(useAuth).mockReturnValue({
       user: { id: "user-123", email: "test@example.com" },
@@ -238,6 +242,7 @@ describe("DashboardPage", () => {
     expect(cards[2]).toHaveTextContent("Department not available")
   })
 
+  // Spec: CAND-04-A2.2C (docs/spec/clauses/04-dashboard.md#cand-04-a2-2c)
   it("maps missing contact details to undefined and prefers a custom office address", async () => {
     vi.mocked(useAuth).mockReturnValue({
       user: { id: "user-123", email: "test@example.com" },
@@ -273,6 +278,7 @@ describe("DashboardPage", () => {
     expect(cards[1]).toHaveTextContent("Tower A, Floor 3")
   })
 
+  // Spec: CAND-04-A2.2E (docs/spec/clauses/04-dashboard.md#cand-04-a2-2e)
   it("falls back to 'Address not available' when no office address details exist", async () => {
     vi.mocked(useAuth).mockReturnValue({
       user: { id: "user-123", email: "test@example.com" },
@@ -298,6 +304,7 @@ describe("DashboardPage", () => {
     })
   })
 
+  // Spec: CAND-04-A1.2A (docs/spec/clauses/04-dashboard.md#cand-04-a1-2a)
   it("renders the missing-email error state and allows retry", async () => {
     const refetch = vi.fn()
 
@@ -316,6 +323,7 @@ describe("DashboardPage", () => {
     expect(refetch).toHaveBeenCalledTimes(1)
   })
 
+  // Spec: CAND-04-A1.3A (docs/spec/clauses/04-dashboard.md#cand-04-a1-3a)
   it("renders an error state and retries the query", async () => {
     const refetch = vi.fn()
 
@@ -339,6 +347,7 @@ describe("DashboardPage", () => {
     expect(refetch).toHaveBeenCalledTimes(1)
   })
 
+  // Spec: CAND-04-A1.3B (docs/spec/clauses/04-dashboard.md#cand-04-a1-3b)
   it("renders the generic error message when the query error is not an Error instance", () => {
     vi.mocked(useAuth).mockReturnValue({
       user: { id: "user-123", email: "test@example.com" },
@@ -354,6 +363,7 @@ describe("DashboardPage", () => {
     expect(screen.getByText("Something went wrong while fetching your dashboard data.")).toBeTruthy()
   })
 
+  // Spec: CAND-04-A1.5A (docs/spec/clauses/04-dashboard.md#cand-04-a1-5a)
   it("hands the empty state to the promo as a fallback when onboarding has not started", () => {
     vi.mocked(useAuth).mockReturnValue({
       user: { id: "user-123", email: "test@example.com" },
@@ -370,6 +380,7 @@ describe("DashboardPage", () => {
     expect(screen.getByTestId("home-promo").textContent).toContain("No Data Available")
   })
 
+  // Spec: CAND-04-A1.5B (docs/spec/clauses/04-dashboard.md#cand-04-a1-5b)
   it("keeps the empty state out of the promo fallback once onboarding data exists", () => {
     vi.mocked(useAuth).mockReturnValue({
       user: { id: "user-123", email: "test@example.com" },

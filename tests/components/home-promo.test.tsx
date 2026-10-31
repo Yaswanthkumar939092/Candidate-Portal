@@ -37,6 +37,7 @@ const disabledContent: HomeContent = {
 beforeEach(() => vi.clearAllMocks());
 
 describe("PromoCarousel", () => {
+  // Spec: CAND-04-A7.2A (docs/spec/clauses/04-dashboard.md#cand-04-a7-2a)
   it("advances with next and wraps back to the first slide", () => {
     render(<PromoCarousel carousel={{ enabled: true, interval: 0, slides }} />);
     expect(screen.getByText("First slide")).toBeInTheDocument();
@@ -46,12 +47,14 @@ describe("PromoCarousel", () => {
     expect(screen.getByText("First slide")).toBeInTheDocument();
   });
 
+  // Spec: CAND-04-A7.2B (docs/spec/clauses/04-dashboard.md#cand-04-a7-2b)
   it("steps backwards from the first slide to the last", () => {
     render(<PromoCarousel carousel={{ enabled: true, interval: 0, slides }} />);
     fireEvent.click(screen.getByRole("button", { name: "Previous slide" }));
     expect(screen.getByText("Second slide")).toBeInTheDocument();
   });
 
+  // Spec: CAND-04-A7.2F (docs/spec/clauses/04-dashboard.md#cand-04-a7-2f)
   it("omits navigation for a single slide", () => {
     render(<PromoCarousel carousel={{ enabled: true, interval: 4500, slides: slides.slice(0, 1) }} />);
     expect(screen.queryByRole("button", { name: "Next slide" })).not.toBeInTheDocument();
@@ -60,11 +63,13 @@ describe("PromoCarousel", () => {
 });
 
 describe("HomePromo", () => {
+  // Spec: CAND-04-A7.1A (docs/spec/clauses/04-dashboard.md#cand-04-a7-1a)
   it("renders nothing when every section is disabled", async () => {
     const { container } = renderPromo(disabledContent);
     await waitFor(() => expect(container).toBeEmptyDOMElement());
   });
 
+  // Spec: CAND-04-A7.1B (docs/spec/clauses/04-dashboard.md#cand-04-a7-1b)
   it("renders nothing when the content request fails", async () => {
     vi.mocked(homeService.getHomeContent).mockRejectedValue(new Error("guest api down"));
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -76,6 +81,7 @@ describe("HomePromo", () => {
     await waitFor(() => expect(container).toBeEmptyDOMElement());
   });
 
+  // Spec: CAND-04-A7.1C (docs/spec/clauses/04-dashboard.md#cand-04-a7-1c)
   it("renders only the sections that are enabled", async () => {
     const { container } = renderPromo({
       ...disabledContent,
@@ -98,6 +104,7 @@ describe("HomePromo", () => {
     expect(container.querySelector('[aria-label="Company highlights"]')).toBeNull();
   });
 
+  // Spec: CAND-04-A7.1F (docs/spec/clauses/04-dashboard.md#cand-04-a7-1f)
   it("renders the carousel and value cards when those sections are enabled", async () => {
     renderPromo({
       ...disabledContent,

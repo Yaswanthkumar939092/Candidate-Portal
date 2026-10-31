@@ -30,6 +30,7 @@ describe("useFileUpload Hook", () => {
     queryClient.clear();
   });
 
+  // Spec: CAND-05-A10.4A (docs/spec/clauses/05-onboarding-logic.md#cand-05-a10-4a)
   it("uploads file successfully", async () => {
     const mockResponse = { url: "https://example.com/file.pdf" };
     (fileUploadService.uploadFile as any).mockResolvedValue(mockResponse);
@@ -44,6 +45,7 @@ describe("useFileUpload Hook", () => {
     expect(fileUploadService.uploadFile).toHaveBeenCalledWith(file);
   });
 
+  // Spec: CAND-05-A10.4B (docs/spec/clauses/05-onboarding-logic.md#cand-05-a10-4b)
   it("handles upload error", async () => {
     const mockError = new Error("Upload failed");
     (fileUploadService.uploadFile as any).mockRejectedValue(mockError);

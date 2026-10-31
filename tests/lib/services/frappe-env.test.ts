@@ -41,6 +41,7 @@ describe('FrappeClient', () => {
   })
 
   // TC-1.10: Sends authenticated request with token header
+  // Spec: CAND-07-A11.1A (docs/spec/clauses/07-services-and-hooks.md#cand-07-a11-1a)
   it('sends authenticated request with token header', async () => {
     const mockResponse = { data: [{ name: 'JO-001' }] }
     globalThis.fetch = vi.fn().mockResolvedValue({
@@ -60,6 +61,7 @@ describe('FrappeClient', () => {
   })
 
   // TC-1.11: Throws FrappeAuthError on 401
+  // Spec: CAND-07-A11.1B (docs/spec/clauses/07-services-and-hooks.md#cand-07-a11-1b)
   it('throws FrappeAuthError on 401', async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: false,
@@ -299,6 +301,7 @@ describe('FrappeEnvironmentManager', () => {
   })
 
   // TC-1.3: Cache mechanism -- second call within TTL should not hit DB
+  // Spec: CAND-07-A11.1C (docs/spec/clauses/07-services-and-hooks.md#cand-07-a11-1c)
   it('caches config for 5 minutes (no second DB call)', async () => {
     const mockEnv = {
       frappe_url: 'http://cached.example.com',

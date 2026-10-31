@@ -64,6 +64,7 @@ describe("ReviewStep", () => {
     ...overrides,
   });
 
+  // Spec: CAND-06-A8.6A (docs/spec/clauses/06-onboarding-components.md#cand-06-a8-6a)
   it("renders success state when submitted", () => {
     vi.mocked(useOnboarding).mockReturnValue(getMockContext({ status: "submitted" }));
     render(<ReviewStep />);
@@ -72,6 +73,7 @@ describe("ReviewStep", () => {
     expect(screen.getByText(/Your onboarding information has been submitted successfully/)).toBeTruthy();
   });
 
+  // Spec: CAND-06-A8.4A (docs/spec/clauses/06-onboarding-components.md#cand-06-a8-4a)
   it("renders incomplete steps warning and disables submit", () => {
     vi.mocked(useOnboarding).mockReturnValue(
       getMockContext({ completedSteps: new Set() }) // Personal Info is incomplete
@@ -91,6 +93,7 @@ describe("ReviewStep", () => {
     expect(mockGoToStep).toHaveBeenCalledWith(0);
   });
 
+  // Spec: CAND-06-A8.5B (docs/spec/clauses/06-onboarding-components.md#cand-06-a8-5b)
   it("renders step tabs and allows expanding sections to see summary data", () => {
     vi.mocked(useOnboarding).mockReturnValue(getMockContext());
     render(<ReviewStep />);
@@ -113,6 +116,7 @@ describe("ReviewStep", () => {
     expect(mockGoToStep).toHaveBeenCalledWith(0);
   });
 
+  // Spec: CAND-06-A8.4B (docs/spec/clauses/06-onboarding-components.md#cand-06-a8-4b)
   it("calls prevStep when Back button is clicked", () => {
     vi.mocked(useOnboarding).mockReturnValue(getMockContext());
     render(<ReviewStep />);
@@ -122,6 +126,7 @@ describe("ReviewStep", () => {
     expect(mockPrevStep).toHaveBeenCalled();
   });
 
+  // Spec: CAND-06-A8.1C (docs/spec/clauses/06-onboarding-components.md#cand-06-a8-1c)
   it("handles standard successful submission flow after declaration acceptance", async () => {
     vi.mocked(useOnboarding).mockReturnValue(getMockContext());
     render(<ReviewStep />);
@@ -140,6 +145,7 @@ describe("ReviewStep", () => {
     });
   });
 
+  // Spec: CAND-06-A8.1D (docs/spec/clauses/06-onboarding-components.md#cand-06-a8-1d)
   it("displays server error message on submit failure", async () => {
     mockSubmitAll.mockRejectedValueOnce(new Error("Network Error occurred"));
     vi.mocked(useOnboarding).mockReturnValue(getMockContext());
@@ -159,6 +165,7 @@ describe("ReviewStep", () => {
   });
 
   describe("Extended Workflow: Automations & Dynamic Summaries", () => {
+    // Spec: CAND-06-A8.6B (docs/spec/clauses/06-onboarding-components.md#cand-06-a8-6b)
     it("navigates successfully when explicit dashboard button is clicked in success view", () => {
        // Exercise Line 117 manual click route
        vi.mocked(useOnboarding).mockReturnValue(getMockContext({ status: "submitted" }));
@@ -170,6 +177,7 @@ describe("ReviewStep", () => {
        expect(mockPush).toHaveBeenCalledWith("/dashboard");
     });
 
+    // Spec: CAND-06-A8.5A (docs/spec/clauses/06-onboarding-components.md#cand-06-a8-5a)
     it("accurately renders dynamic count summaries for tabular record sets", () => {
        // Target Line 139-143: Positive and Negative Count Evaluation
        const tableContext = getMockContext({
@@ -204,6 +212,7 @@ describe("ReviewStep", () => {
        expect(screen.getByText("No Vouches Added")).toBeTruthy();
     });
 
+    // Spec: CAND-06-A8.5C (docs/spec/clauses/06-onboarding-components.md#cand-06-a8-5c)
     it("supports robust nested decomposition of child tabular field arrays in expansion", () => {
        // Target Line 236-248: Grid renders, missing value drops, hidden field filters
        const complexTableContext = getMockContext({
@@ -252,6 +261,7 @@ describe("ReviewStep", () => {
        expect(screen.queryByText("Ghost:")).toBeNull();
     });
 
+    // Spec: CAND-06-A8.5D (docs/spec/clauses/06-onboarding-components.md#cand-06-a8-5d)
     it("displays definitive void state when expansion uncovers an empty target table", () => {
        // Target Line 238 edge case: Table renders but is explicitly vacant or non-array
        const vacantContext = getMockContext({

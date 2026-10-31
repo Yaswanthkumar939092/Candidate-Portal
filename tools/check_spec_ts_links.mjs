@@ -9,7 +9,7 @@
 // Selector form (docs/spec/acceptance-cases.md section 5):
 //   Test: <mapped|characterization>: `path/file.test.ts(x)::exact test title`
 // The title is the first argument of one `it("...")` / `test("...")` call, written
-// as a double-quoted string on one line, and unique inside its file.
+// as a single-line quoted string (double or single quotes, or a backtick string without interpolation), and unique inside its file.
 //
 // Usage (repo root):
 //   node tools/check_spec_ts_links.mjs                 check, exit 0 / 1 / 2
@@ -172,7 +172,7 @@ for (const c of cases) {
   }
   const { kind, path: p, title, extra, line } = c.test;
   if (extra.length) add(c.file, line, "test-field", `case ${c.id}: selector must be path::title with no further '::'`);
-  if (!/^(src|tests?)\/[A-Za-z0-9_./-]+\.test\.tsx?$/.test(p) || p.includes("..")) {
+  if (!/^(src|tests?)\/[A-Za-z0-9_./()-]+\.test\.tsx?$/.test(p) || p.includes("..")) {
     add(c.file, line, "test-field", `case ${c.id}: '${p}' must be a repo-relative *.test.ts or *.test.tsx path`);
     continue;
   }
@@ -187,12 +187,12 @@ for (const c of cases) {
   }
   const hits = file.calls.filter((x) => x.title === title);
   if (hits.length === 0) {
-    add(c.file, line, "test-missing", `case ${c.id}: no it()/test() titled "${title}" in ${p} (titles are double-quoted, one line, exact)`);
+    add(c.file, line, "test-missing", `case ${c.id}: no it()/test() titled "${title}" in ${p} (titles are one-line quoted strings, exact)`);
     continue;
   }
   if (hits.length > 1) add(c.file, line, "test-duplicate", `case ${c.id}: ${hits.length} tests titled "${title}" in ${p}; titles must be unique`);
   const call = hits[0];
-  if (call.quote !== '"') add(p, call.line, "test-title-quote", `title of "${title}" must be a double-quoted string`);
+  if (call.quote === "`" && /\$\{/.test(title)) add(p, call.line, "test-title-quote", `title of "${title}" is a template literal with an interpolation; it cannot be named exactly`);
   if (call.modifiers) add(c.file, line, "test-skipped", `case ${c.id}: "${title}" is declared with ${call.modifiers}; a skipped, todo or conditional test is not coverage`);
   if (/\b(skip|skipIf|runIf)\s*\(|\bit\.skip|\bctx\.skip/.test(call.body)) add(c.file, line, "test-skipped", `case ${c.id}: "${title}" skips itself`);
   if (!hasAssertion(call.body)) add(c.file, line, "test-scaffold", `case ${c.id}: "${title}" has no expect() (empty scaffold)`);
@@ -217,7 +217,7 @@ for (const c of cases) {
   else {
     if (c.row.href !== `${c.clause}#${c.id.toLowerCase().replace(/\./g, "-")}`) add(c.file, c.row.line, "index-row-link", `case link must be '${c.clause}#${c.id.toLowerCase().replace(/\./g, "-")}', found '${c.row.href}'`);
     if (c.row.label !== title) add(c.file, c.row.line, "index-row-test", `test label must be '${title}', found '${c.row.label}'`);
-    const target = path.posix.normalize(path.posix.join(path.posix.dirname(c.file), c.row.thref));
+    const target = path.posix.normalize(path.posix.join(path.posix.dirname(c.file), decodeURIComponent(c.row.thref)));
     if (target !== p) add(c.file, c.row.line, "index-row-test", `test link resolves to '${target}' but the Test field names '${p}'`);
     if (!c.row.mid) add(c.file, c.row.line, "index-row-format", "the middle cell must say what the assertions check");
   }
@@ -302,7 +302,7 @@ if (WANT_TRACE) {
   for (const c of cases) {
     if (!c.test) continue;
     const clauseId = (/^# (SPEC-[A-Z0-9]+-\d{2}):/m.exec(fs.readFileSync(path.join(CLAUSES, c.clause), "utf8")) || [])[1];
-    console.log(`| [${c.id}](clauses/${c.clause}#${c.id.toLowerCase().replace(/\./g, "-")}) | \`${clauseId}\` | ${c.test.kind} | [\`${c.test.title}\`](../../${c.test.path}) | UNVERIFIED |`);
+    console.log(`| [${c.id}](clauses/${c.clause}#${c.id.toLowerCase().replace(/\./g, "-")}) | \`${clauseId}\` | ${c.test.kind} | [\`${c.test.title}\`](../../${c.test.path.replace(/\(/g, "%28").replace(/\)/g, "%29")}) | UNVERIFIED |`);
   }
   process.exit(0);
 }

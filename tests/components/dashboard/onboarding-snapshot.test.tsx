@@ -81,6 +81,7 @@ const DEFAULT_MOCK_PAYLOAD: DashboardData = {
 };
 
 describe("OnboardingSnapshot", () => {
+  // Spec: CAND-04-A4.2A (docs/spec/clauses/04-dashboard.md#cand-04-a4-2a)
   it("renders correctly with in-progress status", async () => {
     render(
       <OnboardingSnapshot 
@@ -96,6 +97,7 @@ describe("OnboardingSnapshot", () => {
     });
   });
 
+  // Spec: CAND-04-A4.2D (docs/spec/clauses/04-dashboard.md#cand-04-a4-2d)
   it("renders correctly with completed status", async () => {
     render(
       <OnboardingSnapshot 
@@ -118,6 +120,7 @@ describe("OnboardingSnapshot", () => {
     });
   });
 
+  // Spec: CAND-04-A4.1A (docs/spec/clauses/04-dashboard.md#cand-04-a4-1a)
   it("renders explicit percentage from payload correctly", async () => {
     render(
       <OnboardingSnapshot 
@@ -131,6 +134,7 @@ describe("OnboardingSnapshot", () => {
     });
   });
 
+  // Spec: CAND-04-A4.1B (docs/spec/clauses/04-dashboard.md#cand-04-a4-1b)
   it("renders correctly with default totalSteps", async () => {
     render(
       <OnboardingSnapshot 
@@ -144,6 +148,7 @@ describe("OnboardingSnapshot", () => {
     });
   });
 
+  // Spec: CAND-04-A4.4C (docs/spec/clauses/04-dashboard.md#cand-04-a4-4c)
   it("allows downloading and opening PDF offer letter", async () => {
     const originalFetch = global.fetch;
     const fetchMock = vi.fn().mockResolvedValue({
@@ -190,6 +195,7 @@ describe("OnboardingSnapshot", () => {
     window.open = originalOpen;
   });
 
+  // Spec: CAND-04-A4.4D (docs/spec/clauses/04-dashboard.md#cand-04-a4-4d)
   it("handles fetch error during pdf download", async () => {
     const originalFetch = global.fetch;
     global.fetch = vi.fn().mockRejectedValue(new Error("Network fail"));
@@ -223,24 +229,28 @@ describe("OnboardingSnapshot", () => {
         />,
       );
 
+    // Spec: CAND-04-A4.5A (docs/spec/clauses/04-dashboard.md#cand-04-a4-5a)
     it("is hidden when the backend reports no culture book", () => {
       mockCultureBookAvailable = false;
       renderSnapshot();
       expect(screen.queryByRole("button", { name: /Culture Book/i })).toBeNull();
     });
 
+    // Spec: CAND-04-A4.5B (docs/spec/clauses/04-dashboard.md#cand-04-a4-5b)
     it("is hidden while availability is still unknown", () => {
       mockCultureBookAvailable = undefined;
       renderSnapshot();
       expect(screen.queryByRole("button", { name: /Culture Book/i })).toBeNull();
     });
 
+    // Spec: CAND-04-A4.5C (docs/spec/clauses/04-dashboard.md#cand-04-a4-5c)
     it("is shown once the backend confirms a culture book", () => {
       mockCultureBookAvailable = true;
       renderSnapshot();
       expect(screen.getByRole("button", { name: /Culture Book/i })).toBeTruthy();
     });
 
+    // Spec: CAND-04-A4.5D (docs/spec/clauses/04-dashboard.md#cand-04-a4-5d)
     it("is not rendered disabled - it is absent entirely", () => {
       mockCultureBookAvailable = false;
       const { container } = renderSnapshot();

@@ -26,6 +26,7 @@ describe("fileUploadService", () => {
     expect(FrappeAPI.uploadFile).toHaveBeenCalledWith(file, "", "DocName", "DocType");
   });
 
+  // Spec: CAND-05-A9.2A (docs/spec/clauses/05-onboarding-logic.md#cand-05-a9-2a)
   it("handles upload errors", async () => {
     const mockError = new Error("Upload failed");
     (FrappeAPI.uploadFile as any).mockRejectedValue(mockError);

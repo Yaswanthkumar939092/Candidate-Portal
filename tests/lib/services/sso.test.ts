@@ -40,6 +40,7 @@ describe("SSO Services", () => {
   describe("FrappeSSOProvider", () => {
     const provider = new FrappeSSOProvider("http://frappe.url", "client_id", "client_secret");
 
+    // Spec: CAND-07-A11.3A (docs/spec/clauses/07-services-and-hooks.md#cand-07-a11-3a)
     it("generateAuthUrl returns correct URL", () => {
       const url = provider.generateAuthUrl("state123", "http://redirect.uri");
       expect(url).toContain("client_id=client_id");

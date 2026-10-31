@@ -3,28 +3,33 @@ import { evaluateDependsOn, isFieldFilled } from "@/lib/onboarding-utils";
 import { OnboardingField } from "@/lib/types/onboarding";
 
 describe("evaluateDependsOn", () => {
+  // Spec: CAND-05-A5.1A (docs/spec/clauses/05-onboarding-logic.md#cand-05-a5-1a)
   it("should return true if expression is empty or undefined", () => {
     expect(evaluateDependsOn(undefined, {})).toBe(true);
     expect(evaluateDependsOn("", {})).toBe(true);
   });
 
+  // Spec: CAND-05-A5.1B (docs/spec/clauses/05-onboarding-logic.md#cand-05-a5-1b)
   it("should evaluate a simple eval expression", () => {
     const doc = { custom_has_passport: "Yes" };
     expect(evaluateDependsOn("eval:doc.custom_has_passport=='Yes'", doc)).toBe(true);
     expect(evaluateDependsOn("eval:doc.custom_has_passport=='No'", doc)).toBe(false);
   });
 
+  // Spec: CAND-05-A5.1C (docs/spec/clauses/05-onboarding-logic.md#cand-05-a5-1c)
   it("should evaluate expression without eval prefix", () => {
     const doc = { custom_has_passport: "Yes" };
     expect(evaluateDependsOn("doc.custom_has_passport=='Yes'", doc)).toBe(true);
     expect(evaluateDependsOn("doc.custom_has_passport=='No'", doc)).toBe(false);
   });
 
+  // Spec: CAND-05-A5.1D (docs/spec/clauses/05-onboarding-logic.md#cand-05-a5-1d)
   it("should handle boolean/falsy evaluation", () => {
     const doc = { custom_has_passport: "No", custom_passport_number: "" };
     expect(evaluateDependsOn("eval:!doc.custom_passport_number", doc)).toBe(true);
   });
 
+  // Spec: CAND-05-A5.1E (docs/spec/clauses/05-onboarding-logic.md#cand-05-a5-1e)
   it("should evaluate expression with simple fieldname", () => {
     const doc = { custom_is_rehire: 1, custom_another_field: 0 };
     expect(evaluateDependsOn("custom_is_rehire", doc)).toBe(true);
@@ -32,6 +37,7 @@ describe("evaluateDependsOn", () => {
     expect(evaluateDependsOn("non_existent_field", doc)).toBe(false);
   });
 
+  // Spec: CAND-05-A5.1F (docs/spec/clauses/05-onboarding-logic.md#cand-05-a5-1f)
   it("should handle error cases gracefully by returning false", () => {
     const doc = {};
     // Invalid javascript syntax should fail evaluation gracefully
@@ -40,6 +46,7 @@ describe("evaluateDependsOn", () => {
 });
 
 describe("isFieldFilled", () => {
+  // Spec: CAND-05-A5.2A (docs/spec/clauses/05-onboarding-logic.md#cand-05-a5-2a)
   it("does not require table child fields that are hidden by their dependency", () => {
     const educationField: OnboardingField = {
       fieldname: "custom_education_details",

@@ -12,6 +12,7 @@ describe("OnboardingRightRail", () => {
     vi.clearAllMocks();
   });
 
+  // Spec: CAND-06-A4.1B (docs/spec/clauses/06-onboarding-components.md#cand-06-a4-1b)
   it("renders company name and joining details when provided in formConfig", () => {
     const mockFormConfig = {
       branding: {
@@ -47,6 +48,7 @@ describe("OnboardingRightRail", () => {
     expect(screen.getByText(/30\s+Jun\s+2026/)).toBeTruthy();
   });
 
+  // Spec: CAND-06-A4.1C (docs/spec/clauses/06-onboarding-components.md#cand-06-a4-1c)
   it("does not render joining details sections if joining info is missing", () => {
     const mockFormConfig = {
       branding: {
@@ -72,6 +74,7 @@ describe("OnboardingRightRail", () => {
     expect(screen.queryByText("Trainee DOJ")).toBeNull();
   });
 
+  // Spec: CAND-06-A4.1D (docs/spec/clauses/06-onboarding-components.md#cand-06-a4-1d)
   it("renders Trainee DOJ when trainee_doj is provided in joining info", () => {
     const mockFormConfig = {
       branding: {
@@ -99,6 +102,7 @@ describe("OnboardingRightRail", () => {
     expect(screen.getByText(/15\s+Jul\s+2026/)).toBeTruthy();
   });
 
+  // Spec: CAND-06-A4.1E (docs/spec/clauses/06-onboarding-components.md#cand-06-a4-1e)
   it("calculates days to joining from days_to_joining field or custom date, including invalid date fallback", () => {
     // 1. With days_to_joining in formConfig
     vi.mocked(useOnboarding).mockReturnValue({
@@ -176,6 +180,7 @@ describe("OnboardingRightRail", () => {
     expect(screen.getByText("—")).toBeTruthy();
   });
 
+  // Spec: CAND-06-A4.5C (docs/spec/clauses/06-onboarding-components.md#cand-06-a4-5c)
   it("handles buddy name initials generation properly", () => {
     vi.mocked(useOnboarding).mockReturnValue({
       formConfig: {
@@ -199,6 +204,7 @@ describe("OnboardingRightRail", () => {
     expect(screen.getByText("JD")).toBeTruthy();
   });
 
+  // Spec: CAND-06-A4.2C (docs/spec/clauses/06-onboarding-components.md#cand-06-a4-2c)
   it("renders required fields checklist and handles jumping to field when clicked", () => {
     const mockTabs = [
       {
@@ -259,6 +265,7 @@ describe("OnboardingRightRail", () => {
     document.body.removeChild(mockContainer);
   });
 
+  // Spec: CAND-06-A4.6A (docs/spec/clauses/06-onboarding-components.md#cand-06-a4-6a)
   it("renders onboarding journey step-by-step info", () => {
     vi.mocked(useOnboarding).mockReturnValue({
       formConfig: {
@@ -290,6 +297,7 @@ describe("OnboardingRightRail", () => {
     expect(screen.getByText("Intro call")).toBeTruthy();
   });
 
+  // Spec: CAND-06-A4.5A (docs/spec/clauses/06-onboarding-components.md#cand-06-a4-5a)
   it("renders onboarding buddy card and handles say hello click", () => {
     vi.mocked(useOnboarding).mockReturnValue({
       formConfig: {
@@ -321,6 +329,7 @@ describe("OnboardingRightRail", () => {
     windowMock.mockRestore();
   });
 
+  // Spec: CAND-06-A4.5B (docs/spec/clauses/06-onboarding-components.md#cand-06-a4-5b)
   it("shows only the Onboarding Buddy under the buddy heading, not teammates or the manager", () => {
     vi.mocked(useOnboarding).mockReturnValue({
       formConfig: {
@@ -346,6 +355,7 @@ describe("OnboardingRightRail", () => {
     expect(screen.queryByText("Rahul Agrawal")).toBeNull();
   });
 
+  // Spec: CAND-06-A4.4A (docs/spec/clauses/06-onboarding-components.md#cand-06-a4-4a)
   it("handles bottom action triggers (Save & Continue, Save as Draft & Exit) on form steps", async () => {
     const mockTriggerSubmit = vi.fn().mockResolvedValue(true);
     vi.mocked(useOnboarding).mockReturnValue({
@@ -372,6 +382,7 @@ describe("OnboardingRightRail", () => {
     expect(mockTriggerSubmit).toHaveBeenCalledWith("save_draft");
   });
 
+  // Spec: CAND-06-A4.4C (docs/spec/clauses/06-onboarding-components.md#cand-06-a4-4c)
   it("hides Save & Continue on review step", () => {
     vi.mocked(useOnboarding).mockReturnValue({
       formConfig: {
@@ -390,6 +401,7 @@ describe("OnboardingRightRail", () => {
     expect(screen.getByText("Save as Draft & Exit")).toBeTruthy();
   });
 
+  // Spec: CAND-06-A4.4B (docs/spec/clauses/06-onboarding-components.md#cand-06-a4-4b)
   it("Save as Draft & Exit calls submitAll on review step", async () => {
     const mockSubmitAll = vi.fn().mockResolvedValue(undefined);
     const mockAssign = vi.fn();

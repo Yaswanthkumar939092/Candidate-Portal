@@ -62,6 +62,7 @@ describe("useJobOffer Hooks", () => {
     expect(jobOfferService.getJobOfferSummary).toHaveBeenCalledWith("test@example.com", undefined);
   });
 
+  // Spec: CAND-07-A2.3A (docs/spec/clauses/07-services-and-hooks.md#cand-07-a2-3a)
   it("useJobOfferSummary hook passes token to the service", async () => {
     const mockData = {
       applicant_name: "Test User",
@@ -91,6 +92,7 @@ describe("useJobOffer Hooks", () => {
     expect(jobOfferService.getJobOfferStatus).toHaveBeenCalledWith("test@example.com", undefined);
   });
 
+  // Spec: CAND-07-A2.3B (docs/spec/clauses/07-services-and-hooks.md#cand-07-a2-3b)
   it("useJobOfferStatus hook passes token to the service", async () => {
     const mockData = { status: "Awaiting Response" };
     vi.mocked(jobOfferService.getJobOfferStatus).mockResolvedValue(mockData);
@@ -129,6 +131,7 @@ describe("useJobOffer Hooks", () => {
     expect(jobOfferService.getJobOfferPdfUrl).toHaveBeenCalledWith("test@example.com", "my-token");
   });
 
+  // Spec: CAND-07-A2.3C (docs/spec/clauses/07-services-and-hooks.md#cand-07-a2-3c)
   it("useJobOfferPdf returns null when disabled", () => {
     const { result } = renderHook(
       () => useJobOfferPdf("test@example.com", false),
@@ -139,6 +142,7 @@ describe("useJobOffer Hooks", () => {
     expect(result.current.isLoading).toBe(false);
   });
 
+  // Spec: CAND-07-A2.3D (docs/spec/clauses/07-services-and-hooks.md#cand-07-a2-3d)
   it("useRejectionReasons fetches data correctly", async () => {
     const mockData = [{ name: "Salary", reason: "Salary" }];
     vi.mocked(jobOfferService.getRejectionReasons).mockResolvedValue(mockData);
@@ -149,6 +153,7 @@ describe("useJobOffer Hooks", () => {
     expect(result.current.data).toEqual(mockData);
   });
 
+  // Spec: CAND-07-A2.4A (docs/spec/clauses/07-services-and-hooks.md#cand-07-a2-4a)
   it("useUpdateJobOfferStatus calls service and updates cache directly", async () => {
     vi.mocked(jobOfferService.updateJobOfferStatus).mockResolvedValue({ jo_id: "test-id", webform: "" });
     const setQueryDataSpy = vi.spyOn(queryClient, "setQueryData");
@@ -172,6 +177,7 @@ describe("useJobOffer Hooks", () => {
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["dashboard"] });
   });
 
+  // Spec: CAND-07-A2.3E (docs/spec/clauses/07-services-and-hooks.md#cand-07-a2-3e)
   it("useConsentForm fetches data correctly", async () => {
     const mockData = { html: "<div>Consent Form</div>" } as any;
     vi.mocked(jobOfferService.getConsentForm).mockResolvedValue(mockData);
@@ -183,6 +189,7 @@ describe("useJobOffer Hooks", () => {
     expect(jobOfferService.getConsentForm).toHaveBeenCalledWith("test@example.com", "my-token");
   });
 
+  // Spec: CAND-07-A2.4B (docs/spec/clauses/07-services-and-hooks.md#cand-07-a2-4b)
   it("useSubmitConsent calls service method on mutateAsync", async () => {
     const mockRes = { success: true };
     vi.mocked(jobOfferService.submitConsent).mockResolvedValue(mockRes);

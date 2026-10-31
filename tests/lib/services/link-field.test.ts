@@ -14,6 +14,7 @@ describe("linkFieldService", () => {
     vi.clearAllMocks();
   });
 
+  // Spec: CAND-05-A9.1B (docs/spec/clauses/05-onboarding-logic.md#cand-05-a9-1b)
   it("fetches link field options correctly without search text", async () => {
     const mockRes = {
       status: "success",
@@ -36,6 +37,7 @@ describe("linkFieldService", () => {
     );
   });
 
+  // Spec: CAND-05-A9.1C (docs/spec/clauses/05-onboarding-logic.md#cand-05-a9-1c)
   it("fetches link field options correctly with search text", async () => {
     const mockRes = {
       status: "success",
@@ -55,10 +57,12 @@ describe("linkFieldService", () => {
     );
   });
 
+  // Spec: CAND-05-A9.1D (docs/spec/clauses/05-onboarding-logic.md#cand-05-a9-1d)
   it("throws error if doctype is missing", async () => {
     await expect(linkFieldService.getLinkFieldOptions("")).rejects.toThrow("Doctype is required");
   });
 
+  // Spec: CAND-05-A9.1E (docs/spec/clauses/05-onboarding-logic.md#cand-05-a9-1e)
   it("throws error if API returns failure", async () => {
     (FrappeAPI.get as any).mockResolvedValue({ status: "error", message: "Failed" });
     await expect(linkFieldService.getLinkFieldOptions("Designation")).rejects.toThrow("Failed to fetch link field options");

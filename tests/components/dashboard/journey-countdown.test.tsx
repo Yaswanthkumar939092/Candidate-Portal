@@ -11,6 +11,7 @@ describe("JourneyCountdown", () => {
     vi.useRealTimers();
   });
 
+  // Spec: CAND-04-A3.4A (docs/spec/clauses/04-dashboard.md#cand-04-a3-4a)
   it("renders correctly for a future date", () => {
     // Set "now" to 2026-04-12
     const date = new Date(2026, 3, 12);
@@ -22,6 +23,7 @@ describe("JourneyCountdown", () => {
     expect(screen.getByText("In 3 Days")).toBeTruthy();
   });
 
+  // Spec: CAND-04-A3.4B (docs/spec/clauses/04-dashboard.md#cand-04-a3-4b)
   it("renders '1 Day' for tomorrow", () => {
     const date = new Date(2026, 3, 12);
     vi.setSystemTime(date);
@@ -31,6 +33,7 @@ describe("JourneyCountdown", () => {
     expect(screen.getByText("In 1 Day")).toBeTruthy();
   });
 
+  // Spec: CAND-04-A3.4C (docs/spec/clauses/04-dashboard.md#cand-04-a3-4c)
   it("renders '0 Days' for today or past date", () => {
     const date = new Date(2026, 3, 12);
     vi.setSystemTime(date);
@@ -42,6 +45,7 @@ describe("JourneyCountdown", () => {
     expect(screen.getAllByText("In 0 Days")).toHaveLength(2);
   });
 
+  // Spec: CAND-04-A3.4D (docs/spec/clauses/04-dashboard.md#cand-04-a3-4d)
   it("returns null and renders nothing if joiningDate is falsy", () => {
     const { container } = render(<JourneyCountdown joiningDate={"" as any} />);
     expect(container.firstChild).toBeNull();

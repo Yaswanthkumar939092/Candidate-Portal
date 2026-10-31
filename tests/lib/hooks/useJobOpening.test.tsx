@@ -71,6 +71,7 @@ describe("useJobOpening Hooks", () => {
     expect(JobOpeningService.getJobOpening).toHaveBeenCalledWith(1, 10, "developer", undefined);
   });
 
+  // Spec: CAND-07-A10.3A (docs/spec/clauses/07-services-and-hooks.md#cand-07-a10-3a)
   it("useJobOpening fetches campus invite openings correctly and maps job_opening to name", async () => {
     const mockRes = {
       success: true,
@@ -113,6 +114,7 @@ describe("useJobOpening Hooks", () => {
     expect(JobOpeningService.getCampusInviteOpenings).toHaveBeenCalledWith("CINV-2026-0001", "test@test.com");
   });
 
+  // Spec: CAND-07-A10.3B (docs/spec/clauses/07-services-and-hooks.md#cand-07-a10-3b)
   it("useCreateJobApplicant calls service on mutate", async () => {
     const mockResponse = {
       status: "ok",
@@ -130,6 +132,7 @@ describe("useJobOpening Hooks", () => {
     });
   });
 
+  // Spec: CAND-07-A10.3C (docs/spec/clauses/07-services-and-hooks.md#cand-07-a10-3c)
   it("useGetAllDrafts fetches all drafts", async () => {
     const mockDrafts = [{ id: "draft1" }];
     (draftJobApplicantService.getAllDrafts as any).mockResolvedValue(mockDrafts);
@@ -151,6 +154,7 @@ describe("useJobOpening Hooks", () => {
     expect(jobApplicationService.getJobApplicationForm).toHaveBeenCalledWith("job1", undefined, undefined, undefined);
   });
 
+  // Spec: CAND-07-A10.3D (docs/spec/clauses/07-services-and-hooks.md#cand-07-a10-3d)
   it("useJobApplicationForm fetches form correctly with isCampus = true", async () => {
     const mockForm = { fields: [{ label: "Name" }] };
     (jobApplicationService.getJobApplicationForm as any).mockResolvedValue(mockForm);
@@ -176,6 +180,7 @@ describe("useJobOpening Hooks", () => {
       consoleErrorSpy.mockRestore();
     });
 
+    // Spec: CAND-07-A10.3E (docs/spec/clauses/07-services-and-hooks.md#cand-07-a10-3e)
     it("useCreateJobApplicant onError is called on failure", async () => {
       (jobApplicationService.submitApplication as any).mockRejectedValue(new Error("err"));
       const { result } = renderHook(() => useCreateJobApplicant(), { wrapper });
@@ -184,6 +189,7 @@ describe("useJobOpening Hooks", () => {
       expect(consoleErrorSpy).toHaveBeenCalled();
     });
 
+    // Spec: CAND-07-A10.3F (docs/spec/clauses/07-services-and-hooks.md#cand-07-a10-3f)
     it("useDeleteDraftJobApplicant callbacks work", async () => {
       (draftJobApplicantService.deleteDraftJobApplicant as any).mockResolvedValue({});
       const { result } = renderHook(() => useDeleteDraftJobApplicant(), { wrapper });

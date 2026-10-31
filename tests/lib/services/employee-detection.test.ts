@@ -127,6 +127,7 @@ describe('InternalEmployeeDetector', () => {
       expect(frappeEnvManager.getClient).not.toHaveBeenCalled()
     })
 
+    // Spec: CAND-07-A11.5A (docs/spec/clauses/07-services-and-hooks.md#cand-07-a11-5a)
     it('falls back to Frappe when domain is not recognized', async () => {
       // Domain lookup returns nothing
       mockDomainLookup({ data: null, error: { code: 'PGRST116' } })

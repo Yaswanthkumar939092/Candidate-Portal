@@ -12,6 +12,7 @@ vi.mock("@/components/portal/portal-navigation", () => ({
 }))
 
 describe("SurveyOfferNavigation", () => {
+  // Spec: CAND-04-A8.5A (docs/spec/clauses/04-dashboard.md#cand-04-a8-5a)
   it("renders PortalNavigation with hideNavLinks=true", () => {
     render(<SurveyOfferNavigation />);
     const nav = screen.getByTestId("portal-navigation");

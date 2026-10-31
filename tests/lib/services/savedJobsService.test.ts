@@ -14,6 +14,7 @@ describe("SavedJobsService", () => {
     vi.clearAllMocks();
   });
 
+  // Spec: CAND-07-A9.5A (docs/spec/clauses/07-services-and-hooks.md#cand-07-a9-5a)
   it("getSavedJobs calls FrappeAPI.get", async () => {
     const mockRes = { status: "success", saved_job_openings: ["HR-OPN-1"] };
     (FrappeAPI.get as any).mockResolvedValue(mockRes);
@@ -26,6 +27,7 @@ describe("SavedJobsService", () => {
     );
   });
 
+  // Spec: CAND-07-A9.5B (docs/spec/clauses/07-services-and-hooks.md#cand-07-a9-5b)
   it("toggleSavedJob calls FrappeAPI.post", async () => {
     const mockRes = { action: "saved", is_saved: true };
     (FrappeAPI.post as any).mockResolvedValue(mockRes);

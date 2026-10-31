@@ -125,6 +125,7 @@ describe("FrappeSyncService", () => {
     expect(supabaseAdmin.from).toHaveBeenCalledWith("companies");
   });
 
+  // Spec: CAND-07-A11.2A (docs/spec/clauses/07-services-and-hooks.md#cand-07-a11-2a)
   it("syncAll runs all syncs and returns summary", async () => {
     // Mock for jobs
     mockClient.request.mockResolvedValueOnce({ data: [] });

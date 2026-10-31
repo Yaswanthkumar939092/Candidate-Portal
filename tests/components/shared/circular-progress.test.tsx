@@ -9,6 +9,7 @@ describe('CircularProgress', () => {
     expect(container.querySelector('svg')).toBeTruthy()
   })
 
+  // Spec: CAND-06-A7.1A (docs/spec/clauses/06-onboarding-components.md#cand-06-a7-1a)
   it('renders two circle elements (track + progress arc)', () => {
     const { container } = render(<CircularProgress value={50} />)
     const circles = container.querySelectorAll('circle')
@@ -17,6 +18,7 @@ describe('CircularProgress', () => {
 
   // The percentage label uses clampedValue (not animatedValue), so it
   // immediately shows the target value regardless of animation state.
+  // Spec: CAND-06-A7.1B (docs/spec/clauses/06-onboarding-components.md#cand-06-a7-1b)
   it('displays percentage text immediately', () => {
     render(<CircularProgress value={75} />)
     expect(screen.getByText('75%')).toBeTruthy()
@@ -32,6 +34,7 @@ describe('CircularProgress', () => {
     expect(screen.getByText('100%')).toBeTruthy()
   })
 
+  // Spec: CAND-06-A7.1C (docs/spec/clauses/06-onboarding-components.md#cand-06-a7-1c)
   it('clamps values above 100 to 100', () => {
     render(<CircularProgress value={150} />)
     expect(screen.getByText('100%')).toBeTruthy()
@@ -42,6 +45,7 @@ describe('CircularProgress', () => {
     expect(screen.getByText('0%')).toBeTruthy()
   })
 
+  // Spec: CAND-06-A7.1D (docs/spec/clauses/06-onboarding-components.md#cand-06-a7-1d)
   it('accepts custom size and sets SVG dimensions', () => {
     const { container } = render(
       <CircularProgress value={50} size={200} strokeWidth={12} />,
