@@ -17,6 +17,7 @@ describe("useCurrentUser", () => {
     vi.clearAllMocks();
   });
 
+  // Spec: CAND-01-A2.3B (docs/spec/clauses/01-overview-routing-and-session.md#cand-01-a2-3b)
   it("returns the logged-in user's email", async () => {
     mockGetCurrentUser.mockResolvedValue({
       email: "ava@example.com",
@@ -33,6 +34,7 @@ describe("useCurrentUser", () => {
     expect(mockGetCurrentUser).toHaveBeenCalledTimes(1);
   });
 
+  // Spec: CAND-01-A2.3A (docs/spec/clauses/01-overview-routing-and-session.md#cand-01-a2-3a)
   it("falls back to the default email when no user is returned", async () => {
     mockGetCurrentUser.mockResolvedValue(null);
 
@@ -43,6 +45,7 @@ describe("useCurrentUser", () => {
     expect(result.current.userEmail).toBe("deepakrajput0006@gmail.com");
   });
 
+  // Spec: CAND-01-A2.3C (docs/spec/clauses/01-overview-routing-and-session.md#cand-01-a2-3c)
   it("falls back to the default email when fetching the user fails", async () => {
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     mockGetCurrentUser.mockRejectedValue(new Error("session failed"));

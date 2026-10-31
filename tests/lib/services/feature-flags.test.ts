@@ -7,6 +7,7 @@ describe("featureFlagsService", () => {
     global.fetch = vi.fn();
   });
 
+  // Spec: CAND-02-A4.2B (docs/spec/clauses/02-api-client-and-backend-contract.md#cand-02-a4-2b)
   it("getFeatureFlags calls the server-side proxy route", async () => {
     const mockFlags = { "feature-1": 1 };
     vi.mocked(fetch).mockResolvedValue({

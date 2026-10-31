@@ -58,6 +58,7 @@ describe("AuthProvider", () => {
     })
   })
 
+  // Spec: CAND-01-A2.5A (docs/spec/clauses/01-overview-routing-and-session.md#cand-01-a2-5a)
   it("hydrates profile state directly from the Frappe session user", async () => {
     mockProfileFromFrappeUser.mockReturnValue({
       id: frappeUser.id,
@@ -91,6 +92,7 @@ describe("AuthProvider", () => {
     expect(screen.getByTestId("stage").textContent).toBe("candidate")
   })
 
+  // Spec: CAND-01-A2.4A (docs/spec/clauses/01-overview-routing-and-session.md#cand-01-a2-4a)
   it("displays success toast and clears sessionStorage when showLoginToast is set to true", async () => {
     const sessionStorageSpy = vi.spyOn(Storage.prototype, 'getItem').mockReturnValue("true")
     const sessionStorageRemoveSpy = vi.spyOn(Storage.prototype, 'removeItem')

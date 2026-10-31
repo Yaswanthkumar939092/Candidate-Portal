@@ -14,6 +14,7 @@ describe("authPageContentService", () => {
     vi.clearAllMocks();
   });
 
+  // Spec: CAND-02-A5.2A (docs/spec/clauses/02-api-client-and-backend-contract.md#cand-02-a5-2a)
   it("getAuthPageContent calls FrappeAPI.get correctly", async () => {
     const mockContent = {
       logo: "/files/logo.png",

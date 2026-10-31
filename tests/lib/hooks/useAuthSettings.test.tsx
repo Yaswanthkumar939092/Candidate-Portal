@@ -29,6 +29,7 @@ describe("useAuthSettings", () => {
     queryClient.clear();
   });
 
+  // Spec: CAND-03-A3.3B (docs/spec/clauses/03-authentication.md#cand-03-a3-3b)
   it("fetches auth settings data", async () => {
     const mockSettings = {
       enabled: 1,
