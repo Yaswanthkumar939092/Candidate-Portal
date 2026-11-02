@@ -140,9 +140,10 @@ None. This is a browser and Node front end with no scheduler, no server hooks an
 - Security: `useCurrentUser` falls back to a fixed personal e-mail address and its callers use it as the applicant e-mail for offer and onboarding calls (`lib/hooks/useUser.ts:12-16`, `app/(portal)/job_offer/page.tsx:127,133`). Issue: PWHR-1512.
 - Security: `app/layout.tsx` inserts a script with `dangerouslySetInnerHTML`; its content is a constant string with no input from the request (`app/layout.tsx:76-78`).
 - Security: the page `app/(public)/page.tsx:17-18` names a customer in its fallback text. Core clauses are customer-neutral; this is a fact about the code, listed here for the owner (Not filed: copy text, no behaviour).
-- Performance: the auth provider and the React Query client are created at the root, so every route pays for them (`app/layout.tsx:85-88`, `app/providers.tsx:9`).
-- Performance: `generateMetadata` calls the branding method on the server for each render of the root layout; this clause did not check whether Next.js caches it (`app/layout.tsx:31`). [INFERENCE]
-- Performance: `(portal)` pages sit behind `FeatureFlagLoader`, which blocks the whole page on the flag request (`app/(portal)/layout.tsx:56-57`).
+- Performance: the one React Query client is `new QueryClient()` with no `defaultOptions`, built at module scope, and the auth provider and that client wrap every route, so each hook decides its own freshness and ten of them set no `staleTime` (`app/providers.tsx:9,14`, `app/layout.tsx:85-88`). Issue: PWHR-1754.
+- Performance: the branding method is called twice per first page view, once on the server in `generateMetadata` with no cache option and once in the browser by `DynamicFavicon`, which `Providers` renders on every route (`app/layout.tsx:31`, `app/providers.tsx:15`, `components/dynamic-favicon.tsx:11`, `lib/hooks/useCandidateBranding.ts:5-8`). Whether Next.js caches or dedups the server call was not read. Issue: PWHR-1755. [INFERENCE]
+- Performance: `(portal)` pages sit behind `FeatureFlagLoader`, which renders a spinner instead of the page until the flag request settles, and the flag context value is a fresh object on every provider render (`app/(portal)/layout.tsx:56-57`, `lib/contexts/feature-flags.tsx:133-136,78-85`). Issue: PWHR-1756.
+- Performance: `useCurrentUser` re-requests the session the provider already fetched, in a mount effect with no cache, dedup or staleness gate, once per mounting component (`lib/hooks/useUser.ts:8-22`, `lib/contexts/auth-context.tsx:69`). Issue: PWHR-1757.
 
 ## 9. Known gaps / open questions
 
