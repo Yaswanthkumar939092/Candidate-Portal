@@ -24,6 +24,8 @@ export interface ControlField {
   label: string;
   fieldtype: string;
   options?: string;
+  /** Attach fields: allowed extensions from the server (".pdf,.png"); null = ACCEPT. */
+  accept?: string | null;
 }
 
 export interface FieldControlProps {
@@ -54,6 +56,21 @@ const TEXTAREA = new Set(["Small Text", "Text", "Long Text"]);
 const ATTACH = new Set(["Attach", "Attach Image"]);
 const ACCEPT = ".pdf,.png,.jpg,.jpeg,.doc,.docx";
 const AADHAAR_FIELD = "custom_da_aadhaar_masked";
+// Hint names per extension, in the order they are listed.
+const FILE_KINDS: [string, string[]][] = [
+  ["JPEG", [".jpg", ".jpeg"]],
+  ["PNG", [".png"]],
+  ["PDF", [".pdf"]],
+  ["Word", [".doc", ".docx"]],
+];
+
+/** ".pdf,.jpg,.jpeg,.png" -> "JPEG, PNG and PDF only, up to 5 MB" */
+function fileHint(accept: string) {
+  const exts = accept.toLowerCase().split(",").map((e) => e.trim());
+  const kinds = FILE_KINDS.filter(([, list]) => list.some((e) => exts.includes(e))).map(([kind]) => kind);
+  const names = kinds.length > 1 ? `${kinds.slice(0, -1).join(", ")} and ${kinds[kinds.length - 1]}` : kinds[0];
+  return names ? `${names} only, up to 5 MB` : "Up to 5 MB";
+}
 
 export function FieldControl(props: FieldControlProps) {
   const { field, value, onChange, disabled, invalid, id, ariaLabel, nonWorkingDays, onNonWorkingDay } = props;
@@ -194,6 +211,7 @@ function AttachControl({ access, field, value, onChange, parentFieldname, disabl
   const [error, setError] = React.useState<string | null>(null);
   const url = value ? String(value) : "";
   const name = url ? decodeURIComponent(url.split("/").pop() || url) : "";
+  const accept = field.accept || ACCEPT;
 
   const pick = async (file: File | undefined) => {
     if (!file) return;
@@ -217,7 +235,7 @@ function AttachControl({ access, field, value, onChange, parentFieldname, disabl
 
   return (
     <div className="space-y-1">
-      <input ref={inputRef} type="file" accept={ACCEPT} className="hidden" onChange={(e) => pick(e.target.files?.[0])} />
+      <input ref={inputRef} type="file" accept={accept} className="hidden" onChange={(e) => pick(e.target.files?.[0])} />
       {url ? (
         <div className={cn("flex items-center gap-2 rounded-md border px-3 py-2 text-sm", invalid && "border-destructive")}>
           <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -237,7 +255,7 @@ function AttachControl({ access, field, value, onChange, parentFieldname, disabl
         </Button>
       )}
       {error && <p className="text-xs text-destructive">{error}</p>}
-      {!url && !error && <p className="text-xs text-muted-foreground">PDF, image or Word, up to 5 MB</p>}
+      {!url && !error && <p className="text-xs text-muted-foreground">{fileHint(accept)}</p>}
     </div>
   );
 }
