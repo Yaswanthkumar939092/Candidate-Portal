@@ -31,6 +31,7 @@ describe("useApplicantStatus Hooks", () => {
     queryClient.clear();
   });
 
+  // Spec: CAND-04-A6.4A (docs/spec/clauses/04-dashboard.md#cand-04-a6-4a)
   it("useApplicantStatus fetches data correctly", async () => {
     const mockData = { success: true, data: { status: "Applied" } };
     (ApplicantStatusResponse.getApplicantStatusResponse as any).mockResolvedValue(mockData);
@@ -42,6 +43,7 @@ describe("useApplicantStatus Hooks", () => {
     expect(ApplicantStatusResponse.getApplicantStatusResponse).toHaveBeenCalledWith("test@example.com");
   });
 
+  // Spec: CAND-04-A6.4B (docs/spec/clauses/04-dashboard.md#cand-04-a6-4b)
   it("useJobApplicantDetails fetches data correctly", async () => {
     const mockData = { name: "APP-001" };
     (ApplicantStatusResponse.getJobApplicant as any).mockResolvedValue(mockData);
@@ -53,12 +55,14 @@ describe("useApplicantStatus Hooks", () => {
     expect(ApplicantStatusResponse.getJobApplicant).toHaveBeenCalledWith("APP-001");
   });
 
+  // Spec: CAND-04-A6.4C (docs/spec/clauses/04-dashboard.md#cand-04-a6-4c)
   it("useApplicantStatus is disabled when email is empty", () => {
     const { result } = renderHook(() => useApplicantStatus(""), { wrapper });
     expect(result.current.isLoading).toBe(false);
     expect(result.current.fetchStatus).toBe("idle");
   });
 
+  // Spec: CAND-04-A6.4D (docs/spec/clauses/04-dashboard.md#cand-04-a6-4d)
   it("useJobApplicantDetails is disabled when jobApplicantName is null", () => {
     const { result } = renderHook(() => useJobApplicantDetails(null), { wrapper });
     expect(result.current.isLoading).toBe(false);

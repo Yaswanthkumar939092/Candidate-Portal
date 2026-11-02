@@ -30,6 +30,7 @@ describe("useLinkFieldOptions", () => {
     queryClient.clear();
   });
 
+  // Spec: CAND-05-A10.2B (docs/spec/clauses/05-onboarding-logic.md#cand-05-a10-2b)
   it("fetches link field options correctly", async () => {
     const mockRes = {
       status: "success" as const,
@@ -50,6 +51,7 @@ describe("useLinkFieldOptions", () => {
     expect(linkFieldService.getLinkFieldOptions).toHaveBeenCalledWith("Designation", "searchQuery", undefined);
   });
 
+  // Spec: CAND-05-A10.2C (docs/spec/clauses/05-onboarding-logic.md#cand-05-a10-2c)
   it("does not fetch if doctype is missing", () => {
     const { result } = renderHook(() => useLinkFieldOptions(""), { wrapper });
     expect(result.current.isLoading).toBe(false);

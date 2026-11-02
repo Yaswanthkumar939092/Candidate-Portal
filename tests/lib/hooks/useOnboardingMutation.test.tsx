@@ -29,6 +29,7 @@ describe("useOnboardingSubmit", () => {
     queryClient.clear();
   });
 
+  // Spec: CAND-05-A10.3C (docs/spec/clauses/05-onboarding-logic.md#cand-05-a10-3c)
   it("submits onboarding step data with the user email", async () => {
     const stepData = {
       personal_details: {

@@ -699,7 +699,7 @@ describe("JobOfferPage", () => {
           webform: "",
           dpdp_consent_required: true,
           dpdp_consent_mode: "External Portal",
-          dpdp_consent_url: "https://l.hffc.in/HFFCIN/gqsPk",
+          dpdp_consent_url: "https://consent.example.invalid/c/gqsPk",
           dpdp_consent_session: "sess-1",
         }),
       });
@@ -707,7 +707,7 @@ describe("JobOfferPage", () => {
       acceptOffer();
 
       await waitFor(() => {
-        expect(assign).toHaveBeenCalledWith("https://l.hffc.in/HFFCIN/gqsPk");
+        expect(assign).toHaveBeenCalledWith("https://consent.example.invalid/c/gqsPk");
       });
       // The in-app consent form is for Internal Form mode only.
       expect(mockPush).not.toHaveBeenCalledWith(
@@ -729,7 +729,7 @@ describe("JobOfferPage", () => {
       mockStartConsentSession.mockResolvedValue({
         already_consented: false,
         session_id: "sess-2",
-        consent_url: "https://l.hffc.in/HFFCIN/reissued",
+        consent_url: "https://consent.example.invalid/c/reissued",
         reused: true,
       });
 
@@ -742,7 +742,7 @@ describe("JobOfferPage", () => {
         });
       });
       await waitFor(() => {
-        expect(assign).toHaveBeenCalledWith("https://l.hffc.in/HFFCIN/reissued");
+        expect(assign).toHaveBeenCalledWith("https://consent.example.invalid/c/reissued");
       });
     });
 

@@ -38,17 +38,17 @@ describe('InternalEmployeeDetector', () => {
     it('detects internal employee by email domain', async () => {
       mockDomainLookup({
         data: {
-          domain: 'physicswallah.com',
-          company_name: 'PW',
+          domain: 'example.invalid',
+          company_name: 'Example Co',
           is_active: true,
         },
         error: null,
       })
 
-      const result = await detector.detectByDomain('user@physicswallah.com')
+      const result = await detector.detectByDomain('user@example.invalid')
       expect(result.is_internal).toBe(true)
       expect(result.method).toBe('domain_match')
-      expect(result.company_name).toBe('PW')
+      expect(result.company_name).toBe('Example Co')
     })
 
     // TC-8.2: External user not detected as internal
@@ -127,6 +127,7 @@ describe('InternalEmployeeDetector', () => {
       expect(frappeEnvManager.getClient).not.toHaveBeenCalled()
     })
 
+    // Spec: CAND-07-A11.5A (docs/spec/clauses/07-services-and-hooks.md#cand-07-a11-5a)
     it('falls back to Frappe when domain is not recognized', async () => {
       // Domain lookup returns nothing
       mockDomainLookup({ data: null, error: { code: 'PGRST116' } })

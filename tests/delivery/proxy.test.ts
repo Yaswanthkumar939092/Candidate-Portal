@@ -27,6 +27,7 @@ function callProxy(url: string, pathSegments: string[]) {
   });
 }
 
+// Spec: CAND-02-A3.4A (docs/spec/clauses/02-api-client-and-backend-contract.md#cand-02-a3-4a)
 it("uses runtime upstream and preserves the path and query", async () => {
   vi.stubEnv("FRAPPE_BASE_URL", "http://frappe:8000");
   const res = await callProxy("http://portal/backend/api/method/login?a=1", ["api", "method", "login"]);
@@ -42,6 +43,7 @@ it("sets Host and X-Frappe-Site-Name to the Frappe hostname", async () => {
   expect(sent.get("x-frappe-site-name")).toBe("frappe");
 });
 
+// Spec: CAND-02-A3.4B (docs/spec/clauses/02-api-client-and-backend-contract.md#cand-02-a3-4b)
 it("cannot replace the configured origin with a double slash path", async () => {
   vi.stubEnv("FRAPPE_BASE_URL", "http://frappe:8000");
   // The leading empty segment is what Next's catch-all would hand us for
@@ -59,6 +61,7 @@ it.each(["", "https://user:password@example.test", "file:///etc/passwd", "https:
   },
 );
 
+// Spec: CAND-02-A4.1B (docs/spec/clauses/02-api-client-and-backend-contract.md#cand-02-a4-1b)
 it("health is independent of backend availability", async () => {
   vi.stubEnv("FRAPPE_BASE_URL", "");
   expect(healthGet().status).toBe(200);

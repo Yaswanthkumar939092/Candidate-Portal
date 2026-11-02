@@ -57,6 +57,7 @@ describe("OnboardingStepNav", () => {
     }
   };
 
+  // Spec: CAND-06-A3.1C (docs/spec/clauses/06-onboarding-components.md#cand-06-a3-1c)
   it("renders onboarding header and progress bar", () => {
     vi.mocked(useOnboarding).mockReturnValue(defaultProps);
     render(<OnboardingStepNav />);
@@ -65,6 +66,7 @@ describe("OnboardingStepNav", () => {
     expect(screen.getByText("Complete your profile to get started.")).toBeTruthy();
   });
 
+  // Spec: CAND-06-A3.3A (docs/spec/clauses/06-onboarding-components.md#cand-06-a3-3a)
   it("calculates progress percentage correctly", () => {
     // 2 tabs + 1 review = 3 steps total.
     // 1 completed step.
@@ -85,6 +87,7 @@ describe("OnboardingStepNav", () => {
     expect(progressBar).toHaveStyle("width: 33%");
   });
 
+  // Spec: CAND-06-A3.3B (docs/spec/clauses/06-onboarding-components.md#cand-06-a3-3b)
   it("calculates progress percentage correctly using field_status_counts when present", () => {
     vi.mocked(useOnboarding).mockReturnValue({
       ...defaultProps,
@@ -110,6 +113,7 @@ describe("OnboardingStepNav", () => {
     expect(progressBar).toHaveStyle("width: 50%");
   });
 
+  // Spec: CAND-06-A3.1D (docs/spec/clauses/06-onboarding-components.md#cand-06-a3-1d)
   it("calculates progress percentage and step counts in real-time from stepData", () => {
     vi.mocked(useOnboarding).mockReturnValue({
       ...defaultProps,
@@ -158,6 +162,7 @@ describe("OnboardingStepNav", () => {
     expect(screen.getByText("1/2")).toBeTruthy();
   });
 
+  // Spec: CAND-06-A3.2C (docs/spec/clauses/06-onboarding-components.md#cand-06-a3-2c)
   it("renders steps with correct status indicators", () => {
     vi.mocked(useOnboarding).mockReturnValue({
       ...defaultProps,
@@ -180,6 +185,7 @@ describe("OnboardingStepNav", () => {
     expect(completedStep?.querySelector("svg")).toBeTruthy(); // Check icon
   });
 
+  // Spec: CAND-06-A3.2D (docs/spec/clauses/06-onboarding-components.md#cand-06-a3-2d)
   it("calls goToStep when a clickable step is clicked", () => {
     vi.mocked(useOnboarding).mockReturnValue({
       ...defaultProps,
@@ -205,6 +211,7 @@ describe("OnboardingStepNav", () => {
     expect(mockGoToStep).not.toHaveBeenCalled();
   });
 
+  // Spec: CAND-06-A3.2E (docs/spec/clauses/06-onboarding-components.md#cand-06-a3-2e)
   it("allows clicking the next step if the current step has no mandatory fields", () => {
     vi.mocked(useOnboarding).mockReturnValue({
       ...defaultProps,
@@ -243,6 +250,7 @@ describe("OnboardingStepNav", () => {
     expect(mockGoToStep).toHaveBeenCalledWith(1);
   });
 
+  // Spec: CAND-06-A3.2F (docs/spec/clauses/06-onboarding-components.md#cand-06-a3-2f)
   it("allows clicking the next step if the current step has mandatory fields and they are filled", () => {
     vi.mocked(useOnboarding).mockReturnValue({
       ...defaultProps,
@@ -286,6 +294,7 @@ describe("OnboardingStepNav", () => {
     expect(mockGoToStep).toHaveBeenCalledWith(1);
   });
 
+  // Spec: CAND-06-A3.4A (docs/spec/clauses/06-onboarding-components.md#cand-06-a3-4a)
   it("renders back to dashboard link", () => {
     vi.mocked(useOnboarding).mockReturnValue(defaultProps);
     render(<OnboardingStepNav />);
@@ -296,6 +305,7 @@ describe("OnboardingStepNav", () => {
   });
 
   describe("Specific Missed Line Coverage Expansion", () => {
+    // Spec: CAND-06-A3.3C (docs/spec/clauses/06-onboarding-components.md#cand-06-a3-3c)
     it("falls back safely to empty step set when formConfig tabs are completely omitted", () => {
       // Covers Line 25-36 (formConfig?.tabs fallback, and zero progress divisor logic)
       vi.mocked(useOnboarding).mockReturnValue({
@@ -310,6 +320,7 @@ describe("OnboardingStepNav", () => {
       expect(progressBar).toHaveStyle("width: 0%"); // 0 completed / 1 step = 0%
     });
 
+    // Spec: CAND-06-A3.2G (docs/spec/clauses/06-onboarding-components.md#cand-06-a3-2g)
     it("applies specific style indicators for steps that are past but not formally completed", () => {
        // Covers Line 86 style branch: isPast && !isCompleted && !isCurrent
        vi.mocked(useOnboarding).mockReturnValue({
@@ -325,6 +336,7 @@ describe("OnboardingStepNav", () => {
        expect(firstStepButton).toHaveClass("text-muted-foreground");
     });
 
+    // Spec: CAND-06-A3.3D (docs/spec/clauses/06-onboarding-components.md#cand-06-a3-3d)
     it("displays granular field completion metrics when step count metadata exists", () => {
        // Covers Line 114: step.counts rendering
        vi.mocked(useOnboarding).mockReturnValue({
@@ -346,6 +358,7 @@ describe("OnboardingStepNav", () => {
        expect(screen.getByText("4/10")).toBeTruthy();
     });
 
+    // Spec: CAND-06-A3.3E (docs/spec/clauses/06-onboarding-components.md#cand-06-a3-3e)
     it("renders green check and label when total equals filled + approved", () => {
        vi.mocked(useOnboarding).mockReturnValue({
           ...defaultProps,

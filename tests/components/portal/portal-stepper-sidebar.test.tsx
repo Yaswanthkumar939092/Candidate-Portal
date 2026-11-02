@@ -24,6 +24,7 @@ describe("PortalStepperSidebar", () => {
   });
 
   describe("Dynamic steps (from survey data)", () => {
+    // Spec: CAND-06-A9.1A (docs/spec/clauses/06-onboarding-components.md#cand-06-a9-1a)
     it("renders dynamic steps with mapped icons, statuses, links, and next step label", () => {
       mockUseSurvey.mockReturnValue({
         data: {
@@ -68,6 +69,7 @@ describe("PortalStepperSidebar", () => {
       expect(onboardingMatches.length).toBeGreaterThanOrEqual(2); // step label + next step card
     });
 
+    // Spec: CAND-06-A9.1B (docs/spec/clauses/06-onboarding-components.md#cand-06-a9-1b)
     it("marks a step ongoing when its key equals current_step even if status is not ongoing", () => {
       mockUseSurvey.mockReturnValue({
         data: {
@@ -90,6 +92,7 @@ describe("PortalStepperSidebar", () => {
       expect(screen.getByText("Onboarding").closest("a")).toBeNull();
     });
 
+    // Spec: CAND-06-A9.1C (docs/spec/clauses/06-onboarding-components.md#cand-06-a9-1c)
     it("falls back to next_step key when it does not match any step", () => {
       mockUseSurvey.mockReturnValue({
         data: {
@@ -111,6 +114,7 @@ describe("PortalStepperSidebar", () => {
   });
 
   describe("Static fallback (no survey data)", () => {
+    // Spec: CAND-06-A9.3A (docs/spec/clauses/06-onboarding-components.md#cand-06-a9-3a)
     it("renders the three static steps and next-step text for the survey page", () => {
       render(<PortalStepperSidebar currentStep="survey" />);
 
@@ -125,6 +129,7 @@ describe("PortalStepperSidebar", () => {
       expect(offerMatches.length).toBeGreaterThanOrEqual(2);
     });
 
+    // Spec: CAND-06-A9.3B (docs/spec/clauses/06-onboarding-components.md#cand-06-a9-3b)
     it("computes next-step text for the offer and onboarding pages", () => {
       const { rerender } = render(<PortalStepperSidebar currentStep="offer" />);
       // "Onboarding" appears as the step label and as the next-step text
@@ -134,6 +139,7 @@ describe("PortalStepperSidebar", () => {
       expect(screen.getByText("Portal Completion")).toBeTruthy();
     });
 
+    // Spec: CAND-06-A9.3C (docs/spec/clauses/06-onboarding-components.md#cand-06-a9-3c)
     it("applies a custom className", () => {
       const { container } = render(
         <PortalStepperSidebar currentStep="survey" className="custom-test-class" />,

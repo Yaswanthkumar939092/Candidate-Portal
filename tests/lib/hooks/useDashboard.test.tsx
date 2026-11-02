@@ -30,6 +30,7 @@ describe("useDashboard", () => {
     queryClient.clear();
   });
 
+  // Spec: CAND-04-A6.2A (docs/spec/clauses/04-dashboard.md#cand-04-a6-2a)
   it("fetches dashboard data for the provided email", async () => {
     const mockDashboard: DashboardData = {
       name: "Ava Smith",
@@ -70,6 +71,7 @@ describe("useDashboard", () => {
     expect(dashboardService.getDashboardData).toHaveBeenCalledWith("ava@example.com");
   });
 
+  // Spec: CAND-04-A6.2B (docs/spec/clauses/04-dashboard.md#cand-04-a6-2b)
   it("does not fetch dashboard data when email is missing", async () => {
     const { result } = renderHook(() => useDashboard(undefined), { wrapper });
 

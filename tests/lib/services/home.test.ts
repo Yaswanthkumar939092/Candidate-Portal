@@ -13,6 +13,7 @@ describe("homeService", () => {
     vi.clearAllMocks();
   });
 
+  // Spec: CAND-07-A7.1C (docs/spec/clauses/07-services-and-hooks.md#cand-07-a7-1c)
   it("gets guest home content through the Frappe API", async () => {
     const content = {
       hero: { enabled: false },

@@ -14,6 +14,7 @@ describe("fileUploadService", () => {
     vi.clearAllMocks();
   });
 
+  // Spec: CAND-02-A1.4B (docs/spec/clauses/02-api-client-and-backend-contract.md#cand-02-a1-4b)
   it("uploadFile calls FrappeAPI.uploadFile correctly", async () => {
     const mockRes = { file_url: "url", name: "name" };
     (FrappeAPI.uploadFile as any).mockResolvedValue(mockRes);
@@ -25,6 +26,7 @@ describe("fileUploadService", () => {
     expect(FrappeAPI.uploadFile).toHaveBeenCalledWith(file, "", "DocName", "DocType");
   });
 
+  // Spec: CAND-05-A9.2A (docs/spec/clauses/05-onboarding-logic.md#cand-05-a9-2a)
   it("handles upload errors", async () => {
     const mockError = new Error("Upload failed");
     (FrappeAPI.uploadFile as any).mockRejectedValue(mockError);

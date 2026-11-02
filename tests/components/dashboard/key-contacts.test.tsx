@@ -17,6 +17,7 @@ const mockContacts = [
 ];
 
 describe("KeyContacts", () => {
+  // Spec: CAND-04-A3.6A (docs/spec/clauses/04-dashboard.md#cand-04-a3-6a)
   it("renders the list of contacts correctly", () => {
     render(<KeyContacts contacts={mockContacts} />);
     
@@ -27,6 +28,7 @@ describe("KeyContacts", () => {
     expect(screen.getByText("HR Manager")).toBeTruthy();
   });
 
+  // Spec: CAND-04-A3.6B (docs/spec/clauses/04-dashboard.md#cand-04-a3-6b)
   it("renders action buttons when email or phone is provided", () => {
     render(<KeyContacts contacts={mockContacts} />);
     
@@ -41,6 +43,7 @@ describe("KeyContacts", () => {
     expect(phoneLink.getAttribute("href")).toBe("tel:+1234567890");
   });
 
+  // Spec: CAND-04-A3.6C (docs/spec/clauses/04-dashboard.md#cand-04-a3-6c)
   it("calculates initials correctly for avatar fallback", () => {
     render(<KeyContacts contacts={mockContacts} />);
     
@@ -48,11 +51,13 @@ describe("KeyContacts", () => {
     expect(screen.getByText("JS")).toBeTruthy();
   });
 
+  // Spec: CAND-04-A3.6D (docs/spec/clauses/04-dashboard.md#cand-04-a3-6d)
   it("returns null when contacts list is empty", () => {
     const { container } = render(<KeyContacts contacts={[]} />);
     expect(container.firstChild).toBeNull();
   });
 
+  // Spec: CAND-04-A3.6E (docs/spec/clauses/04-dashboard.md#cand-04-a3-6e)
   it("renders fallbacks for missing name, role, and calculates initials for single word names", () => {
     const incompleteContacts = [
       {

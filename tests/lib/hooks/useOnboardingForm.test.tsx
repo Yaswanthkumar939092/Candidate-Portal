@@ -30,6 +30,7 @@ describe("useOnboardingForm", () => {
     queryClient.clear();
   });
 
+  // Spec: CAND-05-A10.1B (docs/spec/clauses/05-onboarding-logic.md#cand-05-a10-1b)
   it("fetches onboarding form correctly", async () => {
     const mockForm = {
       boarding_status: "Pending",
@@ -46,6 +47,7 @@ describe("useOnboardingForm", () => {
     expect(candidateOnboardingService.getOnboardingForm).toHaveBeenCalledWith("test@example.com");
   });
 
+  // Spec: CAND-05-A10.1C (docs/spec/clauses/05-onboarding-logic.md#cand-05-a10-1c)
   it("does not fetch if userEmail is missing", () => {
     const { result } = renderHook(() => useOnboardingForm(""), { wrapper });
     expect(result.current.isLoading).toBe(false);

@@ -156,6 +156,7 @@ describe("EmailService", () => {
     expect(result.failed).toBe(0);
   });
 
+  // Spec: CAND-07-A11.4A (docs/spec/clauses/07-services-and-hooks.md#cand-07-a11-4a)
   it("sendBulkEmails handles failures", async () => {
     mockTransporter.sendMail.mockRejectedValueOnce(new Error("Fail")).mockResolvedValueOnce({ messageId: "123" });
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});

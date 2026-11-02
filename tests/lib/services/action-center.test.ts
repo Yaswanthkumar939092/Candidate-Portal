@@ -20,6 +20,7 @@ describe("ActionCenter Services", () => {
   });
 
   describe("ActionCenterDataService", () => {
+    // Spec: CAND-07-A9.4A (docs/spec/clauses/07-services-and-hooks.md#cand-07-a9-4a)
     it("getActionCenterData calls FrappeAPI.get with correct arguments", async () => {
       const mockResponse = { items: [] };
       (FrappeAPI.get as any).mockResolvedValue(mockResponse);
@@ -53,6 +54,7 @@ describe("ActionCenter Services", () => {
   });
 
   describe("CandidateRaiseRequestService", () => {
+    // Spec: CAND-07-A9.4B (docs/spec/clauses/07-services-and-hooks.md#cand-07-a9-4b)
     it("createCandidateRaiseRequest calls FrappeAPI.getresourceDocumentData correctly", async () => {
       const mockResponse = { data: { success: true } };
       (FrappeAPI.getresourceDocumentData as any).mockResolvedValue(mockResponse);

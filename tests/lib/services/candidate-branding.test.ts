@@ -14,6 +14,7 @@ describe("candidateBrandingService", () => {
     vi.clearAllMocks();
   });
 
+  // Spec: CAND-02-A5.1A (docs/spec/clauses/02-api-client-and-backend-contract.md#cand-02-a5-1a)
   it("getCandidateBranding calls FrappeAPI.get correctly", async () => {
     const mockBranding = { title_prefix: "My Portal", app_logo: "logo.png" };
     (FrappeAPI.get as any).mockResolvedValue(mockBranding);

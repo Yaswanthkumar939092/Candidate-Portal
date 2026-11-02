@@ -57,6 +57,7 @@ describe("Frappe candidate auth", () => {
     )
   })
 
+  // Spec: CAND-03-A1.2A (docs/spec/clauses/03-authentication.md#cand-03-a1-2a)
   it("signs up through the recruitment Frappe API with candidateSource", async () => {
     fetchMock.mockResolvedValueOnce(frappePayload({
       status: "otp_required",
@@ -150,12 +151,14 @@ describe("Frappe candidate auth", () => {
     expect(profile.frappe_employee_id).toBeNull()
   })
 
+  // Spec: CAND-03-A3.2B (docs/spec/clauses/03-authentication.md#cand-03-a3-2b)
   it("keeps OAuth disabled until configured in Frappe auth", async () => {
     expect(getEnabledOAuthProviders()).toEqual([])
     expect(isOAuthProviderEnabled()).toBe(false)
     await expect(auth.signInWithOAuth("google")).rejects.toThrow("not enabled")
   })
 
+  // Spec: CAND-03-A3.5A (docs/spec/clauses/03-authentication.md#cand-03-a3-5a)
   it("requests an email signup OTP through the recruitment Frappe API", async () => {
     fetchMock.mockResolvedValueOnce(frappePayload({
       status: "otp_required",
@@ -183,6 +186,7 @@ describe("Frappe candidate auth", () => {
     )
   })
 
+  // Spec: CAND-03-A3.4A (docs/spec/clauses/03-authentication.md#cand-03-a3-4a)
   it("sets the password through the recruitment Frappe API", async () => {
     fetchMock.mockResolvedValueOnce(frappePayload({
       status: "success",
@@ -210,6 +214,7 @@ describe("Frappe candidate auth", () => {
     )
   })
 
+  // Spec: CAND-03-A3.2C (docs/spec/clauses/03-authentication.md#cand-03-a3-2c)
   it("returns a noop auth-state subscription for compatibility", () => {
     const result = onAuthStateChange(vi.fn())
     expect(result.data.subscription.unsubscribe()).toBeUndefined()

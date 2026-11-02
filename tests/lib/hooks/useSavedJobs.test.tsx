@@ -31,6 +31,7 @@ describe("useSavedJobs Hooks", () => {
     queryClient.clear();
   });
 
+  // Spec: CAND-07-A10.2B (docs/spec/clauses/07-services-and-hooks.md#cand-07-a10-2b)
   it("useGetSavedJobs queries and returns saved jobs list", async () => {
     const mockData = { status: "success", saved_job_openings: ["HR-OPN-1"] };
     (SavedJobsService.getSavedJobs as any).mockResolvedValue(mockData);
@@ -42,6 +43,7 @@ describe("useSavedJobs Hooks", () => {
     expect(SavedJobsService.getSavedJobs).toHaveBeenCalledWith("candidate@test.com");
   });
 
+  // Spec: CAND-07-A10.2C (docs/spec/clauses/07-services-and-hooks.md#cand-07-a10-2c)
   it("useToggleSavedJob mutation triggers API call and invalidates query", async () => {
     const mockRes = { action: "saved", is_saved: true };
     (SavedJobsService.toggleSavedJob as any).mockResolvedValue(mockRes);

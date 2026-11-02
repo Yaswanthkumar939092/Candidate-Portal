@@ -158,6 +158,7 @@ describe("PortalNavigation", () => {
     expect(screen.queryByText("Physics Wallah")).toBeNull()
   })
 
+  // Spec: CAND-04-A8.1A (docs/spec/clauses/04-dashboard.md#cand-04-a8-1a)
   it("renders navigation items on desktop", () => {
     render(<PortalNavigation />)
     expect(screen.getByText("Home")).toBeTruthy()
@@ -201,6 +202,7 @@ describe("PortalNavigation", () => {
     expect(screen.getByText("John Doe")).toBeTruthy()
   })
 
+  // Spec: CAND-04-A8.4C (docs/spec/clauses/04-dashboard.md#cand-04-a8-4c)
   it("opens user dropdown menu when clicked", async () => {
     render(<PortalNavigation />)
     const trigger = screen.getAllByRole("button").find(
@@ -239,6 +241,7 @@ describe("PortalNavigation", () => {
     }
   })
 
+  // Spec: CAND-04-A8.4E (docs/spec/clauses/04-dashboard.md#cand-04-a8-4e)
   it("calls toggleTheme when theme button clicked", async () => {
     const mockToggleTheme = vi.fn()
     vi.mocked(themeContext.useTheme).mockReturnValue({
@@ -295,6 +298,7 @@ describe("PortalNavigation", () => {
     }
   })
 
+  // Spec: CAND-04-A8.4D (docs/spec/clauses/04-dashboard.md#cand-04-a8-4d)
   it("calls signOut when Sign Out clicked", async () => {
     render(<PortalNavigation />)
     const trigger = screen.getAllByRole("button").find(
@@ -308,12 +312,14 @@ describe("PortalNavigation", () => {
     }
   })
 
+  // Spec: CAND-04-A8.2A (docs/spec/clauses/04-dashboard.md#cand-04-a8-2a)
   it("displays live badge count for My Jobs", () => {
     render(<PortalNavigation />)
     const badges = screen.getAllByText("2")
     expect(badges.length).toBeGreaterThan(0)
   })
 
+  // Spec: CAND-04-A8.2B (docs/spec/clauses/04-dashboard.md#cand-04-a8-2b)
   it("hides My Jobs badge when there are no applications", () => {
     vi.mocked(applicantStatusHook.useApplicantStatus).mockReturnValue({
       data: {
@@ -332,6 +338,7 @@ describe("PortalNavigation", () => {
     expect(screen.queryByText("2")).toBeNull()
   })
 
+  // Spec: CAND-04-A8.1B (docs/spec/clauses/04-dashboard.md#cand-04-a8-1b)
   it("filters nav items by feature flags", () => {
     vi.mocked(featureFlagsContext.useFeatureFlags).mockReturnValue({
       isEnabled: vi.fn((flag: string) => flag !== "action_center"),
@@ -357,6 +364,7 @@ describe("PortalNavigation", () => {
     expect(screen.getByText("John Doe")).toBeTruthy()
   })
 
+  // Spec: CAND-04-A8.4A (docs/spec/clauses/04-dashboard.md#cand-04-a8-4a)
   it("displays email as fallback for display name", () => {
     vi.mocked(authContext.useAuth).mockReturnValue({
       user: { ...mockUser, user_metadata: {} },
@@ -413,6 +421,7 @@ describe("PortalNavigation", () => {
     expect(document.body.querySelector('[data-testid="icon-clipboard"]')).toBeTruthy()
   })
 
+  // Spec: CAND-04-A8.4B (docs/spec/clauses/04-dashboard.md#cand-04-a8-4b)
   it("handles user with single name", () => {
     vi.mocked(authContext.useAuth).mockReturnValue({
       user: mockUser,
@@ -423,6 +432,7 @@ describe("PortalNavigation", () => {
     expect(screen.getByText("M")).toBeTruthy()
   })
 
+  // Spec: CAND-04-A8.1C (docs/spec/clauses/04-dashboard.md#cand-04-a8-1c)
   it("hides navigation links and mobile menu when hideNavLinks is true", () => {
     render(<PortalNavigation hideNavLinks={true} />)
     expect(screen.queryByText("Home")).toBeNull()
@@ -431,6 +441,7 @@ describe("PortalNavigation", () => {
     expect(screen.queryByRole("button", { name: /Toggle menu/i })).toBeNull()
   })
 
+  // Spec: CAND-04-A8.3A (docs/spec/clauses/04-dashboard.md#cand-04-a8-3a)
   it("disables brand logo redirect on /campus-apply", () => {
     mockPathname = "/campus-apply"
     render(<PortalNavigation />)

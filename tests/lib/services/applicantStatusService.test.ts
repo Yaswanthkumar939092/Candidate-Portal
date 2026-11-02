@@ -14,6 +14,7 @@ describe("ApplicantStatusResponse Service", () => {
     vi.clearAllMocks();
   });
 
+  // Spec: CAND-04-A6.3A (docs/spec/clauses/04-dashboard.md#cand-04-a6-3a)
   it("getApplicantStatusResponse calls FrappeAPI.get with correct arguments", async () => {
     const mockResponse = { success: true, data: {} };
     (FrappeAPI.get as any).mockResolvedValue(mockResponse);
@@ -27,6 +28,7 @@ describe("ApplicantStatusResponse Service", () => {
     );
   });
 
+  // Spec: CAND-04-A6.3B (docs/spec/clauses/04-dashboard.md#cand-04-a6-3b)
   it("getJobApplicant calls FrappeAPI.get with correct arguments", async () => {
     const mockResponse = { name: "APP-001" };
     (FrappeAPI.get as any).mockResolvedValue(mockResponse);

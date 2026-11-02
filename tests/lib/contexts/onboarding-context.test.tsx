@@ -134,6 +134,7 @@ describe('OnboardingContext', () => {
   })
 
   describe('useOnboarding hook', () => {
+    // Spec: CAND-05-A4.2A (docs/spec/clauses/05-onboarding-logic.md#cand-05-a4-2a)
     it('throws when used outside OnboardingProvider', () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { })
 
@@ -148,6 +149,7 @@ describe('OnboardingContext', () => {
   })
 
   describe('OnboardingProvider', () => {
+    // Spec: CAND-05-A4.2B (docs/spec/clauses/05-onboarding-logic.md#cand-05-a4-2b)
     it('renders children', () => {
       render(
         <OnboardingProvider>
@@ -157,6 +159,7 @@ describe('OnboardingContext', () => {
       expect(screen.getByText('Onboarding content')).toBeTruthy()
     })
 
+    // Spec: CAND-05-A2.2E (docs/spec/clauses/05-onboarding-logic.md#cand-05-a2-2e)
     it('starts at step 0', async () => {
       render(<OnboardingProvider><ConsumerComponent /></OnboardingProvider>)
       await waitFor(() => {
@@ -164,6 +167,7 @@ describe('OnboardingContext', () => {
       })
     })
 
+    // Spec: CAND-05-A1.1E (docs/spec/clauses/05-onboarding-logic.md#cand-05-a1-1e)
     it('is not loading after formConfig loads', async () => {
       render(<OnboardingProvider><ConsumerComponent /></OnboardingProvider>)
       await waitFor(() => {
@@ -171,6 +175,7 @@ describe('OnboardingContext', () => {
       })
     })
 
+    // Spec: CAND-05-A1.1F (docs/spec/clauses/05-onboarding-logic.md#cand-05-a1-1f)
     it('status is draft when formConfig status is Draft', async () => {
       setupMocks({ ...sampleFormConfig, status: 'Draft' })
       render(<OnboardingProvider><ConsumerComponent /></OnboardingProvider>)
@@ -179,6 +184,7 @@ describe('OnboardingContext', () => {
       })
     })
 
+    // Spec: CAND-05-A1.1G (docs/spec/clauses/05-onboarding-logic.md#cand-05-a1-1g)
     it('status is draft when formConfig status is Pending', async () => {
       setupMocks({ ...sampleFormConfig, status: 'Pending' })
       render(<OnboardingProvider><ConsumerComponent /></OnboardingProvider>)
@@ -187,6 +193,7 @@ describe('OnboardingContext', () => {
       })
     })
 
+    // Spec: CAND-05-A1.1H (docs/spec/clauses/05-onboarding-logic.md#cand-05-a1-1h)
     it('status is submitted when formConfig status is Completed', async () => {
       setupMocks({ ...sampleFormConfig, status: 'Completed' })
       render(<OnboardingProvider><ConsumerComponent /></OnboardingProvider>)
@@ -195,6 +202,7 @@ describe('OnboardingContext', () => {
       })
     })
 
+    // Spec: CAND-05-A1.1I (docs/spec/clauses/05-onboarding-logic.md#cand-05-a1-1i)
     it('marks all steps complete when status is Completed', async () => {
       setupMocks({ ...sampleFormConfig, status: 'Completed' })
       render(<OnboardingProvider><ConsumerComponent /></OnboardingProvider>)
@@ -203,6 +211,7 @@ describe('OnboardingContext', () => {
       })
     })
 
+    // Spec: CAND-05-A1.1A (docs/spec/clauses/05-onboarding-logic.md#cand-05-a1-1a)
     it('initializes step data from formConfig', async () => {
       render(<OnboardingProvider><ConsumerComponent /></OnboardingProvider>)
       await waitFor(() => {
@@ -212,6 +221,7 @@ describe('OnboardingContext', () => {
       })
     })
 
+    // Spec: CAND-05-A1.1B (docs/spec/clauses/05-onboarding-logic.md#cand-05-a1-1b)
     it('populates field values from formConfig', async () => {
       render(<OnboardingProvider><ConsumerComponent /></OnboardingProvider>)
       await waitFor(() => {
@@ -221,6 +231,7 @@ describe('OnboardingContext', () => {
     })
 
 
+    // Spec: CAND-05-A1.1C (docs/spec/clauses/05-onboarding-logic.md#cand-05-a1-1c)
     it('stays loading while formConfig is loading', () => {
       mockUseOnboardingForm.mockReturnValue({
         data: null,
@@ -231,6 +242,7 @@ describe('OnboardingContext', () => {
       expect(screen.getByTestId('loading').textContent).toBe('true')
     })
 
+    // Spec: CAND-05-A1.1D (docs/spec/clauses/05-onboarding-logic.md#cand-05-a1-1d)
     it('stops loading when formConfig errors', async () => {
       mockUseOnboardingForm.mockReturnValue({
         data: null,
@@ -245,6 +257,7 @@ describe('OnboardingContext', () => {
   })
 
   describe('navigation', () => {
+    // Spec: CAND-05-A2.2A (docs/spec/clauses/05-onboarding-logic.md#cand-05-a2-2a)
     it('goToStep navigates to specified step', async () => {
       render(<OnboardingProvider><NavigationTest /></OnboardingProvider>)
       await waitFor(() => expect(screen.getByTestId('step').textContent).toBe('0'))
@@ -256,6 +269,7 @@ describe('OnboardingContext', () => {
       })
     })
 
+    // Spec: CAND-05-A2.2B (docs/spec/clauses/05-onboarding-logic.md#cand-05-a2-2b)
     it('nextStep advances to next step', async () => {
       render(<OnboardingProvider><NavigationTest /></OnboardingProvider>)
       await waitFor(() => expect(screen.getByTestId('step').textContent).toBe('0'))
@@ -266,6 +280,7 @@ describe('OnboardingContext', () => {
       })
     })
 
+    // Spec: CAND-05-A2.2C (docs/spec/clauses/05-onboarding-logic.md#cand-05-a2-2c)
     it('prevStep goes back a step', async () => {
       render(<OnboardingProvider><NavigationTest /></OnboardingProvider>)
       await waitFor(() => expect(screen.getByTestId('step').textContent).toBe('0'))
@@ -277,6 +292,7 @@ describe('OnboardingContext', () => {
       await waitFor(() => expect(screen.getByTestId('step').textContent).toBe('0'))
     })
 
+    // Spec: CAND-05-A2.2D (docs/spec/clauses/05-onboarding-logic.md#cand-05-a2-2d)
     it('prevStep does not go below 0', async () => {
       render(<OnboardingProvider><NavigationTest /></OnboardingProvider>)
       await waitFor(() => expect(screen.getByTestId('step').textContent).toBe('0'))
@@ -300,6 +316,7 @@ describe('OnboardingContext', () => {
       )
     }
 
+    // Spec: CAND-05-A3.1A (docs/spec/clauses/05-onboarding-logic.md#cand-05-a3-1a)
     it('updates step data', async () => {
       render(<OnboardingProvider><SetDataTest /></OnboardingProvider>)
       await waitFor(() => expect(screen.getByTestId('dirty').textContent).toBe('false'))
@@ -311,6 +328,7 @@ describe('OnboardingContext', () => {
       })
     })
 
+    // Spec: CAND-05-A3.1B (docs/spec/clauses/05-onboarding-logic.md#cand-05-a3-1b)
     it('marks isDirty after setStepData', async () => {
       render(<OnboardingProvider><SetDataTest /></OnboardingProvider>)
       await waitFor(() => expect(screen.getByTestId('dirty').textContent).toBe('false'))
@@ -333,6 +351,7 @@ describe('OnboardingContext', () => {
       )
     }
 
+    // Spec: CAND-05-A3.4A (docs/spec/clauses/05-onboarding-logic.md#cand-05-a3-4a)
     it('adds step key to completedSteps', async () => {
       setupMocks({
         applicantId: "test-applicant",
@@ -370,6 +389,7 @@ describe('OnboardingContext', () => {
       )
     }
 
+    // Spec: CAND-05-A3.3B (docs/spec/clauses/05-onboarding-logic.md#cand-05-a3-3b)
     it('returns value from stepData', async () => {
       render(<OnboardingProvider><GetFieldTest /></OnboardingProvider>)
       await waitFor(() => {
@@ -377,6 +397,7 @@ describe('OnboardingContext', () => {
       })
     })
 
+    // Spec: CAND-05-A3.3C (docs/spec/clauses/05-onboarding-logic.md#cand-05-a3-3c)
     it('returns undefined for unknown field', async () => {
       function UnknownFieldTest() {
         const { getFieldValue } = useOnboarding()
@@ -402,6 +423,7 @@ describe('OnboardingContext', () => {
       )
     }
 
+    // Spec: CAND-05-A3.1E (docs/spec/clauses/05-onboarding-logic.md#cand-05-a3-1e)
     it('calls mutateAsync with step data, user email, and action', async () => {
       mockMutateAsync.mockResolvedValue(undefined)
       mockInvalidateQueries.mockResolvedValue(undefined)
@@ -417,6 +439,7 @@ describe('OnboardingContext', () => {
       })
     })
 
+    // Spec: CAND-05-A3.1F (docs/spec/clauses/05-onboarding-logic.md#cand-05-a3-1f)
     it('updates status to submitted after success', async () => {
       mockMutateAsync.mockResolvedValue(undefined)
       mockInvalidateQueries.mockResolvedValue(undefined)
@@ -430,6 +453,7 @@ describe('OnboardingContext', () => {
       })
     })
 
+    // Spec: CAND-05-A3.1G (docs/spec/clauses/05-onboarding-logic.md#cand-05-a3-1g)
     it('shows success toast on submit', async () => {
       mockMutateAsync.mockResolvedValue(undefined)
       mockInvalidateQueries.mockResolvedValue(undefined)
@@ -443,6 +467,7 @@ describe('OnboardingContext', () => {
       })
     })
 
+    // Spec: CAND-05-A3.1D (docs/spec/clauses/05-onboarding-logic.md#cand-05-a3-1d)
     it('calls mutateAsync with only the active step data when saving progress', async () => {
       mockMutateAsync.mockResolvedValue(undefined)
       mockInvalidateQueries.mockResolvedValue(undefined)
@@ -469,6 +494,7 @@ describe('OnboardingContext', () => {
       })
     })
 
+    // Spec: CAND-05-A3.1H (docs/spec/clauses/05-onboarding-logic.md#cand-05-a3-1h)
     it("invalidates both onboarding-form and dashboard queries after success", async () => {
       mockMutateAsync.mockResolvedValue(undefined)
       mockInvalidateQueries.mockResolvedValue(undefined)
@@ -504,6 +530,7 @@ describe('OnboardingContext', () => {
       )
     }
 
+    // Spec: CAND-05-A1.1J (docs/spec/clauses/05-onboarding-logic.md#cand-05-a1-1j)
     it('exposes formConfig', async () => {
       render(<OnboardingProvider><FormConfigTest /></OnboardingProvider>)
       await waitFor(() => {
@@ -511,6 +538,7 @@ describe('OnboardingContext', () => {
       })
     })
 
+    // Spec: CAND-05-A1.1K (docs/spec/clauses/05-onboarding-logic.md#cand-05-a1-1k)
     it('formConfig is undefined when not loaded', async () => {
       mockUseOnboardingForm.mockReturnValue({
         data: null,

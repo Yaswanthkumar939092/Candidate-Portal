@@ -105,6 +105,7 @@ function createFamilyTab(): OnboardingTab {
 }
 
 describe("validateOnboardingStep", () => {
+  // Spec: CAND-05-A6.1A (docs/spec/clauses/05-onboarding-logic.md#cand-05-a6-1a)
   it("returns nested errors for required child fields in rendered table rows", () => {
     const tab: OnboardingTab = {
       tab: "Education",
@@ -160,6 +161,7 @@ describe("validateOnboardingStep", () => {
     );
   });
 
+  // Spec: CAND-05-A6.2A (docs/spec/clauses/05-onboarding-logic.md#cand-05-a6-2a)
   it("requires a Spouse row in family details when marital status is Married", () => {
     const errors = validateOnboardingStep(
       createFamilyTab(),
@@ -174,6 +176,7 @@ describe("validateOnboardingStep", () => {
     );
   });
 
+  // Spec: CAND-05-A6.2B (docs/spec/clauses/05-onboarding-logic.md#cand-05-a6-2b)
   it("accepts family details with a Spouse row when marital status is Married", () => {
     const errors = validateOnboardingStep(
       createFamilyTab(),
@@ -189,6 +192,7 @@ describe("validateOnboardingStep", () => {
     expect(errors.custom_family_details).toBeUndefined();
   });
 
+  // Spec: CAND-05-A6.2E (docs/spec/clauses/05-onboarding-logic.md#cand-05-a6-2e)
   it("allows an under-18 DOB only when the family relation is Child", () => {
     const today = new Date();
     const under18Dob = new Date(today.getFullYear() - 10, today.getMonth(), today.getDate())
@@ -211,6 +215,7 @@ describe("validateOnboardingStep", () => {
     expect(childErrors.custom_family_details).toBeUndefined();
   });
 
+  // Spec: CAND-05-A6.2C (docs/spec/clauses/05-onboarding-logic.md#cand-05-a6-2c)
   it("still flags an incomplete Spouse row when marital status is Married", () => {
     const errors = validateOnboardingStep(
       createFamilyTab(),
@@ -224,6 +229,7 @@ describe("validateOnboardingStep", () => {
     expect(tableErrors[0].member_name.message).toBe("Name is required");
   });
 
+  // Spec: CAND-05-A6.2D (docs/spec/clauses/05-onboarding-logic.md#cand-05-a6-2d)
   it("does not require a Spouse row when marital status is Unmarried", () => {
     const errors = validateOnboardingStep(
       createFamilyTab(),
@@ -236,6 +242,7 @@ describe("validateOnboardingStep", () => {
     expect(errors.custom_family_details).toBeUndefined();
   });
 
+  // Spec: CAND-05-A6.3A (docs/spec/clauses/05-onboarding-logic.md#cand-05-a6-3a)
   it("requires 10th, 12th, and Graduation education details before continuing", () => {
     const errors = validateOnboardingStep(
       createEducationTab(),
@@ -253,6 +260,7 @@ describe("validateOnboardingStep", () => {
     );
   });
 
+  // Spec: CAND-05-A6.3B (docs/spec/clauses/05-onboarding-logic.md#cand-05-a6-3b)
   it("requires education details even when the education table is empty", () => {
     const errors = validateOnboardingStep(
       createEducationTab(),
@@ -268,6 +276,7 @@ describe("validateOnboardingStep", () => {
     );
   });
 
+  // Spec: CAND-05-A6.3C (docs/spec/clauses/05-onboarding-logic.md#cand-05-a6-3c)
   it("requires post graduation details when the candidate selects Yes", () => {
     const errors = validateOnboardingStep(
       createEducationTab(),
@@ -287,6 +296,7 @@ describe("validateOnboardingStep", () => {
     );
   });
 
+  // Spec: CAND-05-A6.3D (docs/spec/clauses/05-onboarding-logic.md#cand-05-a6-3d)
   it("allows education details without post graduation when the candidate selects No", () => {
     const errors = validateOnboardingStep(
       createEducationTab(),
@@ -324,6 +334,7 @@ describe("validateOnboardingStep", () => {
       ],
     };
 
+    // Spec: CAND-05-A6.4A (docs/spec/clauses/05-onboarding-logic.md#cand-05-a6-4a)
     it("accepts valid uppercase alphanumeric IFSC code matching BARB0ALPHAA", () => {
       const errors = validateOnboardingStep(
         ifscTab,
@@ -333,6 +344,7 @@ describe("validateOnboardingStep", () => {
       expect(errors.custom_ifsc_code).toBeUndefined();
     });
 
+    // Spec: CAND-05-A6.4B (docs/spec/clauses/05-onboarding-logic.md#cand-05-a6-4b)
     it("rejects lowercase IFSC code", () => {
       const errors = validateOnboardingStep(
         ifscTab,
@@ -343,6 +355,7 @@ describe("validateOnboardingStep", () => {
       expect((errors.custom_ifsc_code as any).message).toContain("valid 11-character IFSC code");
     });
 
+    // Spec: CAND-05-A6.4C (docs/spec/clauses/05-onboarding-logic.md#cand-05-a6-4c)
     it("rejects non-alphanumeric branch code", () => {
       const errors = validateOnboardingStep(
         ifscTab,
@@ -352,6 +365,7 @@ describe("validateOnboardingStep", () => {
       expect(errors.custom_ifsc_code).toBeDefined();
     });
 
+    // Spec: CAND-05-A6.4D (docs/spec/clauses/05-onboarding-logic.md#cand-05-a6-4d)
     it("rejects non-alphabetic bank code", () => {
       const errors = validateOnboardingStep(
         ifscTab,
@@ -361,6 +375,7 @@ describe("validateOnboardingStep", () => {
       expect(errors.custom_ifsc_code).toBeDefined();
     });
 
+    // Spec: CAND-05-A6.4E (docs/spec/clauses/05-onboarding-logic.md#cand-05-a6-4e)
     it("rejects non-zero fifth character", () => {
       const errors = validateOnboardingStep(
         ifscTab,
@@ -370,6 +385,7 @@ describe("validateOnboardingStep", () => {
       expect(errors.custom_ifsc_code).toBeDefined();
     });
 
+    // Spec: CAND-05-A6.4F (docs/spec/clauses/05-onboarding-logic.md#cand-05-a6-4f)
     it("rejects length different from 11 characters", () => {
       const errors = validateOnboardingStep(
         ifscTab,
@@ -400,6 +416,7 @@ describe("validateOnboardingStep", () => {
       ],
     };
 
+    // Spec: CAND-05-A6.5A (docs/spec/clauses/05-onboarding-logic.md#cand-05-a6-5a)
     it("accepts valid 10-digit numeric phone number", () => {
       const errors = validateOnboardingStep(
         contactTab,
@@ -409,6 +426,7 @@ describe("validateOnboardingStep", () => {
       expect(errors.reporting_manager_contact_number).toBeUndefined();
     });
 
+    // Spec: CAND-05-A6.5B (docs/spec/clauses/05-onboarding-logic.md#cand-05-a6-5b)
     it("rejects non-numeric phone number", () => {
       const errors = validateOnboardingStep(
         contactTab,
@@ -419,6 +437,7 @@ describe("validateOnboardingStep", () => {
       expect((errors.reporting_manager_contact_number as any).message).toContain("valid 10-digit mobile number");
     });
 
+    // Spec: CAND-05-A6.5C (docs/spec/clauses/05-onboarding-logic.md#cand-05-a6-5c)
     it("rejects shorter phone number", () => {
       const errors = validateOnboardingStep(
         contactTab,
@@ -428,6 +447,7 @@ describe("validateOnboardingStep", () => {
       expect(errors.reporting_manager_contact_number).toBeDefined();
     });
 
+    // Spec: CAND-05-A6.5D (docs/spec/clauses/05-onboarding-logic.md#cand-05-a6-5d)
     it("rejects longer phone number", () => {
       const errors = validateOnboardingStep(
         contactTab,
@@ -476,6 +496,7 @@ describe("validateOnboardingStep", () => {
       ]
     };
 
+    // Spec: CAND-05-A6.6A (docs/spec/clauses/05-onboarding-logic.md#cand-05-a6-6a)
     it("accepts valid phone and email in table row", () => {
       const errors = validateOnboardingStep(
         tableTab,
@@ -489,6 +510,7 @@ describe("validateOnboardingStep", () => {
       expect(errors.custom_key_contacts).toBeUndefined();
     });
 
+    // Spec: CAND-05-A6.6B (docs/spec/clauses/05-onboarding-logic.md#cand-05-a6-6b)
     it("rejects invalid pattern in table row child fields", () => {
       const errors = validateOnboardingStep(
         tableTab,
@@ -528,6 +550,7 @@ describe("validateOnboardingStep", () => {
       ],
     };
 
+    // Spec: CAND-05-A6.7A (docs/spec/clauses/05-onboarding-logic.md#cand-05-a6-7a)
     it("accepts dob representing age >= 18", () => {
       const today = new Date();
       const validDob = new Date(today.getFullYear() - 19, today.getMonth(), today.getDate())
@@ -541,6 +564,7 @@ describe("validateOnboardingStep", () => {
       expect(errors.dob).toBeUndefined();
     });
 
+    // Spec: CAND-05-A6.7B (docs/spec/clauses/05-onboarding-logic.md#cand-05-a6-7b)
     it("rejects dob representing age < 18", () => {
       const today = new Date();
       const invalidDob = new Date(today.getFullYear() - 17, today.getMonth(), today.getDate())
@@ -555,6 +579,7 @@ describe("validateOnboardingStep", () => {
       expect((errors.dob as any).message).toContain("at least 18 years old");
     });
 
+    // Spec: CAND-05-A6.7C (docs/spec/clauses/05-onboarding-logic.md#cand-05-a6-7c)
     it("does not apply the age rule to a DOB in Family Details", () => {
       const today = new Date();
       const childDob = new Date(today.getFullYear() - 10, today.getMonth(), today.getDate())
@@ -626,6 +651,7 @@ describe("validateOnboardingStep", () => {
       ],
     };
 
+    // Spec: CAND-05-A6.8A (docs/spec/clauses/05-onboarding-logic.md#cand-05-a6-8a)
     it("accepts zero or positive values", () => {
       const errors = validateOnboardingStep(
         numTab,
@@ -636,6 +662,7 @@ describe("validateOnboardingStep", () => {
       expect(errors.experience_years).toBeUndefined();
     });
 
+    // Spec: CAND-05-A6.8B (docs/spec/clauses/05-onboarding-logic.md#cand-05-a6-8b)
     it("rejects negative values", () => {
       const errors = validateOnboardingStep(
         numTab,
@@ -669,6 +696,7 @@ describe("validateOnboardingStep", () => {
       ],
     };
 
+    // Spec: CAND-05-A6.8C (docs/spec/clauses/05-onboarding-logic.md#cand-05-a6-8c)
     it("accepts values <= 100", () => {
       const errors = validateOnboardingStep(
         pctTab,
@@ -678,6 +706,7 @@ describe("validateOnboardingStep", () => {
       expect(errors.percentage).toBeUndefined();
     });
 
+    // Spec: CAND-05-A6.8D (docs/spec/clauses/05-onboarding-logic.md#cand-05-a6-8d)
     it("rejects values > 100", () => {
       const errors = validateOnboardingStep(
         pctTab,

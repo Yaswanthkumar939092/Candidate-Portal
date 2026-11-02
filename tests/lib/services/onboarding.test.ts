@@ -84,6 +84,7 @@ describe('OnboardingService', () => {
       )
     })
 
+    // Spec: CAND-07-A11.6A (docs/spec/clauses/07-services-and-hooks.md#cand-07-a11-6a)
     it('error message includes specific missing step names', async () => {
       const partialData = {
         user_id: 'user1',

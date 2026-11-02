@@ -23,6 +23,8 @@ export interface DirectApplicantField {
   editable: boolean;
   /** Table fields only: the columns the candidate fills. */
   child?: DirectApplicantChildField[];
+  /** Attach fields: the file types HR allows (".pdf,.png"); null = the default set. */
+  accept?: string | null;
 }
 
 export type DirectApplicantFormStatus =

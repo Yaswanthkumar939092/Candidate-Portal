@@ -32,6 +32,7 @@ describe("FileUploadField", () => {
     } as unknown as ReturnType<typeof useFileUpload>);
   });
 
+  // Spec: CAND-06-A5.1A (docs/spec/clauses/06-onboarding-components.md#cand-06-a5-1a)
   it("renders essential labels and requirements", () => {
     render(<FileUploadField label="Resume" required={true} />);
     expect(screen.getByText("Resume")).toBeTruthy();
@@ -39,6 +40,7 @@ describe("FileUploadField", () => {
     expect(screen.getByText("Click to upload or drag and drop")).toBeTruthy();
   });
 
+  // Spec: CAND-06-A5.4A (docs/spec/clauses/06-onboarding-components.md#cand-06-a5-4a)
   it("shows uploading state when isPending is true", () => {
     vi.mocked(useFileUpload).mockReturnValue({
       mutateAsync: mockUploadFile,
@@ -48,6 +50,7 @@ describe("FileUploadField", () => {
     expect(screen.getByText("Uploading...")).toBeTruthy();
   });
 
+  // Spec: CAND-06-A5.1C (docs/spec/clauses/06-onboarding-components.md#cand-06-a5-1c)
   it("renders filename and remove button when value is provided", () => {
     render(<FileUploadField label="Resume" value="/path/to/my_resume.pdf" onChange={mockOnChange} />);
     expect(screen.getByText("my_resume.pdf")).toBeTruthy();
@@ -57,6 +60,7 @@ describe("FileUploadField", () => {
     expect(mockOnChange).toHaveBeenCalledWith(null);
   });
 
+  // Spec: CAND-06-A5.1B (docs/spec/clauses/06-onboarding-components.md#cand-06-a5-1b)
   it("calls uploadFile when a file is selected via input", async () => {
     mockUploadFile.mockResolvedValue({ file_url: "/new/file.pdf" });
     render(<FileUploadField label="Resume" onChange={mockOnChange} />);
@@ -72,6 +76,7 @@ describe("FileUploadField", () => {
     });
   });
 
+  // Spec: CAND-06-A5.5G (docs/spec/clauses/06-onboarding-components.md#cand-06-a5-5g)
   it("handles drag and drop correctly", async () => {
     mockUploadFile.mockResolvedValue({ file_url: "/dropped/file.pdf" });
     render(<FileUploadField label="Resume" onChange={mockOnChange} />);
@@ -96,6 +101,7 @@ describe("FileUploadField", () => {
     });
   });
 
+  // Spec: CAND-06-A5.4C (docs/spec/clauses/06-onboarding-components.md#cand-06-a5-4c)
   it("prevents interactions when disabled", () => {
     render(<FileUploadField label="Resume" disabled={true} />);
     const uploadArea = screen.getByText("Click to upload or drag and drop").parentElement!;
@@ -108,6 +114,7 @@ describe("FileUploadField", () => {
     // Hard to verify input click since it's hidden, but we check common disabled indicators
   });
 
+  // Spec: CAND-06-A5.4B (docs/spec/clauses/06-onboarding-components.md#cand-06-a5-4b)
   it("hides remove button when disabled", () => {
     render(<FileUploadField label="Resume" value="/path/to/my_resume.pdf" disabled={true} onChange={mockOnChange} />);
     expect(screen.getByText("my_resume.pdf")).toBeTruthy();
@@ -116,6 +123,7 @@ describe("FileUploadField", () => {
 
 
   describe("Expanded Lifecycle & Visual States", () => {
+    // Spec: CAND-06-A5.1D (docs/spec/clauses/06-onboarding-components.md#cand-06-a5-1d)
     it("safely invokes internal file selector on wrapper interaction", () => {
       // Line 72: inputRef.current?.click()
       render(<FileUploadField label="Asset" />);
@@ -130,6 +138,7 @@ describe("FileUploadField", () => {
       clickSpy.mockRestore();
     });
 
+    // Spec: CAND-06-A5.5A (docs/spec/clauses/06-onboarding-components.md#cand-06-a5-5a)
     it("gracefully manages and registers synchronous reject faults from pipeline failure", async () => {
       // Line 82: catch block error log
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
@@ -162,6 +171,7 @@ describe("FileUploadField", () => {
       expect(target).toBeTruthy();
     });
 
+    // Spec: CAND-06-A5.6A (docs/spec/clauses/06-onboarding-components.md#cand-06-a5-6a)
     it("distinctly represents successful validation states using native decorators", () => {
       // Line 130: isApproved branch
       render(<FileUploadField label="Valid Asset" isApproved={true} />);
@@ -171,6 +181,7 @@ describe("FileUploadField", () => {
       expect(approveWrap).toBeTruthy();
     });
 
+    // Spec: CAND-06-A5.6B (docs/spec/clauses/06-onboarding-components.md#cand-06-a5-6b)
     it("renders comprehensive informative feedback upon manual asset rejection", () => {
       // Line 137-144: Rejection Tooltip rendering and isolation logic
       render(<FileUploadField label="Fix Needed" isRejected={true} hrComment="Wrong orientation" />);

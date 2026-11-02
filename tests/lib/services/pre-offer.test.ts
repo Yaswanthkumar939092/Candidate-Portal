@@ -16,6 +16,7 @@ describe("preOfferService", () => {
   });
 
   describe("getPreOfferForm", () => {
+    // Spec: CAND-07-A5.3A (docs/spec/clauses/07-services-and-hooks.md#cand-07-a5-3a)
     it("calls FrappeAPI.get with correct arguments and transforms data", async () => {
       const mockFields = [
         {
@@ -44,6 +45,7 @@ describe("preOfferService", () => {
       expect(result.tabs[0].sections[0].fields[0].fieldname).toBe("applicant_name");
     });
 
+    // Spec: CAND-07-A5.3B (docs/spec/clauses/07-services-and-hooks.md#cand-07-a5-3b)
     it("calls FrappeAPI.get without job_applicant param if email is not provided", async () => {
       (FrappeAPI.get as any).mockResolvedValue([]);
       const result = await preOfferService.getPreOfferForm("");
@@ -54,6 +56,7 @@ describe("preOfferService", () => {
       expect(result.applicantId).toBe("");
     });
 
+    // Spec: CAND-07-A5.3C (docs/spec/clauses/07-services-and-hooks.md#cand-07-a5-3c)
     it("maps table_fields into child_fields for table fields", async () => {
       (FrappeAPI.get as any).mockResolvedValue([
         {
@@ -106,6 +109,7 @@ describe("preOfferService", () => {
   });
 
   describe("submitPreOffer", () => {
+    // Spec: CAND-07-A5.3D (docs/spec/clauses/07-services-and-hooks.md#cand-07-a5-3d)
     it("calls FrappeAPI.post with correct arguments", async () => {
       (FrappeAPI.post as any).mockResolvedValue({ success: true });
       const data = { applicant_name: "Asha Rao" };

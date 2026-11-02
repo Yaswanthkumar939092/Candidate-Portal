@@ -171,6 +171,7 @@ describe("OnboardingFormStep", () => {
     }
   };
 
+  // Spec: CAND-06-A2.1A (docs/spec/clauses/06-onboarding-components.md#cand-06-a2-1a)
   it("renders all sections and fields defined in the tab", () => {
     vi.mocked(useOnboarding).mockReturnValue(defaultContext);
     render(<OnboardingFormStep tab={mockTab} stepKey="personal_info" />);
@@ -182,6 +183,7 @@ describe("OnboardingFormStep", () => {
     expect(screen.getByText("Upload")).toBeTruthy();
   });
 
+  // Spec: CAND-06-A2.1B (docs/spec/clauses/06-onboarding-components.md#cand-06-a2-1b)
   it("initializes form with existing data if available", () => {
     vi.mocked(useOnboarding).mockReturnValue({
       ...defaultContext,
@@ -194,6 +196,7 @@ describe("OnboardingFormStep", () => {
     expect(input.value).toBe("Bruce");
   });
 
+  // Spec: CAND-06-A2.2A (docs/spec/clauses/06-onboarding-components.md#cand-06-a2-2a)
   it("validates mandatory fields and prevents submission", async () => {
     const scrollMock = vi.fn();
     const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
@@ -216,6 +219,7 @@ describe("OnboardingFormStep", () => {
     }
   });
 
+  // Spec: CAND-06-A2.2B (docs/spec/clauses/06-onboarding-components.md#cand-06-a2-2b)
   it("calls setStepData and nextStep on successful form submission", async () => {
     vi.mocked(useOnboarding).mockReturnValue(defaultContext);
     render(<OnboardingFormStep tab={mockTab} stepKey="personal_info" />);
@@ -242,6 +246,7 @@ describe("OnboardingFormStep", () => {
 
 
 
+  // Spec: CAND-06-A2.7A (docs/spec/clauses/06-onboarding-components.md#cand-06-a2-7a)
   it("handles custom_same_as_permanent logic by copying and syncing permanent to communication address fields, and renders on its own row", () => {
     const addressTab: OnboardingTab = {
       tab: "Address",
@@ -295,6 +300,7 @@ describe("OnboardingFormStep", () => {
     expect((screen.getByTestId("input-custom_permanent_address") as HTMLInputElement).value).toBe("456 New Permanent Rd");
   });
 
+  // Spec: CAND-06-A2.7B (docs/spec/clauses/06-onboarding-components.md#cand-06-a2-7b)
   it("keeps saved communication address when custom_same_as_permanent starts unchecked", () => {
     const addressTab: OnboardingTab = {
       tab: "Address",
@@ -325,6 +331,7 @@ describe("OnboardingFormStep", () => {
     expect((screen.getByTestId("input-custom_communication_address") as HTMLInputElement).value).toBe("999 Different Rd");
   });
 
+  // Spec: CAND-06-A2.14A (docs/spec/clauses/06-onboarding-components.md#cand-06-a2-14a)
   it("disables buttons when isSaving is true", () => {
     vi.mocked(useOnboarding).mockReturnValue({
       ...defaultContext,
@@ -337,6 +344,7 @@ describe("OnboardingFormStep", () => {
     expect(screen.getByText("Saving...")).toBeDisabled();
   });
 
+  // Spec: CAND-06-A2.14B (docs/spec/clauses/06-onboarding-components.md#cand-06-a2-14b)
   it("disables 'Previous' button on the first step", () => {
     vi.mocked(useOnboarding).mockReturnValue({
       ...defaultContext,
@@ -348,6 +356,7 @@ describe("OnboardingFormStep", () => {
   });
 
   describe("Extended Edge Verification", () => {
+    // Spec: CAND-06-A2.1C (docs/spec/clauses/06-onboarding-components.md#cand-06-a2-1c)
     it("initializes form from definition defaults when existing data is blank", () => {
       // Exercises Line 137 fallback chain
       const defaultMapTab: OnboardingTab = {
@@ -367,6 +376,7 @@ describe("OnboardingFormStep", () => {
       expect(input.value).toBe("AutoValue");
     });
 
+    // Spec: CAND-06-A2.2C (docs/spec/clauses/06-onboarding-components.md#cand-06-a2-2c)
     it("validates special collection types ensuring required states are populated", async () => {
        // Exercises Line 178-179 (Table Required) and Line 185-186 (Check Required)
        const strictTab: OnboardingTab = {
@@ -659,6 +669,7 @@ describe("OnboardingFormStep", () => {
         });
      });
 
+     // Spec: CAND-06-A2.9A (docs/spec/clauses/06-onboarding-components.md#cand-06-a2-9a)
      it("automatically calculates and populates custom_age based on custom_date_of_birth change", async () => {
         const dobAgeTab: OnboardingTab = {
            tab: "Personal Info",
@@ -688,6 +699,7 @@ describe("OnboardingFormStep", () => {
         });
      });
 
+    // Spec: CAND-06-A2.10A (docs/spec/clauses/06-onboarding-components.md#cand-06-a2-10a)
     it("triggers background state replication on throttle loop completion", () => {
        // Exercises Line 273-274 Auto-save logic
        vi.useFakeTimers();
@@ -709,6 +721,7 @@ describe("OnboardingFormStep", () => {
        vi.useRealTimers();
     });
 
+    // Spec: CAND-06-A2.13A (docs/spec/clauses/06-onboarding-components.md#cand-06-a2-13a)
     it("satisfies specialized container mappings when resolving image attachments", () => {
        // Exercises Line 325 mapping logic
        const imageTab: OnboardingTab = {
@@ -729,6 +742,7 @@ describe("OnboardingFormStep", () => {
         expect(screen.getByText("Portrait Upload")).toBeTruthy();
      });
 
+     // Spec: CAND-06-A2.2D (docs/spec/clauses/06-onboarding-components.md#cand-06-a2-2d)
      it("satisfies fallback logic for anonymous and specialized field valid modes", async () => {
         // Covers Line 199 (empty label -> "This field is required")
         // Covers Line 178-181 (Table validation when null/empty)
@@ -764,6 +778,7 @@ describe("OnboardingFormStep", () => {
         });
      });
 
+     // Spec: CAND-06-A2.15A (docs/spec/clauses/06-onboarding-components.md#cand-06-a2-15a)
      it("enforces unique grid layouts for Aadhaar and long label documentation proofs", () => {
         // Covers Lines 81-82 (Full width logic & isAadhaarFront offsets)
         const layoutTab: OnboardingTab = {
@@ -785,6 +800,7 @@ describe("OnboardingFormStep", () => {
         expect(screen.getByText("Upload Aadhaar")).toBeTruthy();
      });
 
+     // Spec: CAND-06-A2.6B (docs/spec/clauses/06-onboarding-components.md#cand-06-a2-6b)
      it("bypasses section header rendering when section title is identical to tab header", () => {
         // Covers Line 372 sectionCard matching
         const unifiedTab: OnboardingTab = {
@@ -805,6 +821,7 @@ describe("OnboardingFormStep", () => {
         expect(screen.getByText("0/1")).toBeTruthy();
      });
 
+      // Spec: CAND-06-A2.8A (docs/spec/clauses/06-onboarding-components.md#cand-06-a2-8a)
       it("bypasses validation for hidden fields or fields whose depends_on evaluates to false", async () => {
          const hiddenTab: OnboardingTab = {
             tab: "Hidden Tab",
@@ -834,6 +851,7 @@ describe("OnboardingFormStep", () => {
          });
       });
 
+      // Spec: CAND-06-A2.2E (docs/spec/clauses/06-onboarding-components.md#cand-06-a2-2e)
       it("evaluates table field row validation for completeness and validity", async () => {
          const tableTab: OnboardingTab = {
             tab: "Table Tab",
@@ -876,6 +894,7 @@ describe("OnboardingFormStep", () => {
             expect(screen.getByTestId("error-message")).toHaveTextContent("Please complete all required fields in Experience Table");
          });
       });
+      // Spec: CAND-06-A2.8B (docs/spec/clauses/06-onboarding-components.md#cand-06-a2-8b)
       it("automatically clears dependent fields when their visibility condition evaluates to false", async () => {
          const depTab: OnboardingTab = {
             tab: "Depends Tab",
@@ -921,6 +940,7 @@ describe("OnboardingFormStep", () => {
       });
 
 
+      // Spec: CAND-06-A2.11A (docs/spec/clauses/06-onboarding-components.md#cand-06-a2-11a)
       it("blocks submission and shows error toast if a rejected field is not corrected", async () => {
          const rejectTab: OnboardingTab = {
             tab: "Reject Tab",
@@ -967,6 +987,7 @@ describe("OnboardingFormStep", () => {
          });
       });
 
+      // Spec: CAND-06-A2.13D (docs/spec/clauses/06-onboarding-components.md#cand-06-a2-13d)
       it("computes the isRejected property for Attach and Attach Image fields correctly based on original value", () => {
          const attachTab: OnboardingTab = {
             tab: "Attachment Tab",
@@ -1019,6 +1040,7 @@ describe("OnboardingFormStep", () => {
          expect(fileUploads[1].getAttribute("data-isrejected")).toBe("true");
       });
 
+      // Spec: CAND-06-A2.2F (docs/spec/clauses/06-onboarding-components.md#cand-06-a2-2f)
       it("validates that year of passing does not decrease as education level progresses", async () => {
          const eduTab: OnboardingTab = {
             tab: "Education Tab",
@@ -1208,6 +1230,7 @@ describe("OnboardingFormStep", () => {
     });
 
     describe("Extra Line Coverage Tests", () => {
+      // Spec: CAND-06-A2.9B (docs/spec/clauses/06-onboarding-components.md#cand-06-a2-9b)
       it("automatically calculates and populates custom_age based on custom_date_of_birth change (birthday not yet occurred this year)", async () => {
          const dobAgeTab: OnboardingTab = {
             tab: "Personal Info",
@@ -1236,6 +1259,7 @@ describe("OnboardingFormStep", () => {
          });
       });
 
+      // Spec: CAND-06-A2.12A (docs/spec/clauses/06-onboarding-components.md#cand-06-a2-12a)
       it("registers and handles external submit triggers for save_continue and save_draft", async () => {
          const simpleTab: OnboardingTab = {
             tab: "Simple",
@@ -1287,6 +1311,7 @@ describe("OnboardingFormStep", () => {
          }
       });
 
+      // Spec: CAND-06-A2.12B (docs/spec/clauses/06-onboarding-components.md#cand-06-a2-12b)
       it("handles failures during external submit triggers", async () => {
          const simpleTab: OnboardingTab = {
             tab: "Simple",
@@ -1324,6 +1349,7 @@ describe("OnboardingFormStep", () => {
          }
       });
 
+      // Spec: CAND-06-A2.13B (docs/spec/clauses/06-onboarding-components.md#cand-06-a2-13b)
       it("handles file upload and attach change for Attach Image field type", async () => {
          const imageTab: OnboardingTab = {
             tab: "Documents",
@@ -1360,6 +1386,7 @@ describe("OnboardingFormStep", () => {
          });
       });
 
+      // Spec: CAND-06-A2.13C (docs/spec/clauses/06-onboarding-components.md#cand-06-a2-13c)
       it("handles file upload callback via handleFileUpload on table field", async () => {
          const tableTab: OnboardingTab = {
             tab: "Table Tab",
@@ -1406,6 +1433,7 @@ describe("OnboardingFormStep", () => {
          });
       });
 
+      // Spec: CAND-06-A2.9C (docs/spec/clauses/06-onboarding-components.md#cand-06-a2-9c)
       it("prefills custom_email_id with the current user email if empty", async () => {
          const emailTab: OnboardingTab = {
             tab: "Email Tab",

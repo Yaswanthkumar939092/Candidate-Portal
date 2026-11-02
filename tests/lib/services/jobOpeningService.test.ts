@@ -21,6 +21,7 @@ describe("JobOpening Services", () => {
   });
 
   describe("JobOpeningService", () => {
+    // Spec: CAND-07-A9.3A (docs/spec/clauses/07-services-and-hooks.md#cand-07-a9-3a)
     it("getJobOpening calls FrappeAPI.get", async () => {
       const mockRes = [{ name: "HR-OPN-2026-0006" }];
       (FrappeAPI.get as any).mockResolvedValue(mockRes);
@@ -33,6 +34,7 @@ describe("JobOpening Services", () => {
       });
     });
 
+    // Spec: CAND-07-A9.3B (docs/spec/clauses/07-services-and-hooks.md#cand-07-a9-3b)
     it("getJobOpening calls FrappeAPI.get with search_term parameter", async () => {
       const mockRes = [{ name: "HR-OPN-2026-0006" }];
       (FrappeAPI.get as any).mockResolvedValue(mockRes);
@@ -46,6 +48,7 @@ describe("JobOpening Services", () => {
       });
     });
 
+    // Spec: CAND-07-A9.3C (docs/spec/clauses/07-services-and-hooks.md#cand-07-a9-3c)
     it("getCampusInviteOpenings calls FrappeAPI.get with campus_invite", async () => {
       const mockRes = { campus_invite: "CINV-2026-0001", openings: [] };
       (FrappeAPI.get as any).mockResolvedValue(mockRes);
@@ -60,6 +63,7 @@ describe("JobOpening Services", () => {
   });
 
   describe("jobApplicationService", () => {
+    // Spec: CAND-07-A9.3D (docs/spec/clauses/07-services-and-hooks.md#cand-07-a9-3d)
     it("submitApplication calls FrappeAPI.post with submit_application", async () => {
       const mockRes = {
         status: "ok",
@@ -81,6 +85,7 @@ describe("JobOpening Services", () => {
       expect(FrappeAPI.post).toHaveBeenCalledWith("recruitment.api.channels.careers.submit_application", payload);
     });
 
+    // Spec: CAND-07-A9.3E (docs/spec/clauses/07-services-and-hooks.md#cand-07-a9-3e)
     it("submitApplication calls submit_invite_application when isCampus is true", async () => {
       const mockRes = {
         status: "ok",
@@ -112,6 +117,7 @@ describe("JobOpening Services", () => {
   });
 
   describe("draftJobApplicantService", () => {
+    // Spec: CAND-07-A9.3F (docs/spec/clauses/07-services-and-hooks.md#cand-07-a9-3f)
     it("deleteDraftJobApplicant calls FrappeAPI.post", async () => {
       (FrappeAPI.post as any).mockResolvedValue({ success: true });
       await draftJobApplicantService.deleteDraftJobApplicant({ email: "test@test.com", jobId: "JO1" });
@@ -123,6 +129,7 @@ describe("JobOpening Services", () => {
   });
 
   describe("jobApplicationService", () => {
+    // Spec: CAND-07-A9.3G (docs/spec/clauses/07-services-and-hooks.md#cand-07-a9-3g)
     it("getJobApplicationForm returns data or fallback", async () => {
       const mockRawFields = [
         {

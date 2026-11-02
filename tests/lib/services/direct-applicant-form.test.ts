@@ -13,6 +13,7 @@ describe("directApplicantFormService", () => {
     vi.stubGlobal("fetch", fetchMock);
   });
 
+  // Spec: CAND-07-A4.2B (docs/spec/clauses/07-services-and-hooks.md#cand-07-a4-2b)
   it("getForm asks for the request by name with the session cookie", async () => {
     fetchMock.mockReturnValue(reply(200, { message: { form_title: "F", fields: [] } }));
     const data = await directApplicantFormService.getForm({ request: "DAFR-1" });
@@ -22,6 +23,7 @@ describe("directApplicantFormService", () => {
     expect(init.credentials).toBe("include");
   });
 
+  // Spec: CAND-07-A4.2C (docs/spec/clauses/07-services-and-hooks.md#cand-07-a4-2c)
   it("submit posts the data as a JSON string", async () => {
     fetchMock.mockReturnValue(reply(200, { message: { status: "ok" } }));
     await directApplicantFormService.submit({ request: "DAFR-1" }, { custom_pan_number: "ABCDE1234F" });
@@ -30,6 +32,7 @@ describe("directApplicantFormService", () => {
     expect(JSON.parse(init.body)).toEqual({ request: "DAFR-1", data: JSON.stringify({ custom_pan_number: "ABCDE1234F" }) });
   });
 
+  // Spec: CAND-07-A4.2D (docs/spec/clauses/07-services-and-hooks.md#cand-07-a4-2d)
   it("uploadFile sends multipart with the table column when given", async () => {
     fetchMock.mockReturnValue(reply(200, { message: { file_url: "/private/files/a.pdf", file_name: "a.pdf" } }));
     const res = await directApplicantFormService.uploadFile({ request: "DAFR-1" }, "edu", new File(["x"], "a.pdf"), "proof");
@@ -40,6 +43,7 @@ describe("directApplicantFormService", () => {
     expect(body.get("child_fieldname")).toBe("proof");
   });
 
+  // Spec: CAND-07-A4.2E (docs/spec/clauses/07-services-and-hooks.md#cand-07-a4-2e)
   it("the emailed link uses the token endpoints, no session", async () => {
     fetchMock.mockReturnValue(reply(200, { message: { status: "ok" } }));
     await directApplicantFormService.getForm({ token: "tok" });
@@ -49,6 +53,7 @@ describe("directApplicantFormService", () => {
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({ t: "tok", data: JSON.stringify({ a: 1 }) });
   });
 
+  // Spec: CAND-07-A4.2F (docs/spec/clauses/07-services-and-hooks.md#cand-07-a4-2f)
   it("throws the server's own message", async () => {
     fetchMock.mockReturnValue(
       reply(403, { _server_messages: JSON.stringify([JSON.stringify({ message: "This form is not available." })]) })

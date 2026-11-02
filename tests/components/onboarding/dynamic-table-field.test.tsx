@@ -56,6 +56,7 @@ describe("DynamicTableField", () => {
     ]
   };
 
+  // Spec: CAND-06-A6.1A (docs/spec/clauses/06-onboarding-components.md#cand-06-a6-1a)
   it("initializes with one empty row if none exist", () => {
     render(
       <Wrapper>
@@ -75,6 +76,7 @@ describe("DynamicTableField", () => {
     expect(screen.getAllByTestId("field-year")).toHaveLength(1);
   });
 
+  // Spec: CAND-06-A6.1B (docs/spec/clauses/06-onboarding-components.md#cand-06-a6-1b)
   it("can add a new row by clicking 'Add Education'", () => {
     render(
       <Wrapper>
@@ -96,6 +98,7 @@ describe("DynamicTableField", () => {
     expect(screen.getAllByTestId("field-year")).toHaveLength(2);
   });
 
+  // Spec: CAND-06-A6.7A (docs/spec/clauses/06-onboarding-components.md#cand-06-a6-7a)
   it("revalidates a family row when its relation changes", () => {
     const trigger = vi.fn().mockResolvedValue(true);
     const familyField: OnboardingField = {
@@ -157,6 +160,7 @@ describe("DynamicTableField", () => {
     expect(screen.queryByTestId("error-degree")).toBeNull();
   });
 
+  // Spec: CAND-06-A6.1C (docs/spec/clauses/06-onboarding-components.md#cand-06-a6-1c)
   it("can remove a row when more than one exists", () => {
     render(
       <Wrapper defaultValues={{ education: [{}, {}] }}>
@@ -181,6 +185,7 @@ describe("DynamicTableField", () => {
     expect(screen.getAllByTestId("field-degree")).toHaveLength(1);
   });
 
+  // Spec: CAND-06-A6.2A (docs/spec/clauses/06-onboarding-components.md#cand-06-a6-2a)
   it("displays validation errors for specific rows and fields", () => {
     const errors = {
       education: [
@@ -209,6 +214,7 @@ describe("DynamicTableField", () => {
     expect(screen.getByTestId("error-degree")).toHaveTextContent("Degree is required");
   });
 
+  // Spec: CAND-06-A6.2B (docs/spec/clauses/06-onboarding-components.md#cand-06-a6-2b)
   it("renders container id and table-level validation error message", () => {
     const errors = {
       education: {
@@ -235,6 +241,7 @@ describe("DynamicTableField", () => {
     expect(screen.getByText("Total percentage must be 100%")).toBeTruthy();
   });
 
+  // Spec: CAND-06-A6.6A (docs/spec/clauses/06-onboarding-components.md#cand-06-a6-6a)
   it("automatically clears years of passing on chronological violations", () => {
     const eduTableField: OnboardingField = {
       fieldname: "custom_education_details",
@@ -281,6 +288,7 @@ describe("DynamicTableField", () => {
     expect(yearInputs[1].value).toBe("");
   });
 
+  // Spec: CAND-06-A6.5A (docs/spec/clauses/06-onboarding-components.md#cand-06-a6-5a)
   it("hides already selected education levels from other rows", () => {
     const eduTableField: OnboardingField = {
       fieldname: "custom_education_details",
@@ -331,6 +339,7 @@ describe("DynamicTableField", () => {
     expect(levelFields[1].getAttribute("data-options")).toContain("Graduation");
   });
 
+  // Spec: CAND-06-A6.5B (docs/spec/clauses/06-onboarding-components.md#cand-06-a6-5b)
   it("hides add button when required education levels are complete without post graduation", () => {
     const eduTableField: OnboardingField = {
       fieldname: "custom_education_details",
@@ -369,6 +378,7 @@ describe("DynamicTableField", () => {
     expect(screen.queryByRole("button", { name: /Add Education Details/i })).toBeNull();
   });
 
+  // Spec: CAND-06-A6.5C (docs/spec/clauses/06-onboarding-components.md#cand-06-a6-5c)
   it("keeps add button visible until post graduation is complete when applicable", () => {
     const eduTableField: OnboardingField = {
       fieldname: "custom_education_details",
@@ -407,6 +417,7 @@ describe("DynamicTableField", () => {
     expect(screen.getByRole("button", { name: /Add Education Details/i })).toBeTruthy();
   });
 
+  // Spec: CAND-06-A6.5D (docs/spec/clauses/06-onboarding-components.md#cand-06-a6-5d)
   it("hides add button when post graduation is complete and applicable", () => {
     const eduTableField: OnboardingField = {
       fieldname: "custom_education_details",

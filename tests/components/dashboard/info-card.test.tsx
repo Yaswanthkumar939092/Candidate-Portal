@@ -4,6 +4,7 @@ import { InfoCard } from "@/components/dashboard/info-card";
 import { Calendar } from "lucide-react";
 
 describe("InfoCard", () => {
+  // Spec: CAND-04-A3.5A (docs/spec/clauses/04-dashboard.md#cand-04-a3-5a)
   it("renders with basic props correctly", () => {
     render(
       <InfoCard 
@@ -18,6 +19,7 @@ describe("InfoCard", () => {
     expect(screen.getByTestId("icon")).toBeTruthy();
   });
 
+  // Spec: CAND-04-A3.5B (docs/spec/clauses/04-dashboard.md#cand-04-a3-5b)
   it("renders with subtitle when provided", () => {
     render(
       <InfoCard 
@@ -31,6 +33,7 @@ describe("InfoCard", () => {
     expect(screen.getByText("Remote")).toBeTruthy();
   });
 
+  // Spec: CAND-04-A3.5C (docs/spec/clauses/04-dashboard.md#cand-04-a3-5c)
   it("renders with tag and correct variant classes", () => {
     const { rerender } = render(
       <InfoCard 
