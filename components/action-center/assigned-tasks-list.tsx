@@ -19,10 +19,10 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { Fragment, useState } from "react"
 import { frappeApiBase } from "@/lib/frappe-base"
 
-/** A single job detail rendered as a chip on the task card. */
+/** A single job detail rendered as a label/value row on the task card. */
 export interface TaskJobChip {
   label: string
   value: string
@@ -41,7 +41,7 @@ export interface Task {
   completedDate?: string
   icon?: string
   iconColor?: string
-  /** Job details (title, designation, department, location, type) shown as chips */
+  /** Job details (title, company, department, designation, type, location) */
   jobChips?: TaskJobChip[]
 }
 
@@ -78,7 +78,7 @@ const STATUS_STYLES: Record<string, { label: string; badgeClass: string; iconBgC
   },
 }
 
-/** Icons for the job detail chips shown on a task card. */
+/** Icons for the job detail rows shown on a task card. */
 const JOB_CHIP_ICONS: Record<TaskJobChip["icon"], React.ElementType> = {
   job: Briefcase,
   designation: BadgeCheck,
@@ -165,33 +165,42 @@ export function AssignedTasksList({
                     <Card key={task.id} className="flex flex-col rounded-2xl border border-border bg-card shadow-sm dark:bg-muted/30 transition-shadow hover:shadow-md p-0 gap-0 py-0 w-full md:max-w-[570px]">
                       <CardContent className="p-5 pb-0">
                         <div className="flex items-start justify-between gap-4">
-                          <div className="flex items-start gap-4 min-w-0">
+                          <div className="flex flex-1 items-start gap-4 min-w-0">
                             <div className={cn("flex size-10 shrink-0 items-center justify-center text-white rounded-[12px]", bgClass)}>
                               <StatusIcon className="size-6" strokeWidth={2.5} />
                             </div>
-                            <div className="flex flex-col pt-0.5 min-w-0">
-                              <h4 className="font-bold text-base text-slate-900 dark:text-gray-100 leading-tight ">{task.title}</h4>
-                              <span className="text-xs text-[#667085] mt-1.5 font-medium dark:text-gray-400 leading-none ">{task?.description || "No description available"}</span>
+                            <div className="@container flex flex-1 flex-col pt-0.5 min-w-0">
+                              <h4 className="font-bold text-base text-slate-900 dark:text-gray-100 leading-tight break-words">{task.title}</h4>
+                              <span className="text-xs text-[#667085] mt-1.5 font-medium dark:text-gray-400 leading-snug break-words">{task?.description || "No description available"}</span>
 
                               {task.jobChips && task.jobChips.length > 0 && (
-                                <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                                // Label/value grid rather than chips: the label
+                                // column is a fixed width so rows line up within
+                                // and across tiles, and long values wrap instead
+                                // of being truncated. The text column is only
+                                // ~110-250px wide on phones and in the two-up
+                                // tablet layout, so below 16rem (container
+                                // query, not viewport) each label stacks above
+                                // its value to keep the value readable.
+                                <dl className="mt-2.5 grid grid-cols-1 text-xs @min-[16rem]:grid-cols-[8rem_minmax(0,1fr)] @min-[16rem]:gap-x-3 @min-[16rem]:gap-y-1.5">
                                   {task.jobChips.map((chip) => {
                                     const ChipIcon = JOB_CHIP_ICONS[chip.icon] ?? Briefcase
                                     return (
-                                      <span
-                                        key={`${chip.icon}-${chip.value}`}
-                                        title={`${chip.label}: ${chip.value}`}
-                                        className="inline-flex max-w-full items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground"
-                                      >
-                                        <ChipIcon className="h-3 w-3 shrink-0" />
-                                        <span className="truncate">{chip.value}</span>
-                                      </span>
+                                      <Fragment key={`${chip.icon}-${chip.value}`}>
+                                        <dt className="flex min-w-0 items-start gap-1.5 text-muted-foreground">
+                                          <ChipIcon className="mt-0.5 h-3 w-3 shrink-0" />
+                                          <span className="break-words">{chip.label}</span>
+                                        </dt>
+                                        <dd className="mb-1.5 min-w-0 break-words font-medium text-[#475467] last:mb-0 @min-[16rem]:mb-0 dark:text-gray-300">
+                                          {chip.value}
+                                        </dd>
+                                      </Fragment>
                                     )
                                   })}
-                                </div>
+                                </dl>
                               )}
 
-                              {task.attachment && (<span className="text-xs text-[#667085] mt-1.5 font-medium dark:text-gray-400 leading-none truncate">
+                              {task.attachment && (<span className="text-xs text-[#667085] mt-1.5 font-medium dark:text-gray-400 leading-snug break-words">
                                 Document:<button
                                   onClick={() => {
                                     setPdfUrl(`${task?.attachment}`)
