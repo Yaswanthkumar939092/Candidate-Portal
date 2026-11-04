@@ -30,6 +30,12 @@ import { useFormContext } from "react-hook-form";
 import { evaluateDependsOn } from "@/lib/onboarding-utils";
 import { JOINING_DAY_FIELDS, useNonWorkingDays } from "@/lib/hooks/useNonWorkingDays";
 
+
+/** Today as YYYY-MM-DD in the browser's own time zone (not UTC). */
+function localTodayIso() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
 export interface FormField {
   fieldname: string;
   label: string;
@@ -632,6 +638,10 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
       // out individual days, so a holiday or weekly off is refused on pick and
       // explained instead — the same rule the backend enforces on save.
       const isJoiningDay = !!JOINING_DAY_FIELDS[field.fieldname];
+      // An *expected* DOJ cannot be in the past (backend: joining_day.NO_PAST_FIELDS);
+      // an actual Date of Joining may be back-dated, so it stays open.
+      const isExpectedDoj = field.fieldname === "custom_expected_doj" || field.fieldname === "expected_doj";
+      const minDateAttr = isExpectedDoj ? localTodayIso() : undefined;
       const nonWorkingDays = useNonWorkingDays(isJoiningDay);
       const [joiningDayError, setJoiningDayError] = React.useState("");
       return (
@@ -648,6 +658,10 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
               value={(value as string) || ""}
               onChange={(e) => {
                 const next = e.target.value;
+                if (next && minDateAttr && next < minDateAttr) {
+                  setJoiningDayError(`${field.label} cannot be a past date.`);
+                  return;
+                }
                 if (next && nonWorkingDays.includes(next)) {
                   setJoiningDayError(`${field.label} must be a working day — that date is a holiday or weekly off.`);
                   return;
@@ -659,6 +673,7 @@ const defaultFields: Record<FieldType, FieldConfig<FormField> | null> = {
               disabled={disabled || !!field.read_only}
               className={getFieldClass(field, value, error, disabled)}
               max={maxDateAttr}
+              min={minDateAttr}
             />
             <FieldStatusTooltip field={field} value={value} error={error} disabled={disabled} />
           </div>

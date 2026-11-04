@@ -49,6 +49,10 @@ export interface FieldControlProps {
   nonWorkingDays?: string[];
   /** Called when a non-working day is rejected, so the form can explain why. */
   onNonWorkingDay?: (date: string) => void;
+  /** Date fields only: earliest selectable YYYY-MM-DD; earlier dates are refused. */
+  minDate?: string;
+  /** Called when a date before `minDate` is rejected (typed in, or an old browser). */
+  onPastDate?: (date: string) => void;
 }
 
 const NUMERIC = new Set(["Int", "Float", "Currency", "Percent"]);
@@ -73,7 +77,8 @@ function fileHint(accept: string) {
 }
 
 export function FieldControl(props: FieldControlProps) {
-  const { field, value, onChange, disabled, invalid, id, ariaLabel, nonWorkingDays, onNonWorkingDay } = props;
+  const { field, value, onChange, disabled, invalid, id, ariaLabel, nonWorkingDays, onNonWorkingDay, minDate, onPastDate } =
+    props;
   const text = value === null || value === undefined ? "" : String(value);
   const invalidClass = invalid ? "border-destructive focus-visible:ring-destructive/30" : "";
 
@@ -135,8 +140,15 @@ export function FieldControl(props: FieldControlProps) {
       inputMode={field.fieldname === AADHAAR_FIELD ? "numeric" : undefined}
       placeholder={field.fieldname === AADHAAR_FIELD ? "12-digit Aadhaar number" : undefined}
       value={text}
+      min={field.fieldtype === "Date" ? minDate : undefined}
       onChange={(e) => {
         const next = e.target.value;
+        // `min` greys out earlier days in the picker, but a typed date still
+        // gets through; ISO strings compare correctly as text.
+        if (next && minDate && next < minDate) {
+          onPastDate?.(next);
+          return;
+        }
         // A native date input offers no way to grey out individual days, so a
         // non-working one is refused here instead of being carried to a submit
         // the backend would reject.

@@ -42,6 +42,8 @@ export type DirectApplicantFormStatus =
 export interface JoiningDayRule {
   fieldnames: string[];
   non_working_days: string[];
+  /** Earliest selectable YYYY-MM-DD (today): an expected DOJ cannot be in the past. */
+  min_date?: string;
 }
 
 export interface DirectApplicantFormData {

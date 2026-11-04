@@ -34,7 +34,7 @@ const base: CtcProposalData = {
     { label: "Total CTC – Per Month", kind: "total", key: "ctc", monthly: 62886, annual: 754632 },
   ],
   take_home_monthly: 60000, annexure_note: "Subject to TDS.",
-  annexure_name: "Ms. Asha", company_name: "PhysicsWallah Limited",
+  annexure_name: "Ms. Asha", company_name: "Precious Alloys Pvt Ltd",
   hr_note: "Welcome!", version: 1,
   status: "Sent", expired: false, expires_on: null, can_respond: true, can_negotiate: true, negotiations_left: 3, response: "",
 };
@@ -80,9 +80,19 @@ describe("CtcProposalView", () => {
     renderView();
     expect(await screen.findByText("Ms. Asha")).toBeInTheDocument();
     expect(screen.getByText("Total CTC – Per Month")).toBeInTheDocument();
-    expect(screen.getByText("M/S. PhysicsWallah Limited")).toBeInTheDocument();
-    expect(screen.getByText("Admin / Accounts & Finance")).toBeInTheDocument();
-    expect(screen.getByText("Accepted (Ms. Asha)")).toBeInTheDocument();
+    expect(screen.getByText("M/S. Precious Alloys Pvt Ltd")).toBeInTheDocument();
+    expect(
+      screen.getByText("This is a system-generated document and does not require a physical signature.")
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Admin / Accounts & Finance")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Digitally Accepted/)).not.toBeInTheDocument();
+  });
+
+  it("shows who accepted and when once the proposal is accepted", async () => {
+    const statement = "Digitally Accepted by Ms. Asha on 04/11/2026 at 14:05 IST.";
+    getProposal.mockResolvedValue({ ...base, status: "Accepted", can_respond: false, accepted_statement: statement });
+    renderView();
+    expect(await screen.findByText(statement)).toBeInTheDocument();
   });
 
   it("accepts after confirmation", async () => {

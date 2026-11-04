@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { directApplicantFormService, frappeErrorMessage } from "@/lib/services/direct-applicant-form";
+import { directApplicantFormService, frappeErrorMessage, myFileUrl } from "@/lib/services/direct-applicant-form";
 
 const fetchMock = vi.fn();
 
@@ -70,5 +70,19 @@ describe("frappeErrorMessage", () => {
   it("falls back to the exception text, then the fallback", () => {
     expect(frappeErrorMessage({ exception: "frappe.exceptions.ValidationError: Bad" }, "x")).toBe("Bad");
     expect(frappeErrorMessage({}, "fallback")).toBe("fallback");
+  });
+});
+
+describe("myFileUrl", () => {
+  it("routes a private upload through the candidate download endpoint", () => {
+    const url = myFileUrl("DAFR-7", "/private/files/cv one.pdf");
+    expect(url).toContain("recruitment.api.direct_applicant_portal.download_my_file?");
+    expect(url).toContain("request=DAFR-7");
+    expect(url).toContain("file_url=%2Fprivate%2Ffiles%2Fcv+one.pdf");
+  });
+
+  it("links a public file directly", () => {
+    expect(myFileUrl("DAFR-7", "/files/logo.png")).toMatch(/\/files\/logo\.png$/);
+    expect(myFileUrl("DAFR-7", "/files/logo.png")).not.toContain("download_my_file");
   });
 });
