@@ -94,3 +94,100 @@ describe("AssignedTasksList Component", () => {
     expect(mockPush).toHaveBeenCalledWith("compliance_id")
   })
 })
+
+// =====================================================================
+//  PWHR-1902 / PWHR-1903 – JOB DETAIL LAYOUT ON THE TASK TILE
+// =====================================================================
+describe("AssignedTasksList – job details", () => {
+  const longValues = {
+    job: "Senior Principal Platform Reliability Engineer (Distributed Systems)",
+    company: "Northwind Technologies International Holdings Private Limited",
+    department: "Platform Engineering and Site Reliability Operations Group",
+    designation: "Staff Software Engineer, Infrastructure and Developer Tooling",
+    employmentType: "Full-time Permanent (Probation 6 Months)",
+    location: "Magarpatta City, Hadapsar, Pune, Maharashtra, India",
+  }
+
+  const taskWithJobDetails: Task = {
+    id: "t3",
+    title: "Pre-Offer Form",
+    category: "Recruitment",
+    status: "action_required",
+    description: "Please fill and submit the required details",
+    redirectUrl: "/pre-offer",
+    attachment: "",
+    jobChips: [
+      { label: "Job Opening Title", value: longValues.job, icon: "job" },
+      { label: "Company", value: longValues.company, icon: "company" },
+      { label: "Department", value: longValues.department, icon: "department" },
+      { label: "Designation", value: longValues.designation, icon: "designation" },
+      { label: "Employee Type", value: longValues.employmentType, icon: "employmentType" },
+      { label: "Location", value: longValues.location, icon: "location" },
+    ],
+  }
+
+  it("renders every job detail as a label/value row in the expected order", () => {
+    render(<AssignedTasksList tasks={[taskWithJobDetails]} />)
+
+    const labels = screen.getAllByRole("term").map((node) => node.textContent)
+    expect(labels).toEqual([
+      "Job Opening Title",
+      "Company",
+      "Department",
+      "Designation",
+      "Employee Type",
+      "Location",
+    ])
+
+    const values = screen.getAllByRole("definition").map((node) => node.textContent)
+    expect(values).toEqual([
+      longValues.job,
+      longValues.company,
+      longValues.department,
+      longValues.designation,
+      longValues.employmentType,
+      longValues.location,
+    ])
+  })
+
+  it("wraps long job detail values instead of truncating them", () => {
+    render(<AssignedTasksList tasks={[taskWithJobDetails]} />)
+
+    for (const value of Object.values(longValues)) {
+      const node = screen.getByText(value)
+      expect(node.className).toContain("break-words")
+      expect(node.className).not.toContain("truncate")
+      expect(node.textContent).toBe(value)
+    }
+  })
+
+  it("lays the rows out in one aligned grid so tiles line up", () => {
+    render(<AssignedTasksList tasks={[taskWithJobDetails]} />)
+
+    const list = screen.getAllByRole("term")[0].parentElement as HTMLElement
+    expect(list.tagName).toBe("DL")
+    expect(list.className).toContain("grid")
+    expect(list.className).toContain("@min-[16rem]:grid-cols-[8rem_minmax(0,1fr)]")
+  })
+
+  it("does not truncate a long task title in the card header", () => {
+    const longTitle =
+      "Pre-Offer Form for the Senior Principal Platform Reliability Engineer role"
+    render(
+      <AssignedTasksList
+        tasks={[{ ...taskWithJobDetails, title: longTitle }]}
+      />
+    )
+
+    const heading = screen.getByRole("heading", { name: longTitle })
+    expect(heading.className).toContain("break-words")
+    expect(heading.className).not.toContain("truncate")
+  })
+
+  it("renders no job detail list when a task carries no job details", () => {
+    render(
+      <AssignedTasksList tasks={[{ ...taskWithJobDetails, jobChips: [] }]} />
+    )
+    expect(screen.queryAllByRole("term")).toHaveLength(0)
+  })
+})

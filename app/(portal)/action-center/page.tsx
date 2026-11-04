@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/contexts/auth-context"
 import { useActionCenter, useActionCenterMyRequest, useCandidateRaiseRequest } from "@/lib/hooks/useAcationCenter"
 import { toast } from "sonner"
+import { resolveTaskTitle } from "@/lib/action-center-labels"
 
 /**
  * Maps the API status string to the Task status union type.
@@ -47,20 +48,20 @@ function mapApiStatusToTaskStatus(
 }
 
 /**
- * Builds the job detail chips (title, designation, department, company, location,
- * employment type) from an item's `job` object. Fields that are missing or
- * blank are skipped, and duplicate values (e.g. job title == designation)
- * are only shown once.
+ * Builds the job detail chips from an item's `job` object, in the order the
+ * card shows them: job opening title, company, department, designation,
+ * employee type, location. Fields that are missing or blank are skipped, and
+ * duplicate values (e.g. job title == designation) are only shown once.
  */
 function mapJobToChips(job: any): TaskJobChip[] {
   if (!job) return []
 
   const candidates: TaskJobChip[] = [
-    { label: "Job", value: job.job_title, icon: "job" },
+    { label: "Job Opening Title", value: job.job_title, icon: "job" },
     {
-      label: "Designation",
-      value: job.designation_name || job.designation,
-      icon: "designation",
+      label: "Company",
+      value: job.company_name || job.company,
+      icon: "company",
     },
     {
       label: "Department",
@@ -68,19 +69,19 @@ function mapJobToChips(job: any): TaskJobChip[] {
       icon: "department",
     },
     {
-      label: "Company",
-      value: job.company_name || job.company,
-      icon: "company",
+      label: "Designation",
+      value: job.designation_name || job.designation,
+      icon: "designation",
+    },
+    {
+      label: "Employee Type",
+      value: job.employment_type_name || job.employment_type,
+      icon: "employmentType",
     },
     {
       label: "Location",
       value: job.location_name || job.location,
       icon: "location",
-    },
-    {
-      label: "Employment Type",
-      value: job.employment_type_name || job.employment_type,
-      icon: "employmentType",
     },
   ]
 
@@ -106,8 +107,9 @@ function mapApiItemsToTasks(items: any[]): Task[] {
     const status = mapApiStatusToTaskStatus(item.status)
     const isCompleted = status === "completed" || status === "approved"
 
-    // Use title from item
-    const title = item.title || "Task"
+    // Configured title (Action Center Settings) wins; otherwise show the
+    // action type derived from the reference doctype instead of "Task".
+    const title = resolveTaskTitle(item.title, item.reference_doctype)
 
     // Derive a category from reference_doctype
     const category = item.reference_doctype
