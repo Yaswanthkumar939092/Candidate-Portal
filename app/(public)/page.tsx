@@ -7,15 +7,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { usePublicOpenings } from "@/lib/hooks/usePublicOpenings";
 
 const WHY_FALLBACK = [
-  { title: "Mission-first culture", body: "Work on products and programmes that make quality education reachable for every learner." },
+  { title: "Meaningful work", body: "Take ownership of work that matters to our customers and to the business." },
   { title: "Room to grow", body: "Clear levels, mentorship and internal moves across teams, so your role can grow with you." },
   { title: "Benefits that care", body: "Health cover, leave and wellness support for you and your family." },
 ];
 
 function WhyFallback() {
   return (
-    <section aria-label="Why PhysicsWallah">
-      <h2 className="text-xl font-bold text-foreground">Why PhysicsWallah</h2>
+    <section aria-label="Why work with us">
+      <h2 className="text-xl font-bold text-foreground">Why work with us</h2>
       <div className="mt-5 grid gap-4 md:grid-cols-3">
         {WHY_FALLBACK.map((item) => (
           <Card key={item.title} className="rounded-2xl">

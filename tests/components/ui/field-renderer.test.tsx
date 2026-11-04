@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { render, screen, waitFor, fireEvent } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { useForm, FormProvider } from "react-hook-form"
@@ -225,7 +225,8 @@ describe("DynamicFieldRenderer", () => {
       expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("9876543210")
     })
 
-    it("accepts only digits for custom_account_number", async () => {
+    // Letters are allowed (some banks issue alphanumeric account numbers): 617f0cb.
+    it("keeps letters and digits, uppercased, for custom_account_number", async () => {
       const field: FormField = {
         fieldname: "custom_account_number",
         label: "Account Number",
@@ -238,10 +239,10 @@ describe("DynamicFieldRenderer", () => {
       )
 
       const input = screen.getByRole("textbox") as HTMLInputElement
-      fireEvent.change(input, { target: { value: "12AB-34 56" } })
+      fireEvent.change(input, { target: { value: "12ab-34 56" } })
 
-      expect(onChange).toHaveBeenCalledWith("123456")
-      expect(input.inputMode).toBe("numeric")
+      expect(onChange).toHaveBeenCalledWith("12AB3456")
+      expect(input.inputMode).toBe("")
     })
 
     it("normalizes pincode input to 6 digits", async () => {
@@ -562,6 +563,43 @@ describe("DynamicFieldRenderer", () => {
         await user.type(input, "2025-06-15")
         expect(onChange).toHaveBeenCalled()
       }
+    })
+  })
+
+  describe("Expected DOJ cannot be in the past", () => {
+    const localToday = () => {
+      const d = new Date()
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+    }
+
+    beforeEach(() => {
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({ message: { dates: [] } }) }))
+    })
+    afterEach(() => {
+      vi.unstubAllGlobals()
+    })
+
+    it.each(["custom_expected_doj", "expected_doj"])("%s starts at today and refuses an earlier date", (fieldname) => {
+      const onChange = vi.fn()
+      const { container } = render(
+        <DynamicFieldRenderer field={{ fieldname, label: "Expected DOJ", fieldtype: "Date" }} value="" onChange={onChange} />
+      )
+      const input = container.querySelector('input[type="date"]') as HTMLInputElement
+      expect(input.min).toBe(localToday())
+      fireEvent.change(input, { target: { value: "2000-01-01" } })
+      expect(onChange).not.toHaveBeenCalled()
+      expect(screen.getByText("Expected DOJ cannot be a past date.")).toBeInTheDocument()
+    })
+
+    it("leaves an actual Date of Joining open for back-dating", () => {
+      const onChange = vi.fn()
+      const { container } = render(
+        <DynamicFieldRenderer field={{ fieldname: "date_of_joining", label: "Date of Joining", fieldtype: "Date" }} value="" onChange={onChange} />
+      )
+      const input = container.querySelector('input[type="date"]') as HTMLInputElement
+      expect(input.min).toBe("")
+      fireEvent.change(input, { target: { value: "2000-01-03" } })
+      expect(onChange).toHaveBeenCalledWith("2000-01-03")
     })
   })
 

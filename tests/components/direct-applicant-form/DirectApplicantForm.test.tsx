@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
+import { toast } from "sonner";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import DirectApplicantForm, { initialValues, validate } from "@/components/direct-applicant-form/DirectApplicantForm";
@@ -102,5 +103,33 @@ describe("DirectApplicantForm", () => {
     });
     renderForm();
     expect(await screen.findByText("Thank you")).toBeInTheDocument();
+  });
+});
+
+describe("expected DOJ", () => {
+  const doj: DirectApplicantField = {
+    fieldname: "custom_expected_doj", label: "Expected DOJ", fieldtype: "Date", reqd: 0, section: "Joining", value: null, editable: true,
+  };
+  const payload = {
+    applicant_name: "Asha", company: "PAPL", form_title: "Joining Details", instructions: "", status: "Sent",
+    expires_on: null, resubmit_note: "", fields: [doj],
+    joining_day: { fieldnames: ["custom_expected_doj"], non_working_days: ["2026-11-08"], min_date: "2026-11-04" },
+  };
+
+  it("starts the picker at today and refuses a past or non-working date", async () => {
+    getForm.mockResolvedValue(payload);
+    renderForm();
+    const input = (await screen.findByLabelText(/Expected DOJ/)) as HTMLInputElement;
+    expect(input.min).toBe("2026-11-04");
+
+    fireEvent.change(input, { target: { value: "2026-11-03" } });
+    expect(input.value).toBe("");
+    expect(toast.error).toHaveBeenCalledWith("Expected DOJ cannot be a past date.");
+
+    fireEvent.change(input, { target: { value: "2026-11-08" } });
+    expect(input.value).toBe("");
+
+    fireEvent.change(input, { target: { value: "2026-11-05" } });
+    expect(input.value).toBe("2026-11-05");
   });
 });

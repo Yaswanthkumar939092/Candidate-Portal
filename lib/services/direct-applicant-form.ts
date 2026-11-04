@@ -44,6 +44,18 @@ function via(access: FormAccess, tokenMethod: string, sessionMethod: string): { 
     : { method: sessionMethod, params: { request: access.request as string } };
 }
 
+/**
+ * Link that opens a file the candidate uploaded on their form. The upload is a
+ * private Frappe File, so its own /private/files/... URL is Forbidden to a
+ * candidate (portal session, no Frappe login); this endpoint checks ownership
+ * and serves it. Public /files/... URLs are linked directly.
+ */
+export function myFileUrl(requestName: string, fileUrl: string) {
+  if (!fileUrl.startsWith("/private/")) return `${frappeApiBase()}${fileUrl}`;
+  const query = new URLSearchParams({ request: requestName, file_url: fileUrl }).toString();
+  return `${frappeApiBase()}/api/method/${API}.download_my_file?${query}`;
+}
+
 export const accessKey = (access: FormAccess) => access.token ?? access.request ?? "";
 
 export const directApplicantFormService = {

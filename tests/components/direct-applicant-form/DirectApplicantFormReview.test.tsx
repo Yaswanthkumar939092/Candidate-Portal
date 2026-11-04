@@ -13,6 +13,7 @@ vi.mock("next/link", () => ({
 const getForm = vi.fn();
 vi.mock("@/lib/services/direct-applicant-form", () => ({
   accessKey: (a: { token?: string; request?: string }) => a.token ?? a.request ?? "",
+  myFileUrl: (request: string, fileUrl: string) => `download_my_file?request=${request}&file_url=${fileUrl}`,
   directApplicantFormService: {
     getForm: (...a: unknown[]) => getForm(...a),
     submit: vi.fn(),
@@ -79,5 +80,18 @@ describe("completed Action Center item is reviewable", () => {
     renderForm();
     await waitFor(() => expect(screen.getByRole("button", { name: /submit/i })).toBeTruthy());
     expect(screen.queryByText("You have already submitted this form.")).toBeNull();
+  });
+
+  it("opens an uploaded private file through the candidate download endpoint", async () => {
+    getForm.mockResolvedValue({
+      ...reviewPayload,
+      fields: [
+        { fieldname: "resume_attachment", label: "Resume", fieldtype: "Attach", reqd: 1, section: "Identity",
+          value: "/private/files/cv.jpeg", editable: false },
+      ],
+    });
+    renderForm({ request: "DAFR-9" });
+    const link = await screen.findByRole("link", { name: "cv.jpeg" });
+    expect(link.getAttribute("href")).toBe("download_my_file?request=DAFR-9&file_url=/private/files/cv.jpeg");
   });
 });

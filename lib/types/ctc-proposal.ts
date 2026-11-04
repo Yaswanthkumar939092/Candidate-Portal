@@ -59,6 +59,8 @@ export interface CtcProposalData {
   can_negotiate: boolean;
   negotiations_left: number;
   response: string;
+  /** "Digitally Accepted by Ms. … on DD/MM/YYYY at HH:MM IST." once accepted, else "". */
+  accepted_statement?: string;
 }
 
 export type CtcResponse = "Accept" | "Negotiate" | "Reject";

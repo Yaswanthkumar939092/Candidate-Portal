@@ -176,7 +176,6 @@ const amount = (v?: number) =>
 function Annexure({ data }: { data: CtcProposalData }) {
   const cell = "border border-black px-2 py-1";
   const name = data.annexure_name || data.applicant_name;
-  const sign = "min-w-[200px] flex-1 border-t border-black pt-1 text-xs font-bold";
   return (
     <div className="overflow-x-auto rounded-lg border bg-white p-4 font-serif text-black">
       <table className="w-full border-collapse text-sm text-black">
@@ -217,11 +216,9 @@ function Annexure({ data }: { data: CtcProposalData }) {
         </tbody>
       </table>
       {data.annexure_note && <p className="mt-3 whitespace-pre-wrap text-justify text-sm">{data.annexure_note}</p>}
-      <p className="mb-12 mt-3 text-sm font-bold">M/S. {data.company_name || data.company}</p>
-      <div className="flex flex-wrap gap-12">
-        <div className={sign}>Admin / Accounts &amp; Finance</div>
-        <div className={cn(sign, "text-center")}>Accepted ({name})</div>
-      </div>
+      <p className="mt-3 text-sm font-bold">M/S. {data.company_name || data.company}</p>
+      <p className="mt-1 text-sm italic">This is a system-generated document and does not require a physical signature.</p>
+      {data.accepted_statement && <p className="mt-3 text-sm font-bold">{data.accepted_statement}</p>}
     </div>
   );
 }

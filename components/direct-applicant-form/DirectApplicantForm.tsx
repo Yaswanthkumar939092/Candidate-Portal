@@ -12,8 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useDirectApplicantForm, useSubmitDirectApplicantForm } from "@/lib/hooks/useDirectApplicantForm";
-import { frappeApiBase } from "@/lib/frappe-base";
-import type { FormAccess } from "@/lib/services/direct-applicant-form";
+import { myFileUrl, type FormAccess } from "@/lib/services/direct-applicant-form";
 import type { DirectApplicantField, DirectApplicantFormData, TableRow } from "@/lib/types/direct-applicant-form";
 import { FieldControl } from "./FieldControl";
 import { TableField } from "./TableField";
@@ -27,6 +26,12 @@ const ATTACH_FIELDTYPES: Record<string, true> = { Attach: true, "Attach Image": 
 const WIDE_FIELDTYPES: Record<string, true> = { "Small Text": true, Text: true, "Long Text": true };
 
 /** Spans both grid columns: HR's Width on the form, else tables and long text. */
+/** Today as YYYY-MM-DD in the browser's own time zone (not UTC). */
+function localToday() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 export function isFullWidth(field: DirectApplicantField) {
   if (field.fieldtype === "Table") return true;
   if (field.width === "Full" || field.width === "Half") return field.width === "Full";
@@ -105,7 +110,7 @@ export default function DirectApplicantForm({ access }: { access: FormAccess }) 
   // dead end — that is the whole point of "View Details" on a completed task.
   // The emailed link has no portal session, so it keeps the thank-you page.
   if (data.review) {
-    return inPortal ? <ReviewBody data={data} /> : <Submitted inPortal={inPortal} />;
+    return inPortal ? <ReviewBody requestName={access.request ?? ""} data={data} /> : <Submitted inPortal={inPortal} />;
   }
   if (data.status === "Submitted") return <Submitted inPortal={inPortal} />;
   return <FormBody access={access} data={data} />;
@@ -121,6 +126,9 @@ function FormBody({ access, data }: { access: FormAccess; data: DirectApplicantF
   // Date of Joining must be a working day. The backend sends which of this
   // form's fields the rule covers (usually none) and the dates they refuse.
   const nonWorkingDays = data.joining_day?.non_working_days ?? [];
+  // Expected DOJ cannot be in the past. Today in the browser's zone when the
+  // backend predates `min_date`; the server enforces the rule either way.
+  const joiningMinDate = data.joining_day?.min_date ?? localToday();
   const joiningDayFields = React.useMemo(() => {
     const covered: Record<string, true> = {};
     (data.joining_day?.fieldnames ?? []).forEach((fieldname) => {
@@ -220,10 +228,12 @@ function FormBody({ access, data }: { access: FormAccess; data: DirectApplicantF
                         onNonWorkingDay={() =>
                           toast.error(`${f.label} must be a working day — holidays and weekly offs cannot be selected.`)
                         }
+                        minDate={joiningDayFields[f.fieldname] ? joiningMinDate : undefined}
+                        onPastDate={() => toast.error(`${f.label} cannot be a past date.`)}
                       />
                     )}
                     {joiningDayFields[f.fieldname] && (
-                      <p className="text-xs text-muted-foreground">Must be a working day.</p>
+                      <p className="text-xs text-muted-foreground">Must be a working day, today or later.</p>
                     )}
                     {f.fieldname === "custom_da_aadhaar_masked" && (
                       <p className="text-xs text-muted-foreground">Only the last 4 digits are stored.</p>
@@ -252,7 +262,7 @@ function FormBody({ access, data }: { access: FormAccess; data: DirectApplicantF
  * for with the value on file, grouped exactly as the fill view groups them, so
  * what they see here matches what they filled in.
  */
-function ReviewBody({ data }: { data: DirectApplicantFormData }) {
+function ReviewBody({ requestName, data }: { requestName: string; data: DirectApplicantFormData }) {
   const sections = React.useMemo(() => {
     const out: { title: string; fields: DirectApplicantField[] }[] = [];
     data.fields.forEach((f) => {
@@ -301,7 +311,7 @@ function ReviewBody({ data }: { data: DirectApplicantFormData }) {
                   <ReviewTable field={f} />
                 ) : ATTACH_FIELDTYPES[f.fieldtype] && typeof f.value === "string" && f.value ? (
                   <a
-                    href={`${frappeApiBase()}${f.value}`}
+                    href={myFileUrl(requestName, f.value)}
                     target="_blank"
                     rel="noreferrer"
                     className="break-all text-sm text-primary underline underline-offset-2"
