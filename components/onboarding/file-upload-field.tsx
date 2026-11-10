@@ -29,6 +29,10 @@ interface FileUploadFieldProps {
   hrComment?: string;
   isApproved?: boolean;
   fieldname?: string;
+  /** Stores the file and returns its URL. Defaults to the shared guest upload. */
+  upload?: (file: File) => Promise<{ file_url: string }>;
+  /** Builds the link that opens a stored file (e.g. through an ownership check). */
+  viewUrl?: (value: string) => string;
 }
 
 /**
@@ -57,12 +61,16 @@ export function FileUploadField({
   hrComment,
   isApproved = false,
   fieldname,
+  upload,
+  viewUrl,
 }: FileUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [internalError, setInternalError] = useState<string | null>(null);
 
-  const { mutateAsync: uploadFile, isPending } = useFileUpload();
+  const { mutateAsync: guestUpload, isPending: guestPending } = useFileUpload();
+  const [customPending, setCustomPending] = useState(false);
+  const isPending = upload ? customPending : guestPending;
 
   const fileName =
     typeof value === "string" && value.length > 0
@@ -71,9 +79,11 @@ export function FileUploadField({
 
   const fileUrl =
     typeof value === "string" && value.length > 0
-      ? value.startsWith("http")
-        ? value
-        : `${frappeApiBase()}${value}`
+      ? viewUrl
+        ? viewUrl(value)
+        : value.startsWith("http")
+          ? value
+          : `${frappeApiBase()}${value}`
       : null;
 
   const handleClick = () => {
@@ -99,14 +109,26 @@ export function FileUploadField({
       }
 
       try {
-        const response = await uploadFile(file);
+        let response: { file_url: string };
+        if (upload) {
+          setCustomPending(true);
+          try {
+            response = await upload(file);
+          } finally {
+            setCustomPending(false);
+          }
+        } else {
+          response = await guestUpload(file);
+        }
         onChange?.(response.file_url);
       } catch (error) {
         console.error("Upload failed", error);
-        setInternalError("Upload failed. Please try again.");
+        setInternalError(
+          upload && error instanceof Error && error.message ? error.message : "Upload failed. Please try again.",
+        );
       }
     },
-    [uploadFile, onChange],
+    [upload, guestUpload, onChange],
   );
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {

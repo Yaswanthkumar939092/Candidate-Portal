@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 import { FileUploadField } from "@/components/onboarding/file-upload-field";
+import { myOnboardingFileUrl, uploadMyOnboardingFile } from "@/lib/services/onboarding-files";
 import { cn } from "@/lib/utils";
 import { OnboardingTab, OnboardingField } from "@/lib/types/onboarding";
 import { SectionCard } from "@/components/onboarding/section-card";
@@ -601,6 +602,8 @@ export function OnboardingFormStep({
             hrComment={field.hr_comment}
             isApproved={field.approval_status === "Approved"}
             fieldname={field.fieldname}
+            upload={(file) => uploadMyOnboardingFile(file, field.fieldname)}
+            viewUrl={myOnboardingFileUrl}
           />
         ),
       },
@@ -640,6 +643,8 @@ export function OnboardingFormStep({
             hrComment={field.hr_comment}
             isApproved={field.approval_status === "Approved"}
             fieldname={field.fieldname}
+            upload={(file) => uploadMyOnboardingFile(file, field.fieldname)}
+            viewUrl={myOnboardingFileUrl}
           />
         ),
       },
