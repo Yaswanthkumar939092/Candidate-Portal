@@ -342,4 +342,26 @@ describe("FileUploadField", () => {
       });
     });
   });
+  it("uses the given uploader instead of the guest upload", async () => {
+    const upload = vi.fn().mockResolvedValue({ file_url: "/private/files/pan.png" });
+    const { container } = render(<FileUploadField label="PAN" onChange={mockOnChange} upload={upload} />);
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+    const file = new File(["x"], "pan.png", { type: "image/png" });
+    fireEvent.change(input, { target: { files: [file] } });
+    await waitFor(() => expect(mockOnChange).toHaveBeenCalledWith("/private/files/pan.png"));
+    expect(upload).toHaveBeenCalledWith(file);
+    expect(mockUploadFile).not.toHaveBeenCalled();
+  });
+
+  it("opens the file through the given view URL", () => {
+    const open = vi.spyOn(window, "open").mockImplementation(() => null);
+    const viewUrl = vi.fn((v: string) => `https://portal.example/view?f=${encodeURIComponent(v)}`);
+    render(<FileUploadField label="PAN" value="/private/files/pan.png" viewUrl={viewUrl} />);
+    fireEvent.click(screen.getByTitle("Click to view file"));
+    expect(viewUrl).toHaveBeenCalledWith("/private/files/pan.png");
+    expect(open).toHaveBeenCalledWith(
+      "https://portal.example/view?f=%2Fprivate%2Ffiles%2Fpan.png", "_blank", "noopener,noreferrer",
+    );
+    open.mockRestore();
+  });
 });
