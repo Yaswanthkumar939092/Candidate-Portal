@@ -53,7 +53,8 @@ export function BrandLockup({
   const fallback = tone === "light" ? BRAND_LOGO_ON_DARK : BRAND_LOGO;
   const logo = useLogoWithFallback(logoSrc || resolveBrandLogoUrl(branding?.app_logo), fallback);
   // The bundled wordmark already spells out the name, so it never gets a text label.
-  const showName = shouldShowBrandName(branding) && logo.src !== fallback;
+  const usingFallback = logo.src === fallback;
+  const showName = shouldShowBrandName(branding) && !usingFallback;
   const name = branding?.title_prefix?.trim() || BRAND_NAME;
   const px = size === "lg" ? 48 : 32;
 
@@ -65,7 +66,8 @@ export function BrandLockup({
       <Image
         src={logo.src}
         onError={logo.onError}
-        alt={showName ? "" : name}
+        // The alt names what the picture shows: the bundled wordmark is always Hybrowlabs.
+        alt={showName ? "" : usingFallback ? BRAND_NAME : name}
         aria-hidden={showName ? true : undefined}
         width={px}
         height={px}

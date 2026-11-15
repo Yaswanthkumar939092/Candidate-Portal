@@ -139,7 +139,7 @@ None. This is a browser and Node front end with no scheduler, no server hooks an
 - Security: the redirect after sign-in is taken from the `redirect` query value without a same-origin check (SPEC-CAND-03, issue PWHR-1519).
 - Security: `useCurrentUser` falls back to a fixed personal e-mail address and its callers use it as the applicant e-mail for offer and onboarding calls (`lib/hooks/useUser.ts:12-16`, `app/(portal)/job_offer/page.tsx:127,133`). Issue: PWHR-1512.
 - Security: `app/layout.tsx` inserts a script with `dangerouslySetInnerHTML`; its content is a constant string with no input from the request (`app/layout.tsx:76-78`).
-- Security: the page `app/(public)/page.tsx:17-18` names a customer in its fallback text. Core clauses are customer-neutral; this is a fact about the code, listed here for the owner (Not filed: copy text, no behaviour).
+- Branding: the home page fallback (`app/(public)/page.tsx:19-22`) is Hybrowlabs' own copy, with the heading built from `BRAND_NAME` (`lib/branding.ts`). The earlier customer name in this text was removed in OPS-500.
 - Performance: the one React Query client is `new QueryClient()` with no `defaultOptions`, built at module scope, and the auth provider and that client wrap every route, so each hook decides its own freshness and ten of them set no `staleTime` (`app/providers.tsx:9,14`, `app/layout.tsx:85-88`). Issue: PWHR-1754.
 - Performance: the branding method is called on the server in `generateMetadata` with no cache option on every first page view (`app/layout.tsx:34`). The second, browser-side call by `DynamicFavicon` was removed with that component in OPS-500. Whether Next.js caches or dedups the server call was not read. Issue: PWHR-1755. [INFERENCE]
 - Performance: `(portal)` pages sit behind `FeatureFlagLoader`, which renders a spinner instead of the page until the flag request settles, and the flag context value is a fresh object on every provider render (`app/(portal)/layout.tsx:56-57`, `lib/contexts/feature-flags.tsx:133-136,78-85`). Issue: PWHR-1756.
@@ -154,7 +154,7 @@ None. This is a browser and Node front end with no scheduler, no server hooks an
 - G5: The `(portal)` layout drops the requested URL when it sends a visitor to `/login` (`app/(portal)/layout.tsx:33`), while `/campus-apply` keeps it (`app/campus-apply/page.tsx:45`). Whether that is intended is a question for the owner. Not filed: product question.
 - G6: Every case stubs the backend; none talks to a real Frappe site or a browser. Hosted CI is UNVERIFIED.
 - G7: `CareersShell` shows the guest header while auth is still loading and then redirects a signed-in visitor; a signed-in visitor may see a flash of the guest header (`components/careers/careers-shell.tsx:27,34`). [INFERENCE: render timing was not observed]
-- G8: `app/(public)/page.tsx:17-18` contains a customer name in core source. Not filed: copy text.
+- G8: Resolved in OPS-500. `app/(public)/page.tsx` no longer contains a customer name; its fallback is Hybrowlabs copy.
 - Statutory source: not applicable.
 
 ## 10. Uncovered behaviour
