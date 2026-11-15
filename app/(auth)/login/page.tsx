@@ -8,6 +8,7 @@ import { useAuthSettings } from "@/lib/hooks/useAuthSettings";
 import { MailCheck, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/contexts/auth-context";
+import { safeRedirect } from "@/lib/careers/login-redirect";
 
 export default function LoginPage() {
   return (
@@ -57,7 +58,7 @@ function LoginFormContent() {
     if (typeof window !== "undefined" && window.sessionStorage) {
       sessionStorage.setItem("showLoginToast", "true");
     }
-    router.push(redirectParam || "/open-jobs");
+    router.push(safeRedirect(redirectParam, "/open-jobs"));
   };
 
   useEffect(() => {

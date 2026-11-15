@@ -75,12 +75,15 @@ describe("login page after a successful password sign-in", () => {
   })
 
   // Spec: CAND-03-A4.1B (docs/spec/clauses/03-authentication.md#cand-03-a4-1b)
-  // Characterization: pins current behaviour, not endorsed.
-  it("pushes the redirect query value exactly as given, even an absolute URL", async () => {
-    h.redirectParam.value = "https://elsewhere.example.invalid/landing"
-    await signInWith(base)
-    await waitFor(() => expect(h.push).toHaveBeenCalledWith("https://elsewhere.example.invalid/landing"))
-    expect(h.push).toHaveBeenCalledTimes(1)
+  it("never follows an absolute or protocol-relative redirect value; it falls back to /open-jobs", async () => {
+    for (const redirect of ["https://elsewhere.example.invalid/landing", "//elsewhere.example.invalid", "/\\elsewhere.example.invalid"]) {
+      h.push.mockClear()
+      document.body.innerHTML = ""
+      h.redirectParam.value = redirect
+      await signInWith(base)
+      await waitFor(() => expect(h.push).toHaveBeenCalledWith("/open-jobs"))
+      expect(h.push).toHaveBeenCalledTimes(1)
+    }
   })
 
   // Spec: CAND-03-A4.1C (docs/spec/clauses/03-authentication.md#cand-03-a4-1c)
@@ -195,6 +198,18 @@ describe("register page", () => {
     render(<RegisterPage />)
     expect(screen.getByText("Candidate signup is disabled.")).toBeTruthy()
     expect(screen.queryByPlaceholderText("Create a strong password")).toBeNull()
+  })
+
+  // Open redirect fix (PWHR-1519, OPS-507); no spec clause yet.
+  it("never follows an off-site redirect value after a verified sign-up OTP; it falls back to /open-jobs", async () => {
+    h.signUp.mockResolvedValue({ status: "otp_required" })
+    h.redirectParam.value = "/..//elsewhere.example.invalid"
+    await fillAndSubmit("cand@example.invalid")
+    await screen.findByText("Verify your email")
+    await user.type(screen.getByLabelText("Email OTP"), "000000")
+    await user.click(screen.getByRole("button", { name: "Verify and continue" }))
+    await waitFor(() => expect(h.push).toHaveBeenCalledWith("/open-jobs"))
+    expect(h.push).toHaveBeenCalledTimes(1)
   })
 })
 

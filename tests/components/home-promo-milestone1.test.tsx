@@ -6,6 +6,12 @@ import { FrappeAPI } from "@/lib/frappe-api";
 
 vi.mock("@/lib/frappe-api", () => ({ FrappeAPI: { get: vi.fn(), post: vi.fn() } }));
 
+const allOff = {
+  hero: { enabled: false, eyebrow: "", heading: "", body: "", image: null, image_alt: null, artwork_key: null, stats: [] },
+  carousel: { enabled: false, interval: 0, slides: [] },
+  values: { enabled: false, heading: "", subheading: "", cards: [] },
+};
+
 function renderPromo() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
@@ -15,14 +21,21 @@ function renderPromo() {
   );
 }
 
-describe("HomePromo in milestone 1", () => {
+// OPS-507: the home promo gate is open; its one method is on the proxy allowlist.
+describe("HomePromo with its gate open", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("renders the fallback and never calls the denied candidate_home method", async () => {
+  it("asks only the reviewed candidate_home method and shows the fallback while HR has every section off", async () => {
+    vi.mocked(FrappeAPI.get).mockResolvedValue(allOff);
     renderPromo();
     await waitFor(() => expect(screen.getByText("why-fallback")).toBeTruthy());
-    await new Promise((r) => setTimeout(r, 50));
     const methods = vi.mocked(FrappeAPI.get).mock.calls.map((c) => String(c[0]));
-    expect(methods.filter((m) => m.includes("candidate_home"))).toEqual([]);
+    expect(methods).toEqual(["recruitment.api.candidate_home.get_home_content"]);
+  });
+
+  it("keeps the fallback when the request fails", async () => {
+    vi.mocked(FrappeAPI.get).mockRejectedValue(new Error("Not found"));
+    renderPromo();
+    await waitFor(() => expect(screen.getByText("why-fallback")).toBeTruthy());
   });
 });
