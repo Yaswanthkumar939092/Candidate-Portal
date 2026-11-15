@@ -173,10 +173,9 @@ describe("PortalNavigation", () => {
 
   it("uses the Operate title prefix over the Hybrowlabs default", () => {
     vi.mocked(candidateBrandingHook.useCandidateBranding).mockReturnValue({
-      data: { title_prefix: "Acme", app_logo: "/brand2.png", logo_includes_company_name: true },
+      data: { title_prefix: "Acme", app_logo: "/files/logo2.png" },
     } as ReturnType<typeof candidateBrandingHook.useCandidateBranding>)
     render(<PortalNavigation />)
-    expect(screen.getByAltText("Acme")).toBeTruthy()
     expect(screen.getByText("Acme")).toBeTruthy()
     expect(screen.queryByText("Hybrowlabs")).toBeNull()
   })

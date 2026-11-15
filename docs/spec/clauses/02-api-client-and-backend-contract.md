@@ -139,7 +139,7 @@ Names only. Readers are from a script run over `app/`, `lib/`, `components/` and
 
 | Name | Read at | Used for |
 |---|---|---|
-| `NEXT_PUBLIC_FRAPPE_URL` | `lib/frappe-base.ts:20`, `lib/server/feature-flags.ts:12`, `app/api/public/branding/route.ts:12`, `app/api/public/openings/route.ts:13`, `app/api/candidate-feature-flags/route.ts:7`, `app/layout.tsx:38`, `components/auth-form.tsx:64`, `components/brand-lockup.tsx:9`, `components/dynamic-favicon.tsx:20`, `next.config.ts:5` | backend URL fallback on the server, image URLs, image host; also a build argument (`Dockerfile:22,29`) |
+| `NEXT_PUBLIC_FRAPPE_URL` | `lib/frappe-base.ts:20`, `lib/server/feature-flags.ts:12`, `app/api/public/branding/route.ts:12`, `app/api/public/openings/route.ts:13`, `app/api/candidate-feature-flags/route.ts:7`, `components/auth-form.tsx:65`, `components/brand-lockup.tsx:14`, `next.config.ts:5` | backend URL fallback on the server, image URLs, image host; also a build argument (`Dockerfile:22,29`) |
 | `FRAPPE_BASE_URL` | `lib/frappe-base.ts:24`, `app/backend/[...path]/route.ts:28`, and the three server routes and `lib/server/feature-flags.ts:11` | runtime backend URL; the only variable the proxy reads |
 | `FRAPPE_API_KEY`, `FRAPPE_API_SECRET` | `lib/server/feature-flags.ts:25-26`, `app/api/public/branding/route.ts:15-16`, `app/api/public/openings/route.ts:14-15`, `app/api/candidate-feature-flags/route.ts:10` | server-side token for guest routes (secret) |
 | `FRAPPE_USERNAME`, `FRAPPE_PASSWORD` | `lib/services/frappe-env.ts:294-295,412-413` | legacy module only (G5) (secret) |

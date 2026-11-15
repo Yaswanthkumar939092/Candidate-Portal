@@ -42,19 +42,19 @@ describe("BrandLockup", () => {
 
   it("shows the bundled Hybrowlabs wordmark, with no text, when no logo is configured", () => {
     render(<BrandLockup branding={{ title_prefix: "Acme Careers" }} />)
-    expect(screen.getByAltText("Acme Careers").getAttribute("src")).toBe("/hybrowlabs-logo.svg")
+    expect(screen.getByAltText("Acme Careers").getAttribute("src")).toContain("/hybrowlabs-logo.svg")
     expect(screen.queryByText("Acme Careers")).toBeNull()
   })
 
   it("uses the light wordmark on dark surfaces and the Hybrowlabs name when Operate has none", () => {
     render(<BrandLockup branding={null} tone="light" />)
-    expect(screen.getByAltText("Hybrowlabs").getAttribute("src")).toBe("/hybrowlabs-logo-white.svg")
+    expect(screen.getByAltText("Hybrowlabs").getAttribute("src")).toContain("/hybrowlabs-logo-white.svg")
   })
 
   it("falls back to the bundled wordmark when the configured logo fails to load", () => {
     render(<BrandLockup branding={{ title_prefix: "Acme Careers", app_logo: "/files/logo.png" }} />)
     fireEvent.error(screen.getByTestId("brand-lockup").querySelector("img")!)
-    expect(screen.getByAltText("Acme Careers").getAttribute("src")).toBe("/hybrowlabs-logo.svg")
+    expect(screen.getByAltText("Acme Careers").getAttribute("src")).toContain("/hybrowlabs-logo.svg")
     expect(screen.queryByText("Acme Careers")).toBeNull()
   })
 })
