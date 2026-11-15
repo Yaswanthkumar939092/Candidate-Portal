@@ -21,6 +21,11 @@ vi.mock("@/lib/hooks/useSavedJobs", () => ({
   useToggleSavedJob: vi.fn(),
 }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+// The gate is open since OPS-15; this keeps covering the closed-gate path.
+vi.mock("@/lib/careers/milestone", async (orig) => ({
+  ...(await orig<typeof import("@/lib/careers/milestone")>()),
+  SAVED_AND_DRAFTS_ENABLED: false,
+}));
 
 describe("MyJobsPage in milestone 1 (applied jobs only)", () => {
   beforeEach(() => {
