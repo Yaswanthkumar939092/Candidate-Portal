@@ -28,6 +28,7 @@ import { JobDetailDialog } from "@/components/jobs/job-detail-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { toast } from "sonner";
 import { SAVED_AND_DRAFTS_ENABLED } from "@/lib/careers/milestone";
+import { applyJobPath } from "@/lib/careers/job-route";
 import Link from "next/link";
 
 // Mock data for draft applications removed in favor of real API
@@ -338,7 +339,7 @@ export default function MyJobsPage() {
                         <Trash2 className="h-4 w-4" />
                       </Button>
                       <Button size="sm" className="gap-1" asChild>
-                        <Link href={`/open-jobs/${draft.job_opening}/apply-job`}>
+                        <Link href={applyJobPath(draft.job_opening)}>
                           Resume Application
                           <ChevronRight className="h-4 w-4" />
                         </Link>

@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
 import { JobApplicationTableField } from "./ChildTable";
 import { useAuth } from "@/lib/contexts/auth-context";
+import { applyJobPath } from "@/lib/careers/job-route";
 import {
   validateJobAppField,
 } from "@/lib/validation/job-application-validation";
@@ -327,7 +328,7 @@ export function JobApplicationStep({
         onSuccess: () => {
           toast.success("Application submitted successfully!");
           reset({});
-          router.push(`/open-jobs/${jobID}/apply-job/thank-you`);
+          router.push(`${applyJobPath(jobID)}/thank-you`);
         },
         onError: () => {
           toast.error("Submission failed. Please try again.");

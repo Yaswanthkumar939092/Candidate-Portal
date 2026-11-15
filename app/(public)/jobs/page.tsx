@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResumeDropzone } from "@/components/careers/resume-dropzone";
 import { toCardJob, toColumnFields } from "@/components/careers/job-mapping";
+import { applyJobPath } from "@/lib/careers/job-route";
 import { loginHref, SHARED_JOB_PARAM } from "@/lib/careers/login-redirect";
 import { matchesQuery } from "@/lib/careers/openings";
 import { usePublicOpenings } from "@/lib/hooks/usePublicOpenings";
@@ -169,7 +170,7 @@ export default function PublicJobsPage() {
           setSharedJobId(null);
         }}
         job={selected ? toCardJob(selected) : null}
-        applyHref={selected ? loginHref(`/open-jobs/${selected.id}/apply-job`) : undefined}
+        applyHref={selected ? loginHref(applyJobPath(selected.id)) : undefined}
       />
     </div>
   );
