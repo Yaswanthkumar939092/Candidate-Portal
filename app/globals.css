@@ -113,7 +113,7 @@
   --info-bg:       #E6ECFF;
   --warning:       #D97706;
   --warning-bg:    #FEF3C7;
-  --text-subtle:   #6B7280;
+  --text-subtle:   #5F6672;
   --border-soft:   #EEF2FC;
   --nav-active-bg:   #0038FF;
   --nav-active-text: #FFFFFF;
@@ -172,7 +172,8 @@
 
   --brand:                var(--primary);
   --brand-deep:           color-mix(in srgb, var(--primary) 40%, #05070C);
-  --primary-hover:        color-mix(in srgb, var(--primary) 85%, var(--foreground));
+  /* Darken (not lighten) on hover so white text stays above 4.5:1. */
+  --primary-hover:        color-mix(in srgb, var(--primary) 85%, #000000);
   --success-foreground:   #FFFFFF;
   --destructive-foreground: #FFFFFF;
 }

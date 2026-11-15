@@ -19,7 +19,7 @@ function WhyFallback() {
     <section aria-label={`Why ${BRAND_NAME}`}>
       <h2 className="text-xl font-bold text-foreground">Why {BRAND_NAME}</h2>
       <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-        Hybrowlabs Technologies, founded in 2016, is a certified Frappe partner (Best Frappe Partner 2024) with
+        Hybrowlabs Technologies, founded in 2016, is a Frappe partner (Best Frappe Partner 2024) with
         350+ ERPNext implementations across manufacturing, retail, healthcare and education.
       </p>
       <div className="mt-5 grid gap-4 md:grid-cols-3">
