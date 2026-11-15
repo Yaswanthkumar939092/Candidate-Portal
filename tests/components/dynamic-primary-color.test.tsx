@@ -1,4 +1,4 @@
-import { render, waitFor } from "@testing-library/react";
+import { act, render, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { DynamicPrimaryColor, isValidPrimaryColor } from "@/components/dynamic-primary-color";
 import { useAuthSettings } from "@/lib/hooks/useAuthSettings";
@@ -43,6 +43,7 @@ describe("DynamicPrimaryColor", () => {
       document.documentElement.style.removeProperty(v),
     );
     document.documentElement.removeAttribute("data-brand");
+    document.documentElement.removeAttribute("data-theme");
   });
 
   describe("default palette (enable_theme_mode off)", () => {
@@ -90,6 +91,46 @@ describe("DynamicPrimaryColor", () => {
 
       await waitFor(() => {
         managedVariables.forEach((v) => expect(readVar(v)).toBe(""));
+      });
+    });
+  });
+
+  describe("dark mode (data-theme=nova-dark)", () => {
+    it("does not override the nova-dark tokens when dark mode is already on", async () => {
+      document.documentElement.setAttribute("data-theme", "nova-dark");
+      mockSettings({ primary_color: "#0038FF", enable_theme_mode: 0 });
+
+      render(<DynamicPrimaryColor />);
+
+      // Give effects a chance to run, then confirm nothing was written.
+      await waitFor(() => expect(useAuthSettings).toHaveBeenCalled());
+      managedVariables.forEach((v) => expect(readVar(v)).toBe(""));
+    });
+
+    it("drops the override when the user switches to dark mode", async () => {
+      mockSettings({ primary_color: "#0038FF", enable_theme_mode: 0 });
+
+      render(<DynamicPrimaryColor />);
+      await waitFor(() => expect(readVar("--accent-foreground")).toBe("#0038FF"));
+
+      act(() => document.documentElement.setAttribute("data-theme", "nova-dark"));
+
+      await waitFor(() => {
+        managedVariables.forEach((v) => expect(readVar(v)).toBe(""));
+      });
+    });
+
+    it("restores the override when the user switches back to light mode", async () => {
+      document.documentElement.setAttribute("data-theme", "nova-dark");
+      mockSettings({ primary_color: "#0038FF", enable_theme_mode: 0 });
+
+      render(<DynamicPrimaryColor />);
+      expect(readVar("--primary")).toBe("");
+
+      act(() => document.documentElement.removeAttribute("data-theme"));
+
+      await waitFor(() => {
+        managedVariables.forEach((v) => expect(readVar(v)).toBe("#0038FF"));
       });
     });
   });
