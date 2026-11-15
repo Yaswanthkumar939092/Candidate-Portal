@@ -32,7 +32,7 @@ function getInitials(name?: string): string {
  * and IT support. Each contact shows an avatar (or initials fallback),
  * name, role, and action buttons for email and phone.
  *
- * Matches the PW Candidate Portal screenshot design with a section heading
+ * Candidate Portal design with a section heading
  * and a bordered card per contact row.
  */
 export function KeyContacts({ contacts = [], className }: KeyContactsProps) {

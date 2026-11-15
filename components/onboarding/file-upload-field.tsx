@@ -38,7 +38,7 @@ interface FileUploadFieldProps {
 /**
  * A styled file upload field with drag-and-drop support.
  * Renders a dashed border upload area with an upload cloud icon,
- * matching the Physics Wallah onboarding design.
+ * matching the onboarding design.
  *
  * @param label - The label text for the upload field
  * @param required - Whether the field is required (shows red asterisk)

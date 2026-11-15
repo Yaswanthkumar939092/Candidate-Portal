@@ -18,7 +18,7 @@ vi.mock("@/lib/services/ctc-proposal", () => ({
 }));
 
 const base: CtcProposalData = {
-  applicant_name: "Asha", company: "PW", designation: "Professor", department: "Academics",
+  applicant_name: "Asha", company: "Hybrowlabs", designation: "Professor", department: "Academics",
   employment_type: "Full-time", expected_doj: "2026-10-19", currency: "INR", ctc: 1800000, annual_ctc: 1800000,
   earnings: [{ component: "Basic", monthly: 60000, annual: 720000 }],
   deductions: [{ component: "Professional Tax", monthly: 200, annual: 2400 }],

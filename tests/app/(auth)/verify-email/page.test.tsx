@@ -58,8 +58,8 @@ vi.mock("@/lib/hooks/useAuthPageContent", () => ({
 vi.mock("@/lib/hooks/useCandidateBranding", () => ({
   useCandidateBranding: () => ({
     data: {
-      title_prefix: "Physics Wallah",
-      app_logo: "/brand.png",
+      title_prefix: "Hybrowlabs",
+      app_logo: "/files/logo.png",
     },
     isLoading: false,
   }),

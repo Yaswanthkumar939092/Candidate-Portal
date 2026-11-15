@@ -109,7 +109,7 @@ function formatRole(role: string): string {
 
 /**
  * Desktop-first top navigation bar for authenticated portal pages.
- * Matches the Physics Wallah design with dark pill active states,
+ * Pill-style active states,
  * green pill for Action Center, badge counts, and user avatar dropdown.
  */
 export function PortalNavigation({
