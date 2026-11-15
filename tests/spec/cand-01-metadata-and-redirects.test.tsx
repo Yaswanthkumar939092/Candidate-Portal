@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+﻿import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const { getBranding } = vi.hoisted(() => ({ getBranding: vi.fn() }))
 
@@ -63,7 +63,7 @@ describe("careers login-redirect helpers", () => {
   it("loginHref encodes the destination, and an unknown careers path maps to /dashboard", () => {
     expect(loginHref("/open-jobs/HR-OPN-TEST-1/apply-job?x=1&y=2")).toBe("/login?redirect=%2Fopen-jobs%2FHR-OPN-TEST-1%2Fapply-job%3Fx%3D1%26y%3D2")
     expect(portalEquivalent("/something-else", "")).toBe("/dashboard")
-    expect(PORTAL_EQUIVALENT).toEqual({ "/": "/dashboard", "/ai-match": RESUME_CONTINUE_PATH, "/jobs": "/open-jobs" })
+    expect(PORTAL_EQUIVALENT).toEqual({ "/": "/open-jobs", "/ai-match": RESUME_CONTINUE_PATH, "/jobs": "/open-jobs" })
     expect(SHARED_JOB_PARAM).toBe("job")
   })
 })

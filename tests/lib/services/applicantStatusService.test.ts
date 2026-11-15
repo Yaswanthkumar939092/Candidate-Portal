@@ -15,17 +15,38 @@ describe("ApplicantStatusResponse Service", () => {
   });
 
   // Spec: CAND-04-A6.3A (docs/spec/clauses/04-dashboard.md#cand-04-a6-3a)
-  it("getApplicantStatusResponse calls FrappeAPI.get with correct arguments", async () => {
-    const mockResponse = { success: true, data: {} };
-    (FrappeAPI.get as any).mockResolvedValue(mockResponse);
+  it("getApplicantStatusResponse reads my_applications (no email sent) and adapts rows to the timeline shape", async () => {
+    (FrappeAPI.get as any).mockResolvedValue([
+      { receipt: "APP-AAA111", job_opening: "HR-OPN-1", job_title: "Payroll Analyst", status: "In review", submitted_on: "2026-10-21" },
+      { receipt: "APP-BBB222", job_opening: "HR-OPN-2", job_title: null, status: "Closed", submitted_on: null },
+    ]);
 
-    const result = await ApplicantStatusResponse.getApplicantStatusResponse("test@example.com");
+    const result = await ApplicantStatusResponse.getApplicantStatusResponse("ignored@example.com");
 
-    expect(result).toEqual(mockResponse);
-    expect(FrappeAPI.get).toHaveBeenCalledWith(
-      "recruitment.api.channels.careers.get_applied_jobs",
-      { email: "test@example.com" }
-    );
+    expect(FrappeAPI.get).toHaveBeenCalledWith("recruitment.api.v1.candidate.my_applications", {});
+    expect(result.success).toBe(true);
+    expect(result.data.applications).toHaveLength(2);
+    expect(result.data.applications[0]).toMatchObject({
+      id: "APP-AAA111",
+      applied_on: "2026-10-21",
+      status: "In review",
+      job: { designation: "Payroll Analyst", company: null, location: null, experience_range: null, employment_type: null },
+    });
+    expect(result.data.applications[0].flags).toEqual([
+      { status: "Open", flag: true, date: "2026-10-21" },
+      { status: "Replied", flag: true, date: null },
+      { status: "Accepted", flag: false, date: null },
+      { status: "Rejected", flag: false, date: null },
+    ]);
+    expect(result.data.applications[1].job.designation).toBe("HR-OPN-2");
+    expect(result.data.applications[1].flags.find((f: any) => f.status === "Rejected").flag).toBe(true);
+  });
+
+  it("returns an empty application list when the candidate has none", async () => {
+    (FrappeAPI.get as any).mockResolvedValue([]);
+    const result = await ApplicantStatusResponse.getApplicantStatusResponse("a@b.c");
+    expect(result.success).toBe(true);
+    expect(result.data.applications).toEqual([]);
   });
 
   // Spec: CAND-04-A6.3B (docs/spec/clauses/04-dashboard.md#cand-04-a6-3b)

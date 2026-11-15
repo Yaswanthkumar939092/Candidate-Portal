@@ -11,23 +11,51 @@ export const JobOpeningService = {
     page: number,
     limit: number,
     searchTerm?: string,
-    email?: string,
+    _email?: string,
   ): Promise<ListOpeningsResponse> => {
+    const pageLength = Math.min(Math.max(Number(limit) || 10, 1), 50);
     const params: Record<string, string> = {
       page: String(page),
-      limit: String(limit),
+      page_length: String(pageLength),
     };
     if (searchTerm) {
-      params.search_term = searchTerm;
+      params.search = searchTerm;
     }
-    if (email) {
-      params.email = email;
-    }
-    const response = await FrappeAPI.get(
-      "recruitment.api.channels.careers.list_openings",
-      params,
-    );
-    return response as ListOpeningsResponse;
+    const [list, applied] = await Promise.all([
+      FrappeAPI.get("recruitment.api.v1.candidate.list_openings", params) as Promise<{
+        openings?: Record<string, unknown>[];
+        page?: number;
+        page_length?: number;
+        total?: number;
+      }>,
+      (
+        FrappeAPI.get("recruitment.api.v1.candidate.my_applications", {}) as Promise<
+          { job_opening: string }[]
+        >
+      ).catch(() => [] as { job_opening: string }[]),
+    ]);
+    const appliedTo = new Set((applied ?? []).map((a) => a.job_opening));
+    const openings = (list?.openings ?? []).map((o) => ({
+      ...o,
+      applied: appliedTo.has(String(o.name)),
+      saved: false,
+    })) as unknown as ListOpeningsResponse["openings"];
+    const total = list?.total ?? openings.length;
+    const size = list?.page_length || pageLength;
+    const current = list?.page || page;
+    const totalPages = Math.max(Math.ceil(total / size), 1);
+    return {
+      columns: [],
+      search_filters: [],
+      openings,
+      pagination: {
+        total,
+        page: current,
+        limit: size,
+        total_pages: totalPages,
+        has_more: current < totalPages,
+      },
+    };
   },
 
   getCampusInviteOpenings: async (
@@ -92,11 +120,11 @@ export const jobApplicationService = {
       return response as SubmitApplicationResponse;
     }
 
-    const response = await FrappeAPI.post(
-      "recruitment.api.channels.careers.submit_application",
-      payload as unknown as Record<string, unknown>,
-    );
-    return response as SubmitApplicationResponse;
+    const response = (await FrappeAPI.post("recruitment.api.v1.candidate.submit_application", {
+      job_opening: payload.job_opening,
+      form_data: payload.form_data,
+    })) as { receipt: string; status: string };
+    return { status: response.status, name: response.receipt, source: "careers" };
   },
 
   getJobApplicationForm: async (
@@ -113,7 +141,7 @@ export const jobApplicationService = {
 
       const endpoint = isCampus
         ? "recruitment.api.channels.campus.get_application_fields"
-        : "recruitment.api.channels.careers.get_application_fields";
+        : "recruitment.api.v1.candidate.get_application_fields";
 
       const res = await FrappeAPI.get(endpoint, params);
 
@@ -126,7 +154,7 @@ export const jobApplicationService = {
         is_mandatory: field.reqd,
         tab_label: field.section,
         section_label: "Details",
-        child_fields: field.table_fields,
+        child_fields: field.columns ?? field.table_fields,
         value: field.value,
         stage_requirement: field.stage_requirement,
       }));

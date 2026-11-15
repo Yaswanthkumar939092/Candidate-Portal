@@ -17,6 +17,10 @@ vi.mock("@/lib/contexts/feature-flags")
 vi.mock("@/lib/contexts/theme-context")
 vi.mock("@/lib/hooks/useCandidateBranding")
 vi.mock("@/lib/hooks/useApplicantStatus")
+vi.mock("@tanstack/react-query", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@tanstack/react-query")>()),
+  useQueryClient: () => ({ clear: vi.fn(), invalidateQueries: vi.fn() }),
+}))
 
 let mockPathname = "/dashboard"
 vi.mock("next/navigation", () => ({
@@ -189,11 +193,12 @@ describe("PortalNavigation", () => {
   })
 
   // Spec: CAND-04-A8.1A (docs/spec/clauses/04-dashboard.md#cand-04-a8-1a)
-  it("renders navigation items on desktop", () => {
+  it("renders only the navigation items that work on the reviewed v1 API", () => {
     render(<PortalNavigation />)
-    expect(screen.getByText("Home")).toBeTruthy()
     expect(screen.getByText("Open Jobs")).toBeTruthy()
     expect(screen.getByText("My Jobs")).toBeTruthy()
+    expect(screen.queryByText("Home")).toBeNull()
+    expect(screen.queryByText("Action Center")).toBeNull()
   })
 
   it("renders user avatar with initials", () => {
@@ -241,7 +246,6 @@ describe("PortalNavigation", () => {
     expect(trigger).toBeTruthy()
     if (trigger) {
       await user.click(trigger)
-      expect(screen.getByText("Profile")).toBeTruthy()
       // expect(screen.getByText("Settings")).toBeTruthy()
       expect(screen.getByText("Sign Out")).toBeTruthy()
     }
@@ -292,7 +296,13 @@ describe("PortalNavigation", () => {
     }
   })
 
-  it("renders profile link in dropdown", async () => {
+  it("brand logo links to /open-jobs, not the dashboard", () => {
+    render(<PortalNavigation />)
+    const link = screen.getAllByRole("link").find((a) => a.querySelector("img"))
+    expect(link?.getAttribute("href")).toBe("/open-jobs")
+  })
+
+  it("has no Profile menu item, because the profile page calls methods the proxy denies", async () => {
     render(<PortalNavigation />)
     const trigger = screen.getAllByRole("button").find(
       (btn) => btn.textContent?.includes("John Doe")
@@ -300,7 +310,8 @@ describe("PortalNavigation", () => {
     expect(trigger).toBeTruthy()
     if (trigger) {
       await user.click(trigger)
-      expect(screen.getByText("Profile")).toBeTruthy()
+      expect(screen.getByText("Sign Out")).toBeTruthy()
+      expect(screen.queryByText("Profile")).toBeNull()
     }
   })
 
@@ -446,7 +457,7 @@ describe("PortalNavigation", () => {
     const menuBtn = screen.getByRole("button", { name: /Toggle menu/i })
     await user.click(menuBtn)
     // Icons render inside the Sheet portal
-    expect(document.body.querySelector('[data-testid="icon-home"]')).toBeTruthy()
+    expect(document.body.querySelector('[data-testid="icon-home"]')).toBeNull()
     expect(document.body.querySelector('[data-testid="icon-briefcase"]')).toBeTruthy()
     expect(document.body.querySelector('[data-testid="icon-clipboard"]')).toBeTruthy()
   })

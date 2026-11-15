@@ -30,12 +30,15 @@ docker exec "$portal" node -e '
 const assert=require("node:assert/strict");
 (async()=>{
  assert.notEqual(process.getuid(),0);
- const r=await fetch("http://127.0.0.1:3000/backend/api/method/smoke?x=1",{
+ const method="recruitment.api.v1.candidate.submit_application";
+ const r=await fetch("http://127.0.0.1:3000/backend/api/method/"+method+"?x=1",{
  method:"POST",headers:{"Content-Type":"application/json",Cookie:"candidate_portal_session=request"},
  body:JSON.stringify({smoke:true})});
  assert.equal(r.status,200);
  assert.equal(r.headers.getSetCookie().length,2);
  const body=await r.json();
- assert.deepEqual(body,{url:"/api/method/smoke?x=1",method:"POST",body:JSON.stringify({smoke:true}),cookie:"candidate_portal_session=request"});
+ assert.deepEqual(body,{url:"/api/method/"+method+"?x=1",method:"POST",body:JSON.stringify({smoke:true}),cookie:"candidate_portal_session=request"});
+ const denied=await fetch("http://127.0.0.1:3000/backend/api/method/frappe.client.get_list",{headers:{Cookie:"candidate_portal_session=request"}});
+ assert.equal(denied.status,404);
 })().catch(()=>{console.error("Proxy contract failed");process.exitCode=1;});'
-echo "PASS: non-root, read-only runtime, health, proxy POST/query/body/cookies"
+echo "PASS: non-root, read-only runtime, health, proxy POST/query/body/cookies on an allowed method, 404 outside the allowlist"

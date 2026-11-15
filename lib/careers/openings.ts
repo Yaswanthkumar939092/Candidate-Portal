@@ -58,6 +58,41 @@ export function normalizeOpening(
   };
 }
 
+/** Row returned by `recruitment.api.v1.candidate.list_openings` (narrow, Guest-safe). */
+export interface V1OpeningRow {
+  name: string;
+  job_title?: string | null;
+  designation?: string | null;
+  department?: string | null;
+  location?: string | null;
+  employment_type?: string | null;
+  company?: string | null;
+  posted_on?: string | null;
+  closes_on?: string | null;
+  opening_code?: string | null;
+}
+
+/** v1 returns no salary, hiring type or experience, so none is invented here. */
+export function fromV1Opening(row: V1OpeningRow, description?: string | null): PublicOpening {
+  const closesOn = row.closes_on ? row.closes_on.slice(0, 10) : null;
+  return {
+    id: row.name,
+    title: row.job_title || row.designation || row.name,
+    designation: row.designation ?? "",
+    department: row.department?.replace(/ - [^-]+$/, "") ?? "",
+    company: row.company ?? "",
+    location: row.location ?? "",
+    employmentType: row.employment_type ?? "",
+    hiringType: "",
+    experience: "",
+    description: description ?? "",
+    postedOn: row.posted_on ? row.posted_on.slice(0, 10) : null,
+    closesOn,
+    salary: null,
+    evergreen: closesOn === null,
+  };
+}
+
 /** `today` is `YYYY-MM-DD`. Openings past their closing date are dropped. */
 export function listLiveOpenings(
   raws: RawPublicOpening[],

@@ -339,21 +339,6 @@ export function JobApplicationStep({
     onNext();
   });
 
-  // ── SAVE DRAFT (no validation) ────────────────────────────────────────────
-
-  const onDraftSave = () => {
-    const data = watch();
-    setStepData(stepKey, data);
-    const payload = buildSubmitPayload(data, "Draft");
-
-    createApplicant(payload as any, {
-      onSuccess: () => {
-        toast.success("Draft saved successfully!");
-      },
-      onError: () => toast.error("Draft save failed."),
-    });
-  };
-
   // ── Field overrides ───────────────────────────────────────────────────────
 
   const fieldOverrides = {
@@ -499,17 +484,6 @@ export function JobApplicationStep({
         </Button>
 
         <div className="flex items-center gap-2">
-          {!campusInvite && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onDraftSave}
-              disabled={isPending}
-            >
-              Save Draft
-            </Button>
-          )}
-
           <Button type="submit" disabled={isPending}>
             {isLastStep ? "Submit Application" : "Next Step"}
             {!isLastStep && <ChevronRight className="ml-1 h-4 w-4" />}

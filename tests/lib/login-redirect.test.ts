@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+﻿import { describe, expect, it } from "vitest";
 import { portalEquivalent } from "@/lib/careers/login-redirect";
 
 describe("portalEquivalent", () => {
@@ -20,7 +20,7 @@ describe("portalEquivalent", () => {
 
   // Spec: CAND-01-A4.2D (docs/spec/clauses/01-overview-routing-and-session.md#cand-01-a4-2d)
   it("ignores a job param on other careers pages", () => {
-    expect(portalEquivalent("/", "?job=HR-OPN-1")).toBe("/dashboard");
+    expect(portalEquivalent("/", "?job=HR-OPN-1")).toBe("/open-jobs");
     expect(portalEquivalent("/ai-match", "?job=HR-OPN-1")).toBe("/open-jobs?tab=smart-match");
   });
 });

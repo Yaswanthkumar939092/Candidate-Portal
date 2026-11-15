@@ -8,7 +8,7 @@ export const RESUME_CONTINUE_PATH = "/open-jobs?tab=smart-match";
 
 /** Candidate Portal page a logged-in visitor is moved to from each public careers page. */
 export const PORTAL_EQUIVALENT: Record<string, string> = {
-  "/": "/dashboard",
+  "/": "/open-jobs",
   "/ai-match": RESUME_CONTINUE_PATH,
   "/jobs": "/open-jobs",
 };
