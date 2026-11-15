@@ -133,6 +133,46 @@ it.each([
   expect(res.status).toBe(200);
   expect(lastCall?.url).toBe(`http://frappe:8000${path.slice("/backend".length)}`);
 });
+// OPS-507: the home promotion method passed review (allow_guest, read-only, admin copy).
+it("proxies the reviewed Guest home promotion route", async () => {
+  vi.stubEnv("FRAPPE_BASE_URL", "http://frappe:8000");
+  const path = "/backend/api/method/recruitment.api.candidate_home.get_home_content";
+  const res = await callProxy(`http://portal${path}`);
+  expect(res.status).toBe(200);
+  expect(lastCall?.url).toBe(`http://frappe:8000${path.slice("/backend".length)}`);
+});
+
+it.each([
+  "recruitment.api.candidate_home.get_home_contentx",
+  "recruitment.api.candidate_home._image",
+  "recruitment.api.candidate_home.get_home_content/extra",
+  "recruitment.api.candidate_home",
+  "recruitment.api.candidate_home.frappe.get_doc",
+])("denies the home promotion route's neighbour %s", async (method) => {
+  vi.stubEnv("FRAPPE_BASE_URL", "http://frappe:8000");
+  await expectDenied(`http://portal/backend/api/method/${method}`);
+});
+
+// OPS-507: these were reviewed in cn-recruitment 6e67378f and failed, so they stay
+// denied and the screens that call them stay behind their milestone gates.
+it.each([
+  "recruitment.api.channels.careers.get_saved_job_openings",
+  "recruitment.api.channels.careers.toggle_saved_job_opening",
+  "recruitment.api.channels.careers.delete_draft",
+  "recruitment.api.draft_application.get_job_applicant",
+  "recruitment.api.candidate_portal.get_link_field_options",
+  "recruitment.api.employee_onboarding.update_onboarding_details",
+  "recruitment.api.candidate_portal_survey.submit_survey",
+  "recruitment.api.candidate_auth.update_me",
+  "recruitment.api.candidate_auth.change_password",
+  "recruitment.job_offer_utils.get_job_offer_summary",
+  "recruitment.job_offer_utils.download_job_offer_pdf",
+  "recruitment.job_offer_utils.job_offer_update",
+])("keeps the review-failed method %s denied", async (method) => {
+  vi.stubEnv("FRAPPE_BASE_URL", "http://frappe:8000");
+  await expectDenied(`http://portal/backend/api/method/${method}`, { headers: { cookie: "candidate_portal_session=placeholder" } });
+});
+
 it.each([
   "/backend/api/method/recruitment.api.candidate_portal.get_candidate_feature_flags",
   "/backend/api/method/recruitment.api.v1.candidate.get_public_flags",

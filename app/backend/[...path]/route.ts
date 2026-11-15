@@ -6,9 +6,9 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * Same-origin reverse proxy to the Frappe backend.
+ * Same-origin reverse proxy to the Frappe backend, limited to ALLOWED_METHODS.
  *
- * `middleware.ts` used to do this with `NextResponse.rewrite()`, but on Vercel
+ * A since-removed `middleware.ts` did this with `NextResponse.rewrite()`, but on Vercel
  * cross-origin rewrites don't honor custom headers set via `request.headers` —
  * the `Host` and `X-Frappe-Site-Name` overrides were being dropped before the
  * request left the edge, so Frappe saw `Host: <frontend>.vercel.app` and
@@ -81,11 +81,14 @@ const DROP_FROM_UPSTREAM = new Set([
 
 // The browser may reach only these reviewed candidate API methods. Everything
 // else on Frappe (desk, /api/resource, private files, other whitelisted
-// methods) answers 404 here, whatever cookie the caller sends.
+// methods) answers 404 here, whatever cookie the caller sends. Add a method only
+// after reviewing it in cn-recruitment at the version Operate runs (OPS-507).
 const ALLOWED_METHODS = new Set([
   ...["list_openings", "get_opening", "get_application_fields", "submit_application", "my_applications", "get_application"].map(name => `recruitment.api.v1.candidate.${name}`),
   ...["get_auth_settings", "get_auth_page_content", "login", "signup", "request_email_signup_otp", "request_otp", "verify_otp", "logout", "me"].map(name => `recruitment.api.candidate_auth.${name}`),
   "recruitment.api.candidate_portal.get_website_branding",
+  // Guest read of admin-set promotion copy; no candidate data (OPS-507).
+  "recruitment.api.candidate_home.get_home_content",
 ]);
 
 // Decode the raw path (repeatedly, so double-encoding cannot smuggle a denied

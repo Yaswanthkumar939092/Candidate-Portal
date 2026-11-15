@@ -6,8 +6,9 @@
 // authenticated requests fail on iPhone even though they work everywhere else.
 //
 // The fix is to make the cookie first-party: in the browser we send every
-// credentialed request to a SAME-ORIGIN path (`/backend/...`) that Next.js
-// rewrites to the real Frappe host (see middleware.ts). The
+// credentialed request to a SAME-ORIGIN path (`/backend/...`) that a Next.js
+// Route Handler forwards to the real Frappe host, for allowlisted candidate
+// methods only (see app/backend/[...path]/route.ts). The
 // browser then sees the session cookie as belonging to our own origin, so it
 // stores and resends it like any first-party cookie — ITP no longer applies.
 //

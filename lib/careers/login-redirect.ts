@@ -3,6 +3,20 @@ export function loginHref(redirect: string): string {
   return `/login?redirect=${encodeURIComponent(redirect)}`;
 }
 
+/**
+ * The post-login `redirect` value, if it is a same-origin path; otherwise `fallback`.
+ * An absolute or protocol-relative URL (`https://…`, `//host`, `/\host`) would send a
+ * freshly signed-in candidate off the portal, so it is never followed.
+ */
+export function safeRedirect(redirect: string | null | undefined, fallback: string): string {
+  if (!redirect || !redirect.startsWith("/") || redirect.startsWith("//") || redirect.startsWith("/\\")) {
+    return fallback;
+  }
+  // Browsers drop tabs/newlines and treat "\" like "/" while parsing a URL.
+  if (/[\u0000-\u001f\u007f\\]/.test(redirect)) return fallback;
+  return redirect;
+}
+
 /** Portal page that continues a resume upload; opens the AI Resume / Job Match tab. */
 export const RESUME_CONTINUE_PATH = "/open-jobs?tab=smart-match";
 
