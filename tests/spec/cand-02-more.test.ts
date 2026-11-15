@@ -25,13 +25,19 @@ describe("POST /api/parse-resume", () => {
 
   // Spec: CAND-02-A2.5A (docs/spec/clauses/02-api-client-and-backend-contract.md#cand-02-a2-5a)
   // Characterization: pins current behaviour, not endorsed.
-  it("returns the extracted text for any uploaded file with no authentication, size or type check, and 400 when the file part is missing or not a file", async () => {
+  it("returns the extracted text only for a PDF up to 2 MB, and 400 for a non-PDF, a missing file part or a non-file", async () => {
     pdfMock.mockResolvedValueOnce({ text: "synthetic resume text" })
-    const ok = await parseResume(formRequest({ file: new File(["not really a pdf"], "x.txt", { type: "text/plain" }) }))
+    const ok = await parseResume(formRequest({ file: new File(["%PDF-1.4 synthetic"], "x.pdf", { type: "application/pdf" }) }))
     expect(ok.status).toBe(200)
     expect(await ok.json()).toEqual({ text: "synthetic resume text" })
     expect(pdfMock).toHaveBeenCalledTimes(1)
     expect(Buffer.isBuffer(pdfMock.mock.calls[0][0])).toBe(true)
+
+    const notPdf = await parseResume(formRequest({ file: new File(["not really a pdf"], "x.txt", { type: "text/plain" }) }))
+    expect(notPdf.status).toBe(400)
+    expect(pdfMock).toHaveBeenCalledTimes(1)
+    const tooLarge = await parseResume(formRequest({ file: new File([new Uint8Array(2 * 1024 * 1024 + 1)], "big.pdf") }))
+    expect(tooLarge.status).toBe(413)
 
     const missing = await parseResume(formRequest({ other: "x" }))
     expect(missing.status).toBe(400)
@@ -42,12 +48,12 @@ describe("POST /api/parse-resume", () => {
 
   // Spec: CAND-02-A2.5B (docs/spec/clauses/02-api-client-and-backend-contract.md#cand-02-a2-5b)
   // Characterization: pins current behaviour, not endorsed.
-  it("answers 500 with the parser's own error message and logs the error", async () => {
+  it("answers 500 with a generic message, never the parser's own error, and logs the error", async () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {})
     pdfMock.mockRejectedValueOnce(new Error("internal parser detail"))
-    const res = await parseResume(formRequest({ file: new File(["x"], "x.pdf") }))
+    const res = await parseResume(formRequest({ file: new File(["%PDF-1.4 x"], "x.pdf") }))
     expect(res.status).toBe(500)
-    expect(await res.json()).toEqual({ error: "internal parser detail" })
+    expect(await res.json()).toEqual({ error: "Could not read the file" })
     expect(spy).toHaveBeenCalled()
   })
 })
@@ -63,7 +69,7 @@ describe("/backend proxy configuration guard", () => {
     vi.stubEnv("NEXT_PUBLIC_FRAPPE_URL", "http://public.example.invalid")
     for (const bad of ["", "ftp://frappe.example.invalid", "http://u:p@frappe.example.invalid", "http://frappe.example.invalid/sub", "http://frappe.example.invalid/?a=1", "http://frappe.example.invalid/#h"]) {
       vi.stubEnv("FRAPPE_BASE_URL", bad)
-      const res = await proxy.GET(new NextRequest("http://portal.example.invalid/backend/a"), { params: Promise.resolve({ path: ["a"] }) })
+      const res = await proxy.GET(new NextRequest("http://portal.example.invalid/backend/api/method/recruitment.api.v1.candidate.list_openings"), { params: Promise.resolve({ path: ["api", "method", "recruitment.api.v1.candidate.list_openings"] }) })
       expect(res.status).toBe(503)
       expect(await res.json()).toEqual({ error: "Backend unavailable" })
     }

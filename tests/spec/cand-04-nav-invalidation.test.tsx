@@ -21,7 +21,7 @@ import { PortalNavigation } from "@/components/portal/portal-navigation"
 describe("portal navigation and the dashboard query (characterization)", () => {
   // Spec: CAND-04-A6.2D (docs/spec/clauses/04-dashboard.md#cand-04-a6-2d)
   // Characterization: pins current behaviour, not endorsed.
-  it("invalidates the dashboard query of the signed-in e-mail when the brand link or the Home link is clicked, and no query when another link is clicked", () => {
+  it("invalidates the dashboard query of the signed-in e-mail when the brand link (now /open-jobs) is clicked, offers no Home link, and invalidates nothing for a nav link", () => {
     const client = new QueryClient()
     const spy = vi.spyOn(client, "invalidateQueries")
     render(
@@ -29,18 +29,17 @@ describe("portal navigation and the dashboard query (characterization)", () => {
         <PortalNavigation />
       </QueryClientProvider>,
     )
-    const home = screen.getAllByRole("link").filter((a) => a.getAttribute("href") === "/dashboard")
-        expect(home).toHaveLength(2)
-    for (const link of home) {
-      spy.mockClear()
-      fireEvent.click(link)
-      expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith({ queryKey: ["dashboard", { email: "cand@example.invalid" }] })
-    }
+    expect(screen.getAllByRole("link").filter((a) => a.getAttribute("href") === "/dashboard")).toHaveLength(0)
+
+    const brand = screen.getAllByRole("link").find((a) => a.querySelector("img"))
+    expect(brand?.getAttribute("href")).toBe("/open-jobs")
+    fireEvent.click(brand!)
+    expect(spy).toHaveBeenCalledTimes(1)
+    expect(spy).toHaveBeenCalledWith({ queryKey: ["dashboard", { email: "cand@example.invalid" }] })
 
     spy.mockClear()
-    const other = screen.getAllByRole("link").find((a) => a.getAttribute("href") === "/open-jobs")
-    expect(other).toBeTruthy()
+    const other = screen.getAllByRole("link").find((a) => a.textContent?.includes("Open Jobs"))
+    expect(other?.getAttribute("href")).toBe("/open-jobs")
     fireEvent.click(other!)
     expect(spy).not.toHaveBeenCalled()
   })

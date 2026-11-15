@@ -40,11 +40,11 @@ describe("job application form loading", () => {
 
   // Spec: CAND-07-A9.1B (docs/spec/clauses/07-services-and-hooks.md#cand-07-a9-1b)
   // Characterization: pins current behaviour, not endorsed.
-  it("sends the campus e-mail and invite only on the campus endpoint and leaves them off the careers one", async () => {
+  it("sends the campus e-mail and invite only on the campus endpoint and leaves them off the v1 one", async () => {
     get.mockResolvedValue([])
 
     await jobApplicationService.getJobApplicationForm("CAND-TEST-OPN-0001", false, "CAND-TEST-0001@example.invalid", "CAND-TEST-CINV-0001")
-    expect(get).toHaveBeenNthCalledWith(1, "recruitment.api.channels.careers.get_application_fields", {
+    expect(get).toHaveBeenNthCalledWith(1, "recruitment.api.v1.candidate.get_application_fields", {
       opening: "CAND-TEST-OPN-0001",
     })
 
@@ -58,7 +58,7 @@ describe("job application form loading", () => {
 
   // Spec: CAND-07-A9.1C (docs/spec/clauses/07-services-and-hooks.md#cand-07-a9-1c)
   // Characterization: pins current behaviour, not endorsed.
-  it("uses the campus submit endpoint only when the payload carries both the campus flag and the invite", async () => {
+  it("uses the campus submit endpoint only when the payload carries both the campus flag and the invite, and otherwise sends only job_opening and form_data to v1", async () => {
     post.mockResolvedValue({ status: "ok", name: "CAND-TEST-APP-0001" })
 
     await jobApplicationService.submitApplication({
@@ -81,25 +81,27 @@ describe("job application form loading", () => {
       form_data: { full_name: "Test Candidate" },
       isCampus: true,
     }
-    await jobApplicationService.submitApplication(careers as never)
-    expect(post).toHaveBeenNthCalledWith(2, "recruitment.api.channels.careers.submit_application", careers)
+    post.mockResolvedValueOnce({ receipt: "CAND-TEST-APP-0002", status: "received" })
+    await expect(jobApplicationService.submitApplication(careers as never)).resolves.toEqual({ status: "received", name: "CAND-TEST-APP-0002", source: "careers" })
+    expect(post).toHaveBeenNthCalledWith(2, "recruitment.api.v1.candidate.submit_application", {
+      job_opening: "CAND-TEST-OPN-0001",
+      form_data: { full_name: "Test Candidate" },
+    })
   })
 
   // Spec: CAND-07-A9.1D (docs/spec/clauses/07-services-and-hooks.md#cand-07-a9-1d)
   // Characterization: pins current behaviour, not endorsed.
-  it("stringifies the page and limit of the opening list and leaves out an empty search term or e-mail", async () => {
-    get.mockResolvedValue({ openings: [] })
+  it("stringifies the page and page_length of the v1 opening list, sends a search term only when given and never sends the e-mail", async () => {
+    get.mockImplementation(async (method: string) => (method.endsWith("my_applications") ? [] : { openings: [] }))
+    const listCalls = () => get.mock.calls.filter((c) => c[0] === "recruitment.api.v1.candidate.list_openings").map((c) => c[1])
 
     await JobOpeningService.getJobOpening(2, 25, "", "")
-    expect(get).toHaveBeenNthCalledWith(1, "recruitment.api.channels.careers.list_openings", { page: "2", limit: "25" })
-
     await JobOpeningService.getJobOpening(1, 10, "engineer", "CAND-TEST-0001@example.invalid")
-    expect(get).toHaveBeenNthCalledWith(2, "recruitment.api.channels.careers.list_openings", {
-      page: "1",
-      limit: "10",
-      search_term: "engineer",
-      email: "CAND-TEST-0001@example.invalid",
-    })
+    expect(listCalls()).toEqual([
+      { page: "2", page_length: "25" },
+      { page: "1", page_length: "10", search: "engineer" },
+    ])
+    expect(JSON.stringify(get.mock.calls)).not.toContain("CAND-TEST-0001@example.invalid")
   })
 })
 
@@ -125,7 +127,7 @@ describe("opening list hook", () => {
   // Spec: CAND-07-A10.1A (docs/spec/clauses/07-services-and-hooks.md#cand-07-a10-1a)
   // Characterization: pins current behaviour, not endorsed.
   it("stays idle only when enabled is explicitly false and keys the list on every list parameter", async () => {
-    get.mockResolvedValue({ openings: [] })
+    get.mockImplementation(async (method: string) => (method.endsWith("my_applications") ? [] : { openings: [] }))
 
     const off = renderHook(() => useJobOpening({ page: 1, limit: 10, enabled: false }), { wrapper })
     expect(off.result.current.fetchStatus).toBe("idle")

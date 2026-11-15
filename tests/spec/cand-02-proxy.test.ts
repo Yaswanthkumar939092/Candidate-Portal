@@ -23,6 +23,11 @@ afterEach(() => {
   globalThis.fetch = realFetch
 })
 
+// Any method on the reviewed allowlist; the proxy answers 404 for everything else.
+const OK = "api/method/recruitment.api.v1.candidate.list_openings"
+const OK_URL = `http://portal.example.invalid/backend/${OK}`
+const OK_UPSTREAM = `http://frappe.example.invalid:8000/${OK}`
+
 function call(handler: (req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) => Promise<Response>, url: string, path: string[], init?: RequestInit) {
   return handler(new NextRequest(url, init as ConstructorParameters<typeof NextRequest>[1]), { params: Promise.resolve({ path }) })
 }
@@ -31,7 +36,7 @@ describe("/backend proxy request side", () => {
   // Spec: CAND-02-A3.1A (docs/spec/clauses/02-api-client-and-backend-contract.md#cand-02-a3-1a)
   // Characterization: pins current behaviour, not endorsed.
   it("forwards the cookie and other client headers, drops host and hop-by-hop headers, and sets Host and X-Frappe-Site-Name from FRAPPE_BASE_URL", async () => {
-    await call(route.POST, "http://portal.example.invalid/backend/api/method/x", ["api", "method", "x"], {
+    await call(route.POST, OK_URL, OK.split("/"), {
       method: "POST",
       body: JSON.stringify({ a: 1 }),
       headers: {
@@ -56,7 +61,7 @@ describe("/backend proxy request side", () => {
   // Spec: CAND-02-A3.1B (docs/spec/clauses/02-api-client-and-backend-contract.md#cand-02-a3-1b)
   // Characterization: pins current behaviour, not endorsed.
   it("streams the body with duplex half for POST and sends no body for GET and HEAD, with manual redirects and no caching", async () => {
-    await call(route.POST, "http://portal.example.invalid/backend/a", ["a"], { method: "POST", body: "payload" })
+    await call(route.POST, OK_URL, OK.split("/"), { method: "POST", body: "payload" })
     expect(sent!.init.method).toBe("POST")
     expect(sent!.init.body).toBeTruthy()
     expect(sent!.init.duplex).toBe("half")
@@ -64,22 +69,23 @@ describe("/backend proxy request side", () => {
     expect(sent!.init.cache).toBe("no-store")
 
     for (const [handler, method] of [[route.GET, "GET"], [route.HEAD, "HEAD"]] as const) {
-      await call(handler, "http://portal.example.invalid/backend/a?q=1", ["a"], { method })
+      await call(handler, `${OK_URL}?q=1`, OK.split("/"), { method })
       expect(sent!.init.method).toBe(method)
       expect(sent!.init.body).toBeUndefined()
       expect("duplex" in sent!.init).toBe(false)
-      expect(sent!.url).toBe("http://frappe.example.invalid:8000/a?q=1")
+      expect(sent!.url).toBe(`${OK_UPSTREAM}?q=1`)
     }
   })
 
   // Spec: CAND-02-A3.1C (docs/spec/clauses/02-api-client-and-backend-contract.md#cand-02-a3-1c)
   // Characterization: pins current behaviour, not endorsed.
-  it("exports one handler for each of GET, POST, PUT, PATCH, DELETE, OPTIONS and HEAD and no path allowlist", async () => {
+  it("exports one handler for each of GET, POST, PUT, PATCH, DELETE, OPTIONS and HEAD and answers 404 for a method outside the reviewed allowlist", async () => {
     for (const m of ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"] as const) expect(typeof route[m]).toBe("function")
     expect(route.runtime).toBe("nodejs")
     expect(route.dynamic).toBe("force-dynamic")
-    await call(route.GET, "http://portal.example.invalid/backend/api/method/frappe.utils.some_anything", ["api", "method", "frappe.utils.some_anything"], { method: "GET" })
-    expect(sent!.url).toBe("http://frappe.example.invalid:8000/api/method/frappe.utils.some_anything")
+    const denied = await call(route.GET, "http://portal.example.invalid/backend/api/method/frappe.utils.some_anything", ["api", "method", "frappe.utils.some_anything"], { method: "GET" })
+    expect(denied.status).toBe(404)
+    expect(sent).toBeNull()
   })
 })
 
@@ -87,7 +93,7 @@ describe("/backend proxy response side", () => {
   // Spec: CAND-02-A3.2A (docs/spec/clauses/02-api-client-and-backend-contract.md#cand-02-a3-2a)
   // Characterization: pins current behaviour, not endorsed.
   it("returns the upstream status, statusText and body, passes set-cookie and other headers, and drops hop-by-hop, content-encoding and content-length", async () => {
-    const res = await call(route.GET, "http://portal.example.invalid/backend/a", ["a"], { method: "GET" })
+    const res = await call(route.GET, OK_URL, OK.split("/"), { method: "GET" })
     expect(res.status).toBe(201)
     expect(res.statusText).toBe("Created")
     expect(await res.text()).toBe("upstream body")
@@ -103,12 +109,12 @@ describe("/backend proxy response side", () => {
   // Characterization: pins current behaviour, not endorsed.
   it("answers 502 with a fixed JSON body when the upstream fetch throws and does not follow upstream redirects", async () => {
     globalThis.fetch = vi.fn().mockRejectedValue(new Error("ECONNREFUSED")) as typeof fetch
-    const res = await call(route.GET, "http://portal.example.invalid/backend/a", ["a"], { method: "GET" })
+    const res = await call(route.GET, OK_URL, OK.split("/"), { method: "GET" })
     expect(res.status).toBe(502)
     expect(await res.json()).toEqual({ error: "Backend request failed" })
 
     globalThis.fetch = vi.fn(async () => new Response(null, { status: 302, headers: { location: "http://elsewhere.example.invalid/" } })) as typeof fetch
-    const redirected = await call(route.GET, "http://portal.example.invalid/backend/a", ["a"], { method: "GET" })
+    const redirected = await call(route.GET, OK_URL, OK.split("/"), { method: "GET" })
     expect(redirected.status).toBe(302)
     expect(redirected.headers.get("location")).toBe("http://elsewhere.example.invalid/")
   })

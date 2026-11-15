@@ -3,13 +3,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 
-const h = vi.hoisted(() => ({ reduced: { value: false }, content: vi.fn() }))
+const h = vi.hoisted(() => ({ reduced: { value: false }, content: vi.fn(), promoEnabled: { value: true } }))
 
 vi.mock("motion/react", () => ({
   AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   motion: { div: ({ children }: { children: React.ReactNode }) => <div>{children}</div> },
   useReducedMotion: () => h.reduced.value,
 }))
+// Home promo content is gated off for milestone 1; these cases pin it as it
+// renders once the gate opens.
+vi.mock("@/lib/careers/milestone", async (orig) => ({ ...(await orig<object>()), get HOME_PROMO_ENABLED() { return h.promoEnabled.value } }))
 vi.mock("@/lib/services/home", () => ({ homeService: { getHomeContent: h.content } }))
 
 import { HomePromo } from "@/components/home/home-promo"
@@ -35,6 +38,7 @@ function promo(fallback?: React.ReactNode) {
 
 beforeEach(() => {
   h.reduced.value = false
+  h.promoEnabled.value = true
   h.content.mockReset()
 })
 
@@ -140,5 +144,13 @@ describe("promo carousel (characterization)", () => {
 
     const empty = render(<PromoCarousel carousel={{ enabled: true, interval: 1000, slides: [] }} />)
     expect(empty.container.firstChild).toBeNull()
+  })
+
+  // Milestone-1 gate (lib/careers/milestone.ts); no spec clause yet.
+  it("never asks for home content and shows the fallback while the home promo is gated off", async () => {
+    h.promoEnabled.value = false
+    promo(<p>fallback text</p>)
+    expect(screen.getByText("fallback text")).toBeTruthy()
+    expect(h.content).not.toHaveBeenCalled()
   })
 })
