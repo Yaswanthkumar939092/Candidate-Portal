@@ -31,7 +31,7 @@ function getFirstName(name?: string): string {
 }
 
 /**
- * Dashboard welcome header matching the PW Candidate Portal design.
+ * Dashboard welcome header for the Candidate Portal.
  *
  * Shows a personalised greeting with a wave emoji, an onboarding subtitle,
  * and a "Profile Active" badge on the right when the user profile exists.

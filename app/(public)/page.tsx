@@ -5,17 +5,23 @@ import { ArrowRight, BriefcaseBusiness, Sparkles } from "lucide-react";
 import { HomePromo } from "@/components/home/home-promo";
 import { Card, CardContent } from "@/components/ui/card";
 import { usePublicOpenings } from "@/lib/hooks/usePublicOpenings";
+import { BRAND_NAME } from "@/lib/branding";
 
+// Copy taken from hybrowlabs.com (/careers and /about).
 const WHY_FALLBACK = [
-  { title: "Meaningful work", body: "Take ownership of work that matters to our customers and to the business." },
-  { title: "Room to grow", body: "Clear levels, mentorship and internal moves across teams, so your role can grow with you." },
-  { title: "Benefits that care", body: "Health cover, leave and wellness support for you and your family." },
+  { title: "Meaningful work", body: "Work on ERPNext and HRMS implementations for clients across India and global markets." },
+  { title: "Room to grow", body: "Continuous learning and development programs to help you advance your career." },
+  { title: "Flexible and collaborative", body: "Flexible working hours and remote work options, in a team that values collaboration and innovation." },
 ];
 
 function WhyFallback() {
   return (
-    <section aria-label="Why work with us">
-      <h2 className="text-xl font-bold text-foreground">Why work with us</h2>
+    <section aria-label={`Why ${BRAND_NAME}`}>
+      <h2 className="text-xl font-bold text-foreground">Why {BRAND_NAME}</h2>
+      <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+        Hybrowlabs Technologies, founded in 2016, is a certified Frappe partner (Best Frappe Partner 2024) with
+        350+ ERPNext implementations across manufacturing, retail, healthcare and education.
+      </p>
       <div className="mt-5 grid gap-4 md:grid-cols-3">
         {WHY_FALLBACK.map((item) => (
           <Card key={item.title} className="rounded-2xl">

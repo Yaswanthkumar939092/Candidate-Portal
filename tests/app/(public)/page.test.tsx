@@ -12,10 +12,10 @@ vi.mock("@/components/home/home-promo", () => ({
 }));
 
 describe("public careers home", () => {
-  it("shows company-neutral fallback copy, no Physics Wallah branding", () => {
+  it("shows the Hybrowlabs fallback copy, no earlier customer branding", () => {
     const { container } = render(<CareersHomePage />);
-    expect(screen.getByRole("heading", { name: "Why work with us" })).toBeInTheDocument();
-    expect(container.textContent).not.toMatch(/physics\s*wallah|education|learner/i);
+    expect(screen.getByRole("heading", { name: "Why Hybrowlabs" })).toBeInTheDocument();
+    expect(container.textContent).not.toMatch(/physics\s*wallah|learner/i);
     // The rest of the page is unchanged.
     expect(screen.getByText("AI Resume / Job Match")).toBeInTheDocument();
     expect(screen.getByText("All Open Jobs")).toBeInTheDocument();

@@ -17,6 +17,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCandidateBranding } from "@/lib/hooks/useCandidateBranding";
 import { useAuthPageContent } from "@/lib/hooks/useAuthPageContent";
+import { BRAND_NAME } from "@/lib/branding";
 import type { AuthPagePoint } from "@/lib/services/auth-page-content";
 import { cn } from "@/lib/utils";
 import { BrandLockup } from "@/components/brand-lockup";
@@ -132,13 +133,13 @@ export function AuthForm({
     (point): point is AuthPagePoint => Boolean(point?.title?.trim()),
   );
   const points = apiPoints.length ? apiPoints : fallback.points;
+  // BrandLockup (tone="light") falls back to the light Hybrowlabs wordmark for the dark pane.
   const logoSrc =
     resolveFrappeAssetUrl(pageContent?.logo) ||
-    resolveFrappeAssetUrl(branding?.app_logo) ||
-    "/fallback.png";
+    resolveFrappeAssetUrl(branding?.app_logo);
   const footer =
     pageContent?.footer?.trim() ||
-    `© ${new Date().getFullYear()}${branding?.title_prefix ? ` ${branding.title_prefix}` : ""}. All rights reserved.`;
+    `© ${new Date().getFullYear()} ${branding?.title_prefix || BRAND_NAME}. All rights reserved.`;
   const searchParams = useSearchParams();
   const redirectParam = searchParams.get("redirect");
   const redirectQuery = redirectParam

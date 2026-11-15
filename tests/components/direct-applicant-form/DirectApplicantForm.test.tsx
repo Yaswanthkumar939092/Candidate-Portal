@@ -54,7 +54,7 @@ describe("validate / initialValues", () => {
 describe("DirectApplicantForm", () => {
   it("shows HR's note and only the reopened fields on a resubmission", async () => {
     getForm.mockResolvedValue({
-      applicant_name: "Asha", company: "PW", form_title: "Joining Details", instructions: "Read me",
+      applicant_name: "Asha", company: "Hybrowlabs", form_title: "Joining Details", instructions: "Read me",
       status: "Resubmission Requested", expires_on: null, resubmit_note: "PAN is wrong",
       fields: [pan, { ...edu, editable: false }],
     });
@@ -67,7 +67,7 @@ describe("DirectApplicantForm", () => {
 
   it("submits and thanks the candidate", async () => {
     getForm.mockResolvedValue({
-      applicant_name: "Asha", company: "PW", form_title: "Joining Details", instructions: "",
+      applicant_name: "Asha", company: "Hybrowlabs", form_title: "Joining Details", instructions: "",
       status: "Sent", expires_on: null, resubmit_note: "", fields: [pan],
     });
     submit.mockResolvedValue({ status: "ok" });
@@ -87,7 +87,7 @@ describe("DirectApplicantForm", () => {
 
   it("from the emailed link: no Action Center link", async () => {
     getForm.mockResolvedValue({
-      applicant_name: "Asha", company: "PW", form_title: "F", instructions: "",
+      applicant_name: "Asha", company: "Hybrowlabs", form_title: "F", instructions: "",
       status: "Submitted", expires_on: null, resubmit_note: "", fields: [],
     });
     renderForm({ token: "tok" });
@@ -98,7 +98,7 @@ describe("DirectApplicantForm", () => {
 
   it("shows the thank-you page for an already submitted form", async () => {
     getForm.mockResolvedValue({
-      applicant_name: "Asha", company: "PW", form_title: "F", instructions: "",
+      applicant_name: "Asha", company: "Hybrowlabs", form_title: "F", instructions: "",
       status: "Submitted", expires_on: null, resubmit_note: "", fields: [],
     });
     renderForm();
