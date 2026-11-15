@@ -199,6 +199,18 @@ describe("register page", () => {
     expect(screen.getByText("Candidate signup is disabled.")).toBeTruthy()
     expect(screen.queryByPlaceholderText("Create a strong password")).toBeNull()
   })
+
+  // Open redirect fix (PWHR-1519, OPS-507); no spec clause yet.
+  it("never follows an off-site redirect value after a verified sign-up OTP; it falls back to /open-jobs", async () => {
+    h.signUp.mockResolvedValue({ status: "otp_required" })
+    h.redirectParam.value = "/..//elsewhere.example.invalid"
+    await fillAndSubmit("cand@example.invalid")
+    await screen.findByText("Verify your email")
+    await user.type(screen.getByLabelText("Email OTP"), "000000")
+    await user.click(screen.getByRole("button", { name: "Verify and continue" }))
+    await waitFor(() => expect(h.push).toHaveBeenCalledWith("/open-jobs"))
+    expect(h.push).toHaveBeenCalledTimes(1)
+  })
 })
 
 describe("register page campus source and password check", () => {

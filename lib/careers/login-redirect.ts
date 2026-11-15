@@ -14,7 +14,17 @@ export function safeRedirect(redirect: string | null | undefined, fallback: stri
   }
   // Browsers drop tabs/newlines and treat "\" like "/" while parsing a URL.
   if (/[\u0000-\u001f\u007f\\]/.test(redirect)) return fallback;
-  return redirect;
+  // Dot segments ("/..//host", "/%2e%2e//host") normalise to a "//host" path, which a
+  // later navigation would read as protocol-relative, so check the resolved path too.
+  const base = "http://portal.invalid";
+  let url: URL;
+  try {
+    url = new URL(redirect, base);
+  } catch {
+    return fallback;
+  }
+  if (url.origin !== base || url.pathname.startsWith("//")) return fallback;
+  return url.pathname + url.search + url.hash;
 }
 
 /** Portal page that continues a resume upload; opens the AI Resume / Job Match tab. */
