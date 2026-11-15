@@ -93,8 +93,10 @@ const ALLOWED_METHODS = new Set([
   // #1688 (OPS-508). Each checks the session candidate's identity.
   ...["get_saved_job_openings", "toggle_saved_job_opening", "get_draft", "delete_draft"].map(name => `recruitment.api.channels.careers.${name}`),
   "recruitment.api.draft_application.get_job_applicant",
-  // Job offer and DPDP consent: every one but get_rejection_reasons goes through
-  // _authorize_offer, which #1688 restricted to released offers (OPS-508).
+  // Job offer and DPDP consent (reviewed OPS-15). Each needs the signed offer token,
+  // desk permission or, for the PDF and culture book, the owning candidate's session;
+  // get_rejection_reasons is public master data. #1688 added released-offer filters
+  // inside the offer methods; get_job_offer_status still lacks one (OPS-509).
   ...["get_job_offer_summary", "get_job_offer_status", "download_job_offer_pdf", "preview_culture_book", "job_offer_update", "get_rejection_reasons"].map(name => `recruitment.job_offer_utils.${name}`),
   "recruitment.recruitment.doctype.dpdp_act_settings.dpdp_act_settings.get_consent_form",
   "recruitment.dpdp_external_consent.start_consent_session",
@@ -103,7 +105,8 @@ const ALLOWED_METHODS = new Set([
 ]);
 
 // Methods that change data answer only to POST here. The session cookie is
-// SameSite=Lax, so a cross-site link (GET) still carries it; a cross-site POST does not.
+// SameSite=Lax (Candidate Portal Auth Settings), so a cross-site link (GET) still
+// carries it; a cross-site POST does not.
 const POST_ONLY_METHODS = new Set([
   "recruitment.api.channels.careers.toggle_saved_job_opening",
   "recruitment.api.channels.careers.delete_draft",

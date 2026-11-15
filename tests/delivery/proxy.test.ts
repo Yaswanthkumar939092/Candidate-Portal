@@ -189,7 +189,7 @@ it.each(WRITE_METHODS_508)("proxies the reviewed candidate write %s by POST", as
   expect(lastCall?.init?.method).toBe("POST");
 });
 
-it.each(WRITE_METHODS_508.flatMap(method => ["GET", "PUT", "DELETE"].map(verb => [method, verb])))(
+it.each(WRITE_METHODS_508.flatMap(method => ["GET", "HEAD", "OPTIONS", "PUT", "PATCH", "DELETE"].map(verb => [method, verb])))(
   "refuses %s by %s before it reaches Frappe", async (method, verb) => {
     vi.stubEnv("FRAPPE_BASE_URL", "http://frappe:8000");
     const res = await callProxy(`http://portal/backend/api/method/${method}`, { method: verb, headers: { cookie: "candidate_portal_session=placeholder" } });
