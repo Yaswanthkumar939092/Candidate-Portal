@@ -7,6 +7,11 @@ const detailHook = vi.fn()
 vi.mock("@/lib/hooks/useApplicantStatus", () => ({
   useJobApplicantDetails: (...a: unknown[]) => detailHook(...a),
 }))
+// The gate is open since OPS-15; this keeps covering the closed-gate path.
+vi.mock("@/lib/careers/milestone", async (orig) => ({
+  ...(await orig<typeof import("@/lib/careers/milestone")>()),
+  APPLICATION_DETAIL_ENABLED: false,
+}))
 
 const app = {
   id: "APP-AAA111",

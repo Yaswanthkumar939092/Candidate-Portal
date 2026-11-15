@@ -89,6 +89,27 @@ const ALLOWED_METHODS = new Set([
   "recruitment.api.candidate_portal.get_website_branding",
   // Guest read of admin-set promotion copy; no candidate data (OPS-507).
   "recruitment.api.candidate_home.get_home_content",
+  // Saved jobs, drafts and application detail: fixed and reviewed in cn-recruitment
+  // #1688 (OPS-508). Each checks the session candidate's identity.
+  ...["get_saved_job_openings", "toggle_saved_job_opening", "get_draft", "delete_draft"].map(name => `recruitment.api.channels.careers.${name}`),
+  "recruitment.api.draft_application.get_job_applicant",
+  // Job offer and DPDP consent: every one but get_rejection_reasons goes through
+  // _authorize_offer, which #1688 restricted to released offers (OPS-508).
+  ...["get_job_offer_summary", "get_job_offer_status", "download_job_offer_pdf", "preview_culture_book", "job_offer_update", "get_rejection_reasons"].map(name => `recruitment.job_offer_utils.${name}`),
+  "recruitment.recruitment.doctype.dpdp_act_settings.dpdp_act_settings.get_consent_form",
+  "recruitment.dpdp_external_consent.start_consent_session",
+  "recruitment.dpdp_external_consent.get_consent_session_status",
+  "recruitment.dpdp_consent.submit_dpdp_consent",
+]);
+
+// Methods that change data answer only to POST here. The session cookie is
+// SameSite=Lax, so a cross-site link (GET) still carries it; a cross-site POST does not.
+const POST_ONLY_METHODS = new Set([
+  "recruitment.api.channels.careers.toggle_saved_job_opening",
+  "recruitment.api.channels.careers.delete_draft",
+  "recruitment.job_offer_utils.job_offer_update",
+  "recruitment.dpdp_external_consent.start_consent_session",
+  "recruitment.dpdp_consent.submit_dpdp_consent",
 ]);
 
 // Decode the raw path (repeatedly, so double-encoding cannot smuggle a denied
@@ -114,6 +135,9 @@ async function proxy(req: NextRequest, _ctx: RouteContext) {
   const path = allowedPath(req.nextUrl.pathname);
   if (!path) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+  if (POST_ONLY_METHODS.has(path.slice("/api/method/".length)) && req.method.toUpperCase() !== "POST") {
+    return NextResponse.json({ error: "Method not allowed" }, { status: 405, headers: { allow: "POST" } });
   }
 
   const target = targetBase();

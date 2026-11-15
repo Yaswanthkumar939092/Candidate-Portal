@@ -153,22 +153,76 @@ it.each([
   await expectDenied(`http://portal/backend/api/method/${method}`);
 });
 
-// OPS-507: these were reviewed in cn-recruitment 6e67378f and failed, so they stay
-// denied and the screens that call them stay behind their milestone gates.
-it.each([
+// OPS-15: fixed and reviewed in cn-recruitment #1688 (OPS-508).
+const READ_METHODS_508 = [
   "recruitment.api.channels.careers.get_saved_job_openings",
+  "recruitment.api.channels.careers.get_draft",
+  "recruitment.api.draft_application.get_job_applicant",
+  "recruitment.job_offer_utils.get_job_offer_summary",
+  "recruitment.job_offer_utils.get_job_offer_status",
+  "recruitment.job_offer_utils.download_job_offer_pdf",
+  "recruitment.job_offer_utils.preview_culture_book",
+  "recruitment.job_offer_utils.get_rejection_reasons",
+  "recruitment.recruitment.doctype.dpdp_act_settings.dpdp_act_settings.get_consent_form",
+  "recruitment.dpdp_external_consent.get_consent_session_status",
+];
+const WRITE_METHODS_508 = [
   "recruitment.api.channels.careers.toggle_saved_job_opening",
   "recruitment.api.channels.careers.delete_draft",
-  "recruitment.api.draft_application.get_job_applicant",
+  "recruitment.job_offer_utils.job_offer_update",
+  "recruitment.dpdp_external_consent.start_consent_session",
+  "recruitment.dpdp_consent.submit_dpdp_consent",
+];
+
+it.each(READ_METHODS_508)("proxies the reviewed candidate read %s", async (method) => {
+  vi.stubEnv("FRAPPE_BASE_URL", "http://frappe:8000");
+  const res = await callProxy(`http://portal/backend/api/method/${method}?appl=HR-APP-1`, { headers: { cookie: "candidate_portal_session=placeholder" } });
+  expect(res.status).toBe(200);
+  expect(lastCall?.url).toBe(`http://frappe:8000/api/method/${method}?appl=HR-APP-1`);
+});
+
+it.each(WRITE_METHODS_508)("proxies the reviewed candidate write %s by POST", async (method) => {
+  vi.stubEnv("FRAPPE_BASE_URL", "http://frappe:8000");
+  const res = await callProxy(`http://portal/backend/api/method/${method}`, { method: "POST", body: "{}", headers: { cookie: "candidate_portal_session=placeholder", "content-type": "application/json" } });
+  expect(res.status).toBe(200);
+  expect(lastCall?.url).toBe(`http://frappe:8000/api/method/${method}`);
+  expect(lastCall?.init?.method).toBe("POST");
+});
+
+it.each(WRITE_METHODS_508.flatMap(method => ["GET", "PUT", "DELETE"].map(verb => [method, verb])))(
+  "refuses %s by %s before it reaches Frappe", async (method, verb) => {
+    vi.stubEnv("FRAPPE_BASE_URL", "http://frappe:8000");
+    const res = await callProxy(`http://portal/backend/api/method/${method}`, { method: verb, headers: { cookie: "candidate_portal_session=placeholder" } });
+    expect(res.status).toBe(405);
+    expect(res.headers.get("allow")).toBe("POST");
+    expect(lastCall).toBeNull();
+  },
+);
+
+it.each([
+  "recruitment.api.channels.careers.get_draftx",
+  "recruitment.api.channels.careers._find_draft",
+  "recruitment.api.channels.careers.get_saved_job_openings/extra",
+  "recruitment.api.channels.campus.delete_draft",
+  "recruitment.api.draft_application.save_candidate_portal_data",
+  "recruitment.job_offer_utils._authorize_offer",
+  "recruitment.job_offer_utils.preview_job_offer_html",
+  "recruitment.job_offer_utils.get_job_offer_print_preview_url",
+  "recruitment.dpdp_consent._existing_submitted_log",
+])("denies the neighbour %s of a reviewed candidate method", async (method) => {
+  vi.stubEnv("FRAPPE_BASE_URL", "http://frappe:8000");
+  await expectDenied(`http://portal/backend/api/method/${method}`, { method: "POST", headers: { cookie: "candidate_portal_session=placeholder" } });
+});
+
+// These stay denied: onboarding form methods wait for OPS-509; profile and survey
+// writes were hardened in #1688 but their screens are outside this release.
+it.each([
   "recruitment.api.candidate_portal.get_link_field_options",
   "recruitment.api.employee_onboarding.update_onboarding_details",
   "recruitment.api.candidate_portal_survey.submit_survey",
   "recruitment.api.candidate_auth.update_me",
   "recruitment.api.candidate_auth.change_password",
-  "recruitment.job_offer_utils.get_job_offer_summary",
-  "recruitment.job_offer_utils.download_job_offer_pdf",
-  "recruitment.job_offer_utils.job_offer_update",
-])("keeps the review-failed method %s denied", async (method) => {
+])("keeps the method %s denied", async (method) => {
   vi.stubEnv("FRAPPE_BASE_URL", "http://frappe:8000");
   await expectDenied(`http://portal/backend/api/method/${method}`, { headers: { cookie: "candidate_portal_session=placeholder" } });
 });
