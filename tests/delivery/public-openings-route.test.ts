@@ -21,7 +21,7 @@ afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
 describe("GET /api/public/openings (v1, no API key)", () => {
   it("lists openings through the Guest v1 methods and sends no credentials", async () => {
     const spy = mockFetch((url) => {
-      if (url.includes("v1.candidate.list_openings")) return json(list([{ name: "A", job_title: "Dev", closes_on: null, posted_on: "2026-10-20 00:00:00" }]));
+      if (url.includes("v1.candidate.list_openings")) return json(list([{ name: "A", job_title: "Dev", closes_on: null, is_evergreen: 0, posted_on: "2026-10-20 00:00:00" }]));
       if (url.includes("v1.candidate.get_opening")) return json(detail("A"));
       return json({}, 404);
     });
@@ -29,12 +29,21 @@ describe("GET /api/public/openings (v1, no API key)", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.openings).toHaveLength(1);
-    expect(body.openings[0]).toMatchObject({ id: "A", title: "Dev", description: "<p>desc A</p>" });
+    expect(body.openings[0]).toMatchObject({ id: "A", title: "Dev", description: "<p>desc A</p>", evergreen: false });
     for (const call of spy.mock.calls) {
       const headers = JSON.stringify((call[1] as RequestInit | undefined)?.headers ?? {});
       expect(headers).not.toMatch(/token|authorization/i);
       expect(call[0]).not.toMatch(/api\/resource|frappe\.client/);
     }
+  });
+
+  it("keeps only openings explicitly marked evergreen in the Evergreen Jobs category", async () => {
+    mockFetch((url) => {
+      if (url.includes("list_openings")) return json(list([{ name: "EVERGREEN", job_title: "Always hiring", closes_on: null, is_evergreen: 1 }]));
+      return json(detail("EVERGREEN"));
+    });
+    const body = await (await GET()).json();
+    expect(body.openings[0]).toMatchObject({ id: "EVERGREEN", evergreen: true });
   });
 
   it("works with no FRAPPE_API_KEY configured", async () => {

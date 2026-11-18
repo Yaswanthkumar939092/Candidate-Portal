@@ -47,8 +47,8 @@ export default function PublicJobsPage() {
   const results = useMemo(() => (openings ?? []).filter((o) => matchesQuery(o, query)), [openings, query]);
   const searching = query.trim().length > 0;
   const noMatch = !!openings && results.length === 0;
-  // Until the visitor picks a tab, open the first one that has jobs.
-  const activeTab = tab ?? (results.some((o) => !o.evergreen) || results.length === 0 ? "normal" : "evergreen");
+  // Until the visitor picks a tab, All Open Jobs opens on Normal Jobs.
+  const activeTab = tab ?? "normal";
 
   return (
     <div className="space-y-6">

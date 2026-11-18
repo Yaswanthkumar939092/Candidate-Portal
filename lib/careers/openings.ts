@@ -12,6 +12,7 @@ export const PUBLIC_OPENING_FIELDS: (keyof RawPublicOpening)[] = [
   "description",
   "posted_on",
   "closes_on",
+  "custom_is_evergreen",
   "custom_hiring_type",
   "custom_min_experience_required",
   "custom_work_experience_range",
@@ -54,7 +55,7 @@ export function normalizeOpening(
     salary: publishSalary
       ? { lower: raw.lower_range ?? 0, upper: raw.upper_range ?? 0, per: raw.salary_per ?? "" }
       : null,
-    evergreen: closesOn === null,
+    evergreen: raw.custom_is_evergreen === 1,
   };
 }
 
@@ -69,6 +70,7 @@ export interface V1OpeningRow {
   company?: string | null;
   posted_on?: string | null;
   closes_on?: string | null;
+  is_evergreen?: 0 | 1 | boolean | null;
   opening_code?: string | null;
 }
 
@@ -89,7 +91,7 @@ export function fromV1Opening(row: V1OpeningRow, description?: string | null): P
     postedOn: row.posted_on ? row.posted_on.slice(0, 10) : null,
     closesOn,
     salary: null,
-    evergreen: closesOn === null,
+    evergreen: row.is_evergreen === 1 || row.is_evergreen === true,
   };
 }
 

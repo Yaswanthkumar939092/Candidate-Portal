@@ -11,6 +11,7 @@ const listRow = {
   company: "Hybrow Labs",
   posted_on: "2026-10-20 09:00:00",
   closes_on: null,
+  is_evergreen: 0,
   opening_code: "PA-7",
 };
 
@@ -28,8 +29,12 @@ describe("fromV1Opening", () => {
       description: "<p>Own payroll</p>",
       postedOn: "2026-10-20",
       closesOn: null,
-      evergreen: true,
+      evergreen: false,
     });
+  });
+
+  it("keeps an explicitly evergreen opening in the evergreen category", () => {
+    expect(fromV1Opening({ ...listRow, is_evergreen: 1 }, "").evergreen).toBe(true);
   });
 
   it("never invents salary, hiring type or experience that v1 does not return", () => {

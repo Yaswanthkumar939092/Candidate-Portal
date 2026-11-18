@@ -63,6 +63,18 @@ describe("PublicJobsPage shared job link", () => {
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
+  it("opens Normal Jobs even when every currently open role is evergreen", () => {
+    vi.mocked(usePublicOpenings).mockReturnValue({
+      data: [opening("HR-OPN-2", "Data Analyst", true)],
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as never);
+    visit("");
+    render(<PublicJobsPage />);
+    expect(screen.getByRole("tab", { name: /Normal Jobs/, hidden: true })).toHaveAttribute("data-state", "active");
+  });
+
   it("says so when the shared job is no longer open, and still lists the open ones", async () => {
     visit("?job=HR-OPN-GONE");
     render(<PublicJobsPage />);

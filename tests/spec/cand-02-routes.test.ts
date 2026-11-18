@@ -116,14 +116,14 @@ describe("GET /api/public/openings", () => {
   it("reads the Guest v1 list_openings and get_opening methods with no API key, and returns normalised openings with a 60 s edge cache", async () => {
     frappeEnv(true)
     fetchMock
-      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ message: { openings: [{ name: "HR-OPN-TEST-1", job_title: "Tester", employment_type: "Full Time", closes_on: null, posted_on: "2026-01-02 10:00:00" }], total: 1 } }) })
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ message: { openings: [{ name: "HR-OPN-TEST-1", job_title: "Tester", employment_type: "Full Time", closes_on: null, is_evergreen: 0, posted_on: "2026-01-02 10:00:00" }], total: 1 } }) })
       .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ message: { description: "<p>Synthetic</p>" } }) })
     const res = await openingsGet()
     expect(res.status).toBe(200)
     expect(res.headers.get("cache-control")).toBe("public, s-maxage=60, stale-while-revalidate=300")
     const body = await res.json()
     expect(body.openings).toHaveLength(1)
-    expect(body.openings[0]).toMatchObject({ id: "HR-OPN-TEST-1", title: "Tester", employmentType: "Full Time", evergreen: true, postedOn: "2026-01-02", description: "<p>Synthetic</p>" })
+    expect(body.openings[0]).toMatchObject({ id: "HR-OPN-TEST-1", title: "Tester", employmentType: "Full Time", evergreen: false, postedOn: "2026-01-02", description: "<p>Synthetic</p>" })
 
     const urls: string[] = fetchMock.mock.calls.map((c) => c[0])
     expect(urls[0].startsWith(`${LIST}?`)).toBe(true)
