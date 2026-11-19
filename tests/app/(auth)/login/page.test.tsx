@@ -554,7 +554,7 @@ describe("LoginPage – Edge Cases", () => {
     });
   });
 
-  describe("LoginPage – post-login routing (no survey call, milestone-1 target)", () => {
+  describe("LoginPage – post-login routing (backend-driven)", () => {
     const login = async () => {
       mockGetAuthSettings.mockResolvedValue({
         ...defaultAuthSettings,
@@ -568,19 +568,77 @@ describe("LoginPage – Edge Cases", () => {
       await user.click(screen.getByRole("button", { name: /Sign in to your account/i }));
     };
 
-    it("goes to /open-jobs after login when there is no redirect param", async () => {
-      await login();
-      await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith("/open-jobs");
+    it("asks the backend for the post-login route and goes where it points", async () => {
+      // The backend walks the configured Post-Login Flow (survey / job offer /
+      // onboarding / action center) and returns the resolved destination as
+      // `redirect_url`. The client must follow it rather than hardcode a page,
+      // otherwise an admin's "Redirect To" setting and any pending step is
+      // silently bypassed.
+      mockGetPostLoginRoute.mockResolvedValue({
+        survey_required: false,
+        redirect_url: "/action-center",
+        current_step: null,
+        next_step: null,
+        steps: [],
       });
+
+      await login();
+
+      await waitFor(() => expect(mockGetPostLoginRoute).toHaveBeenCalled());
+      await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/action-center"));
+      expect(mockPush).not.toHaveBeenCalledWith("/open-jobs");
     });
 
-    it("never calls the survey route method, which the proxy denies", async () => {
+    it("routes to /survey when the backend says a survey is pending", async () => {
+      // `survey_required: true` replaces `redirect_url` in the response, so the
+      // client must know to send the candidate to /survey in that case.
+      mockGetPostLoginRoute.mockResolvedValue({
+        survey_required: true,
+        form_name: "Candidate Survey",
+        form_schema: {},
+        job_applicant: "JA-0001",
+        job_opening: "JO-0001",
+        current_step: "survey",
+        next_step: null,
+        steps: [],
+      });
+
       await login();
-      await waitFor(() => expect(mockPush).toHaveBeenCalled());
-      expect(mockGetPostLoginRoute).not.toHaveBeenCalled();
-      expect(mockPush).not.toHaveBeenCalledWith("/dashboard");
-      expect(mockPush).not.toHaveBeenCalledWith("/survey");
+
+      await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/survey"));
+    });
+
+    it("falls back to /open-jobs when the backend call fails, so a backend hiccup never traps the user on /login", async () => {
+      mockGetPostLoginRoute.mockRejectedValue(new Error("ECONNREFUSED"));
+
+      await login();
+
+      await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/open-jobs"));
+    });
+
+    it("honours an explicit ?redirect= param over the backend route", async () => {
+      // The user asked for a specific page before logging in (deep link); the
+      // backend's default landing must not override that request.
+      const useSearchParamsMock = vi.spyOn(
+        await import("next/navigation"),
+        "useSearchParams",
+      );
+      useSearchParamsMock.mockReturnValue({
+        get: vi.fn((k: string) => (k === "redirect" ? "/my-jobs" : null)),
+      } as unknown as ReturnType<typeof import("next/navigation").useSearchParams>);
+      mockGetPostLoginRoute.mockResolvedValue({
+        survey_required: false,
+        redirect_url: "/action-center",
+        current_step: null,
+        next_step: null,
+        steps: [],
+      });
+
+      await login();
+
+      await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/my-jobs"));
+      expect(mockPush).not.toHaveBeenCalledWith("/action-center");
+      useSearchParamsMock.mockRestore();
     });
   });
 });

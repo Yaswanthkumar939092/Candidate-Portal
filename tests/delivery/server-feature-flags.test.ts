@@ -55,6 +55,35 @@ describe("server feature flags (authenticated doctype read)", () => {
   // `get_candidate_feature_flags` method and merge it over the Guest result.
   // That method returns the Candidate Portal Feature Flag doctype's page-level
   // toggles (open_jobs, my_jobs, action_center, documents, candidate_dashboard …).
+  // Spec: CAND-02-A8.1E (docs/spec/clauses/02-api-client-and-backend-contract.md#cand-02-a8-1e)
+  it("sends FRAPPE_API_KEY/SECRET as a Bearer token on the authenticated flags call when configured, so the method answers before the backend adopts @candidate_required", async () => {
+    // The Vercel server route forwards the browser's cookie, but the current
+    // backend still has @frappe.whitelist() on get_candidate_feature_flags —
+    // the candidate's session cookie alone makes Frappe answer 401. Falling
+    // back to the admin API key here keeps the nav working until the
+    // cn-recruitment PR (adds @candidate_required) is merged and deployed.
+    vi.stubEnv("FRAPPE_API_KEY", "ak");
+    vi.stubEnv("FRAPPE_API_SECRET", "sk");
+
+    const spy = vi.fn(async (url: string) => {
+      if (String(url).includes("get_public_flags")) {
+        return json({ message: { careers_public_enabled: false } });
+      }
+      return json({ message: { action_center: 1, open_jobs: 0, my_jobs: 0 } });
+    });
+    vi.stubGlobal("fetch", spy);
+
+    await getServerFeatureFlags("sid=abc");
+
+    const authCall = spy.mock.calls.find(([u]) => String(u).includes("get_candidate_feature_flags"));
+    expect(authCall).toBeTruthy();
+    const headers = new Headers((authCall![1] as RequestInit).headers);
+    expect(headers.get("authorization")).toBe("token ak:sk");
+    // The cookie still rides along so once the backend adopts @candidate_required
+    // and the API key is unset, the same call keeps working.
+    expect(headers.get("cookie")).toBe("sid=abc");
+  });
+
   // Spec: CAND-02-A8.1A (docs/spec/clauses/02-api-client-and-backend-contract.md#cand-02-a8-1a)
   it("forwards the candidate session cookie to the authenticated endpoint and merges on top of Guest flags", async () => {
     const spy = vi.fn(async (url: string, _init?: RequestInit) => {

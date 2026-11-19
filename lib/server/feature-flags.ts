@@ -49,10 +49,25 @@ async function readAuthenticatedFlags(
   cookie: string,
 ): Promise<ServerFeatureFlags> {
   try {
+    const headers: Record<string, string> = {
+      Accept: "application/json",
+      cookie,
+    };
+    // The current cn-recruitment release has @frappe.whitelist() on this
+    // method (not @candidate_required), so the candidate's session cookie
+    // alone makes Frappe answer 401. Fall back to the admin API key when
+    // it is configured so the nav works today; once the backend PR adopts
+    // @candidate_required, the cookie alone is enough and this header is
+    // just extra credentials Frappe accepts.
+    const apiKey = process.env.FRAPPE_API_KEY;
+    const apiSecret = process.env.FRAPPE_API_SECRET;
+    if (apiKey && apiSecret) {
+      headers.authorization = `token ${apiKey}:${apiSecret}`;
+    }
     const res = await fetch(
       `${frappeUrl}/api/method/recruitment.api.candidate_portal.get_candidate_feature_flags`,
       {
-        headers: { Accept: "application/json", cookie },
+        headers,
         cache: "no-store",
       },
     );
