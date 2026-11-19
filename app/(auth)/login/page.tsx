@@ -9,6 +9,7 @@ import { MailCheck, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { safeRedirect } from "@/lib/careers/login-redirect";
+import { surveyService } from "@/lib/services/survey";
 
 export default function LoginPage() {
   return (
@@ -58,7 +59,27 @@ function LoginFormContent() {
     if (typeof window !== "undefined" && window.sessionStorage) {
       sessionStorage.setItem("showLoginToast", "true");
     }
-    router.push(safeRedirect(redirectParam, "/open-jobs"));
+    // Deep-link request (?redirect=) wins: the user asked for a specific page
+    // before logging in, and the backend's default landing must not override.
+    if (redirectParam) {
+      router.push(safeRedirect(redirectParam, "/open-jobs"));
+      return;
+    }
+    // Otherwise follow the backend: it walks the Post-Login Flow
+    // (survey / job offer / onboarding / Candidate Portal Auth Settings →
+    // Redirect To) and returns the resolved destination. Any failure falls
+    // back to /open-jobs so a backend hiccup never traps the user on /login.
+    try {
+      const route = await surveyService.getPostLoginRoute();
+      if (route.survey_required) {
+        router.push("/survey");
+        return;
+      }
+      router.push(route.redirect_url || "/open-jobs");
+    } catch (error) {
+      console.error("Post-login route lookup failed:", error);
+      router.push("/open-jobs");
+    }
   };
 
   useEffect(() => {
