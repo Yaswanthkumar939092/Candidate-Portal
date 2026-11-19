@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { useAuthSettings } from "@/lib/hooks/useAuthSettings";
 
 /**
@@ -29,12 +29,36 @@ export const NOVA_BRAND = "nova";
 /** Mirrors the flag so the pre-paint script in layout.tsx can avoid a flash. */
 export const BRAND_STORAGE_KEY = "candidate-portal-brand";
 
+/** Set on <html> by ThemeProvider (and the pre-paint script) in dark mode. */
+export const THEME_ATTRIBUTE = "data-theme";
+export const NOVA_DARK_THEME = "nova-dark";
+
+function subscribeToTheme(onChange: () => void) {
+  const observer = new MutationObserver(onChange);
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: [THEME_ATTRIBUTE],
+  });
+  return () => observer.disconnect();
+}
+
+const isNovaDarkActive = () =>
+  document.documentElement.getAttribute(THEME_ATTRIBUTE) === NOVA_DARK_THEME;
+
+/** Tracks the dark-mode attribute on <html>; the server always renders light. */
+function useIsNovaDark() {
+  return useSyncExternalStore(subscribeToTheme, isNovaDarkActive, () => false);
+}
+
 /**
  * Applies the candidate portal theming from auth settings.
  *
  * - `enable_theme_mode: 1` mounts the NOVA palette (`data-brand="nova"`).
  * - Otherwise the default palette in globals.css is used unchanged, with
  *   `primary_color` recoloring only the primary accent variables.
+ * - In dark mode (`data-theme="nova-dark"`) the override is skipped: a light
+ *   theme brand color on the dark surfaces fails WCAG AA, so the nova-dark
+ *   tokens in globals.css apply instead.
  *
  * CSS supplies the fallback whenever no valid color is configured.
  */
@@ -42,6 +66,7 @@ export function DynamicPrimaryColor() {
   const { data: settings } = useAuthSettings();
   const primaryColor = settings?.primary_color;
   const themeModeEnabled = settings?.enable_theme_mode === 1;
+  const isNovaDark = useIsNovaDark();
 
   // 1. Choose the palette.
   useEffect(() => {
@@ -63,17 +88,18 @@ export function DynamicPrimaryColor() {
   }, [settings, themeModeEnabled]);
 
   // 2. Recolor the primary accent. NOVA ships its own designed palette, so the
-  //    picker only applies when it is not active.
+  //    picker only applies when it is not active. Inline styles beat the
+  //    nova-dark block, so the picker also steps aside in dark mode.
   useEffect(() => {
     const rootStyle = document.documentElement.style;
 
-    if (!themeModeEnabled && isValidPrimaryColor(primaryColor)) {
+    if (!themeModeEnabled && !isNovaDark && isValidPrimaryColor(primaryColor)) {
       PRIMARY_COLOR_VARIABLES.forEach((variable) => rootStyle.setProperty(variable, primaryColor));
       return;
     }
 
     PRIMARY_COLOR_VARIABLES.forEach((variable) => rootStyle.removeProperty(variable));
-  }, [primaryColor, themeModeEnabled]);
+  }, [primaryColor, themeModeEnabled, isNovaDark]);
 
   return null;
 }

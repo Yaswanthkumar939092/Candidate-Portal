@@ -6,9 +6,9 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * Same-origin reverse proxy to the Frappe backend.
+ * Same-origin reverse proxy to the Frappe backend, limited to ALLOWED_METHODS.
  *
- * `middleware.ts` used to do this with `NextResponse.rewrite()`, but on Vercel
+ * A since-removed `middleware.ts` did this with `NextResponse.rewrite()`, but on Vercel
  * cross-origin rewrites don't honor custom headers set via `request.headers` —
  * the `Host` and `X-Frappe-Site-Name` overrides were being dropped before the
  * request left the edge, so Frappe saw `Host: <frontend>.vercel.app` and
@@ -79,15 +79,79 @@ const DROP_FROM_UPSTREAM = new Set([
   "content-length",
 ]);
 
-async function proxy(req: NextRequest, ctx: RouteContext) {
+// The browser may reach only these reviewed candidate API methods. Everything
+// else on Frappe (desk, /api/resource, private files, other whitelisted
+// methods) answers 404 here, whatever cookie the caller sends. Add a method only
+// after reviewing it in cn-recruitment at the version Operate runs (OPS-507).
+const ALLOWED_METHODS = new Set([
+  ...["list_openings", "get_opening", "get_application_fields", "submit_application", "my_applications", "get_application"].map(name => `recruitment.api.v1.candidate.${name}`),
+  ...["get_auth_settings", "get_auth_page_content", "login", "signup", "request_email_signup_otp", "request_otp", "verify_otp", "logout", "me"].map(name => `recruitment.api.candidate_auth.${name}`),
+  "recruitment.api.candidate_portal.get_website_branding",
+  // Guest read of admin-set promotion copy; no candidate data (OPS-507).
+  "recruitment.api.candidate_home.get_home_content",
+  // Saved jobs, drafts and application detail: fixed and reviewed in cn-recruitment
+  // #1688 (OPS-508). Each checks the session candidate's identity.
+  ...["get_saved_job_openings", "toggle_saved_job_opening", "get_draft", "delete_draft"].map(name => `recruitment.api.channels.careers.${name}`),
+  "recruitment.api.draft_application.get_job_applicant",
+  // Job offer and DPDP consent (reviewed OPS-15). Each needs the signed offer token,
+  // desk permission or, for the PDF and culture book, the owning candidate's session;
+  // get_rejection_reasons is public master data. #1688 added released-offer filters
+  // inside the offer methods; get_job_offer_status still lacks one (OPS-509).
+  ...["get_job_offer_summary", "get_job_offer_status", "download_job_offer_pdf", "preview_culture_book", "job_offer_update", "get_rejection_reasons"].map(name => `recruitment.job_offer_utils.${name}`),
+  "recruitment.recruitment.doctype.dpdp_act_settings.dpdp_act_settings.get_consent_form",
+  "recruitment.dpdp_external_consent.start_consent_session",
+  "recruitment.dpdp_external_consent.get_consent_session_status",
+  "recruitment.dpdp_consent.submit_dpdp_consent",
+]);
+
+// Methods that change data answer only to POST here. The session cookie is
+// SameSite=Lax (Candidate Portal Auth Settings), so a cross-site link (GET) still
+// carries it; a cross-site POST does not.
+const POST_ONLY_METHODS = new Set([
+  "recruitment.api.channels.careers.toggle_saved_job_opening",
+  "recruitment.api.channels.careers.delete_draft",
+  "recruitment.job_offer_utils.job_offer_update",
+  "recruitment.dpdp_external_consent.start_consent_session",
+  "recruitment.dpdp_consent.submit_dpdp_consent",
+]);
+
+// Decode the raw path (repeatedly, so double-encoding cannot smuggle a denied
+// route past the check) and return it only if it names an allowed method.
+function allowedPath(pathname: string): string | null {
+  let path = pathname.slice("/backend".length) || "/";
+  try {
+    for (let i = 0; i < 3; i++) {
+      const decoded = decodeURIComponent(path);
+      if (decoded === path) break;
+      path = decoded;
+    }
+  } catch {
+    return null;
+  }
+  if (path.includes("%")) return null;
+  const prefix = "/api/method/";
+  if (!path.startsWith(prefix) || !ALLOWED_METHODS.has(path.slice(prefix.length))) return null;
+  return path;
+}
+
+async function proxy(req: NextRequest, _ctx: RouteContext) {
+  const path = allowedPath(req.nextUrl.pathname);
+  if (!path) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+  if (POST_ONLY_METHODS.has(path.slice("/api/method/".length)) && req.method.toUpperCase() !== "POST") {
+    return NextResponse.json({ error: "Method not allowed" }, { status: 405, headers: { allow: "POST" } });
+  }
+
   const target = targetBase();
   if (!target) {
     return NextResponse.json({ error: "Backend unavailable" }, { status: 503 });
   }
 
-  const { path } = await ctx.params;
+  // Assign the checked pathname rather than resolve user input as a URL, so
+  // the request always stays on the configured upstream.
   const upstreamUrl = new URL(target.toString());
-  upstreamUrl.pathname = "/" + (path?.join("/") ?? "");
+  upstreamUrl.pathname = path;
   upstreamUrl.search = req.nextUrl.search;
 
   const upstreamHeaders = new Headers();

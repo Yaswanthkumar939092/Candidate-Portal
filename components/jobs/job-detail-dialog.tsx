@@ -20,6 +20,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
+import { applyJobPath } from "@/lib/careers/job-route";
 
 interface JobDetailDialogProps {
   job: {
@@ -148,7 +149,7 @@ export function JobDetailDialog({
             </Button>
           ) : (
             <Button size="sm" asChild className="hover:cursor-pointer gap-1 ">
-              <Link href={applyHref ?? `/open-jobs/${job.id}/apply-job`}>
+              <Link href={applyHref ?? applyJobPath(job.id)}>
                 Apply
                 <ChevronRight className="h-4 w-4" />
               </Link>

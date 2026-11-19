@@ -63,41 +63,39 @@ beforeEach(() => {
 describe("login page after a successful password sign-in", () => {
   // Spec: CAND-03-A4.1A (docs/spec/clauses/03-authentication.md#cand-03-a4-1a)
   // Characterization: pins current behaviour, not endorsed.
-  it("refreshes the profile, asks the server for the post-login route and goes to /survey when a survey is required", async () => {
+  it("refreshes the profile and pushes the redirect value, with no survey or post-login route call (denied by the proxy)", async () => {
     h.getPostLoginRoute.mockResolvedValue({ survey_required: true, redirect_url: "/ignored" })
-    h.redirectParam.value = "/ignored-too"
+    h.redirectParam.value = "/my-jobs"
     await signInWith(base)
-    await waitFor(() => expect(h.push).toHaveBeenCalledWith("/survey"))
+    await waitFor(() => expect(h.push).toHaveBeenCalledWith("/my-jobs"))
     expect(h.push).toHaveBeenCalledTimes(1)
+    expect(h.getPostLoginRoute).not.toHaveBeenCalled()
     expect(h.refreshProfile).toHaveBeenCalledTimes(1)
     expect(window.sessionStorage.getItem("showLoginToast")).toBe("true")
   })
 
   // Spec: CAND-03-A4.1B (docs/spec/clauses/03-authentication.md#cand-03-a4-1b)
-  // Characterization: pins current behaviour, not endorsed.
-  it("pushes the redirect query value exactly as given, even an absolute URL, ahead of the server's redirect_url", async () => {
-    h.redirectParam.value = "https://elsewhere.example.invalid/landing"
-    await signInWith(base)
-    await waitFor(() => expect(h.push).toHaveBeenCalledWith("https://elsewhere.example.invalid/landing"))
-    expect(h.push).toHaveBeenCalledTimes(1)
+  it("never follows an absolute or protocol-relative redirect value; it falls back to /open-jobs", async () => {
+    for (const redirect of ["https://elsewhere.example.invalid/landing", "//elsewhere.example.invalid", "/\\elsewhere.example.invalid"]) {
+      h.push.mockClear()
+      document.body.innerHTML = ""
+      h.redirectParam.value = redirect
+      await signInWith(base)
+      await waitFor(() => expect(h.push).toHaveBeenCalledWith("/open-jobs"))
+      expect(h.push).toHaveBeenCalledTimes(1)
+    }
   })
 
   // Spec: CAND-03-A4.1C (docs/spec/clauses/03-authentication.md#cand-03-a4-1c)
   // Characterization: pins current behaviour, not endorsed.
-  it("uses the server's redirect_url, falls back to /dashboard when it is empty, and still routes when the route call fails", async () => {
+  it("falls back to /open-jobs without a redirect value, and still routes when the profile refresh fails", async () => {
     await signInWith(base)
     await waitFor(() => expect(h.push).toHaveBeenLastCalledWith("/open-jobs"))
     document.body.innerHTML = ""
 
     h.push.mockClear()
-    h.getPostLoginRoute.mockResolvedValue({ survey_required: false })
-    await signInWith(base)
-    await waitFor(() => expect(h.push).toHaveBeenLastCalledWith("/dashboard"))
-    document.body.innerHTML = ""
-
-    h.push.mockClear()
     const spy = vi.spyOn(console, "error").mockImplementation(() => {})
-    h.getPostLoginRoute.mockRejectedValue(new Error("down"))
+    h.refreshProfile.mockRejectedValue(new Error("down"))
     h.redirectParam.value = "/my-jobs"
     await signInWith(base)
     await waitFor(() => expect(h.push).toHaveBeenLastCalledWith("/my-jobs"))
@@ -201,6 +199,18 @@ describe("register page", () => {
     expect(screen.getByText("Candidate signup is disabled.")).toBeTruthy()
     expect(screen.queryByPlaceholderText("Create a strong password")).toBeNull()
   })
+
+  // Open redirect fix (PWHR-1519, OPS-507); no spec clause yet.
+  it("never follows an off-site redirect value after a verified sign-up OTP; it falls back to /open-jobs", async () => {
+    h.signUp.mockResolvedValue({ status: "otp_required" })
+    h.redirectParam.value = "/..//elsewhere.example.invalid"
+    await fillAndSubmit("cand@example.invalid")
+    await screen.findByText("Verify your email")
+    await user.type(screen.getByLabelText("Email OTP"), "000000")
+    await user.click(screen.getByRole("button", { name: "Verify and continue" }))
+    await waitFor(() => expect(h.push).toHaveBeenCalledWith("/open-jobs"))
+    expect(h.push).toHaveBeenCalledTimes(1)
+  })
 })
 
 describe("register page campus source and password check", () => {
@@ -225,7 +235,9 @@ describe("register page campus source and password check", () => {
       expect(h.signUp.mock.calls[0][0].candidateSource).toBe(expected)
       document.body.innerHTML = ""
     }
-  })
+    // Five full form fills typed key by key; already ~14 s on main on a loaded
+    // machine, so give it headroom over the 15 s default.
+  }, 40_000)
 
   // Spec: CAND-03-A5.3A (docs/spec/clauses/03-authentication.md#cand-03-a5-3a)
   // Characterization: pins current behaviour, not endorsed.
@@ -237,16 +249,16 @@ describe("register page campus source and password check", () => {
 
   // Spec: CAND-03-A5.4A (docs/spec/clauses/03-authentication.md#cand-03-a5-4a)
   // Characterization: pins current behaviour, not endorsed.
-  it("sends a signed-up visitor straight to the redirect value, or /dashboard, when the server does not ask for an OTP", async () => {
+  it("sends a signed-up visitor straight to the redirect value, or /open-jobs, when the server does not ask for an OTP", async () => {
     h.signUp.mockResolvedValue({ status: "success" })
     await submit("cand@example.invalid", "synthetic-pass", "synthetic-pass")
-    await waitFor(() => expect(h.push).toHaveBeenCalledWith("/dashboard"))
+    await waitFor(() => expect(h.push).toHaveBeenCalledWith("/open-jobs"))
     document.body.innerHTML = ""
 
     h.push.mockClear()
-    h.redirectParam.value = "/open-jobs"
+    h.redirectParam.value = "/my-jobs"
     await submit("cand@example.invalid", "synthetic-pass", "synthetic-pass")
-    await waitFor(() => expect(h.push).toHaveBeenCalledWith("/open-jobs"))
+    await waitFor(() => expect(h.push).toHaveBeenCalledWith("/my-jobs"))
   })
 })
 

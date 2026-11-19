@@ -159,6 +159,7 @@ export function JobMatchCard({
             View Details
           </Button>
           <div className="flex items-center gap-2">
+            {onBookmark && (
             <Button
               variant="outline"
               size="icon-sm"
@@ -177,6 +178,7 @@ export function JobMatchCard({
                 <Bookmark className="h-4 w-4" />
               )}
             </Button>
+            )}
             {job.applied && (
               <Button
                 variant="outline"

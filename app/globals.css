@@ -66,54 +66,56 @@
   --color-brand-deep: var(--brand-deep);
 }
 
-/* ── Violet (light, default) ──────────────────────────────────── */
+/* ── Hybrowlabs (light, default) ──────────────────────────────────
+      Hybrowlabs blue #0038FF (from hybrowlabs.com) is the action color;
+      white on it is 6.98:1. ── */
 :root {
   --radius: 0.625rem;
 
-  --background:           #F1ECFB;
-  --foreground:           #110826;
+  --background:           #F0F4FF;
+  --foreground:           #0E1726;
   --card:                 #FFFFFF;
-  --card-foreground:      #110826;
+  --card-foreground:      #0E1726;
   --popover:              #FFFFFF;
-  --popover-foreground:   #110826;
-  --primary:              #7B2CF1;
+  --popover-foreground:   #0E1726;
+  --primary:              #0038FF;
   --primary-foreground:   #FFFFFF;
-  --secondary:            #EFE9FA;
-  --secondary-foreground: #110826;
-  --muted:                #EFE9FA;
-  --muted-foreground:     #564C6E;
-  --accent:               #F3EEFF;
-  --accent-foreground:    #7B2CF1;
+  --secondary:            #E8EEFB;
+  --secondary-foreground: #0E1726;
+  --muted:                #E8EEFB;
+  --muted-foreground:     #4B5563;
+  --accent:               #E6ECFF;
+  --accent-foreground:    #0038FF;
   --destructive:          oklch(0.577 0.245 27.325);
-  --border:               #E9E3F3;
-  --input:                #E9E3F3;
-  --ring:                 #7B2CF1;
+  --border:               #DCE3F3;
+  --input:                #DCE3F3;
+  --ring:                 #0038FF;
   --chart-1:              oklch(0.646 0.222 41.116);
   --chart-2:              oklch(0.6 0.118 184.704);
   --chart-3:              oklch(0.398 0.07 227.392);
   --chart-4:              oklch(0.828 0.189 84.429);
   --chart-5:              oklch(0.769 0.188 70.08);
-  --sidebar:              #EFE9FA;
-  --sidebar-foreground:   #110826;
-  --sidebar-primary:      #7B2CF1;
+  --sidebar:              #E8EEFB;
+  --sidebar-foreground:   #0E1726;
+  --sidebar-primary:      #0038FF;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent:       #F3EEFF;
-  --sidebar-accent-foreground: #7B2CF1;
-  --sidebar-border:       #E9E3F3;
-  --sidebar-ring:         #7B2CF1;
+  --sidebar-accent:       #E6ECFF;
+  --sidebar-accent-foreground: #0038FF;
+  --sidebar-border:       #DCE3F3;
+  --sidebar-ring:         #0038FF;
 
   --success:       #16A34A;
   --success-bg:    #DCFCE7;
   --success-text:  #15803D;
   --field-success:       #16B364;
   --field-success-bg:    #F1FBF5;
-  --info:          #7B2CF1;
-  --info-bg:       #F3EEFF;
+  --info:          #0038FF;
+  --info-bg:       #E6ECFF;
   --warning:       #D97706;
   --warning-bg:    #FEF3C7;
-  --text-subtle:   #8B82A0;
-  --border-soft:   #F3EFFB;
-  --nav-active-bg:   #7B2CF1;
+  --text-subtle:   #5F6672;
+  --border-soft:   #EEF2FC;
+  --nav-active-bg:   #0038FF;
   --nav-active-text: #FFFFFF;
 
   /* Tokens added for the retokenised components. --brand/--primary-hover
@@ -127,50 +129,51 @@
 
 /* ── Nova-dark ────────────────────────────────────────────────── */
 [data-theme="nova-dark"] {
-  --background:           #100A1E;
-  --foreground:           #EFECF7;
-  --card:                 #181327;
-  --card-foreground:      #EFECF7;
-  --popover:              #181327;
-  --popover-foreground:   #EFECF7;
-  --primary:              #8B5CF6;
+  --background:           #0B1220;
+  --foreground:           #EEF2FF;
+  --card:                 #121A2E;
+  --card-foreground:      #EEF2FF;
+  --popover:              #121A2E;
+  --popover-foreground:   #EEF2FF;
+  --primary:              #3D63FF;
   --primary-foreground:   #FFFFFF;
-  --secondary:            #1F1933;
-  --secondary-foreground: #EFECF7;
-  --muted:                #1F1933;
-  --muted-foreground:     #A39CBD;
-  --accent:               #2A1F4D;
-  --accent-foreground:    #A78BFA;
+  --secondary:            #1A2440;
+  --secondary-foreground: #EEF2FF;
+  --muted:                #1A2440;
+  --muted-foreground:     #A3ADC8;
+  --accent:               #16224A;
+  --accent-foreground:    #8FA8FF;
   --destructive:          oklch(0.704 0.191 22.216);
-  --border:               #2F2747;
-  --input:                #2F2747;
-  --ring:                 #8B5CF6;
-  --sidebar:              #1F1933;
-  --sidebar-foreground:   #EFECF7;
-  --sidebar-primary:      #8B5CF6;
+  --border:               #26324F;
+  --input:                #26324F;
+  --ring:                 #3D63FF;
+  --sidebar:              #1A2440;
+  --sidebar-foreground:   #EEF2FF;
+  --sidebar-primary:      #3D63FF;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent:       #2A1F4D;
-  --sidebar-accent-foreground: #A78BFA;
-  --sidebar-border:       #2F2747;
-  --sidebar-ring:         #8B5CF6;
+  --sidebar-accent:       #16224A;
+  --sidebar-accent-foreground: #8FA8FF;
+  --sidebar-border:       #26324F;
+  --sidebar-ring:         #3D63FF;
 
   --success:       #15A66B;
   --success-bg:    #0F2E22;
   --success-text:  #6EE7B7;
   --field-success:       #16B364;
   --field-success-bg:    #0F2E22;
-  --info:          #8B5CF6;
-  --info-bg:       #2A1F4D;
+  --info:          #8FA8FF;
+  --info-bg:       #16224A;
   --warning:       #FBBF24;
   --warning-bg:    #3A2A0A;
-  --text-subtle:   #7A7090;
-  --border-soft:   #221C36;
-  --nav-active-bg:   #8B5CF6;
+  --text-subtle:   #7F8AA8;
+  --border-soft:   #18213A;
+  --nav-active-bg:   #3D63FF;
   --nav-active-text: #FFFFFF;
 
   --brand:                var(--primary);
   --brand-deep:           color-mix(in srgb, var(--primary) 40%, #05070C);
-  --primary-hover:        color-mix(in srgb, var(--primary) 85%, var(--foreground));
+  /* Darken (not lighten) on hover so white text stays above 4.5:1. */
+  --primary-hover:        color-mix(in srgb, var(--primary) 85%, #000000);
   --success-foreground:   #FFFFFF;
   --destructive-foreground: #FFFFFF;
 }

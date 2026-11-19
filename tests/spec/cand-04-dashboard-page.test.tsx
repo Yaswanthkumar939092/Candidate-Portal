@@ -6,10 +6,17 @@ const h = vi.hoisted(() => ({
   dash: { value: {} as unknown },
   refetch: vi.fn(),
   contacts: vi.fn(),
+  replace: vi.fn(),
+  dashEmail: vi.fn(),
+  dashboardEnabled: { value: true },
 }))
 
+// The onboarding dashboard is gated off for milestone 1; the cases below pin it
+// as it renders once the gate opens, and the last case pins the gate itself.
+vi.mock("@/lib/careers/milestone", () => ({ get ONBOARDING_DASHBOARD_ENABLED() { return h.dashboardEnabled.value } }))
+vi.mock("next/navigation", () => ({ useRouter: () => ({ replace: h.replace, push: vi.fn() }) }))
 vi.mock("@/lib/contexts/auth-context", () => ({ useAuth: () => h.auth.value }))
-vi.mock("@/lib/hooks/useDashboard", () => ({ useDashboard: () => h.dash.value }))
+vi.mock("@/lib/hooks/useDashboard", () => ({ useDashboard: (email?: string) => { h.dashEmail(email); return h.dash.value } }))
 vi.mock("@/components/dashboard/welcome-header", () => ({
   WelcomeHeader: ({ name, greeting }: { name: string; greeting: string }) => (
     <div data-testid="welcome-header">{greeting}|{name}</div>
@@ -73,6 +80,7 @@ const query = (over: Record<string, unknown> = {}) => ({
 
 beforeEach(() => {
   vi.clearAllMocks()
+  h.dashboardEnabled.value = true
   h.auth.value = { user: { email: "cand@example.invalid" }, profile: null }
   h.dash.value = query({ data: payload() })
 })
@@ -205,5 +213,14 @@ describe("dashboard page (characterization)", () => {
     expect(screen.getByTestId("value-Office Location").textContent).toBe("Not available")
     expect(screen.getByTestId("subtitle-Office Location").textContent).toBe("Address not available")
     expect(screen.queryByRole("link", { name: "View on Map" })).toBeNull()
+  })
+
+  // Milestone-1 gate (lib/careers/milestone.ts); no spec clause yet.
+  it("renders nothing, asks for no dashboard data and replaces the route with /open-jobs while the onboarding dashboard is gated off", () => {
+    h.dashboardEnabled.value = false
+    const { container } = render(<DashboardPage />)
+    expect(container.innerHTML).toBe("")
+    expect(h.replace).toHaveBeenCalledWith("/open-jobs")
+    expect(h.dashEmail).toHaveBeenLastCalledWith(undefined)
   })
 })

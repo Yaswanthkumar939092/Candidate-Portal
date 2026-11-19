@@ -41,6 +41,12 @@ describe("JobMatchCard", () => {
     vi.clearAllMocks()
   })
 
+  it("shows no bookmark button when no onBookmark handler is given", () => {
+    render(<JobMatchCard job={mockJob} onViewDetails={mockOnViewDetails} />)
+    expect(screen.queryByLabelText("Bookmark job")).toBeNull()
+    expect(screen.queryByLabelText("Remove bookmark")).toBeNull()
+  })
+
   it("renders job title and match percentage", () => {
     render(
       <JobMatchCard

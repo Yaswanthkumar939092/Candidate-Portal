@@ -258,6 +258,24 @@ describe("RegisterPage – Successful Registration", () => {
   });
 });
 
+describe("RegisterPage – post-registration target (milestone 1)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetAuthSettings.mockResolvedValue(defaultAuthSettings);
+    mockSignUp.mockResolvedValue({ user: { id: "1", email: "jane@example.com" }, session: { access_token: "abc" } });
+  });
+
+  it("lands on /open-jobs, not the dashboard that calls a denied method", async () => {
+    await renderRegisterPage();
+    await fillRegisterForm();
+    submitForm();
+    await waitFor(() => expect(mockSignUp).toHaveBeenCalled());
+    await waitFor(() => expect(mockPush).toHaveBeenCalled());
+    expect(mockPush).toHaveBeenCalledWith("/open-jobs");
+    expect(mockPush).not.toHaveBeenCalledWith("/dashboard");
+  });
+});
+
 // =====================================================================
 //  REGISTER PAGE – PASSWORD MISMATCH VALIDATION
 // =====================================================================

@@ -29,14 +29,14 @@ afterEach(() => {
 describe("server-side feature flags", () => {
   // Spec: CAND-02-A2.1A (docs/spec/clauses/02-api-client-and-backend-contract.md#cand-02-a2-1a)
   // Characterization: pins current behaviour, not endorsed.
-  it("calls the flag method with the API key header, coerces values to booleans and returns {} on any failure", async () => {
+  it("calls the Guest get_public_flags method with no API key, coerces values to booleans and returns {} on any failure", async () => {
     frappeEnv(true)
     fetchMock.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ message: { a: 1, b: "1", c: "true", d: true, e: 0, f: "yes", g: null } }) })
     const flags = await getServerFeatureFlags()
     expect(flags).toEqual({ a: true, b: true, c: true, d: true, e: false, f: false, g: false })
     expect(fetchMock).toHaveBeenCalledWith(
-      "http://frappe.example.invalid:8000/api/method/recruitment.api.candidate_portal.get_candidate_feature_flags",
-      { headers: { Authorization: `token ${KEY}:${SECRET}` }, cache: "no-store" },
+      "http://frappe.example.invalid:8000/api/method/recruitment.api.v1.candidate.get_public_flags",
+      { headers: { Accept: "application/json" }, cache: "no-store" },
     )
 
     fetchMock.mockResolvedValueOnce({ ok: false })
@@ -64,11 +64,12 @@ describe("server-side feature flags", () => {
 describe("GET /api/candidate-feature-flags", () => {
   // Spec: CAND-02-A2.2A (docs/spec/clauses/02-api-client-and-backend-contract.md#cand-02-a2-2a)
   // Characterization: pins current behaviour, not endorsed.
-  it("returns 500 when the URL or either API credential is missing, else {flags}", async () => {
+  it("needs no API credential: returns empty {flags} when no backend is configured, else {flags}", async () => {
     frappeEnv(false)
     const missing = await flagsGet()
-    expect(missing.status).toBe(500)
-    expect(await missing.json()).toEqual({ error: "Frappe API credentials are not configured" })
+    expect(missing.status).toBe(200)
+    expect(await missing.json()).toEqual({ flags: {} })
+    expect(fetchMock).not.toHaveBeenCalled()
 
     frappeEnv(true)
     fetchMock.mockResolvedValue({ ok: true, json: () => Promise.resolve({ message: { open_jobs: 1 } }) })
@@ -81,14 +82,14 @@ describe("GET /api/candidate-feature-flags", () => {
 describe("GET /api/public/branding", () => {
   // Spec: CAND-02-A2.3A (docs/spec/clauses/02-api-client-and-backend-contract.md#cand-02-a2-3a)
   // Characterization: pins current behaviour, not endorsed.
-  it("returns the branding with a 300 s edge cache, and an empty object without credentials or on upstream failure", async () => {
+  it("returns the branding with a 300 s edge cache using no API key, and an empty object without a backend or on upstream failure", async () => {
     frappeEnv(true)
     fetchMock.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ message: { title_prefix: "Example" } }) })
     const ok = await brandingGet()
     expect(await ok.json()).toEqual({ branding: { title_prefix: "Example" } })
     expect(ok.headers.get("cache-control")).toBe("public, s-maxage=300, stale-while-revalidate=600")
     expect(fetchMock.mock.calls[0][0]).toBe("http://frappe.example.invalid:8000/api/method/recruitment.api.candidate_portal.get_website_branding")
-    expect(fetchMock.mock.calls[0][1].headers).toEqual({ Authorization: `token ${KEY}:${SECRET}` })
+    expect(fetchMock.mock.calls[0][1].headers).toEqual({ Accept: "application/json" })
 
     fetchMock.mockResolvedValueOnce({ ok: false })
     const bad = await brandingGet()
@@ -107,42 +108,40 @@ describe("GET /api/public/branding", () => {
 })
 
 describe("GET /api/public/openings", () => {
+  const LIST = "http://frappe.example.invalid:8000/api/method/recruitment.api.v1.candidate.list_openings"
+  const DETAIL = "http://frappe.example.invalid:8000/api/method/recruitment.api.v1.candidate.get_opening"
+
   // Spec: CAND-02-A2.4A (docs/spec/clauses/02-api-client-and-backend-contract.md#cand-02-a2-4a)
   // Characterization: pins current behaviour, not endorsed.
-  it("reads Job Opening and Employment Type with the API key, filters Open, and returns normalised openings with a 60 s edge cache", async () => {
+  it("reads the Guest v1 list_openings and get_opening methods with no API key, and returns normalised openings with a 60 s edge cache", async () => {
     frappeEnv(true)
     fetchMock
-      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ data: [{ name: "HR-OPN-TEST-1", job_title: "Tester", employment_type: "ET-1", closes_on: null, posted_on: "2026-01-02 10:00:00" }] }) })
-      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ data: [{ name: "ET-1", employee_type_name: "Full Time" }] }) })
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ message: { openings: [{ name: "HR-OPN-TEST-1", job_title: "Tester", employment_type: "Full Time", closes_on: null, is_evergreen: 0, posted_on: "2026-01-02 10:00:00" }], total: 1 } }) })
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ message: { description: "<p>Synthetic</p>" } }) })
     const res = await openingsGet()
     expect(res.status).toBe(200)
     expect(res.headers.get("cache-control")).toBe("public, s-maxage=60, stale-while-revalidate=300")
     const body = await res.json()
     expect(body.openings).toHaveLength(1)
-    expect(body.openings[0]).toMatchObject({ id: "HR-OPN-TEST-1", title: "Tester", employmentType: "Full Time", evergreen: true, postedOn: "2026-01-02" })
+    expect(body.openings[0]).toMatchObject({ id: "HR-OPN-TEST-1", title: "Tester", employmentType: "Full Time", evergreen: false, postedOn: "2026-01-02", description: "<p>Synthetic</p>" })
 
     const urls: string[] = fetchMock.mock.calls.map((c) => c[0])
-    expect(urls[0].startsWith("http://frappe.example.invalid:8000/api/resource/Job%20Opening?")).toBe(true)
-    const q = new URL(urls[0]).searchParams
-    expect(q.get("filters")).toBe('[["status","=","Open"]]')
-    expect(q.get("order_by")).toBe("posted_on desc")
-    expect(q.get("limit_page_length")).toBe("500")
-    expect(urls[1].startsWith("http://frappe.example.invalid:8000/api/resource/Employment%20Type?")).toBe(true)
-    for (const c of fetchMock.mock.calls) expect(c[1].headers).toEqual({ Authorization: `token ${KEY}:${SECRET}` })
+    expect(urls[0].startsWith(`${LIST}?`)).toBe(true)
+    expect(new URL(urls[0]).searchParams.get("page_length")).toBe("50")
+    expect(urls[1]).toBe(`${DETAIL}?name=HR-OPN-TEST-1`)
+    for (const c of fetchMock.mock.calls) expect(c[1].headers).toEqual({ Accept: "application/json" })
   })
 
   // Spec: CAND-02-A2.4B (docs/spec/clauses/02-api-client-and-backend-contract.md#cand-02-a2-4b)
   // Characterization: pins current behaviour, not endorsed.
-  it("answers 500 without credentials and 502 when the openings read fails or throws, but tolerates a failed type lookup", async () => {
+  it("answers 500 without a backend URL and 502 when the list read fails or throws, but tolerates a failed detail lookup", async () => {
     frappeEnv(false)
     const none = await openingsGet()
     expect(none.status).toBe(500)
-    expect(await none.json()).toEqual({ error: "Frappe API credentials are not configured" })
+    expect(await none.json()).toEqual({ error: "Backend URL is not configured" })
 
     frappeEnv(true)
-    fetchMock
-      .mockResolvedValueOnce({ ok: false, json: () => Promise.resolve({}) })
-      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ data: [] }) })
+    fetchMock.mockResolvedValueOnce({ ok: false, json: () => Promise.resolve({}) })
     const bad = await openingsGet()
     expect(bad.status).toBe(502)
     expect(await bad.json()).toEqual({ error: "Failed to fetch open jobs" })
@@ -153,10 +152,12 @@ describe("GET /api/public/openings", () => {
 
     fetchMock.mockReset()
     fetchMock
-      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ data: [{ name: "HR-OPN-TEST-2", employment_type: "ET-9" }] }) })
-      .mockResolvedValueOnce({ ok: false })
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ message: { openings: [{ name: "HR-OPN-TEST-2", employment_type: "ET-9" }], total: 1 } }) })
+      .mockRejectedValueOnce(new Error("detail down"))
     const tolerant = await openingsGet()
     expect(tolerant.status).toBe(200)
-    expect((await tolerant.json()).openings[0].employmentType).toBe("ET-9")
+    const opening = (await tolerant.json()).openings[0]
+    expect(opening.employmentType).toBe("ET-9")
+    expect(opening.description).toBe("")
   })
 })

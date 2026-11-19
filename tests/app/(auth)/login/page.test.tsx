@@ -554,75 +554,33 @@ describe("LoginPage – Edge Cases", () => {
     });
   });
 
-  describe("LoginPage – Redirect Handling based on survey API response", () => {
-    beforeEach(() => {
-      vi.clearAllMocks();
-    });
-
-    it("redirects to /survey when survey_required is true", async () => {
+  describe("LoginPage – post-login routing (no survey call, milestone-1 target)", () => {
+    const login = async () => {
       mockGetAuthSettings.mockResolvedValue({
         ...defaultAuthSettings,
         allow_email_otp_login: 0,
         enable_email_otp: 0,
       });
       mockSignIn.mockResolvedValue({ status: "success" });
-      mockGetPostLoginRoute.mockResolvedValue({
-        survey_required: true,
-        form_name: "Onboarding Survey",
-        form_schema: {},
-        job_applicant: "HR-APP-2026-00042",
-        job_opening: "HR-OPP-2026-00007",
-      });
-
       await renderLoginPage();
       await user.type(screen.getByPlaceholderText("you@example.com"), "test@test.com");
       await user.type(screen.getByPlaceholderText("Enter your password"), "password123");
       await user.click(screen.getByRole("button", { name: /Sign in to your account/i }));
+    };
 
+    it("goes to /open-jobs after login when there is no redirect param", async () => {
+      await login();
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith("/survey");
+        expect(mockPush).toHaveBeenCalledWith("/open-jobs");
       });
     });
 
-    it("redirects to redirect_url from survey API when survey_required is false", async () => {
-      mockGetAuthSettings.mockResolvedValue({
-        ...defaultAuthSettings,
-        allow_email_otp_login: 0,
-        enable_email_otp: 0,
-      });
-      mockSignIn.mockResolvedValue({ status: "success" });
-      mockGetPostLoginRoute.mockResolvedValue({
-        survey_required: false,
-        redirect_url: "/action-center",
-      });
-
-      await renderLoginPage();
-      await user.type(screen.getByPlaceholderText("you@example.com"), "test@test.com");
-      await user.type(screen.getByPlaceholderText("Enter your password"), "password123");
-      await user.click(screen.getByRole("button", { name: /Sign in to your account/i }));
-
-      await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith("/action-center");
-      });
-    });
-
-    it("defaults to /dashboard when survey API fails", async () => {
-      mockGetAuthSettings.mockResolvedValue({
-        ...defaultAuthSettings,
-        allow_email_otp_login: 0,
-        enable_email_otp: 0,
-      });
-      mockSignIn.mockResolvedValue({ status: "success" });
-      mockGetPostLoginRoute.mockRejectedValue(new Error("API Error"));
-
-      await renderLoginPage();
-      await user.type(screen.getByPlaceholderText("you@example.com"), "test@test.com");
-      await user.type(screen.getByPlaceholderText("Enter your password"), "password123");
-      await user.click(screen.getByRole("button", { name: /Sign in to your account/i }));
-
-      await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith("/dashboard");
-      });
+    it("never calls the survey route method, which the proxy denies", async () => {
+      await login();
+      await waitFor(() => expect(mockPush).toHaveBeenCalled());
+      expect(mockGetPostLoginRoute).not.toHaveBeenCalled();
+      expect(mockPush).not.toHaveBeenCalledWith("/dashboard");
+      expect(mockPush).not.toHaveBeenCalledWith("/survey");
     });
   });
 });

@@ -47,8 +47,8 @@ vi.mock("next/link", () => ({
 vi.mock("@/lib/hooks/useCandidateBranding", () => ({
   useCandidateBranding: () => ({
     data: {
-      title_prefix: "Physics Wallah",
-      app_logo: "/brand.png",
+      title_prefix: "Hybrowlabs",
+      app_logo: "/files/logo.png",
     },
     isLoading: false,
   }),
@@ -176,7 +176,7 @@ describe("AuthForm – Login UI", () => {
     render(<AuthForm {...defaultLoginProps} />);
     const lockup = screen.getByTestId("brand-lockup");
     expect(lockup.querySelector("img")).toBeTruthy();
-    expect(lockup.textContent).toBe("Physics Wallah");
+    expect(lockup.textContent).toBe("Hybrowlabs");
   });
 
   it("renders left-pane heading for login", () => {
@@ -194,7 +194,7 @@ describe("AuthForm – Login UI", () => {
   it("renders the copyright notice", () => {
     render(<AuthForm {...defaultLoginProps} />);
     expect(
-      screen.getByText(/© 2026 Physics Wallah. All rights reserved./)
+      screen.getByText(/© 2026 Hybrowlabs. All rights reserved./)
     ).toBeTruthy();
   });
 });
@@ -701,7 +701,7 @@ describe("AuthForm – Dynamic left pane content", () => {
     ).toBeTruthy();
     expect(screen.getByText("Track your onboarding journey")).toBeTruthy();
     expect(screen.getByTestId("brand-lockup").querySelector("img")!.getAttribute("src")).toContain(
-      "/brand.png",
+      "/files/logo.png",
     );
     expect(screen.queryByTestId("auth-pane-background")).toBeNull();
     expect(screen.getByTestId("auth-pane-glow")).toBeTruthy();
@@ -732,5 +732,18 @@ describe("AuthForm – Dynamic left pane content", () => {
 
     expect(screen.queryByTestId("auth-pane-background")).toBeNull();
     expect(screen.getByTestId("auth-pane-glow")).toBeTruthy();
+  });
+
+  it("falls back to the bundled light Hybrowlabs wordmark when the logo fails to load", () => {
+    authPageContentMock.data = { logo: null };
+    render(<AuthForm {...defaultLoginProps} />);
+    const lockup = screen.getByTestId("brand-lockup");
+    expect(lockup.querySelector("img")!.getAttribute("src")).toContain("/files/logo.png");
+
+    fireEvent.error(lockup.querySelector("img")!);
+
+    // The wordmark carries the name, so the text label is dropped and the image gets the alt.
+    expect(screen.getByAltText("Hybrowlabs").getAttribute("src")).toBe("/hybrowlabs-logo-white.svg");
+    expect(lockup.textContent).toBe("");
   });
 });

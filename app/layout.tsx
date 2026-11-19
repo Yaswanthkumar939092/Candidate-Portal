@@ -6,6 +6,7 @@ import { Toaster } from "sonner";
 import Providers from "./providers";
 
 import { candidateBrandingService } from "@/lib/services/candidate-branding";
+import { BRAND_NAME } from "@/lib/branding";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,18 +25,15 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-  let titlePrefix = "ERP";
-  let faviconUrl = "/favicon.svg";
+  let titlePrefix = BRAND_NAME;
+  // Always the bundled Hybrowlabs mark: Operate's app_logo is a wide wordmark,
+  // and its /files path is not served through the /backend proxy.
+  const faviconUrl = "/favicon.svg";
 
   try {
     const branding = await candidateBrandingService.getCandidateBranding();
     if (branding?.title_prefix) {
       titlePrefix = branding.title_prefix;
-    }
-    if (branding?.app_logo) {
-      faviconUrl = branding.app_logo.startsWith("http")
-        ? branding.app_logo
-        : `${(process.env.NEXT_PUBLIC_FRAPPE_URL || "").replace(/\/$/, "")}${branding.app_logo.startsWith("/") ? branding.app_logo : `/${branding.app_logo}`}`;
     }
   } catch (error) {
     // Graceful fallback if branding endpoint fails or is unavailable

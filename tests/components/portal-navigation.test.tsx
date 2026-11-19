@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { render as rtlRender, screen } from "@testing-library/react"
+import { fireEvent, render as rtlRender, screen } from "@testing-library/react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import type { ReactElement } from "react"
 import userEvent from "@testing-library/user-event"
@@ -17,6 +17,10 @@ vi.mock("@/lib/contexts/feature-flags")
 vi.mock("@/lib/contexts/theme-context")
 vi.mock("@/lib/hooks/useCandidateBranding")
 vi.mock("@/lib/hooks/useApplicantStatus")
+vi.mock("@tanstack/react-query", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@tanstack/react-query")>()),
+  useQueryClient: () => ({ clear: vi.fn(), invalidateQueries: vi.fn() }),
+}))
 
 let mockPathname = "/dashboard"
 vi.mock("next/navigation", () => ({
@@ -79,8 +83,8 @@ const mockProfile = {
 }
 
 const mockBranding = {
-  title_prefix: "Physics Wallah",
-  app_logo: "/brand2.png",
+  title_prefix: "Hybrowlabs",
+  app_logo: "/files/logo2.png",
 }
 
 describe("PortalNavigation", () => {
@@ -141,7 +145,7 @@ describe("PortalNavigation", () => {
   it("shows the logo first, then the company name", () => {
     render(<PortalNavigation />)
     const lockup = screen.getByTestId("brand-lockup")
-    const name = screen.getByText("Physics Wallah")
+    const name = screen.getByText("Hybrowlabs")
     const logo = lockup.querySelector("img")!
     expect(logo).toBeTruthy()
     expect(
@@ -154,16 +158,47 @@ describe("PortalNavigation", () => {
       data: { ...mockBranding, logo_includes_company_name: true },
     } as ReturnType<typeof candidateBrandingHook.useCandidateBranding>)
     render(<PortalNavigation />)
-    expect(screen.getByAltText("Physics Wallah")).toBeTruthy()
-    expect(screen.queryByText("Physics Wallah")).toBeNull()
+    expect(screen.getByAltText("Hybrowlabs")).toBeTruthy()
+    expect(screen.queryByText("Hybrowlabs")).toBeNull()
+  })
+
+  it("falls back to the bundled Hybrowlabs logo when the configured logo fails to load", () => {
+    vi.mocked(candidateBrandingHook.useCandidateBranding).mockReturnValue({
+      data: { app_logo: "/files/missing.svg" },
+    } as ReturnType<typeof candidateBrandingHook.useCandidateBranding>)
+    render(<PortalNavigation />)
+    const logo = screen.getByAltText("Hybrowlabs")
+    expect(logo.getAttribute("src")).toContain("/files/missing.svg")
+
+    fireEvent.error(logo)
+
+    expect(screen.getByAltText("Hybrowlabs").getAttribute("src")).toBe("/hybrowlabs-logo.svg")
+  })
+
+  it("uses the Operate title prefix over the Hybrowlabs default", () => {
+    vi.mocked(candidateBrandingHook.useCandidateBranding).mockReturnValue({
+      data: { title_prefix: "Acme", app_logo: "/files/logo2.png" },
+    } as ReturnType<typeof candidateBrandingHook.useCandidateBranding>)
+    render(<PortalNavigation />)
+    expect(screen.getByText("Acme")).toBeTruthy()
+    expect(screen.queryByText("Hybrowlabs")).toBeNull()
+  })
+
+  it("uses the bundled Hybrowlabs logo when no logo is configured", () => {
+    vi.mocked(candidateBrandingHook.useCandidateBranding).mockReturnValue({
+      data: {},
+    } as ReturnType<typeof candidateBrandingHook.useCandidateBranding>)
+    render(<PortalNavigation />)
+    expect(screen.getByAltText("Hybrowlabs").getAttribute("src")).toBe("/hybrowlabs-logo.svg")
   })
 
   // Spec: CAND-04-A8.1A (docs/spec/clauses/04-dashboard.md#cand-04-a8-1a)
-  it("renders navigation items on desktop", () => {
+  it("renders only the navigation items that work on the reviewed v1 API", () => {
     render(<PortalNavigation />)
-    expect(screen.getByText("Home")).toBeTruthy()
     expect(screen.getByText("Open Jobs")).toBeTruthy()
     expect(screen.getByText("My Jobs")).toBeTruthy()
+    expect(screen.queryByText("Home")).toBeNull()
+    expect(screen.queryByText("Action Center")).toBeNull()
   })
 
   it("renders user avatar with initials", () => {
@@ -211,7 +246,6 @@ describe("PortalNavigation", () => {
     expect(trigger).toBeTruthy()
     if (trigger) {
       await user.click(trigger)
-      expect(screen.getByText("Profile")).toBeTruthy()
       // expect(screen.getByText("Settings")).toBeTruthy()
       expect(screen.getByText("Sign Out")).toBeTruthy()
     }
@@ -262,7 +296,13 @@ describe("PortalNavigation", () => {
     }
   })
 
-  it("renders profile link in dropdown", async () => {
+  it("brand logo links to /open-jobs, not the dashboard", () => {
+    render(<PortalNavigation />)
+    const link = screen.getAllByRole("link").find((a) => a.querySelector("img"))
+    expect(link?.getAttribute("href")).toBe("/open-jobs")
+  })
+
+  it("has no Profile menu item, because the profile page calls methods the proxy denies", async () => {
     render(<PortalNavigation />)
     const trigger = screen.getAllByRole("button").find(
       (btn) => btn.textContent?.includes("John Doe")
@@ -270,7 +310,8 @@ describe("PortalNavigation", () => {
     expect(trigger).toBeTruthy()
     if (trigger) {
       await user.click(trigger)
-      expect(screen.getByText("Profile")).toBeTruthy()
+      expect(screen.getByText("Sign Out")).toBeTruthy()
+      expect(screen.queryByText("Profile")).toBeNull()
     }
   })
 
@@ -416,7 +457,7 @@ describe("PortalNavigation", () => {
     const menuBtn = screen.getByRole("button", { name: /Toggle menu/i })
     await user.click(menuBtn)
     // Icons render inside the Sheet portal
-    expect(document.body.querySelector('[data-testid="icon-home"]')).toBeTruthy()
+    expect(document.body.querySelector('[data-testid="icon-home"]')).toBeNull()
     expect(document.body.querySelector('[data-testid="icon-briefcase"]')).toBeTruthy()
     expect(document.body.querySelector('[data-testid="icon-clipboard"]')).toBeTruthy()
   })
@@ -445,7 +486,7 @@ describe("PortalNavigation", () => {
   it("disables brand logo redirect on /campus-apply", () => {
     mockPathname = "/campus-apply"
     render(<PortalNavigation />)
-    const link = screen.getByText("Physics Wallah").closest("a")
+    const link = screen.getByText("Hybrowlabs").closest("a")
     expect(link).toBeNull()
   })
 })

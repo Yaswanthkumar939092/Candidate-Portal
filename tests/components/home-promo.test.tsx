@@ -6,6 +6,7 @@ import { PromoCarousel } from "@/components/home/promo-carousel";
 import { homeService } from "@/lib/services/home";
 import type { HomeContent } from "@/types/home";
 
+vi.mock("@/lib/careers/milestone", () => ({ HOME_PROMO_ENABLED: true }));
 vi.mock("@/lib/services/home", () => ({ homeService: { getHomeContent: vi.fn() } }));
 vi.mock("motion/react", () => ({
   AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,

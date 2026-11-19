@@ -60,11 +60,17 @@ describe("dashboard service and hooks (characterization)", () => {
 
   // Spec: CAND-04-A6.3C (docs/spec/clauses/04-dashboard.md#cand-04-a6-3c)
   // Characterization: pins current behaviour, not endorsed.
-  it("returns the backend reply unchanged from both applicant-status service methods and lets a rejection through", async () => {
-    const list = { success: true, data: { applications: [] } }
+  it("adapts v1 my_applications rows into the status shape, returns the applicant detail unchanged and lets a rejection through", async () => {
     const detail = { name: "APP-TEST-0001" }
-    h.get.mockResolvedValueOnce(list)
-    await expect(ApplicantStatusResponse.getApplicantStatusResponse("cand@example.invalid")).resolves.toBe(list)
+    h.get.mockResolvedValueOnce([{ receipt: "APP-TEST-0002", job_opening: "HR-OPN-TEST-1", job_title: "Tester", status: "In review", submitted_on: "2026-01-02" }])
+    const adapted = await ApplicantStatusResponse.getApplicantStatusResponse("cand@example.invalid")
+    expect(h.get).toHaveBeenLastCalledWith("recruitment.api.v1.candidate.my_applications", {})
+    expect(adapted.success).toBe(true)
+    expect(adapted.data.applications).toHaveLength(1)
+    expect(adapted.data.applications[0]).toMatchObject({ id: "APP-TEST-0002", applied_on: "2026-01-02", status: "In review", job: { designation: "Tester" } })
+    expect(adapted.data.applications[0].flags.filter((f: { flag: boolean }) => f.flag).map((f: { status: string }) => f.status)).toEqual(["Open", "Replied"])
+    h.get.mockResolvedValueOnce(null)
+    expect((await ApplicantStatusResponse.getApplicantStatusResponse("cand@example.invalid")).data.applications).toEqual([])
     h.get.mockResolvedValueOnce(detail)
     await expect(ApplicantStatusResponse.getJobApplicant("APP-TEST-0001")).resolves.toBe(detail)
     h.get.mockRejectedValueOnce(new Error("backend down"))

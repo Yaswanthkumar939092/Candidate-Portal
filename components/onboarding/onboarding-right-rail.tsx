@@ -65,7 +65,7 @@ const FIELD_TIPS: Record<string, { title: string; body: string }> = {
   },
   custom_blood_group: {
     title: "Emergency use only",
-    body: "Visible to medical responders on PW campuses; not shared elsewhere.",
+    body: "Visible to medical responders at your workplace; not shared elsewhere.",
   },
   custom_father_name: {
     title: "As on Aadhaar",

@@ -26,9 +26,9 @@ export const DEFAULT_FEATURE_FLAGS = {
   job_recommendations: false,
   home: true,
   documents: false,
-  open_jobs: false,
+  open_jobs: true,
   action_center: false,
-  my_jobs: false,
+  my_jobs: true,
   careers_public_enabled: false,
 } as const
 

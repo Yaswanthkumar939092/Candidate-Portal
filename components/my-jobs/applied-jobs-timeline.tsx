@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { cn, formatDateDDMMYYYY } from "@/lib/utils"
 import React from "react"
 import { ViewApplicationModal } from "./view-application-modal"
+import { APPLICATION_DETAIL_ENABLED } from "@/lib/careers/milestone"
 
 // ─────────────────────────────────────────────
 // Types — mirroring the API response shape
@@ -313,25 +314,29 @@ export function AppliedJobsTimeline({
               </div>
 
               {/* ── Action ── */}
-              <div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSelectedApplication(app.id)}
-                >
-                  View Application
-                </Button>
-              </div>
+              {APPLICATION_DETAIL_ENABLED && (
+                <div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedApplication(app.id)}
+                  >
+                    View Application
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         )
       })}
 
-      <ViewApplicationModal
-        jobApplicantName={selectedApplication}
-        isOpen={!!selectedApplication}
-        onClose={() => setSelectedApplication(null)}
-      />
+      {APPLICATION_DETAIL_ENABLED && (
+        <ViewApplicationModal
+          jobApplicantName={selectedApplication}
+          isOpen={!!selectedApplication}
+          onClose={() => setSelectedApplication(null)}
+        />
+      )}
     </div>
   )
 }

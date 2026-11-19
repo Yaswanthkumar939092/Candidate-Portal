@@ -1,10 +1,15 @@
+"use client";
+
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { BRAND_LOGO, BRAND_LOGO_ON_DARK, BRAND_NAME } from "@/lib/branding";
+import { useLogoWithFallback } from "@/lib/hooks/useLogoWithFallback";
 import type { CandidateBranding } from "@/lib/services/candidate-branding";
 
-export function resolveBrandLogoUrl(logo?: string | null): string {
+/** Absolute URL for the configured logo, or null when Operate has none (the bundled wordmark is used). */
+export function resolveBrandLogoUrl(logo?: string | null): string | null {
   const value = logo?.trim();
-  if (!value) return "/fallback.png";
+  if (!value) return null;
   if (value.startsWith("http")) return value;
   const base = (process.env.NEXT_PUBLIC_FRAPPE_URL || "").replace(/\/$/, "");
   return `${base}${value.startsWith("/") ? value : `/${value}`}`;
@@ -23,7 +28,7 @@ export function shouldShowBrandName(branding?: CandidateBranding | null): boolea
 interface BrandLockupProps {
   branding?: CandidateBranding | null;
   /** Override the resolved logo URL (e.g. an auth-page specific logo). */
-  logoSrc?: string;
+  logoSrc?: string | null;
   /** `light` for dark backgrounds (auth left pane). */
   tone?: "default" | "light";
   size?: "md" | "lg";
@@ -32,7 +37,11 @@ interface BrandLockupProps {
   className?: string;
 }
 
-/** Logo first, company name second, vertically centred — one layout for every portal surface. */
+/**
+ * Logo first, company name second, vertically centred — one layout for every portal surface.
+ * Without a configured logo, or when it fails to load (Operate's relative /files URLs are not
+ * served by the /backend proxy), the bundled Hybrowlabs wordmark is shown instead.
+ */
 export function BrandLockup({
   branding,
   logoSrc,
@@ -41,8 +50,12 @@ export function BrandLockup({
   unoptimized,
   className,
 }: BrandLockupProps) {
-  const showName = shouldShowBrandName(branding);
-  const name = branding?.title_prefix?.trim() ?? "";
+  const fallback = tone === "light" ? BRAND_LOGO_ON_DARK : BRAND_LOGO;
+  const logo = useLogoWithFallback(logoSrc || resolveBrandLogoUrl(branding?.app_logo), fallback);
+  // The bundled wordmark already spells out the name, so it never gets a text label.
+  const usingFallback = logo.src === fallback;
+  const showName = shouldShowBrandName(branding) && !usingFallback;
+  const name = branding?.title_prefix?.trim() || BRAND_NAME;
   const px = size === "lg" ? 48 : 32;
 
   return (
@@ -51,8 +64,10 @@ export function BrandLockup({
       className={cn("flex min-w-0 items-center", size === "lg" ? "gap-3" : "gap-2", className)}
     >
       <Image
-        src={logoSrc || resolveBrandLogoUrl(branding?.app_logo)}
-        alt={showName ? "" : name || "Logo"}
+        src={logo.src}
+        onError={logo.onError}
+        // The alt names what the picture shows: the bundled wordmark is always Hybrowlabs.
+        alt={showName ? "" : usingFallback ? BRAND_NAME : name}
         aria-hidden={showName ? true : undefined}
         width={px}
         height={px}

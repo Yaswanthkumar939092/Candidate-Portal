@@ -83,8 +83,8 @@ The pages of the onboarding, dashboard, jobs, offer and survey flows are specced
 
 ### A3: Root metadata
 
-- A3.1: The page title is `<prefix> - Candidate Portal` with template `%s | <prefix>`; the prefix is the branding `title_prefix` and `ERP` when branding has none or the call rejects (`app/layout.tsx:27,31-34,44-47`). [CAND-01-A3.1A] [CAND-01-A3.1B]
-- A3.2: The icon is the branding `app_logo` unchanged when it starts with `http`, otherwise `NEXT_PUBLIC_FRAPPE_URL` (trailing slash removed) plus the logo path with a leading slash added; with no logo it is `/favicon.svg` (`app/layout.tsx:28,35-39`). [CAND-01-A3.1A] [CAND-01-A3.1B]
+- A3.1: The page title is `<prefix> - Candidate Portal` with template `%s | <prefix>`; the prefix is the branding `title_prefix` and `Hybrowlabs` (`BRAND_NAME`, `lib/branding.ts`) when branding has none or the call rejects (`app/layout.tsx:28,35-37,43-46`). [CAND-01-A3.1A] [CAND-01-A3.1B]
+- A3.2: The icon is always the bundled Hybrowlabs mark `/favicon.svg`; the branding `app_logo` is not used for the favicon (OPS-500) (`app/layout.tsx:29-31`). [CAND-01-A3.1A] [CAND-01-A3.1B]
 - A3.3: `/ctc-proposal` and `/direct-applicant-form` set `referrer: "no-referrer"` so the token in the URL is not sent as a Referer (`app/ctc-proposal/layout.tsx:5`, `app/direct-applicant-form/layout.tsx:5`). [CAND-01-A3.2A]
 - A3.4: The root layout writes an inline script into the head that reads `localStorage` keys `candidate-portal-theme` and `candidate-portal-brand` before first paint (`app/layout.tsx:76-78`).
 
@@ -139,9 +139,9 @@ None. This is a browser and Node front end with no scheduler, no server hooks an
 - Security: the redirect after sign-in is taken from the `redirect` query value without a same-origin check (SPEC-CAND-03, issue PWHR-1519).
 - Security: `useCurrentUser` falls back to a fixed personal e-mail address and its callers use it as the applicant e-mail for offer and onboarding calls (`lib/hooks/useUser.ts:12-16`, `app/(portal)/job_offer/page.tsx:127,133`). Issue: PWHR-1512.
 - Security: `app/layout.tsx` inserts a script with `dangerouslySetInnerHTML`; its content is a constant string with no input from the request (`app/layout.tsx:76-78`).
-- Security: the page `app/(public)/page.tsx:17-18` names a customer in its fallback text. Core clauses are customer-neutral; this is a fact about the code, listed here for the owner (Not filed: copy text, no behaviour).
+- Branding: the home page fallback (`app/(public)/page.tsx:19-22`) is Hybrowlabs' own copy, with the heading built from `BRAND_NAME` (`lib/branding.ts`). The earlier customer name in this text was removed in OPS-500.
 - Performance: the one React Query client is `new QueryClient()` with no `defaultOptions`, built at module scope, and the auth provider and that client wrap every route, so each hook decides its own freshness and ten of them set no `staleTime` (`app/providers.tsx:9,14`, `app/layout.tsx:85-88`). Issue: PWHR-1754.
-- Performance: the branding method is called twice per first page view, once on the server in `generateMetadata` with no cache option and once in the browser by `DynamicFavicon`, which `Providers` renders on every route (`app/layout.tsx:31`, `app/providers.tsx:15`, `components/dynamic-favicon.tsx:11`, `lib/hooks/useCandidateBranding.ts:5-8`). Whether Next.js caches or dedups the server call was not read. Issue: PWHR-1755. [INFERENCE]
+- Performance: the branding method is called on the server in `generateMetadata` with no cache option on every first page view (`app/layout.tsx:34`). The second, browser-side call by `DynamicFavicon` was removed with that component in OPS-500. Whether Next.js caches or dedups the server call was not read. Issue: PWHR-1755. [INFERENCE]
 - Performance: `(portal)` pages sit behind `FeatureFlagLoader`, which renders a spinner instead of the page until the flag request settles, and the flag context value is a fresh object on every provider render (`app/(portal)/layout.tsx:56-57`, `lib/contexts/feature-flags.tsx:133-136,78-85`). Issue: PWHR-1756.
 - Performance: `useCurrentUser` re-requests the session the provider already fetched, in a mount effect with no cache, dedup or staleness gate, once per mounting component (`lib/hooks/useUser.ts:8-22`, `lib/contexts/auth-context.tsx:69`). Issue: PWHR-1757.
 
@@ -154,7 +154,7 @@ None. This is a browser and Node front end with no scheduler, no server hooks an
 - G5: The `(portal)` layout drops the requested URL when it sends a visitor to `/login` (`app/(portal)/layout.tsx:33`), while `/campus-apply` keeps it (`app/campus-apply/page.tsx:45`). Whether that is intended is a question for the owner. Not filed: product question.
 - G6: Every case stubs the backend; none talks to a real Frappe site or a browser. Hosted CI is UNVERIFIED.
 - G7: `CareersShell` shows the guest header while auth is still loading and then redirects a signed-in visitor; a signed-in visitor may see a flash of the guest header (`components/careers/careers-shell.tsx:27,34`). [INFERENCE: render timing was not observed]
-- G8: `app/(public)/page.tsx:17-18` contains a customer name in core source. Not filed: copy text.
+- G8: Resolved in OPS-500. `app/(public)/page.tsx` no longer contains a customer name; its fallback is Hybrowlabs copy.
 - Statutory source: not applicable.
 
 ## 10. Uncovered behaviour
@@ -381,17 +381,17 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 | Case | What the assertions check | Test |
 |---|---|---|
-| [CAND-01-A3.1A](01-overview-routing-and-session.md#cand-01-a3-1a) | Title prefix and icon URL are derived from branding, with ERP as default. | [`builds the title and favicon from the branding: title_prefix, and app_logo made absolute against NEXT_PUBLIC_FRAPPE_URL unless it already starts with http`](../../../tests/spec/cand-01-metadata-and-redirects.test.tsx) |
-| [CAND-01-A3.1B](01-overview-routing-and-session.md#cand-01-a3-1b) | A rejecting branding call falls back to ERP and /favicon.svg. | [`falls back to the prefix ERP and /favicon.svg when the branding call rejects`](../../../tests/spec/cand-01-metadata-and-redirects.test.tsx) |
+| [CAND-01-A3.1A](01-overview-routing-and-session.md#cand-01-a3-1a) | Title prefix is derived from branding, with Hybrowlabs as default; the icon is always /favicon.svg. | [`builds the title from the branding title_prefix, defaults it to Hybrowlabs, and always uses the bundled /favicon.svg`](../../../tests/spec/cand-01-metadata-and-redirects.test.tsx) |
+| [CAND-01-A3.1B](01-overview-routing-and-session.md#cand-01-a3-1b) | A rejecting branding call falls back to Hybrowlabs and /favicon.svg. | [`falls back to the prefix Hybrowlabs and /favicon.svg when the branding call rejects`](../../../tests/spec/cand-01-metadata-and-redirects.test.tsx) |
 | [CAND-01-A3.2A](01-overview-routing-and-session.md#cand-01-a3-2a) | The two token-link layouts set referrer no-referrer. | [`sets referrer no-referrer on the two token-link layouts`](../../../tests/spec/cand-01-metadata-and-redirects.test.tsx) |
 
 <a id="cand-01-a3-1a"></a>
 #### CAND-01-A3.1A: Metadata from branding
 
-- Precondition: `getCandidateBranding` resolves in turn: prefix and `/files/logo.png`; prefix and `files/logo.png`; only an `https` logo. `NEXT_PUBLIC_FRAPPE_URL` is a synthetic host with a trailing slash.
-- Action: Call `generateMetadata` three times.
-- Expected result: The title default and template use the prefix; relative logos become the host plus a single leading-slash path; an `https` logo is unchanged; with no prefix the title uses `ERP` `app/layout.tsx:27-39,44-47`
-- Test: characterization: `tests/spec/cand-01-metadata-and-redirects.test.tsx::builds the title and favicon from the branding: title_prefix, and app_logo made absolute against NEXT_PUBLIC_FRAPPE_URL unless it already starts with http`
+- Precondition: `getCandidateBranding` resolves in turn: prefix and `/files/logo.png`; only an `https` logo.
+- Action: Call `generateMetadata` twice.
+- Expected result: The title default and template use the prefix; with no prefix the title uses `Hybrowlabs`; the icon is `/favicon.svg` in both cases `app/layout.tsx:28-46`
+- Test: characterization: `tests/spec/cand-01-metadata-and-redirects.test.tsx::builds the title from the branding title_prefix, defaults it to Hybrowlabs, and always uses the bundled /favicon.svg`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
 - Known gaps: Services and hooks are mocked with `vi.mock`; no real HTTP, Frappe backend or browser. Fonts and `Providers` are stubbed; the favicon is not fetched.
 - Evidence: UNVERIFIED
@@ -401,8 +401,8 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 - Precondition: `getCandidateBranding` rejects.
 - Action: Call `generateMetadata`.
-- Expected result: The icon is `/favicon.svg`, the title uses `ERP` and the first keyword is `erp` `app/layout.tsx:26-28,40-42`
-- Test: characterization: `tests/spec/cand-01-metadata-and-redirects.test.tsx::falls back to the prefix ERP and /favicon.svg when the branding call rejects`
+- Expected result: The icon is `/favicon.svg`, the title uses `Hybrowlabs` and the first keyword is `hybrowlabs` `app/layout.tsx:28-31,38-49`
+- Test: characterization: `tests/spec/cand-01-metadata-and-redirects.test.tsx::falls back to the prefix Hybrowlabs and /favicon.svg when the branding call rejects`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
 - Known gaps: Services and hooks are mocked with `vi.mock`; no real HTTP, Frappe backend or browser.
 - Evidence: UNVERIFIED

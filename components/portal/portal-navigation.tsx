@@ -31,7 +31,6 @@ import {
 } from "@/components/ui/sheet";
 
 import {
-  Home,
   Briefcase,
   ClipboardList,
   ChevronDown,
@@ -62,7 +61,6 @@ interface PortalNavigationProps {
 }
 
 const navItems: NavItem[] = [
-  { label: "Home", href: "/dashboard", icon: Home },
   {
     label: "Open Jobs",
     href: "/open-jobs",
@@ -74,12 +72,6 @@ const navItems: NavItem[] = [
     href: "/my-jobs",
     icon: ClipboardList,
     flagKey: "my_jobs",
-  },
-  {
-    label: "Action Center",
-    href: "/action-center",
-    icon: ClipboardList,
-    flagKey: "action_center",
   },
 ];
 
@@ -109,7 +101,7 @@ function formatRole(role: string): string {
 
 /**
  * Desktop-first top navigation bar for authenticated portal pages.
- * Matches the Physics Wallah design with dark pill active states,
+ * Pill-style active states,
  * green pill for Action Center, badge counts, and user avatar dropdown.
  */
 export function PortalNavigation({
@@ -260,7 +252,7 @@ export function PortalNavigation({
               </div>
             ) : (
               <Link
-                href="/dashboard"
+                href="/open-jobs"
                 className="flex min-w-0 items-center gap-2"
                 onClick={() => {
                   queryClient.invalidateQueries({
@@ -375,14 +367,6 @@ export function PortalNavigation({
 
               {!disableUserDropdown && (
                 <>
-                  {/* Profile link */}
-                  <DropdownMenuItem asChild>
-                    <Link href="/profile" className="flex items-center">
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
-                    </Link>
-                  </DropdownMenuItem>
-
                   {/* Settings link */}
                   {/* <DropdownMenuItem asChild>
                     <Link href="/settings" className="flex items-center">

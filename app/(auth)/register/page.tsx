@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertTriangle, MailCheck, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { safeRedirect } from "@/lib/careers/login-redirect";
 
 export default function RegisterPage() {
   return (
@@ -53,11 +54,7 @@ function RegisterContent() {
     : error;
 
   const handlePostRegistrationRouting = () => {
-    if (redirectParam) {
-      router.push(redirectParam);
-    } else {
-      router.push("/dashboard");
-    }
+    router.push(safeRedirect(redirectParam, "/open-jobs"));
   };
 
   const handleRegister = async (formData: AuthFormData) => {

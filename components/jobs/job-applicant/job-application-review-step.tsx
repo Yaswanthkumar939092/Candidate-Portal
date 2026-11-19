@@ -14,6 +14,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useJobApp } from "@/lib/contexts/job-application-context";
 import { useAuth } from "@/lib/contexts/auth-context";
+import { applyJobPath } from "@/lib/careers/job-route";
 import {
   useCreateJobApplicant,
 } from "@/lib/hooks/useJobOpening";
@@ -140,7 +141,7 @@ export function JobApplicationReviewStep({
           if (onSubmitSuccess) {
             onSubmitSuccess();
           } else {
-            router.push(`/open-jobs/${jobID}/apply-job/thank-you`);
+            router.push(`${applyJobPath(jobID)}/thank-you`);
           }
         },
         onError: (err: any) => {
