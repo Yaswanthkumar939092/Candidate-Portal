@@ -193,11 +193,33 @@ describe("PortalNavigation", () => {
   })
 
   // Spec: CAND-04-A8.1A (docs/spec/clauses/04-dashboard.md#cand-04-a8-1a)
-  it("renders only the navigation items that work on the reviewed v1 API", () => {
+  it("renders every top-nav item whose feature flag is on, including Action Center", () => {
+    // The default mock in beforeEach returns `isEnabled: () => true`, so every
+    // flag-gated nav item should render. Action Center is included: admins
+    // drive its visibility through the Candidate Portal Feature Flag doctype
+    // (`action_center` row) just like Open Jobs and My Jobs.
     render(<PortalNavigation />)
     expect(screen.getByText("Open Jobs")).toBeTruthy()
     expect(screen.getByText("My Jobs")).toBeTruthy()
+    expect(screen.getByText("Action Center")).toBeTruthy()
+    // Home was removed from the nav in HYBA-2609 and has no backend flag;
+    // it stays absent regardless of the doctype.
     expect(screen.queryByText("Home")).toBeNull()
+  })
+
+  it("hides Action Center when the action_center flag is off, independently of Open Jobs / My Jobs", () => {
+    vi.mocked(featureFlagsContext.useFeatureFlags).mockReturnValue({
+      isEnabled: vi.fn((flag: string) => flag !== "action_center"),
+      flags: {},
+      isLoading: false,
+      error: null,
+      refreshFlags: vi.fn(),
+      getFlag: vi.fn(() => true),
+    })
+
+    render(<PortalNavigation />)
+    expect(screen.getByText("Open Jobs")).toBeTruthy()
+    expect(screen.getByText("My Jobs")).toBeTruthy()
     expect(screen.queryByText("Action Center")).toBeNull()
   })
 

@@ -33,6 +33,7 @@ import {
 import {
   Briefcase,
   ClipboardList,
+  Bell,
   ChevronDown,
   LogOut,
   User,
@@ -72,6 +73,12 @@ const navItems: NavItem[] = [
     href: "/my-jobs",
     icon: ClipboardList,
     flagKey: "my_jobs",
+  },
+  {
+    label: "Action Center",
+    href: "/action-center",
+    icon: Bell,
+    flagKey: "action_center",
   },
 ];
 
