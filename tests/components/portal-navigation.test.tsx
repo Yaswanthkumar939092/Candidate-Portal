@@ -193,18 +193,17 @@ describe("PortalNavigation", () => {
   })
 
   // Spec: CAND-04-A8.1A (docs/spec/clauses/04-dashboard.md#cand-04-a8-1a)
-  it("renders every top-nav item whose feature flag is on, including Action Center", () => {
+  it("renders every top-nav item whose feature flag is on, including Home and Action Center", () => {
     // The default mock in beforeEach returns `isEnabled: () => true`, so every
-    // flag-gated nav item should render. Action Center is included: admins
-    // drive its visibility through the Candidate Portal Feature Flag doctype
-    // (`action_center` row) just like Open Jobs and My Jobs.
+    // flag-gated nav item should render. Admins drive visibility through the
+    // Candidate Portal Feature Flag doctype rows (`home`, `open_jobs`,
+    // `my_jobs`, `action_center`); the nav component does not special-case
+    // any of them.
     render(<PortalNavigation />)
+    expect(screen.getByText("Home")).toBeTruthy()
     expect(screen.getByText("Open Jobs")).toBeTruthy()
     expect(screen.getByText("My Jobs")).toBeTruthy()
     expect(screen.getByText("Action Center")).toBeTruthy()
-    // Home was removed from the nav in HYBA-2609 and has no backend flag;
-    // it stays absent regardless of the doctype.
-    expect(screen.queryByText("Home")).toBeNull()
   })
 
   it("hides Action Center when the action_center flag is off, independently of Open Jobs / My Jobs", () => {
@@ -221,6 +220,29 @@ describe("PortalNavigation", () => {
     expect(screen.getByText("Open Jobs")).toBeTruthy()
     expect(screen.getByText("My Jobs")).toBeTruthy()
     expect(screen.queryByText("Action Center")).toBeNull()
+  })
+
+  it("hides Home when the home flag is off", () => {
+    vi.mocked(featureFlagsContext.useFeatureFlags).mockReturnValue({
+      isEnabled: vi.fn((flag: string) => flag !== "home"),
+      flags: {},
+      isLoading: false,
+      error: null,
+      refreshFlags: vi.fn(),
+      getFlag: vi.fn(() => true),
+    })
+
+    render(<PortalNavigation />)
+    expect(screen.queryByText("Home")).toBeNull()
+    expect(screen.getByText("Open Jobs")).toBeTruthy()
+  })
+
+  it("points the brand lockup at /dashboard, not the first flag-gated page", () => {
+    // The brand click used to go to /open-jobs, which is admin-togglable and
+    // looks broken when disabled. /dashboard is the stable Home destination.
+    render(<PortalNavigation />)
+    const brandLink = screen.getByText("Hybrowlabs").closest("a")
+    expect(brandLink?.getAttribute("href")).toBe("/dashboard")
   })
 
   it("renders user avatar with initials", () => {
@@ -318,10 +340,10 @@ describe("PortalNavigation", () => {
     }
   })
 
-  it("brand logo links to /open-jobs, not the dashboard", () => {
+  it("brand logo links to /dashboard, so the Home destination stays stable even when Open Jobs is disabled", () => {
     render(<PortalNavigation />)
     const link = screen.getAllByRole("link").find((a) => a.querySelector("img"))
-    expect(link?.getAttribute("href")).toBe("/open-jobs")
+    expect(link?.getAttribute("href")).toBe("/dashboard")
   })
 
   it("has no Profile menu item, because the profile page calls methods the proxy denies", async () => {
@@ -479,7 +501,7 @@ describe("PortalNavigation", () => {
     const menuBtn = screen.getByRole("button", { name: /Toggle menu/i })
     await user.click(menuBtn)
     // Icons render inside the Sheet portal
-    expect(document.body.querySelector('[data-testid="icon-home"]')).toBeNull()
+    expect(document.body.querySelector('[data-testid="icon-home"]')).toBeTruthy()
     expect(document.body.querySelector('[data-testid="icon-briefcase"]')).toBeTruthy()
     expect(document.body.querySelector('[data-testid="icon-clipboard"]')).toBeTruthy()
   })

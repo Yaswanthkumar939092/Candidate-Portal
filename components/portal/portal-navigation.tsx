@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/sheet";
 
 import {
+  Home,
   Briefcase,
   ClipboardList,
   Bell,
@@ -62,6 +63,12 @@ interface PortalNavigationProps {
 }
 
 const navItems: NavItem[] = [
+  {
+    label: "Home",
+    href: "/dashboard",
+    icon: Home,
+    flagKey: "home",
+  },
   {
     label: "Open Jobs",
     href: "/open-jobs",
@@ -259,7 +266,7 @@ export function PortalNavigation({
               </div>
             ) : (
               <Link
-                href="/open-jobs"
+                href="/dashboard"
                 className="flex min-w-0 items-center gap-2"
                 onClick={() => {
                   queryClient.invalidateQueries({

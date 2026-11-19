@@ -142,6 +142,32 @@ function DashboardErrorState({
   );
 }
 
+/**
+ * Home shell rendered when the full onboarding dashboard is gated off
+ * (ONBOARDING_DASHBOARD_ENABLED = false). The route previously bounced the
+ * caller to /open-jobs, but Open Jobs itself is admin-togglable now: when
+ * that page is also disabled the redirect loops back here or lands the
+ * candidate on an empty screen. Rendering HomePromo (admin-configured copy)
+ * instead keeps /dashboard a usable Home destination for the top nav and
+ * brand lockup.
+ */
+function HomeShell({ displayName }: { displayName: string }) {
+  return (
+    <div className="mx-auto w-full max-w-5xl space-y-6 p-4 md:p-8">
+      <div>
+        <h1 className="text-2xl font-semibold text-foreground">
+          Welcome{displayName ? `, ${displayName}` : ""}
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Use the top navigation to find open roles, review your applications or
+          act on pending requests.
+        </p>
+      </div>
+      <HomePromo />
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const { user, profile } = useAuth();
   const router = useRouter();
@@ -153,11 +179,14 @@ export default function DashboardPage() {
     refetch,
   } = useDashboard(ONBOARDING_DASHBOARD_ENABLED ? user?.email : undefined);
 
-  useEffect(() => {
-    if (!ONBOARDING_DASHBOARD_ENABLED) router.replace("/open-jobs");
-  }, [router]);
-
-  if (!ONBOARDING_DASHBOARD_ENABLED) return null;
+  if (!ONBOARDING_DASHBOARD_ENABLED) {
+    const displayName =
+      profile?.full_name ||
+      user?.user_metadata?.full_name ||
+      user?.email?.split("@")[0] ||
+      "";
+    return <HomeShell displayName={displayName} />;
+  }
 
   const dashboardRegion = isLoading ? (
     <DashboardSkeleton />
