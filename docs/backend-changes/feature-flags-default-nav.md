@@ -19,68 +19,66 @@ visibility — hides both pages. The desired behaviour is:
 - Every other page (Action Center, Documents, Candidate Dashboard, …)
   stays off until an explicit row enables it.
 
-## Required change (two layers)
+## Required change — install patch; the method stays untouched
 
-### 1. `get_candidate_feature_flags` returns defaults even without doctype rows
+The Candidate Portal Feature Flag doctype is the single source of truth.
+`get_candidate_feature_flags` reports exactly what is stored and never
+injects a default; a missing or deleted row therefore hides the page at the
+frontend. Defaults for Open Jobs and My Jobs are materialised as real
+doctype rows by an install patch, so admins see them in Desk and so the
+admin's choice (off, or explicitly deleted) survives every future migrate
+without being undone by a fallback in the method.
 
-In the body of `get_candidate_feature_flags` (after the doctype rows are
-collected into the response map, before it is returned), fill in the two
-default-on keys only when the doctype has not already supplied them:
+Patch module: `recruitment.patches.add_default_candidate_portal_nav_flags`,
+registered in `recruitment/patches.txt`.
 
 ```python
-# recruitment/api/candidate_portal.py (shape, not committed here)
-@frappe.whitelist()
-def get_candidate_feature_flags():
-    doc = frappe.get_single("Candidate Portal Feature Flag")
-    result = {}
-    for row in doc.feature_flags:
-        if row.page_name:
-            result[row.page_name.strip().lower().replace(" ", "_")] = row.is_enabled
-    # Default-on nav items: present without a doctype row means "shown".
-    # A row with is_enabled = 0 overrides the default and hides the page.
-    result.setdefault("open_jobs", 1)
-    result.setdefault("my_jobs", 1)
-    return result
+# recruitment/patches/add_default_candidate_portal_nav_flags.py (shape only)
+import frappe
+
+DOCTYPE_NAME = "Candidate Portal Feature Flag"
+DEFAULT_ROWS = (("Open Jobs", 1), ("My Jobs", 1))
+
+def execute():
+    if not frappe.db.exists("DocType", DOCTYPE_NAME):
+        return
+    doc = frappe.get_single(DOCTYPE_NAME)
+    existing = {(r.page_name or "").strip().lower() for r in doc.feature_flags}
+    changed = False
+    for page_name, is_enabled in DEFAULT_ROWS:
+        if page_name.strip().lower() in existing:
+            continue
+        doc.append("feature_flags", {"page_name": page_name, "is_enabled": is_enabled})
+        changed = True
+    if changed:
+        doc.save(ignore_permissions=True)
 ```
 
-`setdefault` is load-bearing: it must not overwrite an explicit admin
-setting. If `"Open Jobs"` exists in the doctype with `is_enabled = 0`, the
-response must still carry `open_jobs: 0`.
-
-### 2. Install patch materialises the defaults as actual doctype rows
-
-`setdefault` alone keeps the UX surprising: the admin opens the doctype in
-Desk and sees no row for Open Jobs / My Jobs, so there is nothing obvious
-to tick off. An install patch (`recruitment.patches.add_default_candidate_portal_nav_flags`,
-registered in `patches.txt`) fixes this by appending the two rows with
-`is_enabled = 1` on migrate, only when a row with the same `page_name`
-does not already exist.
-
-The patch is both idempotent and admin-respecting:
+The patch is idempotent and admin-respecting:
   * each row is appended only when no row with that `page_name` is present
-    (case-insensitive match), so running the patch twice adds nothing;
+    (case-insensitive match), so running the patch again adds nothing;
   * an existing row (whatever its `is_enabled` value) is kept exactly as
     is, so an admin's "off" choice is preserved across every future
-    `bench migrate`. This is the persistence guarantee: **off stays off
-    until the admin ticks it back on.**
+    `bench migrate`;
+  * `get_candidate_feature_flags` has no fallback that could re-enable a
+    row the admin disabled or deleted. **Off stays off until the admin
+    ticks it back on.**
 
 ## Backend acceptance cases (added in cn-recruitment)
 
 ### `recruitment/api/test_candidate_feature_flags.py` (method)
 
-1. **Open Jobs and My Jobs default-on.** Doctype has no row for either;
-   method returns `open_jobs: 1`, `my_jobs: 1`.
-2. **Admin can disable Open Jobs.** Doctype has a row with
-   `page_name = "Open Jobs"` and `is_enabled = 0`; method returns
-   `open_jobs: 0` and `my_jobs: 1`.
-3. **Admin can disable My Jobs.** Symmetrical case.
-4. **Admin can re-enable with an explicit row.** `is_enabled = 1` is
-   honoured as 1.
-5. **Other pages stay off until a row enables them.** `action_center`,
-   `documents`, `candidate_dashboard` keys are absent until a row exists
-   (the frontend's `false` default applies).
-6. **Page name is snake-cased for the response key.** Existing behaviour
-   preserved: `"Candidate Dashboard"` → `candidate_dashboard`.
+1. **Doctype rows are the only source of truth.** No rows → empty map;
+   nothing is injected.
+2. **Returns the doctype values as is.** Three rows reported verbatim as
+   `{open_jobs, my_jobs, action_center}`.
+3. **Admin off choice is reported as off.** A row with `is_enabled = 0`
+   returns `0` (the migration-persistence case).
+4. **Deleted row is absent from the response.** No safety net undoes an
+   admin's deletion.
+5. **Page name is snake-cased for the response key.** `"Candidate Dashboard"`
+   → `candidate_dashboard`.
+6. **Blank page name is skipped**, not emitted as an empty key.
 
 ### `recruitment/recruitment/tests/test_add_default_candidate_portal_nav_flags.py` (patch)
 
