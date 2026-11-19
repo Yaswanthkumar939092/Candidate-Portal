@@ -15,6 +15,7 @@ import { cn, formatDateDDMMYYYY } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useJobOpening } from "@/lib/hooks/useJobOpening";
 import { useToggleSavedJob } from "@/lib/hooks/useSavedJobs";
+import { SAVED_AND_DRAFTS_ENABLED } from "@/lib/careers/milestone";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { CustomJobOpening } from "@/types/job";
 import { takePendingResume } from "@/lib/careers/pending-resume";
@@ -399,7 +400,7 @@ export default function OpenJobsPage() {
                     columnFields={openingColumnData.get(job.id)}
                     isBookmarked={job.saved ?? false}
                     isBookmarkPending={pendingBookmarkId === job.id}
-                    onBookmark={() => handleBookmark(job.id)}
+                    onBookmark={SAVED_AND_DRAFTS_ENABLED ? () => handleBookmark(job.id) : undefined}
                     onViewDetails={() => handleViewDetails(job)}
                   />
                 ))}

@@ -17,6 +17,7 @@ const base: RawPublicOpening = {
   custom_min_experience_required: 2,
   custom_work_experience_range: "",
   custom_tag_as_remote_job: 0,
+  custom_is_evergreen: 0,
   lower_range: 50000,
   upper_range: 600000,
   salary_per: "Year",
@@ -26,9 +27,9 @@ const base: RawPublicOpening = {
 const types = { EMPTYPE_2: "Employee" };
 
 describe("normalizeOpening", () => {
-  it("treats an opening without a closing date as evergreen", () => {
-    expect(normalizeOpening(base, types).evergreen).toBe(true);
-    expect(normalizeOpening({ ...base, closes_on: "2026-11-14" }, types).evergreen).toBe(false);
+  it("uses the explicit evergreen flag instead of treating every opening without a closing date as evergreen", () => {
+    expect(normalizeOpening(base, types).evergreen).toBe(false);
+    expect(normalizeOpening({ ...base, custom_is_evergreen: 1 }, types).evergreen).toBe(true);
   });
 
   it("never exposes salary unless the opening publishes it", () => {

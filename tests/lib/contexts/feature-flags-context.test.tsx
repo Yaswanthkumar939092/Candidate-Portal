@@ -53,6 +53,16 @@ describe('FeatureFlagContext', () => {
       expect(DEFAULT_FEATURE_FLAGS.oauth_login).toBe(true)
     })
 
+    it('enables the two pages milestone 1 serves, so navigation works with only the public flag returned', () => {
+      expect(DEFAULT_FEATURE_FLAGS.open_jobs).toBe(true)
+      expect(DEFAULT_FEATURE_FLAGS.my_jobs).toBe(true)
+    })
+
+    it('keeps pages that call denied methods off by default', () => {
+      expect(DEFAULT_FEATURE_FLAGS.action_center).toBe(false)
+      expect(DEFAULT_FEATURE_FLAGS.documents).toBe(false)
+    })
+
     it('has social_job_sharing disabled', () => {
       expect(DEFAULT_FEATURE_FLAGS.social_job_sharing).toBe(false)
     })

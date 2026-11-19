@@ -3,8 +3,8 @@ import { NextResponse } from "next/server";
 /**
  * Guest-safe branding proxy for the public Careers pages. The portal's
  * `useCandidateBranding` hits the same Frappe method with a session cookie,
- * which a guest does not have — so this route calls it with the server-side
- * API key and returns a stripped-down branding payload.
+ * which a guest does not have, so this route calls the Guest-allowed method
+ * without credentials and returns a stripped-down branding payload.
  */
 export async function GET() {
   const frappeUrl = (
@@ -12,10 +12,8 @@ export async function GET() {
     process.env.NEXT_PUBLIC_FRAPPE_URL ||
     ""
   ).replace(/\/$/, "");
-  const apiKey = process.env.FRAPPE_API_KEY;
-  const apiSecret = process.env.FRAPPE_API_SECRET;
 
-  if (!frappeUrl || !apiKey || !apiSecret) {
+  if (!frappeUrl) {
     return NextResponse.json({ branding: {} });
   }
 
@@ -23,7 +21,7 @@ export async function GET() {
     const res = await fetch(
       `${frappeUrl}/api/method/recruitment.api.candidate_portal.get_website_branding`,
       {
-        headers: { Authorization: `token ${apiKey}:${apiSecret}` },
+        headers: { Accept: "application/json" },
         cache: "no-store",
       },
     );

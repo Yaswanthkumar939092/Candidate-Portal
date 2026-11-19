@@ -37,6 +37,9 @@ vi.mock("@/lib/services/pre-offer", () => ({
 vi.mock("@/lib/services/profileService", () => ({
   profileService: { updateProfile: svc.updateProfile, changePassword: svc.changePassword },
 }))
+// Home content is gated off for milestone 1 (HOME_PROMO_ENABLED); open the
+// gate here to pin how the hook behaves once it is on.
+vi.mock("@/lib/careers/milestone", async (orig) => ({ ...(await orig<object>()), HOME_PROMO_ENABLED: true }))
 vi.mock("@/lib/services/home", () => ({ homeService: { getHomeContent: svc.getHomeContent } }))
 vi.mock("@/lib/services/survey", () => ({
   surveyService: { getPostLoginRoute: svc.getPostLoginRoute, submitSurvey: svc.submitSurvey },

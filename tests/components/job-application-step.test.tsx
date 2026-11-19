@@ -768,3 +768,51 @@ describe("JobApplicationStep Coverage Enhancements", () => {
     })
   })
 })
+
+describe("JobApplicationStep draft handling (v1 has no draft state)", () => {
+  const mockMutate = vi.fn()
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockMethods.watch.mockReturnValue({})
+    mockMethods.control._getWatch.mockReturnValue({})
+    mockUseAuth.mockReturnValue({ user: { email: "test@example.com" } })
+    ; (jobAppContext.useJobApp as any).mockReturnValue({ stepData: { s1: {} }, setStepData: vi.fn() })
+    ; (jobOpeningHooks.useCreateJobApplicant as any).mockReturnValue({ mutate: mockMutate, isPending: false })
+  })
+
+  const tab = {
+    tab: "Step",
+    sections: [{ section: "Step", fields: [{ fieldname: "full_name", label: "Full Name", fieldtype: "Data" }] }],
+  }
+
+  it("does not offer a Save Draft button, because a draft would be stored as a submitted application", () => {
+    render(
+      <JobApplicationStep tab={tab} stepKey="s1" currentStep={0} totalSteps={2} jobID="J1"
+        onNext={vi.fn()} onPrev={vi.fn()} methods={mockMethods} />
+    )
+    expect(screen.queryByText("Save Draft")).toBeNull()
+    expect(screen.getByText("Next Step")).toBeTruthy()
+  })
+
+  it("moving to the next step never calls the submit mutation", async () => {
+    const onNext = vi.fn()
+    render(
+      <JobApplicationStep tab={tab} stepKey="s1" currentStep={0} totalSteps={2} jobID="J1"
+        onNext={onNext} onPrev={vi.fn()} methods={mockMethods} />
+    )
+    fireEvent.click(screen.getByText("Next Step"))
+    await waitFor(() => expect(onNext).toHaveBeenCalled())
+    expect(mockMutate).not.toHaveBeenCalled()
+  })
+
+  it("only the final step submits, and it submits status Open", async () => {
+    render(
+      <JobApplicationStep tab={tab} stepKey="s1" currentStep={1} totalSteps={2} jobID="J1"
+        onNext={vi.fn()} onPrev={vi.fn()} methods={mockMethods} />
+    )
+    fireEvent.click(screen.getByText("Submit Application"))
+    await waitFor(() => expect(mockMutate).toHaveBeenCalledTimes(1))
+    expect(mockMutate.mock.calls[0][0].status).toBe("Open")
+  })
+})

@@ -27,6 +27,8 @@ import { JobMatchCard } from "@/components/jobs/job-match-card";
 import { JobDetailDialog } from "@/components/jobs/job-detail-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { toast } from "sonner";
+import { SAVED_AND_DRAFTS_ENABLED } from "@/lib/careers/milestone";
+import { applyJobPath } from "@/lib/careers/job-route";
 import Link from "next/link";
 
 // Mock data for draft applications removed in favor of real API
@@ -39,7 +41,7 @@ export default function MyJobsPage() {
     data: draftsResponse,
     isLoading: isLoadingDrafts,
     refetch: refetchDrafts,
-  } = useGetAllDrafts(userEmail);
+  } = useGetAllDrafts(SAVED_AND_DRAFTS_ENABLED ? userEmail : "");
   const { mutate: deleteDraft, isPending: isDeletingDraft } =
     useDeleteDraftJobApplicant();
 
@@ -47,7 +49,7 @@ export default function MyJobsPage() {
   const drafts = draftsResponse?.data || [];
 
   const { data: savedJobsResponse, isLoading: isLoadingSaved } =
-    useGetSavedJobs(userEmail);
+    useGetSavedJobs(SAVED_AND_DRAFTS_ENABLED ? userEmail : "");
   const savedJobsDetails = savedJobsResponse?.openings || savedJobsResponse?.saved_job_openings || [];
   const savedJobColumns = savedJobsResponse?.columns || [];
 
@@ -125,7 +127,11 @@ export default function MyJobsPage() {
         </p>
       </div>
 
-      {/* Info banner */}
+      {!SAVED_AND_DRAFTS_ENABLED && (
+        <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+          Saved jobs and draft applications are not available in this test.
+        </p>
+      )}
 
       {/* Tab bar */}
       <div className="flex items-center gap-6 border-b border-border">
@@ -152,6 +158,7 @@ export default function MyJobsPage() {
           )}
         </button>
 
+        {SAVED_AND_DRAFTS_ENABLED && (
         <button
           className={cn(
             "relative flex items-center gap-1.5 pb-2.5 text-sm font-medium transition-colors",
@@ -174,7 +181,9 @@ export default function MyJobsPage() {
             <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground" />
           )}
         </button>
+        )}
 
+        {SAVED_AND_DRAFTS_ENABLED && (
         <button
           className={cn(
             "relative flex items-center gap-1.5 pb-2.5 text-sm font-medium transition-colors",
@@ -197,6 +206,7 @@ export default function MyJobsPage() {
             <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground" />
           )}
         </button>
+        )}
       </div>
 
       {/* Applied Jobs Tab */}
@@ -329,7 +339,7 @@ export default function MyJobsPage() {
                         <Trash2 className="h-4 w-4" />
                       </Button>
                       <Button size="sm" className="gap-1" asChild>
-                        <Link href={`/open-jobs/${draft.job_opening}/apply-job`}>
+                        <Link href={applyJobPath(draft.job_opening)}>
                           Resume Application
                           <ChevronRight className="h-4 w-4" />
                         </Link>

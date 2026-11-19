@@ -4,6 +4,8 @@ import userEvent from "@testing-library/user-event"
 import { AppliedJobsTimeline } from "@/components/my-jobs/applied-jobs-timeline"
 import React from "react"
 
+vi.mock("@/lib/careers/milestone", () => ({ APPLICATION_DETAIL_ENABLED: true, SAVED_AND_DRAFTS_ENABLED: true }))
+
 vi.mock("@/components/my-jobs/view-application-modal", () => ({
   ViewApplicationModal: ({ isOpen, onClose, jobApplicantName }: any) => (
     isOpen ? (

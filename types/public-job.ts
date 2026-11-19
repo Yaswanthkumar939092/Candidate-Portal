@@ -14,6 +14,7 @@ export interface RawPublicOpening {
   custom_min_experience_required: number | null;
   custom_work_experience_range: string | null;
   custom_tag_as_remote_job: 0 | 1 | null;
+  custom_is_evergreen: 0 | 1 | null;
   lower_range: number | null;
   upper_range: number | null;
   salary_per: string | null;
@@ -36,6 +37,6 @@ export interface PublicOpening {
   closesOn: string | null;
   /** Salary is only exposed when the opening is flagged `publish_salary_range`. */
   salary: { lower: number; upper: number; per: string } | null;
-  /** Evergreen = no closing date; stays live for ongoing / bulk hiring. */
+  /** Evergreen = the Job Opening's explicit Evergreen Job tick; stays live for ongoing / bulk hiring. */
   evergreen: boolean;
 }

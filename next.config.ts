@@ -38,7 +38,7 @@ function getRemoteImagePatterns() {
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  // /backend/* is rewritten by Node middleware using runtime FRAPPE_BASE_URL.
+  // /backend/* is proxied by app/backend/[...path]/route.ts using runtime FRAPPE_BASE_URL.
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -49,6 +49,18 @@ const nextConfig: NextConfig = {
     serverActions: {
       allowedOrigins: ["localhost:3000"],
     },
+  },
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+        ],
+      },
+    ];
   },
   images: {
     remotePatterns: getRemoteImagePatterns(),

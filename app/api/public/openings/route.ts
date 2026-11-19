@@ -1,59 +1,69 @@
 import { NextResponse } from "next/server";
-import { listLiveOpenings, PUBLIC_OPENING_FIELDS } from "@/lib/careers/openings";
-import type { RawPublicOpening } from "@/types/public-job";
+import { fromV1Opening, type V1OpeningRow } from "@/lib/careers/openings";
+import type { PublicOpening } from "@/types/public-job";
+
+const METHOD = "recruitment.api.v1.candidate";
+const PAGE_LENGTH = 50;
+const MAX_PAGES = 10;
+const DETAIL_CONCURRENCY = 8;
+
+function frappeUrl(): string {
+  return (process.env.FRAPPE_BASE_URL || process.env.NEXT_PUBLIC_FRAPPE_URL || "").replace(/\/$/, "");
+}
+
+async function call<T>(base: string, method: string, params: Record<string, string>): Promise<T | null> {
+  const res = await fetch(`${base}/api/method/${METHOD}.${method}?${new URLSearchParams(params)}`, {
+    headers: { Accept: "application/json" },
+    cache: "no-store",
+  });
+  if (!res.ok) return null;
+  return ((await res.json()) as { message?: T }).message ?? null;
+}
+
+interface ListPayload {
+  openings: V1OpeningRow[];
+  total?: number;
+}
+
+async function withDescription(base: string, row: V1OpeningRow): Promise<PublicOpening> {
+  try {
+    const d = await call<{ description?: string }>(base, "get_opening", { name: row.name });
+    return fromV1Opening(row, d?.description ?? "");
+  } catch {
+    return fromV1Opening(row, "");
+  }
+}
 
 /**
- * Guest-readable list of open Job Openings for the public careers pages.
- *
- * `recruitment.api.channels.careers.list_openings` requires a session, so this
- * route reads the Job Opening resource with the server-side API key and returns
- * only the whitelisted fields in `PUBLIC_OPENING_FIELDS`.
+ * Guest-readable list of open Job Openings. Uses only the narrow Guest methods of the
+ * reviewed v1 API, so it needs no Frappe API key and no DocType read permission.
  */
 export async function GET() {
-  const frappeUrl = (process.env.FRAPPE_BASE_URL || process.env.NEXT_PUBLIC_FRAPPE_URL || "").replace(/\/$/, "");
-  const apiKey = process.env.FRAPPE_API_KEY;
-  const apiSecret = process.env.FRAPPE_API_SECRET;
-
-  if (!frappeUrl || !apiKey || !apiSecret) {
-    return NextResponse.json({ error: "Frappe API credentials are not configured" }, { status: 500 });
-  }
-
-  const headers = { Authorization: `token ${apiKey}:${apiSecret}` };
-  const resource = (doctype: string, params: Record<string, string>) =>
-    fetch(`${frappeUrl}/api/resource/${encodeURIComponent(doctype)}?${new URLSearchParams(params)}`, {
-      headers,
-      cache: "no-store",
-    });
+  const base = frappeUrl();
+  if (!base) return NextResponse.json({ error: "Backend URL is not configured" }, { status: 500 });
 
   try {
-    const [openingsRes, typesRes] = await Promise.all([
-      resource("Job Opening", {
-        fields: JSON.stringify(PUBLIC_OPENING_FIELDS),
-        filters: JSON.stringify([["status", "=", "Open"]]),
-        order_by: "posted_on desc",
-        limit_page_length: "500",
-      }),
-      resource("Employment Type", {
-        fields: JSON.stringify(["name", "employee_type_name"]),
-        limit_page_length: "0",
-      }),
-    ]);
-
-    if (!openingsRes.ok) {
-      return NextResponse.json({ error: "Failed to fetch open jobs" }, { status: 502 });
-    }
-
-    const raws: RawPublicOpening[] = (await openingsRes.json()).data ?? [];
-    const employmentTypes: Record<string, string> = {};
-    if (typesRes.ok) {
-      for (const row of (await typesRes.json()).data ?? []) {
-        employmentTypes[row.name] = row.employee_type_name || row.name;
+    const rows: V1OpeningRow[] = [];
+    for (let page = 1; page <= MAX_PAGES; page++) {
+      const data = await call<ListPayload>(base, "list_openings", { page: String(page), page_length: String(PAGE_LENGTH) });
+      if (!data) {
+        if (page === 1) return NextResponse.json({ error: "Failed to fetch open jobs" }, { status: 502 });
+        break;
       }
+      rows.push(...(data.openings ?? []));
+      if (!data.openings?.length || rows.length >= (data.total ?? 0)) break;
     }
 
     const today = new Date().toISOString().slice(0, 10);
+    const live = rows.filter((r) => !r.closes_on || r.closes_on.slice(0, 10) >= today);
+    const openings: PublicOpening[] = [];
+    for (let i = 0; i < live.length; i += DETAIL_CONCURRENCY) {
+      openings.push(...(await Promise.all(live.slice(i, i + DETAIL_CONCURRENCY).map((r) => withDescription(base, r)))));
+    }
+    openings.sort((a, b) => (b.postedOn ?? "").localeCompare(a.postedOn ?? ""));
+
     return NextResponse.json(
-      { openings: listLiveOpenings(raws, employmentTypes, today) },
+      { openings },
       { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" } },
     );
   } catch {

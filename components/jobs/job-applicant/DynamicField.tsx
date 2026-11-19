@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
 import { JobApplicationTableField } from "./ChildTable";
 import { useAuth } from "@/lib/contexts/auth-context";
+import { applyJobPath } from "@/lib/careers/job-route";
 import {
   validateJobAppField,
 } from "@/lib/validation/job-application-validation";
@@ -327,7 +328,7 @@ export function JobApplicationStep({
         onSuccess: () => {
           toast.success("Application submitted successfully!");
           reset({});
-          router.push(`/open-jobs/${jobID}/apply-job/thank-you`);
+          router.push(`${applyJobPath(jobID)}/thank-you`);
         },
         onError: () => {
           toast.error("Submission failed. Please try again.");
@@ -338,21 +339,6 @@ export function JobApplicationStep({
 
     onNext();
   });
-
-  // ── SAVE DRAFT (no validation) ────────────────────────────────────────────
-
-  const onDraftSave = () => {
-    const data = watch();
-    setStepData(stepKey, data);
-    const payload = buildSubmitPayload(data, "Draft");
-
-    createApplicant(payload as any, {
-      onSuccess: () => {
-        toast.success("Draft saved successfully!");
-      },
-      onError: () => toast.error("Draft save failed."),
-    });
-  };
 
   // ── Field overrides ───────────────────────────────────────────────────────
 
@@ -499,17 +485,6 @@ export function JobApplicationStep({
         </Button>
 
         <div className="flex items-center gap-2">
-          {!campusInvite && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onDraftSave}
-              disabled={isPending}
-            >
-              Save Draft
-            </Button>
-          )}
-
           <Button type="submit" disabled={isPending}>
             {isLastStep ? "Submit Application" : "Next Step"}
             {!isLastStep && <ChevronRight className="ml-1 h-4 w-4" />}

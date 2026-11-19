@@ -37,6 +37,8 @@ vi.mock("@/lib/hooks/useSavedJobs", () => ({
   useToggleSavedJob: vi.fn(),
 }));
 
+vi.mock("@/lib/careers/milestone", () => ({ SAVED_AND_DRAFTS_ENABLED: true }));
+
 vi.mock("sonner", () => ({
   toast: {
     success: vi.fn(),

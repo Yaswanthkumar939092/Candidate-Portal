@@ -16,8 +16,8 @@ The client talks to one backend module, `recruitment.api.candidate_auth` (`lib/a
 
 Page flows, as coded:
 
-1. `/login`: e-mail and password → `signIn` → if the settings turn on e-mail OTP login, request an OTP and ask for the code → `verifyOtp` → refresh the profile, ask the server for the post-login route, push to `/survey`, the `redirect` query value or the server's URL (`app/(auth)/login/page.tsx:82-134,136-164,52-73`).
-2. `/register`: name, e-mail, password → `signUp` → when the reply status is `otp_required` show a code form → `verifyOtp` → push the redirect value or `/dashboard` (`app/(auth)/register/page.tsx:63-123`).
+1. `/login`: e-mail and password → `signIn` → if the settings turn on e-mail OTP login, request an OTP and ask for the code → `verifyOtp` → refresh the profile, push the `redirect` query value when it is a same-origin path, else `/open-jobs` (`app/(auth)/login/page.tsx:52-62,71-153`).
+2. `/register`: name, e-mail, password → `signUp` → when the reply status is `otp_required` show a code form → `verifyOtp` → push the redirect value when it is a same-origin path, else `/open-jobs` (`app/(auth)/register/page.tsx:56-123`).
 3. `/verify-email`: e-mail → request a signup OTP or, with `?purpose=Password Reset`, a reset OTP → `verifyOtp` → set a new password → sign out → push `/login` (`app/(auth)/verify-email/page.tsx:49-131`).
 
 Backend behaviour behind these methods (password rules, OTP expiry, attempt limits, rate limits, what `me` returns) is in the `recruitment` app and is not described here.
@@ -62,9 +62,9 @@ Backend behaviour behind these methods (password rules, OTP expiry, attempt limi
 
 - A4.1: The page shows a notice instead of the form while settings load ("Loading login"), when they are missing, when `enabled` is 0, and when `allow_password_login` is 0; the form shows only when `allow_password_login` is 1 (`app/(auth)/login/page.tsx:202-232`). [CAND-03-A4.3A]
 - A4.2: After `signIn` succeeds, the page asks for an e-mail OTP when `allow_email_otp_login` and `enable_email_otp` are both 1, otherwise it routes at once; it calls `requestOtp` with purpose `Login` and shows the code step without routing (`app/(auth)/login/page.tsx:100-120`). [CAND-03-A4.2A]
-- A4.3: Routing after sign-in calls `refreshProfile`, then `getPostLoginRoute`, then sets `sessionStorage.showLoginToast = "true"` and pushes `/survey` when `survey_required` is true, else the `redirect` query value if there is one, else the server's `redirect_url`, else `/dashboard` (`app/(auth)/login/page.tsx:52-65`). [CAND-03-A4.1A] [CAND-03-A4.1B] [CAND-03-A4.1C]
-- A4.4: If that routing throws, the page logs `Post-login routing error:`, still sets the toast flag and pushes the redirect value or `/dashboard` (`app/(auth)/login/page.tsx:66-72`). [CAND-03-A4.1C]
-- A4.5: The `redirect` value is pushed as given; no check that it is a path on this site (`app/(auth)/login/page.tsx:61-63`). [CAND-03-A4.1B] Issue: PWHR-1519.
+- A4.3: Routing after sign-in calls `refreshProfile`, then sets `sessionStorage.showLoginToast = "true"` and pushes the `redirect` query value when it is a same-origin path (A4.5), else `/open-jobs`. It does not call the post-login route method, which the proxy denies (`app/(auth)/login/page.tsx:52-62`). [CAND-03-A4.1A] [CAND-03-A4.1B] [CAND-03-A4.1C]
+- A4.4: If `refreshProfile` throws, the page logs `Post-login profile refresh error:` and still sets the toast flag and routes (`app/(auth)/login/page.tsx:53-57`). [CAND-03-A4.1C]
+- A4.5: The `redirect` value is followed only when it is a same-origin path: `safeRedirect` (`lib/careers/login-redirect.ts`) replaces an absolute URL, a protocol-relative `//host` or `/\host` value, any value carrying a control character or backslash, or a value whose dot segments resolve to a `//host` path (`/..//host`) with `/open-jobs`, and returns the resolved path, query and hash. Login and register both route through it (`app/(auth)/login/page.tsx:61`, `app/(auth)/register/page.tsx:57`). [CAND-03-A4.1B] Issue: PWHR-1519, fixed in OPS-507.
 - A4.6: A sign-in error whose text includes "Please verify your email OTP before signing in." shows the text and pushes `/verify-email?email=<encoded>` plus `&redirect=<encoded>` when a redirect exists; any other error shows its message or "Failed to sign in" (`app/(auth)/login/page.tsx:121-130`). [CAND-03-A4.3B]
 - A4.7: The campus e-mail is the decoded `email=` value of a `redirect` that contains `/campus-apply`; a malformed percent escape makes `decodeURIComponent` throw during render (`app/(auth)/login/page.tsx:42-50`). [CAND-03-A4.4A] Issue: PWHR-1520.
 - A4.8: The login page also has a passwordless branch: with `isPasswordless` set it requests a signup OTP, verifies it and then shows a set-password step that calls `setPassword` and `signOut` (`app/(auth)/login/page.tsx:86-98,150-155,166-190`). The only existing test of this branch is `describe.skip` (`tests/app/(auth)/login/page.test.tsx:482`), so it is uncovered (section 10).
@@ -128,7 +128,7 @@ None. The pages run effects only: toast on settings error (`app/(auth)/login/pag
 
 ## 9. Known gaps / open questions
 
-- G1: The `redirect` value is not validated (A4.5, A5.5). Issue: PWHR-1519.
+- G1: The `redirect` value was not validated (A4.5, A5.5). Issue: PWHR-1519, fixed in OPS-507: login and register follow it only through `safeRedirect`.
 - G2: A malformed escape in the campus `redirect` crashes the pages (A4.7). Issue: PWHR-1520.
 - G3: `components/oauth-buttons.tsx:33-34` calls `isOAuthProviderEnabled("google")` with an argument; the function takes none (TS2554). OAuth is off in code. Issue: PWHR-1514.
 - G4: `signUp` treats any reply with a user as a session, `verifyOtp` does the same whatever the status, and `signIn` needs `success` (A3.1). The pages ignore `session` and decide from `status` or from not throwing. Whether the backend can return a user with a non-success status is a backend fact not read. Not filed: backend question.
@@ -398,43 +398,43 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 
 | Case | What the assertions check | Test |
 |---|---|---|
-| [CAND-03-A4.1A](03-authentication.md#cand-03-a4-1a) | A required survey beats the redirect value and the server URL. | [`refreshes the profile, asks the server for the post-login route and goes to /survey when a survey is required`](../../../tests/spec/cand-03-auth-pages.test.tsx) |
-| [CAND-03-A4.1B](03-authentication.md#cand-03-a4-1b) | The redirect value is pushed without a same-origin check. | [`pushes the redirect query value exactly as given, even an absolute URL, ahead of the server's redirect_url`](../../../tests/spec/cand-03-auth-pages.test.tsx) |
-| [CAND-03-A4.1C](03-authentication.md#cand-03-a4-1c) | Server URL, default and error fallbacks after sign-in. | [`uses the server's redirect_url, falls back to /dashboard when it is empty, and still routes when the route call fails`](../../../tests/spec/cand-03-auth-pages.test.tsx) |
+| [CAND-03-A4.1A](03-authentication.md#cand-03-a4-1a) | Sign-in refreshes the profile and pushes the redirect value, with no post-login route call. | [`refreshes the profile and pushes the redirect value, with no survey or post-login route call (denied by the proxy)`](../../../tests/spec/cand-03-auth-pages.test.tsx) |
+| [CAND-03-A4.1B](03-authentication.md#cand-03-a4-1b) | An off-site redirect value is never followed. | [`never follows an absolute or protocol-relative redirect value; it falls back to /open-jobs`](../../../tests/spec/cand-03-auth-pages.test.tsx) |
+| [CAND-03-A4.1C](03-authentication.md#cand-03-a4-1c) | Default and profile-refresh-failure fallbacks after sign-in. | [`falls back to /open-jobs without a redirect value, and still routes when the profile refresh fails`](../../../tests/spec/cand-03-auth-pages.test.tsx) |
 | [CAND-03-A4.2A](03-authentication.md#cand-03-a4-2a) | The OTP step needs both settings to be 1. | [`asks for a login OTP after the password step only when both allow_email_otp_login and enable_email_otp are 1, and does not route yet`](../../../tests/spec/cand-03-auth-pages.test.tsx) |
 | [CAND-03-A4.3A](03-authentication.md#cand-03-a4-3a) | Four notices replace the login form. | [`shows a notice instead of the form while settings load, when they are missing, when disabled and when password login is off`](../../../tests/spec/cand-03-auth-pages.test.tsx) |
 | [CAND-03-A4.3B](03-authentication.md#cand-03-a4-3b) | The not-verified error redirects to verify-email with e-mail and redirect. | [`sends the visitor to /verify-email with the e-mail and the redirect when sign-in says the e-mail OTP is not verified`](../../../tests/spec/cand-03-auth-pages.test.tsx) |
 | [CAND-03-A4.4A](03-authentication.md#cand-03-a4-4a) | A malformed percent escape crashes the render. | [`throws a URIError while rendering the login and register pages when the campus-apply redirect carries a malformed percent escape in email`](../../../tests/spec/cand-03-auth-pages.test.tsx) |
 
 <a id="cand-03-a4-1a"></a>
-#### CAND-03-A4.1A: Login routes to the survey
+#### CAND-03-A4.1A: Login pushes the redirect path without a post-login route call
 
-- Precondition: Settings turn e-mail OTP off; `getPostLoginRoute` says a survey is required; a `redirect` value exists.
+- Precondition: Settings turn e-mail OTP off; a stubbed `getPostLoginRoute` would say a survey is required; the `redirect` value is `/my-jobs`.
 - Action: Type the credentials and submit.
-- Expected result: `refreshProfile` ran once, the toast flag is `true` and the page pushed `/survey` once and nothing else, ahead of both the `redirect` value and the server's `redirect_url` `app/(auth)/login/page.tsx:52-60`
-- Test: characterization: `tests/spec/cand-03-auth-pages.test.tsx::refreshes the profile, asks the server for the post-login route and goes to /survey when a survey is required`
+- Expected result: `refreshProfile` ran once, the toast flag is `true`, `getPostLoginRoute` was not called and the page pushed `/my-jobs` once `app/(auth)/login/page.tsx:52-62`
+- Test: characterization: `tests/spec/cand-03-auth-pages.test.tsx::refreshes the profile and pushes the redirect value, with no survey or post-login route call (denied by the proxy)`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
-- Known gaps: `fetch`, the router, the auth module or the settings hook are mocked; no real HTTP or Frappe backend. The survey service and router are mocked; the `/survey` page itself is not rendered.
+- Known gaps: `fetch`, the router, the auth module or the settings hook are mocked; no real HTTP or Frappe backend.
 - Evidence: UNVERIFIED
 
 <a id="cand-03-a4-1b"></a>
-#### CAND-03-A4.1B: Login pushes the redirect value as given
+#### CAND-03-A4.1B: Login never follows an off-site redirect value
 
-- Precondition: The redirect query value is an absolute URL on a synthetic host.
-- Action: Submit the credentials.
-- Expected result: The router received exactly that URL, once `app/(auth)/login/page.tsx:61-63`
-- Test: characterization: `tests/spec/cand-03-auth-pages.test.tsx::pushes the redirect query value exactly as given, even an absolute URL, ahead of the server's redirect_url`
+- Precondition: The redirect query value is, in turn, an absolute URL, a protocol-relative `//host` and a `/\host` value on a synthetic host.
+- Action: Submit the credentials for each.
+- Expected result: The router received `/open-jobs` once each time, never the redirect value `app/(auth)/login/page.tsx:61`, `lib/careers/login-redirect.ts`
+- Test: `tests/spec/cand-03-auth-pages.test.tsx::never follows an absolute or protocol-relative redirect value; it falls back to /open-jobs`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
-- Known gaps: `fetch`, the router, the auth module or the settings hook are mocked; no real HTTP or Frappe backend. Pins a suspected defect, not endorsed. Issue: PWHR-1519. Whether a real router leaves the site was not run.
+- Known gaps: `fetch`, the router, the auth module or the settings hook are mocked; no real HTTP or Frappe backend. Issue: PWHR-1519, fixed in OPS-507.
 - Evidence: UNVERIFIED
 
 <a id="cand-03-a4-1c"></a>
 #### CAND-03-A4.1C: Login fallbacks
 
-- Precondition: `getPostLoginRoute` answers `/open-jobs`, then no URL, then rejects with a redirect value.
-- Action: Submit the credentials three times.
-- Expected result: The pushes are `/open-jobs`, `/dashboard` and the redirect value; the toast flag is set in the rejecting case `app/(auth)/login/page.tsx:64,66-72`
-- Test: characterization: `tests/spec/cand-03-auth-pages.test.tsx::uses the server's redirect_url, falls back to /dashboard when it is empty, and still routes when the route call fails`
+- Precondition: No `redirect` value; then `refreshProfile` rejects and the `redirect` value is `/my-jobs`.
+- Action: Submit the credentials twice.
+- Expected result: The pushes are `/open-jobs` and `/my-jobs`; the toast flag is set in the rejecting case `app/(auth)/login/page.tsx:53-61`
+- Test: characterization: `tests/spec/cand-03-auth-pages.test.tsx::falls back to /open-jobs without a redirect value, and still routes when the profile refresh fails`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
 - Known gaps: `fetch`, the router, the auth module or the settings hook are mocked; no real HTTP or Frappe backend.
 - Evidence: UNVERIFIED

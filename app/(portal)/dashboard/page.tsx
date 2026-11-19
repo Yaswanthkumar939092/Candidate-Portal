@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { CalendarDays, MapPin, Building2, AlertCircle } from "lucide-react";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -13,6 +15,7 @@ import { HomePromo } from "@/components/home/home-promo";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useDashboard } from "@/lib/hooks/useDashboard";
+import { ONBOARDING_DASHBOARD_ENABLED } from "@/lib/careers/milestone";
 import type { DashboardData, DashboardKeyContact } from "@/types/dashboard";
 
 const TOTAL_STEPS = 8;
@@ -141,13 +144,20 @@ function DashboardErrorState({
 
 export default function DashboardPage() {
   const { user, profile } = useAuth();
+  const router = useRouter();
   const {
     data: dashboardData,
     isLoading,
     isError,
     error,
     refetch,
-  } = useDashboard(user?.email);
+  } = useDashboard(ONBOARDING_DASHBOARD_ENABLED ? user?.email : undefined);
+
+  useEffect(() => {
+    if (!ONBOARDING_DASHBOARD_ENABLED) router.replace("/open-jobs");
+  }, [router]);
+
+  if (!ONBOARDING_DASHBOARD_ENABLED) return null;
 
   const dashboardRegion = isLoading ? (
     <DashboardSkeleton />
