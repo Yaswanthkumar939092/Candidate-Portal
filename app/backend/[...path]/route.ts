@@ -102,28 +102,6 @@ const ALLOWED_METHODS = new Set([
   "recruitment.dpdp_external_consent.start_consent_session",
   "recruitment.dpdp_external_consent.get_consent_session_status",
   "recruitment.dpdp_consent.submit_dpdp_consent",
-  // Candidate portal flows reviewed 2026-11-19. Every one is scoped to the caller:
-  // a Candidate Portal session checked against the record (candidate_required +
-  // get_current_candidate / enforce_candidate_identity / *_for_candidate), or a
-  // hashed link token for the emailed CTC proposal and direct-applicant links.
-  // Action Center: needs cn-recruitment's portal-session scoping
-  // (fix/action-center-caller-scope); before it, the method trusted the email
-  // from the query string and returned other candidates' signed offer links.
-  "recruitment.api.action_center.get_action_center_items",
-  ...["change_password", "set_password", "update_me"].map(name => `recruitment.api.candidate_auth.${name}`),
-  "recruitment.api.candidate_portal.get_candidate_portal_form",
-  ...["get_post_login_route", "submit_survey"].map(name => `recruitment.api.candidate_portal_survey.${name}`),
-  ...["get_application_fields", "get_form_state", "submit_application"].map(name => `recruitment.api.channels.pre_offer.${name}`),
-  ...["get_proposal", "respond", "get_my_proposal", "respond_my_proposal"].map(name => `recruitment.api.ctc_proposal_portal.${name}`),
-  ...["get_form", "search_link", "submit_form", "upload_file", "get_my_form", "search_my_link", "submit_my_form", "upload_my_file", "download_my_file"].map(name => `recruitment.api.direct_applicant_portal.${name}`),
-  "recruitment.api.employee_onboarding.update_onboarding_details",
-  "recruitment.api.joining_day.get_my_non_working_days",
-  "recruitment.api.onboarding_dashboard.get_dashboard",
-  ...["upload_my_onboarding_file", "download_my_onboarding_file"].map(name => `recruitment.api.onboarding_files.${name}`),
-  // Not yet: recruitment.api.candidate_portal.get_link_field_options (lists any
-  // doctype's records to any candidate), frappe.client.get_meta and upload_file
-  // (generic Frappe endpoints), recruitment.api.channels.campus.* (invite id +
-  // email, no token). Each needs a backend restriction first.
 ]);
 
 // Methods that change data answer only to POST here. The session cookie is
@@ -135,13 +113,6 @@ const POST_ONLY_METHODS = new Set([
   "recruitment.job_offer_utils.job_offer_update",
   "recruitment.dpdp_external_consent.start_consent_session",
   "recruitment.dpdp_consent.submit_dpdp_consent",
-  ...["change_password", "set_password", "update_me"].map(name => `recruitment.api.candidate_auth.${name}`),
-  "recruitment.api.candidate_portal_survey.submit_survey",
-  "recruitment.api.channels.pre_offer.submit_application",
-  ...["respond", "respond_my_proposal"].map(name => `recruitment.api.ctc_proposal_portal.${name}`),
-  ...["submit_form", "upload_file", "submit_my_form", "upload_my_file"].map(name => `recruitment.api.direct_applicant_portal.${name}`),
-  "recruitment.api.employee_onboarding.update_onboarding_details",
-  "recruitment.api.onboarding_files.upload_my_onboarding_file",
 ]);
 
 // Decode the raw path (repeatedly, so double-encoding cannot smuggle a denied

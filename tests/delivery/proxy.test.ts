@@ -214,86 +214,14 @@ it.each([
   await expectDenied(`http://portal/backend/api/method/${method}`, { method: "POST", headers: { cookie: "candidate_portal_session=placeholder" } });
 });
 
-// Candidate portal flows reviewed 2026-11-19 (Action Center, CTC proposal, direct
-// applicant form, onboarding, pre-offer, profile, survey). Each is scoped to the
-// caller's Candidate Portal session or a hashed link token in cn-recruitment.
-const READ_METHODS_PORTAL = [
-  "recruitment.api.action_center.get_action_center_items",
-  "recruitment.api.candidate_portal.get_candidate_portal_form",
-  "recruitment.api.candidate_portal_survey.get_post_login_route",
-  "recruitment.api.channels.pre_offer.get_application_fields",
-  "recruitment.api.channels.pre_offer.get_form_state",
-  "recruitment.api.ctc_proposal_portal.get_proposal",
-  "recruitment.api.ctc_proposal_portal.get_my_proposal",
-  "recruitment.api.direct_applicant_portal.get_form",
-  "recruitment.api.direct_applicant_portal.get_my_form",
-  "recruitment.api.direct_applicant_portal.search_link",
-  "recruitment.api.direct_applicant_portal.search_my_link",
-  "recruitment.api.direct_applicant_portal.download_my_file",
-  "recruitment.api.joining_day.get_my_non_working_days",
-  "recruitment.api.onboarding_dashboard.get_dashboard",
-  "recruitment.api.onboarding_files.download_my_onboarding_file",
-];
-const WRITE_METHODS_PORTAL = [
-  "recruitment.api.candidate_auth.change_password",
-  "recruitment.api.candidate_auth.set_password",
-  "recruitment.api.candidate_auth.update_me",
-  "recruitment.api.candidate_portal_survey.submit_survey",
-  "recruitment.api.channels.pre_offer.submit_application",
-  "recruitment.api.ctc_proposal_portal.respond",
-  "recruitment.api.ctc_proposal_portal.respond_my_proposal",
-  "recruitment.api.direct_applicant_portal.submit_form",
-  "recruitment.api.direct_applicant_portal.upload_file",
-  "recruitment.api.direct_applicant_portal.submit_my_form",
-  "recruitment.api.direct_applicant_portal.upload_my_file",
-  "recruitment.api.employee_onboarding.update_onboarding_details",
-  "recruitment.api.onboarding_files.upload_my_onboarding_file",
-];
-
-it.each(READ_METHODS_PORTAL)("proxies the portal read %s", async (method) => {
-  vi.stubEnv("FRAPPE_BASE_URL", "http://frappe:8000");
-  const res = await callProxy(`http://portal/backend/api/method/${method}?candidate_email=a%40example.com`, { headers: { cookie: "candidate_portal_session=placeholder" } });
-  expect(res.status).toBe(200);
-  expect(lastCall?.url).toBe(`http://frappe:8000/api/method/${method}?candidate_email=a%40example.com`);
-});
-
-it.each(WRITE_METHODS_PORTAL)("proxies the portal write %s by POST", async (method) => {
-  vi.stubEnv("FRAPPE_BASE_URL", "http://frappe:8000");
-  const res = await callProxy(`http://portal/backend/api/method/${method}`, { method: "POST", body: "{}", headers: { cookie: "candidate_portal_session=placeholder", "content-type": "application/json" } });
-  expect(res.status).toBe(200);
-  expect(lastCall?.url).toBe(`http://frappe:8000/api/method/${method}`);
-  expect(lastCall?.init?.method).toBe("POST");
-});
-
-it.each(WRITE_METHODS_PORTAL.flatMap(method => ["GET", "PUT", "DELETE"].map(verb => [method, verb])))(
-  "refuses the portal write %s by %s before it reaches Frappe", async (method, verb) => {
-    vi.stubEnv("FRAPPE_BASE_URL", "http://frappe:8000");
-    const res = await callProxy(`http://portal/backend/api/method/${method}`, { method: verb, headers: { cookie: "candidate_portal_session=placeholder" } });
-    expect(res.status).toBe(405);
-    expect(lastCall).toBeNull();
-  },
-);
-
-it.each([
-  "recruitment.api.action_center.complete_action_center_item",
-  "recruitment.api.action_center.archive_action_center_item",
-  "recruitment.api.ctc_proposal_portal._proposal_for",
-  "recruitment.api.direct_applicant_portal._request_for",
-  "recruitment.api.onboarding_files._upload",
-])("denies the neighbour %s of a portal method", async (method) => {
-  vi.stubEnv("FRAPPE_BASE_URL", "http://frappe:8000");
-  await expectDenied(`http://portal/backend/api/method/${method}`, { method: "POST", headers: { cookie: "candidate_portal_session=placeholder" } });
-});
-
-// These stay denied until the backend restricts them: get_link_field_options
-// lists any doctype's records to any candidate; get_meta and upload_file are
-// generic Frappe endpoints; campus invites are reachable by invite id + email.
+// These stay denied: onboarding form methods wait for OPS-509; profile and survey
+// writes were hardened in #1688 but their screens are outside this release.
 it.each([
   "recruitment.api.candidate_portal.get_link_field_options",
-  "frappe.client.get_meta",
-  "upload_file",
-  "recruitment.api.channels.campus.get_invite_openings",
-  "recruitment.api.channels.campus.submit_invite_application",
+  "recruitment.api.employee_onboarding.update_onboarding_details",
+  "recruitment.api.candidate_portal_survey.submit_survey",
+  "recruitment.api.candidate_auth.update_me",
+  "recruitment.api.candidate_auth.change_password",
 ])("keeps the method %s denied", async (method) => {
   vi.stubEnv("FRAPPE_BASE_URL", "http://frappe:8000");
   await expectDenied(`http://portal/backend/api/method/${method}`, { headers: { cookie: "candidate_portal_session=placeholder" } });
@@ -302,6 +230,8 @@ it.each([
 it.each([
   "/backend/api/method/recruitment.api.candidate_portal.get_candidate_feature_flags",
   "/backend/api/method/recruitment.api.v1.candidate.get_public_flags",
+  "/backend/api/method/recruitment.api.candidate_portal_survey.get_post_login_route",
+  "/backend/api/method/recruitment.api.onboarding_dashboard.get_dashboard",
   "/backend/api/method/recruitment.api.channels.careers.list_openings",
 ])("keeps %s denied at the browser proxy", async (path) => {
   vi.stubEnv("FRAPPE_BASE_URL", "http://frappe:8000");
