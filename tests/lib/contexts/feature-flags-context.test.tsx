@@ -53,12 +53,13 @@ describe('FeatureFlagContext', () => {
       expect(DEFAULT_FEATURE_FLAGS.oauth_login).toBe(true)
     })
 
-    it('enables the two pages milestone 1 serves, so navigation works with only the public flag returned', () => {
-      expect(DEFAULT_FEATURE_FLAGS.open_jobs).toBe(true)
-      expect(DEFAULT_FEATURE_FLAGS.my_jobs).toBe(true)
-    })
-
-    it('keeps pages that call denied methods off by default', () => {
+    // Spec: CAND-02-A8.3A (docs/spec/clauses/02-api-client-and-backend-contract.md#cand-02-a8-3a)
+    it('keeps all page nav items off by default so the backend Feature Flag doctype controls visibility', () => {
+      // Each portal page is off until the Candidate Portal Feature Flag doctype
+      // (read via the authenticated `get_candidate_feature_flags` method) says
+      // otherwise. Defaulting them on hid the doctype from having any effect.
+      expect(DEFAULT_FEATURE_FLAGS.open_jobs).toBe(false)
+      expect(DEFAULT_FEATURE_FLAGS.my_jobs).toBe(false)
       expect(DEFAULT_FEATURE_FLAGS.action_center).toBe(false)
       expect(DEFAULT_FEATURE_FLAGS.documents).toBe(false)
     })

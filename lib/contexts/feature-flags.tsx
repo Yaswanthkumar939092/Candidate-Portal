@@ -26,9 +26,13 @@ export const DEFAULT_FEATURE_FLAGS = {
   job_recommendations: false,
   home: true,
   documents: false,
-  open_jobs: true,
+  // Portal page nav items start off so the Candidate Portal Feature Flag doctype
+  // (read via the authenticated `get_candidate_feature_flags` method and
+  // merged in server-side) decides what the candidate sees. Defaulting them on
+  // meant the doctype had no effect on Open Jobs / My Jobs visibility.
+  open_jobs: false,
   action_center: false,
-  my_jobs: true,
+  my_jobs: false,
   careers_public_enabled: false,
 } as const
 
