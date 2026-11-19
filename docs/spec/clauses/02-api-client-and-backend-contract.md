@@ -111,6 +111,42 @@ Callers of these methods are specced in PWHR-1366 (onboarding, dashboard, jobs, 
 - A4.5: `isEnabled` is false for a flag that is missing or not a boolean; `getFlag` returns the caller's default only when the flag is undefined (`lib/contexts/feature-flags.tsx:65-76`). [CAND-02-A4.3B]
 - A4.6: `useFeatureFlags` throws `useFeatureFlags must be used within a FeatureFlagProvider` outside the provider (`lib/contexts/feature-flags.tsx:95-101`).
 
+### A8: Portal-nav feature flags driven by the Candidate Portal Feature Flag doctype
+
+The portal has two sources of feature flags. The Guest `get_public_flags`
+method serves the public careers home with no cookie and no key, and returns
+the single `careers_public_enabled` flag. The authenticated
+`get_candidate_feature_flags` method serves a signed-in candidate and returns
+one entry per row of the Candidate Portal Feature Flag doctype
+(`{page_name_snake_case: 0|1}` for each row). The server merges the two so the
+authenticated values override the Guest ones per key and both reach the
+browser in one response. Admins toggle a page by adding or editing its row in
+the doctype; the frontend has no hardcoded policy for the page nav items.
+
+- A8.1: `getServerFeatureFlags(cookie?)` reads the Guest method with no
+  credentials; when `cookie` is a non-empty string it also reads
+  `recruitment.api.candidate_portal.get_candidate_feature_flags` with
+  `Accept: application/json` and that `cookie` header, and returns the Guest
+  object spread first with the authenticated one spread over it; any failure
+  on either fetch yields `{}` from that side only, so one side can fail while
+  the other still stands; coercion follows the same rule as A2.1 (`lib/server/feature-flags.ts:22-39,47-70,76-89`). [CAND-02-A8.1A] [CAND-02-A8.1B] [CAND-02-A8.1C] [CAND-02-A8.1D]
+- A8.2: `GET /api/candidate-feature-flags` reads the browser request's
+  `cookie` header and passes it to `getServerFeatureFlags`, so the Candidate
+  Portal Feature Flag doctype values reach the browser alongside the Guest
+  flag (`app/api/candidate-feature-flags/route.ts:4-11`). [CAND-02-A8.2A]
+- A8.3: `DEFAULT_FEATURE_FLAGS` keeps every page nav item
+  (`open_jobs`, `my_jobs`, `action_center`, `documents`) off; these are
+  fallbacks, not preferences, so a backend that does not send a key leaves
+  the page hidden rather than override the admin's intent (`lib/contexts/feature-flags.tsx:17-36`). [CAND-02-A8.3A]
+- A8.4: Backend contract (cn-recruitment, not read here):
+  `recruitment.api.candidate_portal.get_candidate_feature_flags` MUST return
+  `open_jobs: 1` and `my_jobs: 1` by default when the doctype has no row for
+  them, so a fresh deployment shows those two pages; a row with
+  `is_enabled: 0` overrides the default to off. Pages without a default
+  (Action Center, Documents, Candidate Dashboard, …) remain off until an
+  explicit row enables them. The backend change is tracked in
+  `docs/backend-changes/feature-flags-default-nav.md`.
+
 ### A5: Branding and page-content services
 
 - A5.1: `candidateBrandingService.getCandidateBranding` calls `FrappeAPI.get("recruitment.api.candidate_portal.get_website_branding")` with no parameters (`lib/services/candidate-branding.ts:10-14`). [CAND-02-A5.1A]
@@ -632,4 +668,82 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 - Test: mapped: `tests/lib/services/auth-page-content.test.ts::getAuthPageContent calls FrappeAPI.get correctly`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
 - Known gaps: Services and routes are tested with `fetch`, the router or the services mocked; no real HTTP or Frappe backend. The method name is the only contract it checks. Mapped test: only the `Spec:` comment was added.
+- Evidence: UNVERIFIED
+
+<a id="cand-02-a8"></a>
+### CAND-02-A8: Portal-nav feature flags driven by the Candidate Portal Feature Flag doctype
+
+| Case | What the assertions check | Test |
+|---|---|---|
+| [CAND-02-A8.1A](02-api-client-and-backend-contract.md#cand-02-a8-1a) | With a cookie, both endpoints are called; the authenticated response overrides the Guest one key by key. | [`forwards the candidate session cookie to the authenticated endpoint and merges on top of Guest flags`](../../../tests/delivery/server-feature-flags.test.ts) |
+| [CAND-02-A8.1B](02-api-client-and-backend-contract.md#cand-02-a8-1b) | A failing authenticated endpoint falls back to the Guest result silently. | [`falls back to Guest-only flags when the authenticated endpoint errors`](../../../tests/delivery/server-feature-flags.test.ts) |
+| [CAND-02-A8.1C](02-api-client-and-backend-contract.md#cand-02-a8-1c) | Without a cookie, the authenticated endpoint is not called. | [`does not call the authenticated endpoint without a cookie`](../../../tests/delivery/server-feature-flags.test.ts) |
+| [CAND-02-A8.1D](02-api-client-and-backend-contract.md#cand-02-a8-1d) | An empty cookie string is treated the same as no cookie. | [`does not call the authenticated endpoint when the cookie is empty`](../../../tests/delivery/server-feature-flags.test.ts) |
+| [CAND-02-A8.2A](02-api-client-and-backend-contract.md#cand-02-a8-2a) | `GET /api/candidate-feature-flags` forwards the incoming browser cookie to `getServerFeatureFlags`. | [`forwards the incoming cookie so authenticated page-level flags reach the browser`](../../../tests/delivery/feature-flags-route.test.ts) |
+| [CAND-02-A8.3A](02-api-client-and-backend-contract.md#cand-02-a8-3a) | Every page nav item defaults to off, so the backend decides visibility. | [`keeps all page nav items off by default so the backend Feature Flag doctype controls visibility`](../../../tests/lib/contexts/feature-flags-context.test.tsx) |
+
+<a id="cand-02-a8-1a"></a>
+#### CAND-02-A8.1A: Cookie-forwarded auth call and merge order
+
+- Precondition: `fetch` is stubbed to return `{careers_public_enabled: false}` for the Guest URL and `{open_jobs: 1, my_jobs: 0, action_center: 1}` for the authenticated URL; the cookie `sid=abc123; other=1` is passed.
+- Action: Call `getServerFeatureFlags("sid=abc123; other=1")`.
+- Expected result: The return is `{careers_public_enabled: false, open_jobs: true, my_jobs: false, action_center: true}`; the authenticated call carries exactly that cookie string in its `cookie` header `lib/server/feature-flags.ts:47-70,76-89`
+- Test: mapped: `tests/delivery/server-feature-flags.test.ts::forwards the candidate session cookie to the authenticated endpoint and merges on top of Guest flags`
+- Environment: no-site: vitest, jsdom; backend stubbed; no database
+- Known gaps: The real backend's row-to-key conversion (page_name → snake_case) is not driven here; the test sends already-snake-cased keys.
+- Evidence: UNVERIFIED
+
+<a id="cand-02-a8-1b"></a>
+#### CAND-02-A8.1B: Auth-endpoint failure falls back to Guest only
+
+- Precondition: The Guest URL returns `{careers_public_enabled: true}`; the authenticated URL returns status 403; a cookie is passed.
+- Action: Call `getServerFeatureFlags("sid=abc123")`.
+- Expected result: The return is `{careers_public_enabled: true}` — the auth failure is silent and does not blank out the Guest side `lib/server/feature-flags.ts:47-70,85-88`
+- Test: mapped: `tests/delivery/server-feature-flags.test.ts::falls back to Guest-only flags when the authenticated endpoint errors`
+- Environment: no-site: vitest, jsdom; backend stubbed; no database
+- Known gaps: Only one failure mode (non-OK status) is driven; a network throw on the auth side is covered symmetrically by the `catch` but not asserted here.
+- Evidence: UNVERIFIED
+
+<a id="cand-02-a8-1c"></a>
+#### CAND-02-A8.1C: No cookie → no auth call
+
+- Precondition: `fetch` returns `{careers_public_enabled: true}` for any URL.
+- Action: Call `getServerFeatureFlags()` with no argument.
+- Expected result: `fetch` is called exactly once and the URL is the Guest `get_public_flags` method `lib/server/feature-flags.ts:81-83`
+- Test: mapped: `tests/delivery/server-feature-flags.test.ts::does not call the authenticated endpoint without a cookie`
+- Environment: no-site: vitest, jsdom; backend stubbed; no database
+- Known gaps: None known.
+- Evidence: UNVERIFIED
+
+<a id="cand-02-a8-1d"></a>
+#### CAND-02-A8.1D: Empty cookie treated as no cookie
+
+- Precondition: Same as A8.1C.
+- Action: Call `getServerFeatureFlags("")`.
+- Expected result: `fetch` is called exactly once (Guest only); the authenticated endpoint is not reached `lib/server/feature-flags.ts:81-83`
+- Test: mapped: `tests/delivery/server-feature-flags.test.ts::does not call the authenticated endpoint when the cookie is empty`
+- Environment: no-site: vitest, jsdom; backend stubbed; no database
+- Known gaps: None known.
+- Evidence: UNVERIFIED
+
+<a id="cand-02-a8-2a"></a>
+#### CAND-02-A8.2A: Route forwards the browser cookie
+
+- Precondition: Guest URL returns `{careers_public_enabled: false}`; the authenticated URL returns `{open_jobs: 1, my_jobs: 1, action_center: 0}`; the incoming `Request` carries `cookie: "sid=candidate-token"`.
+- Action: Call `GET` of the route with that `Request`.
+- Expected result: Status 200; body `{flags: {careers_public_enabled: false, open_jobs: true, my_jobs: true, action_center: false}}`; the auth call's outgoing `cookie` header is `sid=candidate-token` `app/api/candidate-feature-flags/route.ts:4-11`
+- Test: mapped: `tests/delivery/feature-flags-route.test.ts::forwards the incoming cookie so authenticated page-level flags reach the browser`
+- Environment: no-site: vitest, jsdom; backend stubbed; no database
+- Known gaps: No real signed cookie is minted; the string is opaque to this layer.
+- Evidence: UNVERIFIED
+
+<a id="cand-02-a8-3a"></a>
+#### CAND-02-A8.3A: Page nav items off by default
+
+- Precondition: None (reads the exported object directly).
+- Action: Read `DEFAULT_FEATURE_FLAGS`.
+- Expected result: `open_jobs`, `my_jobs`, `action_center` and `documents` are all `false`, so a backend that omits the key leaves the page hidden `lib/contexts/feature-flags.tsx:30-36`
+- Test: mapped: `tests/lib/contexts/feature-flags-context.test.tsx::keeps all page nav items off by default so the backend Feature Flag doctype controls visibility`
+- Environment: no-site: vitest, jsdom; backend stubbed; no database
+- Known gaps: Only the four nav items are pinned; other flags in the object (`home`, `social_job_sharing`, etc.) still have their own defaults and are not covered by this case.
 - Evidence: UNVERIFIED
