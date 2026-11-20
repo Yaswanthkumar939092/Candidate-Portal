@@ -62,4 +62,13 @@ describe("ApplicantStatusResponse Service", () => {
       { job_applicant: "APP-001" }
     );
   });
+  it("getApplication reads v1 get_application with the receipt, not the legacy job-applicant method", async () => {
+    const view = { receipt: "APP-AAA111", job_opening: "HR-OPN-1", job_title: "Payroll Analyst", status: "In review", submitted_on: "2026-10-21" };
+    (FrappeAPI.get as any).mockResolvedValue(view);
+
+    const result = await ApplicantStatusResponse.getApplication("APP-AAA111");
+
+    expect(FrappeAPI.get).toHaveBeenCalledWith("recruitment.api.v1.candidate.get_application", { receipt: "APP-AAA111" });
+    expect(result).toBe(view);
+  });
 });

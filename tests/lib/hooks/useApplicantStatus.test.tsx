@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useApplicantStatus, useJobApplicantDetails } from "@/lib/hooks/useApplicantStatus";
+import { useApplicantStatus, useApplication, useJobApplicantDetails } from "@/lib/hooks/useApplicantStatus";
 import { ApplicantStatusResponse } from "@/lib/services/applicantStatusService";
 import React from "react";
 
@@ -10,6 +10,7 @@ vi.mock("@/lib/services/applicantStatusService", () => ({
   ApplicantStatusResponse: {
     getApplicantStatusResponse: vi.fn(),
     getJobApplicant: vi.fn(),
+    getApplication: vi.fn(),
   },
 }));
 
@@ -67,5 +68,17 @@ describe("useApplicantStatus Hooks", () => {
     const { result } = renderHook(() => useJobApplicantDetails(null), { wrapper });
     expect(result.current.isLoading).toBe(false);
     expect(result.current.fetchStatus).toBe("idle");
+  });
+  it("useApplication fetches the application by receipt and is idle without one", async () => {
+    const view = { receipt: "APP-AAA111", status: "In review" };
+    (ApplicantStatusResponse.getApplication as any).mockResolvedValue(view);
+
+    const { result } = renderHook(() => useApplication("APP-AAA111"), { wrapper });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toEqual(view);
+    expect(ApplicantStatusResponse.getApplication).toHaveBeenCalledWith("APP-AAA111");
+
+    const idle = renderHook(() => useApplication(null), { wrapper });
+    expect(idle.result.current.fetchStatus).toBe("idle");
   });
 });

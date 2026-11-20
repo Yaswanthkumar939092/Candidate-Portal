@@ -7,7 +7,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog"
-import { useJobApplicantDetails } from "@/lib/hooks/useApplicantStatus"
+import { useApplication } from "@/lib/hooks/useApplicantStatus"
 import { Loader2 } from "lucide-react"
 
 interface ViewApplicationModalProps {
@@ -21,9 +21,8 @@ export function ViewApplicationModal({
   isOpen,
   onClose,
 }: ViewApplicationModalProps) {
-  const { data: response, isLoading, error } = useJobApplicantDetails(jobApplicantName)
-
-  const applicantData = response?.data || {}
+  const { data, isLoading, error } = useApplication(jobApplicantName)
+  const applicantData: Record<string, unknown> = { ...data }
 
   // Fields to exclude from the dynamic display
   const excludeFields = [
@@ -86,7 +85,7 @@ export function ViewApplicationModal({
             </div>
           ) : error ? (
             <div className="text-center py-10 text-destructive">
-              Failed to load application details. Please try again.adasd
+              Failed to load application details. Please try again.
             </div>
           ) : (
             <div className="space-y-4 py-4">
