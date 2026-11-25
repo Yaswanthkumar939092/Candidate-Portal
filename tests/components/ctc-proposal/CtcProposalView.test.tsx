@@ -54,6 +54,7 @@ describe("CtcProposalView", () => {
     respond.mockReset();
   });
 
+  // Spec: CAND-02-A9.2A (docs/spec/clauses/02-api-client-and-backend-contract.md#cand-02-a9-2a)
   it("shows the CTC, breakup and HR note", async () => {
     getProposal.mockResolvedValue(base);
     renderView();
@@ -164,6 +165,7 @@ describe("CtcProposalView", () => {
     company_name: "Precious Alloys Pvt Ltd", accepted_statement: "",
   };
 
+  // Spec: CAND-02-A9.1A (docs/spec/clauses/02-api-client-and-backend-contract.md#cand-02-a9-1a)
   it("renders the agreed monthly amount, not ₹0, for an Agreed Salary only proposal", async () => {
     getProposal.mockResolvedValue(agreed);
     renderView();
@@ -175,6 +177,7 @@ describe("CtcProposalView", () => {
     expect(screen.queryByText("Take-home (Monthly)")).not.toBeInTheDocument();
   });
 
+  // Spec: CAND-02-A9.1B (docs/spec/clauses/02-api-client-and-backend-contract.md#cand-02-a9-1b)
   it("hides the annexure for an Agreed Salary only proposal, since the backend ships none", async () => {
     getProposal.mockResolvedValue(agreed);
     renderView();
@@ -182,6 +185,7 @@ describe("CtcProposalView", () => {
     expect(screen.queryByText("ANNEXURE")).not.toBeInTheDocument();
   });
 
+  // Spec: CAND-02-A9.1C (docs/spec/clauses/02-api-client-and-backend-contract.md#cand-02-a9-1c)
   it("still shows the role facts and the Accept / Negotiate / Reject controls on an Agreed Salary only proposal", async () => {
     getProposal.mockResolvedValue(agreed);
     renderView();

@@ -147,6 +147,28 @@ the doctype; the frontend has no hardcoded policy for the page nav items.
   explicit row enables them. The backend change is tracked in
   `docs/backend-changes/feature-flags-default-nav.md`.
 
+### A9: CTC Proposal view handles the two backend payload shapes
+
+`recruitment.api.ctc_proposal_portal.get_proposal` / `get_my_proposal` ships
+one of two shapes. The full `_payload` carries `ctc`, `ctc_monthly`,
+`annual_ctc`, `take_home_monthly` and an annexure; the `_agreed_payload`
+(sent when the CTC Proposal doc's `agreed_salary_only` is 1) carries only a
+single flat `agreed_salary` monthly amount and omits every CTC / annexure
+field. `CtcProposalView` must render each shape without reading fields the
+other side does not send, and the response controls (Accept, Negotiate,
+Reject) must still be reachable in both.
+
+- A9.1: When `agreed_salary_only === 1`, `CtcProposalView` renders a single
+  "In-hand Salary (Monthly)" tile from `agreed_salary`; the three
+  full-CTC tiles ("CTC (Monthly)", "Annual CTC", "Take-home (Monthly)")
+  and the Annexure block are not rendered; Accept / Negotiate / Reject
+  remain reachable and the Accept confirmation / Negotiate label / missing
+  input toast switch to monthly-salary wording (`components/ctc-proposal/CtcProposalView.tsx:111-139,232-237,293-309`). [CAND-02-A9.1A] [CAND-02-A9.1B] [CAND-02-A9.1C]
+- A9.2: When `agreed_salary_only` is `0` or omitted, the full-CTC layout
+  renders unchanged — three tiles from `ctc_monthly` / `ctc` /
+  `take_home_monthly` and the annexure block, Accept confirmation and
+  Negotiate label use CTC wording (`components/ctc-proposal/CtcProposalView.tsx:111-139,232-237,293-309`). [CAND-02-A9.2A]
+
 ### A5: Branding and page-content services
 
 - A5.1: `candidateBrandingService.getCandidateBranding` calls `FrappeAPI.get("recruitment.api.candidate_portal.get_website_branding")` with no parameters (`lib/services/candidate-branding.ts:10-14`). [CAND-02-A5.1A]
@@ -746,4 +768,58 @@ Every case is `Evidence: UNVERIFIED`. Cases that map an existing test only gaine
 - Test: mapped: `tests/lib/contexts/feature-flags-context.test.tsx::keeps all page nav items off by default so the backend Feature Flag doctype controls visibility`
 - Environment: no-site: vitest, jsdom; backend stubbed; no database
 - Known gaps: Only the four nav items are pinned; other flags in the object (`home`, `social_job_sharing`, etc.) still have their own defaults and are not covered by this case.
+- Evidence: UNVERIFIED
+
+<a id="cand-02-a9"></a>
+### CAND-02-A9: CTC Proposal view handles the two backend payload shapes
+
+| Case | What the assertions check | Test |
+|---|---|---|
+| [CAND-02-A9.1A](02-api-client-and-backend-contract.md#cand-02-a9-1a) | Agreed Salary only: single In-hand tile from `agreed_salary`, no full-CTC tiles. | [`renders the agreed monthly amount, not ₹0, for an Agreed Salary only proposal`](../../../tests/components/ctc-proposal/CtcProposalView.test.tsx) |
+| [CAND-02-A9.1B](02-api-client-and-backend-contract.md#cand-02-a9-1b) | Agreed Salary only: annexure block is not rendered. | [`hides the annexure for an Agreed Salary only proposal, since the backend ships none`](../../../tests/components/ctc-proposal/CtcProposalView.test.tsx) |
+| [CAND-02-A9.1C](02-api-client-and-backend-contract.md#cand-02-a9-1c) | Agreed Salary only: role facts and Accept / Negotiate / Reject still reachable. | [`still shows the role facts and the Accept / Negotiate / Reject controls on an Agreed Salary only proposal`](../../../tests/components/ctc-proposal/CtcProposalView.test.tsx) |
+| [CAND-02-A9.2A](02-api-client-and-backend-contract.md#cand-02-a9-2a) | Full CTC: three tiles + annexure + CTC-worded Accept confirmation (regression guard). | [`shows the CTC, breakup and HR note`](../../../tests/components/ctc-proposal/CtcProposalView.test.tsx) |
+
+<a id="cand-02-a9-1a"></a>
+#### CAND-02-A9.1A: Agreed Salary only — single In-hand tile
+
+- Precondition: `getProposal` resolves with `{agreed_salary_only: 1, agreed_salary: 17500, currency: "INR", …}` and no `ctc_monthly` / `annual_ctc` / `take_home_monthly` keys.
+- Action: Render `<CtcProposalView access={{proposal: "CTCP-1"}} />`.
+- Expected result: `formatMoney(17500, "INR")` appears in the DOM; the three labels `"CTC (Monthly)"`, `"Annual CTC"`, `"Take-home (Monthly)"` are not in the DOM `components/ctc-proposal/CtcProposalView.tsx:111-139`
+- Test: mapped: `tests/components/ctc-proposal/CtcProposalView.test.tsx::renders the agreed monthly amount, not ₹0, for an Agreed Salary only proposal`
+- Environment: no-site: vitest, jsdom; backend stubbed; no database
+- Known gaps: Only the headline tile is pinned; the role-facts dl is covered by A9.1C.
+- Evidence: UNVERIFIED
+
+<a id="cand-02-a9-1b"></a>
+#### CAND-02-A9.1B: Agreed Salary only — annexure hidden
+
+- Precondition: Same as A9.1A.
+- Action: Render the view, wait for the headline amount.
+- Expected result: The text `"ANNEXURE"` is not in the DOM; no annexure rows reach the page `components/ctc-proposal/CtcProposalView.tsx:142`
+- Test: mapped: `tests/components/ctc-proposal/CtcProposalView.test.tsx::hides the annexure for an Agreed Salary only proposal, since the backend ships none`
+- Environment: no-site: vitest, jsdom; backend stubbed; no database
+- Known gaps: Only the `ANNEXURE` header is asserted absent; the annexure sheet's other static text (`"M/S. …"`, system-generated line) is not pinned here.
+- Evidence: UNVERIFIED
+
+<a id="cand-02-a9-1c"></a>
+#### CAND-02-A9.1C: Agreed Salary only — response controls still work
+
+- Precondition: Same as A9.1A, with `can_respond: true` and `can_negotiate: true`.
+- Action: Render the view, wait for the headline amount.
+- Expected result: The role-facts `"Backend Sales Executive"` and `"Contract"` show, and the buttons named `Accept`, `Negotiate`, `Reject` are all in the DOM `components/ctc-proposal/CtcProposalView.tsx:141-157,232-237,277-287`
+- Test: mapped: `tests/components/ctc-proposal/CtcProposalView.test.tsx::still shows the role facts and the Accept / Negotiate / Reject controls on an Agreed Salary only proposal`
+- Environment: no-site: vitest, jsdom; backend stubbed; no database
+- Known gaps: The Accept confirmation wording, the Negotiate input label and the missing-input toast are not re-asserted here; they share the same `agreed_salary_only === 1` branch as the tile and are covered by code inspection.
+- Evidence: UNVERIFIED
+
+<a id="cand-02-a9-2a"></a>
+#### CAND-02-A9.2A: Full CTC — unchanged layout
+
+- Precondition: `getProposal` resolves with the full-CTC fixture (`agreed_salary_only` absent, `ctc_monthly`, `ctc`, `take_home_monthly`, `annexure` all present).
+- Action: Render the view.
+- Expected result: `formatMoney(1800000, "INR")` appears; the annexure's `"Basic"` row renders; HR's `"Welcome!"` note renders `components/ctc-proposal/CtcProposalView.tsx:121-139,142`
+- Test: mapped: `tests/components/ctc-proposal/CtcProposalView.test.tsx::shows the CTC, breakup and HR note`
+- Environment: no-site: vitest, jsdom; backend stubbed; no database
+- Known gaps: Shares the existing test with the full fixture; added `// Spec:` link only — the assertions are unchanged.
 - Evidence: UNVERIFIED
