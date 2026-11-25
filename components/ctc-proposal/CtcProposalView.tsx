@@ -110,20 +110,31 @@ function ProposalBody({ access, data }: { access: ProposalAccess; data: CtcPropo
 
       <Card>
         <CardContent className="space-y-4 pt-6">
-          <div className="flex flex-wrap gap-x-12 gap-y-4">
+          {data.agreed_salary_only === 1 ? (
+            // Agreed-Salary-only proposal: one flat monthly amount, no CTC
+            // breakdown, no annexure. The backend's `_agreed_payload` ships
+            // neither `ctc_monthly` nor `annual_ctc` nor `take_home_monthly`,
+            // so the three-tile layout below would show ₹0 for everything.
             <div>
-              <p className="text-sm text-muted-foreground">CTC (Monthly)</p>
-              <p className="text-3xl font-bold text-foreground">{money(data.ctc_monthly ?? data.ctc / 12)}</p>
+              <p className="text-sm text-muted-foreground">In-hand Salary (Monthly)</p>
+              <p className="text-3xl font-bold text-foreground">{money(data.agreed_salary ?? 0)}</p>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Annual CTC</p>
-              <p className="text-3xl font-bold text-foreground">{money(data.ctc)}</p>
+          ) : (
+            <div className="flex flex-wrap gap-x-12 gap-y-4">
+              <div>
+                <p className="text-sm text-muted-foreground">CTC (Monthly)</p>
+                <p className="text-3xl font-bold text-foreground">{money(data.ctc_monthly ?? (data.ctc ?? 0) / 12)}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Annual CTC</p>
+                <p className="text-3xl font-bold text-foreground">{money(data.ctc ?? 0)}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Take-home (Monthly)</p>
+                <p className="text-3xl font-bold text-foreground">{money(data.take_home_monthly ?? 0)}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Take-home (Monthly)</p>
-              <p className="text-3xl font-bold text-foreground">{money(data.take_home_monthly)}</p>
-            </div>
-          </div>
+          )}
           <dl className="grid grid-cols-1 gap-x-6 gap-y-2 border-t pt-4 text-sm sm:grid-cols-2">
             <Detail label="Designation" value={data.designation} />
             {data.department && <Detail label="Department" value={data.department} />}
@@ -135,7 +146,7 @@ function ProposalBody({ access, data }: { access: ProposalAccess; data: CtcPropo
         </CardContent>
       </Card>
 
-      <Annexure data={data} />
+      {data.agreed_salary_only !== 1 && <Annexure data={data} />}
 
       {data.hr_note && (
         <div className="whitespace-pre-wrap rounded-lg bg-muted p-4 text-sm">
@@ -233,7 +244,9 @@ function Respond({ access, data }: { access: ProposalAccess; data: CtcProposalDa
     if (!mode) return;
     const expectedCtc = Number(expected.replace(/[^0-9.]/g, ""));
     if (mode === "Negotiate" && !(expectedCtc > 0)) {
-      toast.error("Enter the CTC you expect.");
+      toast.error(
+        data.agreed_salary_only === 1 ? "Enter the salary you expect." : "Enter the CTC you expect.",
+      );
       return;
     }
     try {
@@ -281,17 +294,24 @@ function Respond({ access, data }: { access: ProposalAccess; data: CtcProposalDa
 
         {mode === "Accept" && (
           <p className="text-sm text-muted-foreground">
-            By accepting, you agree to an annual CTC of {formatMoney(data.ctc, data.currency)}. Your offer letter will follow.
+            {data.agreed_salary_only === 1
+              ? `By accepting, you agree to a monthly salary of ${formatMoney(data.agreed_salary ?? 0, data.currency)}. Your offer letter will follow.`
+              : `By accepting, you agree to an annual CTC of ${formatMoney(data.ctc ?? 0, data.currency)}. Your offer letter will follow.`}
           </p>
         )}
         {mode === "Negotiate" && (
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label htmlFor="ctc-expected">Your expected Annual CTC *</Label>
+              <Label htmlFor="ctc-expected">
+                {data.agreed_salary_only === 1 ? "Your expected monthly salary *" : "Your expected Annual CTC *"}
+              </Label>
               <Input id="ctc-expected" inputMode="numeric" value={expected} placeholder="e.g. 2000000"
                 onChange={(e) => setExpected(e.target.value.replace(/[^0-9.]/g, ""))} />
               {Number(expected) > 0 && (
-                <p className="text-xs text-muted-foreground">{formatMoney(Number(expected), data.currency)} per year</p>
+                <p className="text-xs text-muted-foreground">
+                  {formatMoney(Number(expected), data.currency)}
+                  {data.agreed_salary_only === 1 ? " per month" : " per year"}
+                </p>
               )}
             </div>
             <div className="space-y-1.5">
