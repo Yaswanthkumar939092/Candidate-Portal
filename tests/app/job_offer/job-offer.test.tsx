@@ -549,6 +549,42 @@ describe("JobOfferPage", () => {
     expect(mockPush).toHaveBeenCalledWith("/action-center");
   });
 
+  it("keeps the offer preview available on a phone-width layout", () => {
+    const { container } = render(<JobOfferPage />);
+
+    const preview = screen.getByRole("heading", { name: "Offer of Employment" });
+    const previewPane = preview.closest("div.w-full");
+    expect(previewPane?.className).not.toMatch(/(?:^|\s)hidden(?:\s|$)/);
+    expect(container.querySelector(".hidden.sm\\:block")).toBeNull();
+
+
+    const previewButton = screen.getByRole("button", {
+      name: /Preview \/ Download Offer Letter/i,
+    });
+    expect(previewButton.closest("div")?.className).not.toContain("hidden");
+    expect(previewButton).toHaveProperty("disabled", false);
+  });
+
+  it("shows the accepted offer letter preview on a phone after it is requested", () => {
+    mockUseJobOfferStatus.mockReturnValue({
+      data: { status: "Accepted", responded_on: "2026-10-05" },
+      isLoading: false,
+    });
+
+    const { container } = render(<JobOfferPage />);
+    expect(screen.queryByRole("heading", { name: "Offer of Employment" })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "View Offer Letter" }));
+
+    const preview = screen.getByRole("heading", { name: "Offer of Employment" });
+    const previewPane = preview.closest("div.w-full");
+    expect(previewPane?.className).not.toMatch(/(?:^|\s)hidden(?:\s|$)/);
+    expect(container.querySelector(".hidden.sm\\:block")).toBeNull();
+    expect(
+      screen.getByRole("button", { name: /Download Offer Letter/i }),
+    ).toBeTruthy();
+  });
+
   it("shows the reason back when the candidate declined the offer", () => {
     mockUseJobOfferStatus.mockReturnValue({
       data: {

@@ -659,7 +659,7 @@ function JobOfferContent() {
                         </span>
                       </label>
 
-                      <div className="hidden lg:block">
+                      <div>
                         <button
                           onClick={() =>
                             activePdfUrl && openPdfPreview(activePdfUrl)
@@ -748,7 +748,7 @@ function JobOfferContent() {
                 </div>
 
                 {/* Right Side: Offer Document (PDF Preview Card) */}
-                <div className="w-full lg:flex-1 lg:min-w-0 overflow-hidden hidden sm:block">
+                <div className="w-full lg:flex-1 lg:min-w-0 overflow-hidden">
                   <div className="rounded-2xl border border-border bg-card shadow-lg overflow-hidden">
                     {/* Header attached inside the card */}
                     <div className="py-3.5 px-6 sm:px-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -1367,7 +1367,7 @@ function OfferReview({
         {/* The letter pane appears only once asked for: mounting PdfViewer is
             what triggers the render on the backend. */}
         {lettersRequested && (
-          <div className="w-full lg:flex-1 lg:min-w-0 overflow-hidden hidden sm:block">
+          <div className="w-full lg:flex-1 lg:min-w-0 overflow-hidden">
             <div className="rounded-2xl border border-border bg-card shadow-lg overflow-hidden">
               <div className="py-3.5 px-6 sm:px-8 flex items-center gap-3">
                 <div className="p-2 bg-primary/10 rounded-xl text-primary shrink-0">

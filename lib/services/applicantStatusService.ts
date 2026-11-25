@@ -73,6 +73,16 @@ export const ApplicantStatusResponse = {
     };
   },
 
+  // GET - the candidate's own application by its opaque receipt (the id that
+  // my_applications returns). The legacy get_job_applicant below takes a Job
+  // Applicant document name, which the portal never sees, so it answers 403 for
+  // a receipt.
+  getApplication: async (receipt: string): Promise<V1ApplicationRow> => {
+    return (await FrappeAPI.get("recruitment.api.v1.candidate.get_application", {
+      receipt,
+    })) as V1ApplicationRow
+  },
+
   // ✅ GET — fetch detailed job applicant by name
   getJobApplicant: async (jobApplicantName: string): Promise<any> => {
     const response = await FrappeAPI.get(

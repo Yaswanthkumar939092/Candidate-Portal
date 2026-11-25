@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react"
 import { ViewApplicationModal } from "@/components/my-jobs/view-application-modal"
 
 vi.mock("@/lib/hooks/useApplicantStatus", () => ({
-  useJobApplicantDetails: vi.fn(),
+  useApplication: vi.fn(),
 }))
 
 vi.mock("lucide-react", async () => {
@@ -14,13 +14,13 @@ vi.mock("lucide-react", async () => {
   }
 })
 
-import { useJobApplicantDetails } from "@/lib/hooks/useApplicantStatus"
+import { useApplication } from "@/lib/hooks/useApplicantStatus"
 
 describe("ViewApplicationModal", () => {
   const mockOnClose = vi.fn()
 
   it("renders loading state", () => {
-    vi.mocked(useJobApplicantDetails).mockReturnValue({ isLoading: true, data: null, error: null } as any)
+    vi.mocked(useApplication).mockReturnValue({ isLoading: true, data: null, error: null } as any)
     render(
       <ViewApplicationModal jobApplicantName="app-1" isOpen={true} onClose={mockOnClose} />
     )
@@ -28,7 +28,7 @@ describe("ViewApplicationModal", () => {
   })
 
   it("renders error state", () => {
-    vi.mocked(useJobApplicantDetails).mockReturnValue({ isLoading: false, data: null, error: new Error("Failed") } as any)
+    vi.mocked(useApplication).mockReturnValue({ isLoading: false, data: null, error: new Error("Failed") } as any)
     render(
       <ViewApplicationModal jobApplicantName="app-1" isOpen={true} onClose={mockOnClose} />
     )
@@ -36,18 +36,16 @@ describe("ViewApplicationModal", () => {
   })
 
   it("renders applicant data successfully", () => {
-    vi.mocked(useJobApplicantDetails).mockReturnValue({
+    vi.mocked(useApplication).mockReturnValue({
       isLoading: false,
       error: null,
       data: {
-        data: {
           first_name: "John",
           last_name: "Doe",
           is_active: true,
           nested_table: [
             { field_1: "Value 1" }
           ]
-        }
       }
     } as any)
 
@@ -63,13 +61,11 @@ describe("ViewApplicationModal", () => {
   })
 
   it("handles empty array in applicant data", () => {
-    vi.mocked(useJobApplicantDetails).mockReturnValue({
+    vi.mocked(useApplication).mockReturnValue({
       isLoading: false,
       error: null,
       data: {
-        data: {
           empty_list: []
-        }
       }
     } as any)
 

@@ -18,3 +18,12 @@ export const useJobApplicantDetails = (jobApplicantName: string | null) => {
     retry: false,
   });
 };
+
+export const useApplication = (receipt: string | null) => {
+  return useQuery({
+    queryKey: ["application-by-receipt", receipt],
+    queryFn: () => ApplicantStatusResponse.getApplication(receipt!),
+    enabled: !!receipt,
+    retry: false,
+  });
+};
