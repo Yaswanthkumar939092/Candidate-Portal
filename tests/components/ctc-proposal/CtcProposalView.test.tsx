@@ -148,4 +148,48 @@ describe("CtcProposalView", () => {
     renderView();
     expect(await screen.findByText("Proposal unavailable")).toBeInTheDocument();
   });
+
+  // "Agreed Salary only" proposals carry just one flat monthly amount — no CTC,
+  // no breakup, no annexure (recruitment.api.ctc_proposal_portal._agreed_payload).
+  // The view used to reach for ctc_monthly / annual_ctc / take_home_monthly and
+  // show ₹0 everywhere; it now renders the agreed amount instead.
+  const agreed: CtcProposalData = {
+    applicant_name: "Yash", company: "Precious Alloys", designation: "Backend Sales Executive",
+    department: "Backend Sales", employment_type: "Contract", expected_doj: "2026-11-26",
+    currency: "INR",
+    agreed_salary_only: 1,
+    agreed_salary: 17500,
+    hr_note: "", version: 1, status: "Sent", expired: false, expires_on: null,
+    can_respond: true, can_negotiate: true, negotiations_left: 3, response: "",
+    company_name: "Precious Alloys Pvt Ltd", accepted_statement: "",
+  };
+
+  it("renders the agreed monthly amount, not ₹0, for an Agreed Salary only proposal", async () => {
+    getProposal.mockResolvedValue(agreed);
+    renderView();
+    // The agreed amount shows as the headline figure.
+    expect(await screen.findByText(formatMoney(17500, "INR"))).toBeInTheDocument();
+    // ₹0 on the three CTC tiles was the bug; those tiles must not render.
+    expect(screen.queryByText("CTC (Monthly)")).not.toBeInTheDocument();
+    expect(screen.queryByText("Annual CTC")).not.toBeInTheDocument();
+    expect(screen.queryByText("Take-home (Monthly)")).not.toBeInTheDocument();
+  });
+
+  it("hides the annexure for an Agreed Salary only proposal, since the backend ships none", async () => {
+    getProposal.mockResolvedValue(agreed);
+    renderView();
+    await screen.findByText(formatMoney(17500, "INR"));
+    expect(screen.queryByText("ANNEXURE")).not.toBeInTheDocument();
+  });
+
+  it("still shows the role facts and the Accept / Negotiate / Reject controls on an Agreed Salary only proposal", async () => {
+    getProposal.mockResolvedValue(agreed);
+    renderView();
+    await screen.findByText(formatMoney(17500, "INR"));
+    expect(screen.getByText("Backend Sales Executive")).toBeInTheDocument();
+    expect(screen.getByText("Contract")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Accept" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Negotiate" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Reject" })).toBeInTheDocument();
+  });
 });

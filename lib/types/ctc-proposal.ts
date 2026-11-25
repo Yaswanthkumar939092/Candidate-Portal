@@ -34,18 +34,24 @@ export interface CtcProposalData {
   employment_type: string;
   expected_doj: string | null;
   currency: string | null;
-  ctc: number;
+  /** 1 for `_agreed_payload` (flat monthly amount, no CTC / breakup / annexure),
+   *  0 or omitted for the full `_payload`. */
+  agreed_salary_only?: 0 | 1;
+  /** Only set when `agreed_salary_only === 1` — the one monthly amount HR offered. */
+  agreed_salary?: number;
+  /** Full-CTC fields: unset on an agreed-salary-only proposal. */
+  ctc?: number;
   /** CTC (Monthly) as HR entered it, else Annual / 12. */
   ctc_monthly?: number;
-  annual_ctc: number;
-  earnings: CtcProposalLine[];
-  deductions: CtcProposalLine[];
-  monthly_gross: number;
-  monthly_deductions: number;
-  monthly_net: number;
-  annexure: CtcAnnexureRow[];
-  take_home_monthly: number;
-  annexure_note: string;
+  annual_ctc?: number;
+  earnings?: CtcProposalLine[];
+  deductions?: CtcProposalLine[];
+  monthly_gross?: number;
+  monthly_deductions?: number;
+  monthly_net?: number;
+  annexure?: CtcAnnexureRow[];
+  take_home_monthly?: number;
+  annexure_note?: string;
   /** The annexure's name line, "Mr. Bishnu Kushwaha" (no salutation without a gender). */
   annexure_name?: string;
   /** The Company's full name, for the annexure's "M/S." sign-off. */
