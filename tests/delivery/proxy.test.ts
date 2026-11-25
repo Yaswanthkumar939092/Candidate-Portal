@@ -231,6 +231,7 @@ const READ_METHODS_PORTAL = [
   "recruitment.api.direct_applicant_portal.search_my_link",
   "recruitment.api.direct_applicant_portal.download_my_file",
   "recruitment.api.joining_day.get_my_non_working_days",
+  "recruitment.api.candidate_portal.get_link_field_options",
   "recruitment.api.onboarding_dashboard.get_dashboard",
   "recruitment.api.onboarding_files.download_my_onboarding_file",
 ];
@@ -285,11 +286,37 @@ it.each([
   await expectDenied(`http://portal/backend/api/method/${method}`, { method: "POST", headers: { cookie: "candidate_portal_session=placeholder" } });
 });
 
-// These stay denied until the backend restricts them: get_link_field_options
-// lists any doctype's records to any candidate; get_meta and upload_file are
-// generic Frappe endpoints; campus invites are reachable by invite id + email.
+// The Link dropdowns' picker. The backend (cn-recruitment a812ad8c) limits it to
+// a candidate session and its reference-doctype allowlist; the proxy forwards the
+// picker's query (doctype, search, include, dependent filters) untouched and lets
+// Frappe decide, so a doctype outside that allowlist is Frappe's 404, not ours.
+it("forwards a Link dropdown lookup with its query unchanged", async () => {
+  vi.stubEnv("FRAPPE_BASE_URL", "http://frappe:8000");
+  const query = "doctype=Education+Stage&txt=Grad&limit=20&include=10th&state=Bihar";
+  const res = await callProxy(
+    `http://portal/backend/api/method/recruitment.api.candidate_portal.get_link_field_options?${query}`,
+    { headers: { cookie: "candidate_portal_session=placeholder" } },
+  );
+  expect(res.status).toBe(200);
+  expect(lastCall?.url).toBe(`http://frappe:8000/api/method/recruitment.api.candidate_portal.get_link_field_options?${query}`);
+  expect(lastCall?.init?.method).toBe("GET");
+  expect(new Headers(lastCall?.init?.headers).get("cookie")).toBe("candidate_portal_session=placeholder");
+});
+
+it("does not open the Link picker's neighbours", async () => {
+  vi.stubEnv("FRAPPE_BASE_URL", "http://frappe:8000");
+  for (const method of [
+    "recruitment.api.candidate_portal.get_link_field_options/extra",
+    "recruitment.api.candidate_portal.get_link_field_options_v2",
+    "recruitment.api.candidate_portal.get_child_doctype_fields",
+  ]) {
+    await expectDenied(`http://portal/backend/api/method/${method}`, { headers: { cookie: "candidate_portal_session=placeholder" } });
+  }
+});
+
+// These stay denied until the backend restricts them: get_meta and upload_file
+// are generic Frappe endpoints; campus invites are reachable by invite id + email.
 it.each([
-  "recruitment.api.candidate_portal.get_link_field_options",
   "frappe.client.get_meta",
   "upload_file",
   "recruitment.api.channels.campus.get_invite_openings",

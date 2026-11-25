@@ -118,12 +118,18 @@ const ALLOWED_METHODS = new Set([
   ...["get_form", "search_link", "submit_form", "upload_file", "get_my_form", "search_my_link", "submit_my_form", "upload_my_file", "download_my_file"].map(name => `recruitment.api.direct_applicant_portal.${name}`),
   "recruitment.api.employee_onboarding.update_onboarding_details",
   "recruitment.api.joining_day.get_my_non_working_days",
+  // Every Link dropdown on the candidate forms (e.g. Education Stage in the
+  // onboarding Educational Details table). Safe since cn-recruitment a812ad8c:
+  // Candidate Portal session only, only the reference doctypes in
+  // CANDIDATE_LINK_DOCTYPES (any other doctype answers 404), equality-only
+  // filters on Link / Select / Data fields, and at most 50 rows a page. A read:
+  // GET, not POST-only.
+  "recruitment.api.candidate_portal.get_link_field_options",
   "recruitment.api.onboarding_dashboard.get_dashboard",
   ...["upload_my_onboarding_file", "download_my_onboarding_file"].map(name => `recruitment.api.onboarding_files.${name}`),
-  // Not yet: recruitment.api.candidate_portal.get_link_field_options (lists any
-  // doctype's records to any candidate), frappe.client.get_meta and upload_file
-  // (generic Frappe endpoints), recruitment.api.channels.campus.* (invite id +
-  // email, no token). Each needs a backend restriction first.
+  // Not yet: frappe.client.get_meta and upload_file (generic Frappe endpoints),
+  // recruitment.api.channels.campus.* (invite id + email, no token). Each needs a
+  // backend restriction first.
 ]);
 
 // Methods that change data answer only to POST here. The session cookie is
